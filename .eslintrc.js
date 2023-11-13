@@ -25,7 +25,7 @@ module.exports = {
     "no-console": "error",
     "no-shadow": "off", // @typescript-eslint/no-shadow
   },
-  ignorePatterns: [".expo/types/**/*.ts", "expo-env.d.ts"],
+  ignorePatterns: ["build/", "dist/", ".expo/types/**/*.ts", "expo-env.d.ts"],
   overrides: [
     {
       files: nodeFiles,

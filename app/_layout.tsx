@@ -1,3 +1,4 @@
+import "expo-webauthn";
 import "react-native-get-random-values";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";

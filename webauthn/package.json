@@ -1,0 +1,39 @@
+{
+  "name": "expo-webauthn",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "webauthn polyfill for expo",
+  "author": "danilo neves cruz <cruzdanilo@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/exactly/mobile.git",
+    "directory": "webauthn"
+  },
+  "scripts": {
+    "build": "expo-module build",
+    "clean": "expo-module clean",
+    "lint": "expo-module lint",
+    "test": "expo-module test",
+    "prepare": "expo-module prepare",
+    "prepublishOnly": "expo-module prepublishOnly"
+  },
+  "workspaces": [
+    "example"
+  ],
+  "dependencies": {
+    "base64-arraybuffer": "^1.0.2",
+    "expo-modules-core": "^1.5.11"
+  },
+  "devDependencies": {
+    "expo-module-scripts": "^3.1.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts"
+}
