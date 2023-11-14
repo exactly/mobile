@@ -1,6 +1,5 @@
 module.exports = {
   reject: [
-    // expo
     "expo-application",
     "expo-device",
     "expo-font",
@@ -9,6 +8,7 @@ module.exports = {
     "expo-status-bar",
     "expo-system-ui",
     "expo-web-browser",
+    "react-native",
     "react-native-gesture-handler",
     "react-native-safe-area-context",
     "react-native-screens",
