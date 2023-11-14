@@ -1,5 +1,9 @@
+import { ApiKeyStamper } from "@turnkey/api-key-stamper";
+import { TurnkeyClient, createActivityPoller, getWebAuthnAttestation } from "@turnkey/http";
+import { encode } from "base64-arraybuffer";
 import React, { useCallback } from "react";
 import { Button, Platform } from "react-native";
+import { getDeviceName } from "react-native-device-info";
 import * as Sentry from "sentry-expo";
 import { Text, XStack, YStack } from "tamagui";
 import { useBlockNumber } from "wagmi";
@@ -11,19 +15,50 @@ export default function Home() {
 
   const create = useCallback(() => {
     const challenge = generateRandomBuffer();
-    const username = `exactly, ${new Date().toISOString().slice(0, 10)}`;
-    navigator.credentials
-      .create({
-        publicKey: {
-          rp: { id: rpId, name: "exactly" },
-          user: { id: challenge, name: username, displayName: username },
-          pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-          authenticatorSelection: { requireResidentKey: true, residentKey: "required", userVerification: "required" },
-          challenge,
-        },
-      })
-      .then((credential) => {
-        console.log("credential", credential); // eslint-disable-line no-console
+    getWebAuthnAttestation({
+      publicKey: {
+        rp: { id: rpId, name: "exactly" },
+        user: { id: challenge, name: "exactly account", displayName: "exactly account" },
+        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+        authenticatorSelection: { requireResidentKey: true, residentKey: "required", userVerification: "required" },
+        challenge,
+      },
+    })
+      .then(async (attestation) => {
+        console.log("attestation", attestation); // eslint-disable-line no-console
+        if (!process.env.EXPO_PUBLIC_TURNKEY_ORGANIZATION_ID) throw new Error("missing turnkey organization id");
+        const client = turnkeyClient();
+        const activityPoller = createActivityPoller({ client, requestFn: client.createSubOrganization });
+        const completedActivity = await activityPoller({
+          type: "ACTIVITY_TYPE_CREATE_SUB_ORGANIZATION_V4",
+          timestampMs: String(Date.now()),
+          organizationId: process.env.EXPO_PUBLIC_TURNKEY_ORGANIZATION_ID,
+          parameters: {
+            subOrganizationName: attestation.credentialId,
+            rootQuorumThreshold: 1,
+            rootUsers: [
+              {
+                apiKeys: [],
+                userName: "account",
+                authenticators: [
+                  { authenticatorName: await getDeviceName(), challenge: base64URLEncode(challenge), attestation },
+                ],
+              },
+            ],
+            wallet: {
+              walletName: "default",
+              accounts: [
+                {
+                  curve: "CURVE_SECP256K1",
+                  addressFormat: "ADDRESS_FORMAT_ETHEREUM",
+                  pathFormat: "PATH_FORMAT_BIP32",
+                  path: "m/44'/60'/0'/0/0",
+                },
+              ],
+            },
+          },
+        });
+        console.log(completedActivity); // eslint-disable-line no-console
       })
       .catch(handleError);
   }, []);
@@ -48,6 +83,10 @@ export default function Home() {
   );
 }
 
+function base64URLEncode(buffer: ArrayBufferLike) {
+  return encode(buffer).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
 function generateRandomBuffer() {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
@@ -57,4 +96,17 @@ function generateRandomBuffer() {
 function handleError(error: unknown) {
   console.log(error); // eslint-disable-line no-console
   (Sentry.Native ?? Sentry.React).captureException(error); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+}
+
+function turnkeyClient() {
+  if (!process.env.EXPO_PUBLIC_TURNKEY_API_PUBLIC_KEY || !process.env.EXPO_PUBLIC_TURNKEY_API_PRIVATE_KEY) {
+    throw new Error("missing turnkey api keys");
+  }
+  return new TurnkeyClient(
+    { baseUrl: "https://api.turnkey.com" },
+    new ApiKeyStamper({
+      apiPublicKey: process.env.EXPO_PUBLIC_TURNKEY_API_PUBLIC_KEY,
+      apiPrivateKey: process.env.EXPO_PUBLIC_TURNKEY_API_PRIVATE_KEY,
+    }),
+  );
 }
