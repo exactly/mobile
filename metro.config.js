@@ -6,6 +6,7 @@ module.exports = {
   ...defaultConfig,
   resolver: {
     ...defaultConfig.resolver,
+    sourceExts: [...(defaultConfig.resolver?.sourceExts ?? []), "mjs"],
     unstable_enablePackageExports: true,
   },
 };
