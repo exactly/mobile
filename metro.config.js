@@ -7,6 +7,7 @@ module.exports = {
   resolver: {
     ...defaultConfig.resolver,
     sourceExts: [...(defaultConfig.resolver?.sourceExts ?? []), "mjs"],
+    unstable_conditionNames: ["react-native", "browser", "require"],
     unstable_enablePackageExports: true,
   },
 };
