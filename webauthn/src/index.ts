@@ -2,17 +2,20 @@ import { encode, decode } from "base64-arraybuffer";
 
 import ExpoWebauthn from "./ExpoWebauthn";
 
-// @ts-expect-error -- polyfill
-global.navigator.credentials ??= {
-  async get(options) {
-    if (!options?.publicKey) throw new Error("publicKey required");
-    return parse(await ExpoWebauthn.get(stringify(options.publicKey)));
-  },
-  async create(options) {
-    if (!options?.publicKey) throw new Error("publicKey required");
-    return parse(await ExpoWebauthn.create(stringify(options.publicKey)));
-  },
-} as CredentialsContainer;
+if (ExpoWebauthn) {
+  const webauthn = ExpoWebauthn;
+  // @ts-expect-error -- polyfill
+  global.navigator.credentials ??= {
+    async get(options) {
+      if (!options?.publicKey) throw new Error("publicKey required");
+      return parse(await webauthn.get(stringify(options.publicKey)));
+    },
+    async create(options) {
+      if (!options?.publicKey) throw new Error("publicKey required");
+      return parse(await webauthn.create(stringify(options.publicKey)));
+    },
+  } as CredentialsContainer;
+}
 
 function stringify(value: unknown) {
   return JSON.stringify(value, (_, v) => {
