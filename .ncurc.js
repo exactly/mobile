@@ -10,6 +10,7 @@ module.exports = {
     "expo-web-browser",
     "react-native",
     "react-native-gesture-handler",
+    "react-native-get-random-values",
     "react-native-safe-area-context",
     "react-native-screens",
     "sharp-cli",
