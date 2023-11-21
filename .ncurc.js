@@ -1,9 +1,12 @@
 module.exports = {
   reject: [
     "expo-application",
+    "expo-build-properties",
+    "expo-constants",
     "expo-device",
     "expo-font",
     "expo-linking",
+    "expo-router",
     "expo-splash-screen",
     "expo-status-bar",
     "expo-system-ui",
