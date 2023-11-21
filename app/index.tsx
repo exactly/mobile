@@ -1,11 +1,12 @@
 import { ApiKeyStamper } from "@turnkey/api-key-stamper";
 import { TurnkeyClient, createActivityPoller, getWebAuthnAttestation } from "@turnkey/http";
 import { encode } from "base64-arraybuffer";
+import { deviceName } from "expo-device";
 import React, { useCallback } from "react";
 import { Button, Platform } from "react-native";
-import { getDeviceName } from "react-native-device-info";
 import * as Sentry from "sentry-expo";
 import { Text, XStack, YStack } from "tamagui";
+import { UAParser } from "ua-parser-js";
 import { useBlockNumber } from "wagmi";
 
 const rpId = __DEV__ && Platform.OS === "web" ? "localhost" : "exactly.app";
@@ -41,7 +42,11 @@ export default function Home() {
                 apiKeys: [],
                 userName: "account",
                 authenticators: [
-                  { authenticatorName: await getDeviceName(), challenge: base64URLEncode(challenge), attestation },
+                  {
+                    authenticatorName: deviceName ?? new UAParser(navigator.userAgent).getBrowser().name ?? "unknown",
+                    challenge: base64URLEncode(challenge),
+                    attestation,
+                  },
                 ],
               },
             ],
