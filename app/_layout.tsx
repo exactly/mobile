@@ -11,7 +11,8 @@ import React, { useEffect } from "react";
 import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
 import { TextEncoder } from "text-encoding";
-import { WagmiConfig, configureChains, createConfig, mainnet } from "wagmi";
+import { goerli } from "viem/chains";
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 
 import metadata from "../package.json";
@@ -33,7 +34,7 @@ Sentry.init({
   autoSessionTracking: true,
 });
 
-const chain = mainnet;
+const chain = goerli;
 const { publicClient, webSocketPublicClient } = configureChains([chain], [publicProvider()]);
 const wagmiConfig = createConfig({ autoConnect: true, publicClient, webSocketPublicClient });
 
