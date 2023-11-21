@@ -3,9 +3,9 @@ import { TurnkeyClient, createActivityPoller, getWebAuthnAttestation } from "@tu
 import { encode } from "base64-arraybuffer";
 import { deviceName } from "expo-device";
 import React, { useCallback } from "react";
-import { Button, Platform } from "react-native";
+import { Platform } from "react-native";
 import * as Sentry from "sentry-expo";
-import { Text, XStack, YStack } from "tamagui";
+import { Button, Text, XStack, YStack } from "tamagui";
 import { UAParser } from "ua-parser-js";
 import { useBlockNumber } from "wagmi";
 
@@ -81,8 +81,8 @@ export default function Home() {
     <XStack flex={1} alignItems="center" space>
       <YStack flex={1} alignItems="center" space>
         <Text textAlign="center">block number: {blockNumber && String(blockNumber)}</Text>
-        <Button title="create" onPress={create} />
-        <Button title="get" onPress={get} />
+        <Button onPress={create}>create</Button>
+        <Button onPress={get}>get</Button>
       </YStack>
     </XStack>
   );
