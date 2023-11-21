@@ -24,6 +24,7 @@ module.exports = {
     "eslint-comments/no-unused-disable": "error",
     "no-console": "error",
     "no-shadow": "off", // @typescript-eslint/no-shadow
+    "react-native/no-raw-text": ["error", { skip: ["Button"] }],
   },
   ignorePatterns: ["build/", "dist/", ".expo/types/**/*.ts", "expo-env.d.ts"],
   overrides: [
