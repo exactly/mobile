@@ -6,7 +6,7 @@ module.exports = function (api) {
     plugins: [
       "expo-router/babel",
       "transform-inline-environment-variables",
-      // ["@tamagui/babel-plugin", { components: ["tamagui"], config: "tamagui.config.ts", logTimings: true }],
+      ["@tamagui/babel-plugin", { components: ["tamagui"], config: "tamagui.config.ts", logTimings: true }],
     ],
   };
 };
