@@ -4,6 +4,7 @@
     "lib": ["ESNext"],
     "pretty": true,
     "strict": true,
+    "checkJs": true,
     "noUncheckedIndexedAccess": true
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
