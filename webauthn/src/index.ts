@@ -20,7 +20,7 @@ if (ExpoWebauthn) {
 function stringify(value: unknown) {
   return JSON.stringify(value, (_, v) => {
     if (v instanceof ArrayBuffer) {
-      return encode(v).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+      return encode(v).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
     }
     return v as unknown;
   });
@@ -38,7 +38,7 @@ function parse(text: string) {
         key === "authenticatorData" ||
         key === "clientExtensionResults")
     ) {
-      return decode(v.replace(/-/g, "+").replace(/_/g, "/"));
+      return decode(v.replaceAll("-", "+").replaceAll("_", "/"));
     }
     return v as unknown;
   }) as PublicKeyCredential;

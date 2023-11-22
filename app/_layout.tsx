@@ -28,7 +28,7 @@ Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
   release: metadata.version,
   environment: __DEV__ ? "development" : "production",
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 1,
   attachStacktrace: true,
   attachViewHierarchy: true,
   autoSessionTracking: true,
@@ -54,7 +54,7 @@ export default function RootLayout() {
     if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
-  if (!loaded) return null;
+  if (!loaded) return;
 
   return (
     <>

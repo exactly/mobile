@@ -89,7 +89,7 @@ export default function Home() {
 }
 
 function base64URLEncode(buffer: ArrayBufferLike) {
-  return encode(buffer).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+  return encode(buffer).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
 }
 
 function generateRandomBuffer() {

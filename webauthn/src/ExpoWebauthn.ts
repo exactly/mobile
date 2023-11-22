@@ -3,9 +3,9 @@ import { requireNativeModule } from "expo-modules-core";
 
 const isExpoGo = ExpoConstants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-export default !isExpoGo
-  ? requireNativeModule<{
+export default isExpoGo
+  ? undefined
+  : requireNativeModule<{
       create: (requestJSON: string) => Promise<string>;
       get(requestJSON: string): Promise<string>;
-    }>("ExpoWebauthn")
-  : null;
+    }>("ExpoWebauthn");
