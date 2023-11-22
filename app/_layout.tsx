@@ -21,7 +21,7 @@ export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = { initialRouteName: "/" };
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -50,7 +50,7 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
+    if (loaded) SplashScreen.hideAsync().catch(() => {});
   }, [loaded]);
 
   if (!loaded) return;

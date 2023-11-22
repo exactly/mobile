@@ -1,5 +1,6 @@
 module.exports = {
   reject: [
+    "@react-native-async-storage/async-storage",
     "expo-application",
     "expo-build-properties",
     "expo-constants",
