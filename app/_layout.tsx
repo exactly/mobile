@@ -10,8 +10,9 @@ import React, { useEffect } from "react";
 import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
 import { TextEncoder } from "text-encoding";
-import { goerli } from "viem/chains";
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
+import { goerli } from "wagmi/chains";
+import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 
 import metadata from "../package.json";
@@ -33,12 +34,17 @@ Sentry.init({
   autoSessionTracking: true,
 });
 
-const chain = goerli;
-const { publicClient, webSocketPublicClient } = configureChains([chain], [publicProvider()]);
+const { publicClient, webSocketPublicClient } = configureChains(
+  [goerli],
+  [
+    process.env.EXPO_PUBLIC_ALCHEMY_API_KEY
+      ? alchemyProvider({ apiKey: process.env.EXPO_PUBLIC_ALCHEMY_API_KEY })
+      : publicProvider(),
+  ],
+);
 const wagmiConfig = createConfig({ autoConnect: true, publicClient, webSocketPublicClient });
 
 export default function RootLayout() {
-  // const colorScheme = useColorScheme();
   const [loaded, error] = useFonts({
     Inter: Inter as FontSource,
     InterBold: InterBold as FontSource,
