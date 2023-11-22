@@ -23,6 +23,7 @@ module.exports = {
     "@typescript-eslint/no-import-type-side-effects": "error",
     "@typescript-eslint/no-shadow": "error",
     "eslint-comments/no-unused-disable": "error",
+    "import/prefer-default-export": "error",
     "no-console": "error",
     "no-shadow": "off", // @typescript-eslint/no-shadow
     "react-native/no-raw-text": ["error", { skip: ["Button"] }],
