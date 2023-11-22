@@ -15,11 +15,11 @@ export default {
 
   android: { package: "app.exactly.mobile", adaptiveIcon: { foregroundImage: "./assets/adaptive-icon.png" } },
   ios: { bundleIdentifier: "app.exactly.mobile", supportsTablet: true },
-  web: { bundler: "metro", favicon: "./assets/favicon.png" },
+  web: { bundler: "metro", output: "server" as "static", favicon: "./assets/favicon.png" },
 
   plugins: [
-    "expo-router",
     "sentry-expo",
+    ["expo-router", { origin: "https://exactly.app" }],
     ["expo-build-properties", { android: { compileSdkVersion: 34, targetSdkVersion: 34 } }],
   ],
   experiments: { typedRoutes: true },
