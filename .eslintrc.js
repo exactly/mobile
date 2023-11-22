@@ -16,6 +16,7 @@ module.exports = {
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
     "plugin:react-native/all",
+    "plugin:unicorn/recommended",
   ],
   rules: {
     "@typescript-eslint/consistent-type-imports": "error",
@@ -25,6 +26,8 @@ module.exports = {
     "no-console": "error",
     "no-shadow": "off", // @typescript-eslint/no-shadow
     "react-native/no-raw-text": ["error", { skip: ["Button"] }],
+    "unicorn/filename-case": "off", // use default export name
+    "unicorn/prefer-top-level-await": "off", // unsupported in react-native
   },
   ignorePatterns: ["build/", "dist/", ".expo/types/**/*.ts", "expo-env.d.ts"],
   overrides: [
@@ -36,6 +39,7 @@ module.exports = {
         "node/no-missing-import": ["error", { tryExtensions: [".ts", ".js"] }],
         "node/no-unpublished-import": "off",
         "node/no-unsupported-features/es-syntax": ["error", { ignores: ["modules", "dynamicImport"] }],
+        "unicorn/prefer-module": "off",
       },
     },
   ],
