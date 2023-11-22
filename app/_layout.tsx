@@ -1,5 +1,4 @@
 import "expo-webauthn";
-import "react-native-get-random-values";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import InterBold from "@tamagui/font-inter/otf/Inter-Bold.otf";

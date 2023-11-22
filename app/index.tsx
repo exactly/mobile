@@ -1,13 +1,15 @@
 import { ApiKeyStamper } from "@turnkey/api-key-stamper";
 import { TurnkeyClient, createActivityPoller, getWebAuthnAttestation } from "@turnkey/http";
-import { encode } from "base64-arraybuffer";
 import { deviceName } from "expo-device";
 import React, { useCallback } from "react";
 import { Platform } from "react-native";
-import * as Sentry from "sentry-expo";
 import { Button, Text, XStack, YStack } from "tamagui";
 import { UAParser } from "ua-parser-js";
 import { useBlockNumber } from "wagmi";
+
+import base64URLEncode from "../utils/base64URLEncode";
+import generateRandomBuffer from "../utils/generateRandomBuffer";
+import handleError from "../utils/handleError";
 
 const rpId = __DEV__ && Platform.OS === "web" ? "localhost" : "exactly.app";
 
@@ -86,21 +88,6 @@ export default function Home() {
       </YStack>
     </XStack>
   );
-}
-
-function base64URLEncode(buffer: ArrayBufferLike) {
-  return encode(buffer).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
-}
-
-function generateRandomBuffer() {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return array.buffer;
-}
-
-function handleError(error: unknown) {
-  console.log(error); // eslint-disable-line no-console
-  (Sentry.Native ?? Sentry.React).captureException(error); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 }
 
 function turnkeyClient() {
