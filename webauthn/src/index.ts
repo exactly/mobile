@@ -15,6 +15,8 @@ if (ExpoWebauthn) {
       return parse(await webauthn.create(stringify(options.publicKey)));
     },
   } as CredentialsContainer;
+  // @ts-expect-error -- turnkey's webauthn support detection
+  global.window.PublicKeyCredential = {} as PublicKeyCredential;
 }
 
 function stringify(value: unknown) {
