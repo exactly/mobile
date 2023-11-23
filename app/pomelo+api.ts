@@ -1,16 +1,13 @@
 import { configureChains, createConfig, fetchBlockNumber } from "@wagmi/core";
-import { goerli } from "@wagmi/core/chains";
 import { alchemyProvider } from "@wagmi/core/providers/alchemy";
 import { publicProvider } from "@wagmi/core/providers/public";
 import { type ExpoRequest, ExpoResponse } from "expo-router/server";
 
+import { alchemyAPIKey, chain } from "../utils/constants";
+
 const { publicClient, webSocketPublicClient } = configureChains(
-  [goerli],
-  [
-    process.env.EXPO_PUBLIC_ALCHEMY_API_KEY
-      ? alchemyProvider({ apiKey: process.env.EXPO_PUBLIC_ALCHEMY_API_KEY })
-      : publicProvider(),
-  ],
+  [chain],
+  [alchemyAPIKey ? alchemyProvider({ apiKey: alchemyAPIKey }) : publicProvider()],
 );
 createConfig({ publicClient, webSocketPublicClient });
 

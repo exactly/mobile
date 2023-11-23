@@ -11,18 +11,19 @@ import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
 import { TextEncoder } from "text-encoding";
 import { WagmiConfig, configureChains, createConfig } from "wagmi";
-import { goerli } from "wagmi/chains";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { publicProvider } from "wagmi/providers/public";
 
 import metadata from "../package.json";
 import tamaguiConfig from "../tamagui.config";
+import AlchemyConnector from "../utils/AlchemyConnector";
+import { alchemyAPIKey, chain } from "../utils/constants";
 
 export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = { initialRouteName: "/" };
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+void SplashScreen.preventAutoHideAsync(); // eslint-disable-line no-void -- android bug
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -35,14 +36,10 @@ Sentry.init({
 });
 
 const { publicClient, webSocketPublicClient } = configureChains(
-  [goerli],
-  [
-    process.env.EXPO_PUBLIC_ALCHEMY_API_KEY
-      ? alchemyProvider({ apiKey: process.env.EXPO_PUBLIC_ALCHEMY_API_KEY })
-      : publicProvider(),
-  ],
+  [chain],
+  [alchemyAPIKey ? alchemyProvider({ apiKey: alchemyAPIKey }) : publicProvider()],
 );
-const wagmiConfig = createConfig({ autoConnect: true, publicClient, webSocketPublicClient });
+const wagmiConfig = createConfig({ connectors: [new AlchemyConnector()], publicClient, webSocketPublicClient });
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
