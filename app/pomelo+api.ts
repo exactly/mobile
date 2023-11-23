@@ -1,18 +1,15 @@
-import { configureChains, createConfig, fetchBlockNumber } from "@wagmi/core";
-import { alchemyProvider } from "@wagmi/core/providers/alchemy";
-import { publicProvider } from "@wagmi/core/providers/public";
+import { createConfig, getBlockNumber, http } from "@wagmi/core";
 import { type ExpoRequest, ExpoResponse } from "expo-router/server";
 
 import { alchemyAPIKey, chain } from "../utils/constants";
 
-const { publicClient, webSocketPublicClient } = configureChains(
-  [chain],
-  [alchemyAPIKey ? alchemyProvider({ apiKey: alchemyAPIKey }) : publicProvider()],
-);
-createConfig({ publicClient, webSocketPublicClient });
+const httpConfig = createConfig({
+  chains: [chain],
+  transports: { [chain.id]: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`) },
+});
 
 // eslint-disable-next-line import/prefer-default-export
 export async function GET(_: ExpoRequest) {
-  const blockNumber = await fetchBlockNumber();
+  const blockNumber = await getBlockNumber(httpConfig);
   return ExpoResponse.json(Number(blockNumber));
 }

@@ -4,23 +4,22 @@ import { deviceName } from "expo-device";
 import React, { useCallback } from "react";
 import { Button, Spinner, Text, XStack, YStack } from "tamagui";
 import { UAParser } from "ua-parser-js";
-import { useAccount, useConnect, useDisconnect, usePrepareSendTransaction, useSendTransaction } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSendTransaction } from "wagmi";
 
 import base64URLEncode from "../utils/base64URLEncode";
-import { rpId, turnkeyAPIPublicKey, turnkeyAPIPrivateKey, turnkeyOrganizationId } from "../utils/constants";
+import { rpId, turnkeyAPIPrivateKey, turnkeyAPIPublicKey, turnkeyOrganizationId } from "../utils/constants";
 import generateRandomBuffer from "../utils/generateRandomBuffer";
 import handleError from "../utils/handleError";
 
 export default function Home() {
   const {
     connect,
-    isLoading: isConnecting,
+    isPending: isConnecting,
     connectors: [connector],
   } = useConnect();
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
-  const { config: sendConfig } = usePrepareSendTransaction({ to: "0xE72185a9f4Ce3500d6dC7CCDCfC64cf66D823bE8" });
-  const { sendTransaction, data: txHash, isLoading: isSending } = useSendTransaction(sendConfig);
+  const { sendTransaction, data: txHash, isPending: isSending } = useSendTransaction();
 
   const createAccount = useCallback(() => {
     const name = `exactly, ${new Date().toISOString()}`;
@@ -81,6 +80,7 @@ export default function Home() {
   }, []);
 
   const connectAccount = useCallback(() => {
+    if (!connector) throw new Error("no connector");
     connect({ connector });
   }, [connect, connector]);
 
@@ -89,7 +89,7 @@ export default function Home() {
   }, [disconnect]);
 
   const send = useCallback(() => {
-    sendTransaction?.();
+    sendTransaction({ to: "0xE72185a9f4Ce3500d6dC7CCDCfC64cf66D823bE8" });
   }, [sendTransaction]);
 
   return (
@@ -97,7 +97,7 @@ export default function Home() {
       <YStack flex={1} alignItems="center" space>
         <Text textAlign="center">{txHash}</Text>
         <Button onPress={createAccount}>create</Button>
-        <Button disabled={isConnecting} onPress={address ? disconnectAccount : connectAccount}>
+        <Button disabled={!connector || isConnecting} onPress={address ? disconnectAccount : connectAccount}>
           {isConnecting ? <Spinner size="small" /> : address ?? "connect"}
         </Button>
         <Button disabled={!address || isSending} onPress={send}>

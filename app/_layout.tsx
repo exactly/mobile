@@ -1,8 +1,11 @@
 import "expo-webauthn";
 
+import { AlchemyProvider } from "@alchemy/aa-alchemy";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import InterBold from "@tamagui/font-inter/otf/Inter-Bold.otf";
 import Inter from "@tamagui/font-inter/otf/Inter-Medium.otf";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { reconnect } from "@wagmi/core";
 import { type FontSource, useFonts } from "expo-font";
 import { Slot, SplashScreen } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -10,14 +13,13 @@ import React, { useEffect } from "react";
 import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
 import { TextEncoder } from "text-encoding";
-import { WagmiConfig, configureChains, createConfig } from "wagmi";
-import { alchemyProvider } from "wagmi/providers/alchemy";
-import { publicProvider } from "wagmi/providers/public";
+import { WagmiProvider, createConfig, custom } from "wagmi";
 
 import metadata from "../package.json";
 import tamaguiConfig from "../tamagui.config";
-import AlchemyConnector from "../utils/AlchemyConnector";
+import alchemyConnector from "../utils/alchemyConnector";
 import { alchemyAPIKey, chain } from "../utils/constants";
+import handleError from "../utils/handleError";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -35,11 +37,13 @@ Sentry.init({
   autoSessionTracking: true,
 });
 
-const { publicClient, webSocketPublicClient } = configureChains(
-  [chain],
-  [alchemyAPIKey ? alchemyProvider({ apiKey: alchemyAPIKey }) : publicProvider()],
-);
-const wagmiConfig = createConfig({ connectors: [new AlchemyConnector()], publicClient, webSocketPublicClient });
+const provider = new AlchemyProvider({ apiKey: alchemyAPIKey, chain });
+const wagmiConfig = createConfig({
+  chains: [chain],
+  connectors: [alchemyConnector(provider)],
+  transports: { [chain.id]: custom(provider) },
+});
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -56,15 +60,21 @@ export default function RootLayout() {
     if (loaded) SplashScreen.hideAsync().catch(() => {});
   }, [loaded]);
 
+  useEffect(() => {
+    reconnect(wagmiConfig).catch(handleError);
+  }, []);
+
   if (!loaded) return;
 
   return (
     <>
       <StatusBar translucent={false} />
       <TamaguiProvider config={tamaguiConfig}>
-        <WagmiConfig config={wagmiConfig}>
-          <Slot />
-        </WagmiConfig>
+        <WagmiProvider config={wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            <Slot />
+          </QueryClientProvider>
+        </WagmiProvider>
       </TamaguiProvider>
     </>
   );
