@@ -20,7 +20,10 @@ export default {
   plugins: [
     "sentry-expo",
     ["expo-router", { origin: "https://exactly.app" }],
-    ["expo-build-properties", { android: { compileSdkVersion: 34, targetSdkVersion: 34 } }],
+    [
+      "expo-build-properties",
+      { android: { compileSdkVersion: 34, targetSdkVersion: 34 }, ios: { deploymentTarget: "13.4" } },
+    ],
   ],
   experiments: { typedRoutes: true },
   hooks: {

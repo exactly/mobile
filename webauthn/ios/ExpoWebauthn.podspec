@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.author         = package['author']
   s.homepage       = package['repository']['url']
   s.source         = { git: package['repository']['url'] }
-  s.platform       = :ios, '13.0'
+  s.platform       = :ios, '13.4'
   s.swift_version  = '5.4'
   s.static_framework = true
 
