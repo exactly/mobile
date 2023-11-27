@@ -1,10 +1,22 @@
+import Auditor from "@exactly/protocol/deployments/goerli/Auditor.json";
+import MarketUSDC from "@exactly/protocol/deployments/goerli/MarketUSDC.json";
+import MarketWETH from "@exactly/protocol/deployments/goerli/MarketWETH.json";
 import { ApiKeyStamper } from "@turnkey/api-key-stamper";
 import { TurnkeyClient, createActivityPoller, getWebAuthnAttestation } from "@turnkey/http";
 import { deviceName } from "expo-device";
 import React, { useCallback } from "react";
 import { Button, Spinner, Text, XStack, YStack } from "tamagui";
 import { UAParser } from "ua-parser-js";
-import { useAccount, useConnect, useDisconnect, useSendTransaction } from "wagmi";
+import { formatEther, getAddress, parseUnits, zeroAddress } from "viem";
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useReadContract,
+  useSimulateContract,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
 
 import base64URLEncode from "../utils/base64URLEncode";
 import { rpId, turnkeyAPIPrivateKey, turnkeyAPIPublicKey, turnkeyOrganizationId } from "../utils/constants";
@@ -19,7 +31,44 @@ export default function Home() {
   } = useConnect();
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
-  const { sendTransaction, data: txHash, isPending: isSending } = useSendTransaction();
+  const { data: enterWETHSimulation } = useSimulateContract({
+    abi: Auditor.abi,
+    address: getAddress(Auditor.address),
+    functionName: "enterMarket",
+    args: [MarketWETH.address],
+    query: { enabled: !!address },
+  });
+  const { data: borrowUSDCSimulation } = useSimulateContract({
+    abi: MarketUSDC.abi,
+    address: getAddress(MarketUSDC.address),
+    functionName: "borrow",
+    args: [parseUnits("1", 6), address, address],
+    query: { enabled: !!address },
+  });
+  const { data: accountLiquidity } = useReadContract({
+    abi: [
+      {
+        name: "accountLiquidity",
+        type: "function",
+        stateMutability: "view",
+        inputs: [
+          { internalType: "address", name: "account", type: "address" },
+          { internalType: "contract Market", name: "marketToSimulate", type: "address" },
+          { internalType: "uint256", name: "withdrawAmount", type: "uint256" },
+        ],
+        outputs: [
+          { internalType: "uint256", name: "sumCollateral", type: "uint256" },
+          { internalType: "uint256", name: "sumDebtPlusEffects", type: "uint256" },
+        ],
+      },
+    ],
+    address: getAddress(Auditor.address),
+    functionName: "accountLiquidity",
+    args: [address ?? zeroAddress, zeroAddress, 0n],
+    query: { enabled: !!address },
+  });
+  const { writeContract, data: txHash, isPending: isSending } = useWriteContract();
+  const { isSuccess, isLoading: isWaiting } = useWaitForTransactionReceipt({ hash: txHash });
 
   const createAccount = useCallback(() => {
     const name = `exactly, ${new Date().toISOString()}`;
@@ -88,20 +137,32 @@ export default function Home() {
     disconnect();
   }, [disconnect]);
 
-  const send = useCallback(() => {
-    sendTransaction({ to: "0xE72185a9f4Ce3500d6dC7CCDCfC64cf66D823bE8" });
-  }, [sendTransaction]);
+  const enterWETH = useCallback(() => {
+    if (!enterWETHSimulation) throw new Error("no simulation");
+    writeContract(enterWETHSimulation.request);
+  }, [enterWETHSimulation, writeContract]);
+
+  const borrowUSDC = useCallback(() => {
+    if (!borrowUSDCSimulation) throw new Error("no simulation");
+    writeContract(borrowUSDCSimulation.request);
+  }, [borrowUSDCSimulation, writeContract]);
 
   return (
     <XStack flex={1} alignItems="center" space>
       <YStack flex={1} alignItems="center" space>
-        <Text textAlign="center">{txHash}</Text>
-        <Button onPress={createAccount}>create</Button>
+        <Text textAlign="center">{txHash && `${txHash} ${isSuccess ? "✅" : ""}`}</Text>
+        <Text textAlign="center">
+          {accountLiquidity && `${accountLiquidity.map((v) => formatEther(v)).join(", ")}`}
+        </Text>
+        <Button onPress={createAccount}>create account</Button>
         <Button disabled={!connector || isConnecting} onPress={address ? disconnectAccount : connectAccount}>
           {isConnecting ? <Spinner size="small" /> : address ?? "connect"}
         </Button>
-        <Button disabled={!address || isSending} onPress={send}>
-          {isSending ? <Spinner size="small" /> : "send"}
+        <Button disabled={!enterWETHSimulation || isSending || isWaiting} onPress={enterWETH}>
+          enter WETH market
+        </Button>
+        <Button disabled={!borrowUSDCSimulation || isSending || isWaiting} onPress={borrowUSDC}>
+          borrow 1 USDC
         </Button>
       </YStack>
     </XStack>
