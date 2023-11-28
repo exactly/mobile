@@ -1,4 +1,5 @@
 import "expo-webauthn";
+import "../utils/polyfill";
 
 import { AlchemyProvider } from "@alchemy/aa-alchemy";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -12,7 +13,6 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
-import { TextEncoder } from "text-encoding";
 import { WagmiProvider, createConfig, custom } from "wagmi";
 
 import metadata from "../package.json";
@@ -79,5 +79,3 @@ export default function RootLayout() {
     </>
   );
 }
-
-global.TextEncoder ??= TextEncoder; // eslint-disable-line @typescript-eslint/no-unnecessary-condition -- polyfill

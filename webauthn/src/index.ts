@@ -16,7 +16,7 @@ if (ExpoWebauthn) {
     },
   } as CredentialsContainer;
   // @ts-expect-error -- turnkey's webauthn support detection
-  global.window.PublicKeyCredential = {} as PublicKeyCredential;
+  global.window.PublicKeyCredential ??= {} as PublicKeyCredential; // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 }
 
 function stringify(value: unknown) {
