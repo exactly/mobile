@@ -1,4 +1,6 @@
 import type { ExpoConfig } from "expo/config";
+import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-properties/build/pluginConfig";
+import type withRouter from "expo-router/plugin/build";
 
 import metadata from "./package.json";
 
@@ -18,12 +20,15 @@ export default {
   web: { bundler: "metro", output: "server" as "static", favicon: "./assets/favicon.png" },
 
   plugins: [
-    "sentry-expo",
-    ["expo-router", { origin: "https://exactly.app" }],
     [
       "expo-build-properties",
-      { android: { compileSdkVersion: 34, targetSdkVersion: 34 }, ios: { deploymentTarget: "13.4" } },
+      {
+        android: { compileSdkVersion: 34, targetSdkVersion: 34 },
+        ios: { deploymentTarget: "13.4" },
+      } as BuildPropertiesConfig,
     ],
+    ["expo-router", { origin: "https://exactly.app" } as Parameters<typeof withRouter>[1]],
+    "sentry-expo",
   ],
   experiments: { typedRoutes: true },
   hooks: {
