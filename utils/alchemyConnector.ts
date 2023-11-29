@@ -137,7 +137,7 @@ export default function alchemyConnector(provider: AlchemyProvider) {
             owner,
           }),
       ).account;
-      provider.withAlchemyGasManager({ policyId: alchemyGasPolicyId });
+      provider.withAlchemyGasManager({ policyId: alchemyGasPolicyId }).withAlchemyUserOpSimulation();
       return account;
     },
     getTurnkeyClient() {
