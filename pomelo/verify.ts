@@ -1,0 +1,73 @@
+import { type ExpoRequest, ExpoResponse } from "expo-router/server";
+import crypto from "node:crypto";
+
+const secrets = {
+  [process.env.POMELO_API_KEY as string]: process.env.POMELO_API_SECRET,
+} as const;
+
+export async function verifySignature(request: ExpoRequest) {
+  const endpoint = request.headers.get("x-endpoint");
+  const timestamp = request.headers.get("x-timestamp");
+  let signature = request.headers.get("x-signature");
+  const apiKey = request.headers.get("x-api-key");
+
+  if (!endpoint || !timestamp || !apiKey || !signature) {
+    return false;
+  }
+
+  const secret = secrets[apiKey];
+  if (!secret) {
+    return false;
+  }
+
+  if (signature.startsWith("hmac-sha256")) {
+    signature = signature.replace("hmac-sha256 ", "");
+  } else {
+    return false;
+  }
+
+  const raw = await request.text();
+
+  const hmac = crypto
+    .createHmac("sha256", Buffer.from(secret, "base64"))
+    .update(timestamp)
+    .update(endpoint)
+    .update(raw);
+
+  const hash = hmac.digest("base64");
+  const hashBytes = Buffer.from(hash, "base64");
+
+  const signatureBytes = Buffer.from(signature, "base64");
+  return crypto.timingSafeEqual(hashBytes, signatureBytes);
+}
+
+export async function signResponse(request: ExpoRequest, response: ExpoResponse): Promise<ExpoResponse> {
+  const endpoint = request.headers.get("x-endpoint");
+  if (!endpoint) {
+    return new ExpoResponse("", { status: 400 });
+  }
+
+  const secret = request.headers.get("x-api-key");
+  if (!secret) {
+    return new ExpoResponse("", { status: 500 });
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+
+  const hmac = crypto.createHmac("sha256", Buffer.from(secret, "base64")).update(timestamp).update(endpoint);
+  const raw = await response.text();
+
+  if (raw) {
+    hmac.update(raw);
+  }
+
+  const hash = hmac.digest("base64");
+
+  const headers = new Headers(Object.fromEntries(response.headers.entries()));
+
+  headers.set("X-Endpoint", endpoint);
+  headers.set("X-Timestamp", timestamp);
+  headers.set("X-signature", "hmac-sha256 " + hash);
+
+  return new ExpoResponse(raw, { ...response, headers });
+}
