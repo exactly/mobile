@@ -16,7 +16,7 @@ type Address = {
 };
 
 type CurrencyAmount = {
-  total: string;
+  total: number;
   currency: string;
 };
 
@@ -123,3 +123,16 @@ export type AuthorizationRequest = {
     }[];
   };
 };
+
+export type AuthorizationResponse = {
+  message: string;
+} & (
+  | {
+      status: "APPROVED";
+      status_detail: "APPROVED";
+    }
+  | {
+      status: "REJECTED";
+      status_detail: "INSUFFICIENT_FUNDS" | "INVALID_MERCHANT" | "INVALID_AMOUNT" | "SYSTEM_ERROR" | "OTHER";
+    }
+);
