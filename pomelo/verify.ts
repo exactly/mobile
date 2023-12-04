@@ -43,11 +43,12 @@ export async function verifySignature(request: ExpoRequest) {
 
 export async function signResponse(request: ExpoRequest, response: ExpoResponse): Promise<ExpoResponse> {
   const endpoint = request.headers.get("x-endpoint");
-  if (!endpoint) {
+  const apiKey = request.headers.get("x-api-key");
+  if (!endpoint || !apiKey) {
     return new ExpoResponse("", { status: 400 });
   }
 
-  const secret = request.headers.get("x-api-key");
+  const secret = secrets[apiKey];
   if (!secret) {
     return new ExpoResponse("", { status: 500 });
   }
