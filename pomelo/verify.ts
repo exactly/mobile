@@ -1,11 +1,13 @@
 import { type ExpoRequest, ExpoResponse } from "expo-router/server";
 import crypto from "node:crypto";
 
+import { pomeloApiKey, pomeloApiSecret } from "../utils/constants";
+
 const secrets = {
-  [process.env.POMELO_API_KEY as string]: process.env.POMELO_API_SECRET,
+  [pomeloApiKey]: pomeloApiSecret,
 } as const;
 
-export async function verifySignature(request: ExpoRequest) {
+export function verifySignature(request: ExpoRequest, rawBody: string) {
   const endpoint = request.headers.get("x-endpoint");
   const timestamp = request.headers.get("x-timestamp");
   let signature = request.headers.get("x-signature");
@@ -26,13 +28,11 @@ export async function verifySignature(request: ExpoRequest) {
     return false;
   }
 
-  const raw = await request.text();
-
   const hmac = crypto
     .createHmac("sha256", Buffer.from(secret, "base64"))
     .update(timestamp)
     .update(endpoint)
-    .update(raw);
+    .update(rawBody);
 
   const hash = hmac.digest("base64");
   const hashBytes = Buffer.from(hash, "base64");
