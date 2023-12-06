@@ -1,4 +1,6 @@
-import type { AccessTokenResponse, ErrorPayload } from "./types.js";
+import type { z } from "zod";
+
+import { type AccessTokenResponse, errorPayload } from "./types.js";
 
 const { POMELO_BASE_URL, POMELO_CLIENT_ID, POMELO_CLIENT_SECRET, POMELO_AUDIENCE } = process.env;
 if (!POMELO_BASE_URL || !POMELO_CLIENT_ID || !POMELO_CLIENT_SECRET || !POMELO_AUDIENCE) {
@@ -24,43 +26,47 @@ async function accessToken() {
 }
 
 export default async function request<Response>(
-  method: "GET" | "POST" | "PATCH",
   url: `/${string}`,
-  body?: object,
-  headers?: Record<string, string>,
+  init: Omit<RequestInit, "method" | "body"> & { method: "GET" | "POST" | "PATCH"; body?: object },
+  validator: z.ZodType<Response>,
 ) {
-  const response = await fetch(`${POMELO_BASE_URL}${url}`, {
-    method,
+  const _request = new Request(`${POMELO_BASE_URL}${url}`, {
+    ...init,
     headers: {
-      ...headers,
+      ...init.headers,
       "Content-Type": "application/json; charset=UTF-8",
       Authorization: `Bearer ${await accessToken()}`,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(init.body),
   });
 
-  if (response.ok) return response.json() as Response;
+  const response = await fetch(_request);
+  const json = response.json();
 
-  const {
-    error: { details },
-  } = (await response.json()) as ErrorPayload;
+  if (!response.ok) {
+    const {
+      error: { details },
+    } = errorPayload.parse(json);
 
-  const detailsText = details.map(({ detail }) => detail).join(", ");
-  switch (response.status) {
-    case 400: {
-      throw new Error(`invalid request: ${detailsText}`);
-    }
-    case 401: {
-      throw new Error("unauthorized");
-    }
-    case 403: {
-      throw new Error("forbidden");
-    }
-    case 404: {
-      throw new Error(`not found: ${detailsText}`);
-    }
-    default: {
-      throw new Error(`unexpected error: ${response.status}`); // TODO report to sentry
+    const detailsText = details.map(({ detail }) => detail).join(", ");
+    switch (response.status) {
+      case 400: {
+        throw new Error(`invalid request: ${detailsText}`);
+      }
+      case 401: {
+        throw new Error("unauthorized");
+      }
+      case 403: {
+        throw new Error("forbidden");
+      }
+      case 404: {
+        throw new Error(`not found: ${detailsText}`);
+      }
+      default: {
+        throw new Error(`unexpected error: ${response.status}`); // TODO report to sentry
+      }
     }
   }
+
+  return validator.parse(json);
 }
