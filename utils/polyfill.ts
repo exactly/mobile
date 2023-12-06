@@ -1,7 +1,10 @@
+import { atob, btoa } from "js-base64";
 import { TextEncoder } from "text-encoding";
 
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
+global.atob ??= atob;
+global.btoa ??= btoa;
 global.TextEncoder ??= TextEncoder;
 
 if (global.window) {
