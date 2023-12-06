@@ -1,7 +1,7 @@
 import { type ExpoRequest, ExpoResponse } from "expo-router/server";
 
 import processTransaction from "../../pomelo/transaction";
-import type { AuthorizationRequest } from "../../pomelo/types";
+import { authorizationRequest } from "../../pomelo/types";
 import { verifySignature, signResponse } from "../../pomelo/verify";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ export async function POST(request: ExpoRequest) {
     return ExpoResponse.json("", { status: 403 });
   }
 
-  const response = processTransaction(JSON.parse(rawBody) as AuthorizationRequest);
+  const response = processTransaction(authorizationRequest.parse(rawBody));
 
   return signResponse(request, ExpoResponse.json(response));
 }

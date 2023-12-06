@@ -1,138 +1,181 @@
-type Country = "ARG" | "BRA" | "MEX" | "COL" | "PER" | "CHL";
+import { z } from "zod";
 
-type DateString = `${number}-${number}-${number}`;
+const country = z.enum(["ARG", "BRA", "MEX", "COL", "PER", "CHL"]);
 
-type Address = {
-  street_name: string;
-  street_number: number;
-  floor: number;
-  apartment: string;
-  zip_code: number;
-  neighborhood: string;
-  city: string;
-  region: string;
-  additional_info: string;
-  country: Country;
-};
+const date = z.string().datetime();
 
-type CurrencyAmount = {
-  total: number;
-  currency: string;
-};
+const address = z.object({
+  street_name: z.string(),
+  street_number: z.number(),
+  floor: z.string(),
+  apartment: z.string(),
+  zip_code: z.number(),
+  neighborhood: z.string(),
+  city: z.string(),
+  region: z.string(),
+  additional_info: z.string(),
+  country,
+});
 
-export type Paginated<T extends Record<string, unknown>> = {
-  data: T[];
-  meta: {
-    pagination: {
-      total_pages: number;
-      current: number;
-    };
-    filter: {
-      key: keyof T;
-      value: T[keyof T][];
-    }[];
-  };
-};
+const currencyAmount = z.object({
+  total: z.number(),
+  currency: z.string(),
+});
 
-export type AccessTokenResponse = {
-  access_token: string;
-  scope: string;
-  expires_in: number;
-  token_type: "Bearer";
-};
+const accessTokenResponse = z.object({
+  access_token: z.string(),
+  scope: z.string(),
+  expires_in: z.number(),
+  token_type: z.literal("Bearer"),
+});
 
-export type ErrorPayload = {
-  error: {
-    error_code: string;
-    details: {
-      code: string;
-      detail: string;
-    }[];
-  };
-};
+export type AccessTokenResponse = z.infer<typeof accessTokenResponse>;
 
-export type User = {
-  id: `usr-${string}`;
-  client_id: `cli-${string}`;
-  email: `${string}@${string}.${string}`;
-  status: "ACTIVE" | "BLOCKED";
-  operation_country: Country;
-  name?: string;
-  surname?: string;
-  identification_type?: "DNI" | "LE" | "LC" | "CI" | "PASSPORT" | "RG" | "CNH" | "INE" | "CC" | "CE" | "PPT";
-  identification_value?: string;
-  birthdate?: DateString;
-  gender?: string;
-  phone: number;
-  tax_identification_type?: "CUIL" | "CUIT" | "CDI" | "CPF" | "RUT" | "RUC" | "RFC" | "NIT";
-  tax_identification_value?: string;
-  nationality: Country;
-  legal_address?: Address;
-};
+export const errorPayload = z.object({
+  error: z.object({
+    error_code: z.string(),
+    details: z
+      .object({
+        code: z.string(),
+        detail: z.string(),
+      })
+      .array(),
+  }),
+});
 
-export type CreateUserRequest = Omit<User, "id" | "client_id" | "status">;
+export type ErrorPayload = z.infer<typeof errorPayload>;
 
-export type Card = {
-  id: `crd-${string}`;
-  user_id: User["id"];
-  affinity_group_id: `afg-${string}`;
-  card_type: "VIRTUAL" | "PHYSICAL";
-  product_type?: "PREPAID" | "DEBIT" | "CREDIT";
-  status?: "ACTIVE" | "BLOCKED" | "DISABLED";
-  shipment_id?: `shi-${string}`;
-  start_date?: DateString;
-  last_four?: string;
-  provider?: "MASTERCARD" | "VISA";
-  affinity_group_name?: string;
-};
+export const user = z.object({
+  id: z.string().regex(/^usr-.*/),
+  client_id: z.string().regex(/^cli-.*/),
+  email: z.string().email(),
+  status: z.enum(["ACTIVE", "BLOCKED"]),
+  operation_country: country,
+  name: z.string().optional(),
+  surname: z.string().optional(),
+  identification_type: z.enum(["DNI", "LE", "LC", "CI", "PASSPORT", "RG", "CNH", "INE", "CC", "CE", "PPT"]).optional(),
+  identification_value: z.string().optional(),
+  birthdate: date.optional(),
+  gender: z.string().optional(),
+  phone: z.number(),
+  tax_identification_type: z.enum(["CUIL", "CUIT", "CDI", "CPF", "RUT", "RUC", "RFC", "NIT"]).optional(),
+  tax_identification_value: z.string().optional(),
+  nationality: country,
+  legal_address: address.optional(),
+});
 
-export type CreateCardRequest = Pick<Card, "user_id" | "affinity_group_id" | "card_type"> & {
-  address?: Address;
-  previous_card_id?: Card["id"];
-};
+export type User = z.infer<typeof user>;
 
-export type AuthorizationRequest = {
-  transaction: {
-    id: `ctx-${string}`;
-    type: string;
-    point_type: string;
-    entry_mode: string;
-    country_code: string;
-    origin: string;
-    source: string;
-    original_transaction_id: `ctx-${string}`;
-    local_date_time: `${DateString}T${number}:${number}:${number}`;
-  };
-  merchant: {
-    id: string;
-    mcc: string;
-    address: string;
-    name: string;
-  };
-  card: Pick<Card, "id" | "product_type" | "provider" | "last_four">;
-  user: Pick<User, "id">;
-  amount: {
-    local: CurrencyAmount;
-    settlement: CurrencyAmount;
-    transaction: CurrencyAmount;
-    details: {
-      type: string;
-      currency: string;
-      amount: string;
-      name: string;
-    }[];
-  };
-};
+const createUserRequest = user.omit({
+  id: true,
+  client_id: true,
+  status: true,
+});
 
-export type AuthorizationResponse = {
-  message: string;
-} & (
-  | {
-      status: "APPROVED";
-      status_detail: "APPROVED";
-    }
-  | {
-      status: "REJECTED";
-      status_detail: "INSUFFICIENT_FUNDS" | "INVALID_MERCHANT" | "INVALID_AMOUNT" | "SYSTEM_ERROR" | "OTHER";
-    }
+export type CreateUserRequest = z.infer<typeof createUserRequest>;
+
+export const card = z.object({
+  id: z.string().regex(/^crd-.*/),
+  user_id: user.shape.id,
+  affinity_group_id: z.string().regex(/^afg-.*/),
+  card_type: z.enum(["VIRTUAL", "PHYSICAL"]),
+  product_type: z.enum(["PREPAID", "DEBIT", "CREDIT"]).optional(),
+  status: z.enum(["ACTIVE", "BLOCKED", "DISABLED"]).optional(),
+  shipment_id: z
+    .string()
+    .regex(/^shi-.*/)
+    .optional(),
+  start_date: date.optional(),
+  last_four: z.string().optional(),
+  provider: z.enum(["MASTERCARD", "VISA"]).optional(),
+  affinity_group_name: z.string().optional(),
+});
+
+export type Card = z.infer<typeof card>;
+
+const createCardRequest = z.intersection(
+  card.pick({
+    user_id: true,
+    affinity_group_id: true,
+    card_type: true,
+  }),
+  z.object({
+    address: address.optional(),
+    previous_card_id: card.shape.id.optional(),
+  }),
 );
+
+export type CreateCardRequest = z.infer<typeof createCardRequest>;
+
+export const authorizationRequest = z.object({
+  transaction: z.object({
+    id: z.string().regex(/^ctx-.*/),
+    type: z.string(),
+    point_type: z.string(),
+    entry_mode: z.string(),
+    country_code: z.string(),
+    origin: z.string(),
+    source: z.string(),
+    original_transaction_id: z.string().regex(/^ctx-.*/),
+    local_date_time: date,
+  }),
+  merchant: z.object({
+    id: z.string(),
+    mcc: z.string(),
+    address: z.string(),
+    name: z.string(),
+  }),
+  card: card.pick({
+    id: true,
+    product_type: true,
+    provider: true,
+    last_four: true,
+  }),
+  user: user.pick({ id: true }),
+  amount: z.object({
+    local: currencyAmount,
+    settlement: currencyAmount,
+    transaction: currencyAmount,
+    details: z
+      .object({
+        type: z.string(),
+        currency: z.string(),
+        amount: z.string(),
+        name: z.string(),
+      })
+      .array(),
+  }),
+});
+
+export type AuthorizationRequest = z.infer<typeof authorizationRequest>;
+
+const authorizationResponse = z.intersection(
+  z.object({
+    message: z.string(),
+  }),
+  z.discriminatedUnion("status", [
+    z.object({
+      status: z.literal("APPROVED"),
+      status_detail: z.enum(["APPROVED"]),
+    }),
+    z.object({
+      status: z.literal("REJECTED"),
+      status_detail: z.enum(["INSUFFICIENT_FUNDS", "INVALID_MERCHANT", "INVALID_AMOUNT", "SYSTEM_ERROR", "OTHER"]),
+    }),
+  ]),
+);
+
+export type AuthorizationResponse = z.infer<typeof authorizationResponse>;
+
+export const paginated = <T extends z.ZodType<object>>(data: T) =>
+  z.object({
+    data: data.array(),
+    meta: z.object({
+      pagination: z.object({
+        total_pages: z.number(),
+        current: z.number(),
+      }),
+    }),
+  });
+
+export type Paginated<T extends z.ZodType<object>> = z.infer<ReturnType<typeof paginated<T>>>;

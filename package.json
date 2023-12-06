@@ -59,6 +59,7 @@
     "ua-parser-js": "^1.0.37",
     "viem": "2.0.0-beta.6",
     "wagmi": "2.0.0-beta.5",
+    "zod": "^3.22.4",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
