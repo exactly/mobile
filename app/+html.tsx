@@ -1,4 +1,3 @@
-// @ts-expect-error -- missing types
 import { ScrollViewStyleReset } from "expo-router/html";
 import React, { type ReactNode } from "react";
 

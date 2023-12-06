@@ -25,7 +25,7 @@ export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = { initialRouteName: "/" };
 
-void SplashScreen.preventAutoHideAsync(); // eslint-disable-line no-void -- android bug
+SplashScreen.preventAutoHideAsync();
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -57,7 +57,7 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync().catch(() => {});
+    if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
   useEffect(() => {

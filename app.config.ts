@@ -1,6 +1,5 @@
 import type { ExpoConfig } from "expo/config";
 import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-properties/build/pluginConfig";
-import type withRouter from "expo-router/plugin/build";
 
 import metadata from "./package.json";
 
@@ -17,7 +16,7 @@ export default {
 
   android: { package: "app.exactly.mobile", adaptiveIcon: { foregroundImage: "./assets/adaptive-icon.png" } },
   ios: { bundleIdentifier: "app.exactly.mobile", supportsTablet: true },
-  web: { bundler: "metro", output: "server" as "static", favicon: "./assets/favicon.png" },
+  web: { bundler: "metro", favicon: "./assets/favicon.png" },
 
   plugins: [
     [
@@ -27,7 +26,7 @@ export default {
         ios: { deploymentTarget: "13.4" },
       } as BuildPropertiesConfig,
     ],
-    ["expo-router", { origin: "https://exactly.app" } as Parameters<typeof withRouter>[1]],
+    "expo-router",
     "sentry-expo",
   ],
   experiments: { typedRoutes: true },
