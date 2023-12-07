@@ -13,6 +13,7 @@
     "test:eslint": "eslint --max-warnings=0 ."
   },
   "workspaces": [
+    "pomelo",
     "webauthn"
   ],
   "engines": {
@@ -44,7 +45,6 @@
     "expo-status-bar": "~1.6.0",
     "expo-system-ui": "~2.4.0",
     "expo-web-browser": "~12.3.2",
-    "expo-webauthn": "workspace:*",
     "js-base64": "^3.7.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

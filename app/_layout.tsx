@@ -1,5 +1,5 @@
-import "expo-webauthn";
 import "../utils/polyfill";
+import "../webauthn/dist";
 
 import { AlchemyProvider } from "@alchemy/aa-alchemy";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
