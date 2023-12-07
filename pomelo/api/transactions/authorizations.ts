@@ -7,6 +7,12 @@ import { signResponse, verifySignature } from "../../src/verify";
 
 export const runtime = "nodejs";
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function (request: VercelRequest, response: VercelResponse) {
   if (request.method !== "POST") {
     return response.status(405).end("method not allowed");
