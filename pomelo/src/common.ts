@@ -1,7 +1,7 @@
 import type { z } from "zod";
 
 import { type AccessTokenResponse, errorPayload } from "./types";
-import { pomeloAudience, pomeloBaseUrl, pomeloClientId, pomeloClientSecret } from "../utils/constants";
+import { pomeloAudience, pomeloBaseUrl, pomeloClientId, pomeloClientSecret } from "../../utils/constants";
 
 async function accessToken() {
   const response = await fetch(`${pomeloBaseUrl}/oauth/token`, {

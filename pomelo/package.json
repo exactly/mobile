@@ -1,0 +1,12 @@
+{
+  "name": "pomelo",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@vercel/node": "^3.0.11",
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

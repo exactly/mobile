@@ -1,13 +1,10 @@
-import { type ExpoRequest, ExpoResponse } from "expo-router/server";
-import crypto from "node:crypto";
-
-import { pomeloApiKey, pomeloApiSecret } from "../utils/constants";
+import { pomeloApiKey, pomeloApiSecret } from "../../utils/constants";
 
 const secrets = {
   [pomeloApiKey]: pomeloApiSecret,
 } as const;
 
-export function verifySignature(request: ExpoRequest, rawBody: string) {
+export function verifySignature(request: Request, rawBody: string) {
   const endpoint = request.headers.get("x-endpoint");
   const timestamp = request.headers.get("x-timestamp");
   let signature = request.headers.get("x-signature");
@@ -41,16 +38,16 @@ export function verifySignature(request: ExpoRequest, rawBody: string) {
   return crypto.timingSafeEqual(hashBytes, signatureBytes);
 }
 
-export async function signResponse(request: ExpoRequest, response: ExpoResponse): Promise<ExpoResponse> {
+export async function signResponse(request: Request, response: Response): Promise<Response> {
   const endpoint = request.headers.get("x-endpoint");
   const apiKey = request.headers.get("x-api-key");
   if (!endpoint || !apiKey) {
-    return new ExpoResponse("", { status: 400 });
+    return new Response(undefined, { status: 400 });
   }
 
   const secret = secrets[apiKey];
   if (!secret) {
-    return new ExpoResponse("", { status: 500 });
+    return new Response(undefined, { status: 500 });
   }
 
   const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -70,5 +67,5 @@ export async function signResponse(request: ExpoRequest, response: ExpoResponse)
   headers.set("X-Timestamp", timestamp);
   headers.set("X-signature", "hmac-sha256 " + hash);
 
-  return new ExpoResponse(raw, { ...response, headers });
+  return new Response(raw, { ...response, headers });
 }
