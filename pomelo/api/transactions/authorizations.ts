@@ -1,16 +1,24 @@
-import processTransaction from "../../pomelo/transaction";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+import processTransaction from "../../src/transaction";
+import { authorizationRequest } from "../../src/types";
+import { buffer } from "../../src/utils";
 import { signResponse, verifySignature } from "../../src/verify";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
-export async function POST(request: Request) {
-  const rawBody = await request.text();
-
-  if (!verifySignature(request, rawBody)) {
-    return new Response(undefined, { status: 403 });
+export default async function (request: VercelRequest, response: VercelResponse) {
+  if (request.method !== "POST") {
+    return response.status(405).end("method not allowed");
   }
 
-  const response = processTransaction(authorizationRequest.parse(rawBody));
+  const buf = await buffer(request);
+  const raw = buf.toString("utf8");
 
-  return signResponse(request, new Response(JSON.stringify(response), { status: 200 }));
+  if (!verifySignature(request, raw)) {
+    return response.status(403).end("forbidden");
+  }
+
+  const tx = await processTransaction(authorizationRequest.parse(raw));
+  return signResponse(request, response.status(200), JSON.stringify(tx));
 }

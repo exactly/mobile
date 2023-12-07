@@ -1,20 +1,25 @@
-import { pomeloApiKey, pomeloApiSecret } from "../../utils/constants";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import crypto from "node:crypto";
 
 const secrets = {
-  [pomeloApiKey]: pomeloApiSecret,
+  [process.env.POMELO_API_KEY as string]: process.env.POMELO_API_SECRET,
 } as const;
 
-export function verifySignature(request: Request, rawBody: string) {
-  const endpoint = request.headers.get("x-endpoint");
-  const timestamp = request.headers.get("x-timestamp");
-  let signature = request.headers.get("x-signature");
-  const apiKey = request.headers.get("x-api-key");
+function valid(header: string | string[] | undefined): header is string {
+  return typeof header === "string";
+}
 
-  if (!endpoint || !timestamp || !apiKey || !signature) {
+export function verifySignature(request: VercelRequest, body: string) {
+  const endpoint = request.headers["x-endpoint"];
+  const timestamp = request.headers["x-timestamp"];
+  let signature = request.headers["x-signature"];
+  const apiKey = request.headers["x-api-key"];
+
+  if (!valid(endpoint) || !valid(timestamp) || !valid(apiKey) || Array.isArray(apiKey) || !valid(signature)) {
     return false;
   }
 
-  const secret = secrets[apiKey];
+  const secret: string | undefined = secrets[apiKey];
   if (!secret) {
     return false;
   }
@@ -29,7 +34,7 @@ export function verifySignature(request: Request, rawBody: string) {
     .createHmac("sha256", Buffer.from(secret, "base64"))
     .update(timestamp)
     .update(endpoint)
-    .update(rawBody);
+    .update(body);
 
   const hash = hmac.digest("base64");
   const hashBytes = Buffer.from(hash, "base64");
@@ -38,34 +43,30 @@ export function verifySignature(request: Request, rawBody: string) {
   return crypto.timingSafeEqual(hashBytes, signatureBytes);
 }
 
-export async function signResponse(request: Request, response: Response): Promise<Response> {
-  const endpoint = request.headers.get("x-endpoint");
-  const apiKey = request.headers.get("x-api-key");
-  if (!endpoint || !apiKey) {
-    return new Response(undefined, { status: 400 });
+export function signResponse(request: VercelRequest, response: VercelResponse, text: string | undefined) {
+  const endpoint = request.headers["x-endpoint"];
+  const apiKey = request.headers["x-api-key"];
+  if (!valid(endpoint) || !valid(apiKey)) {
+    return response.status(400).end("bad request");
   }
 
   const secret = secrets[apiKey];
   if (!secret) {
-    return new Response(undefined, { status: 500 });
+    return response.status(500).end("internal server error");
   }
 
   const timestamp = Math.floor(Date.now() / 1000).toString();
 
   const hmac = crypto.createHmac("sha256", Buffer.from(secret, "base64")).update(timestamp).update(endpoint);
-  const raw = await response.text();
-
-  if (raw) {
-    hmac.update(raw);
+  if (text) {
+    hmac.update(text);
   }
 
   const hash = hmac.digest("base64");
 
-  const headers = new Headers(Object.fromEntries(response.headers.entries()));
+  response.setHeader("X-Endpoint", endpoint);
+  response.setHeader("X-Timestamp", timestamp);
+  response.setHeader("X-signature", "hmac-sha256 " + hash);
 
-  headers.set("X-Endpoint", endpoint);
-  headers.set("X-Timestamp", timestamp);
-  headers.set("X-signature", "hmac-sha256 " + hash);
-
-  return new Response(raw, { ...response, headers });
+  return response.end(text);
 }
