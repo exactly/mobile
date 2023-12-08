@@ -3,7 +3,7 @@ const { include: nodeFiles } = require("./tsconfig.node.json");
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
   parser: "@typescript-eslint/parser",
-  parserOptions: { project: ["tsconfig.json", "tsconfig.node.json"] },
+  parserOptions: { project: ["tsconfig.json", "tsconfig.node.json", "pomelo/tsconfig.json", "webauthn/tsconfig.json"] },
   settings: { react: { version: "detect" }, "import/resolver": "typescript" },
   extends: [
     "universe/native",
@@ -33,11 +33,11 @@ module.exports = {
   ignorePatterns: ["build/", "dist/", ".expo/types/**/*.ts", "expo-env.d.ts"],
   overrides: [
     {
-      files: nodeFiles,
+      files: [...nodeFiles, "pomelo/**"],
       extends: ["plugin:node/recommended"],
       rules: {
         "@typescript-eslint/no-var-requires": "off",
-        "node/no-missing-import": ["error", { tryExtensions: [".ts", ".js"] }],
+        "node/no-missing-import": "off",
         "node/no-unpublished-import": "off",
         "node/no-unsupported-features/es-syntax": ["error", { ignores: ["modules", "dynamicImport"] }],
         "unicorn/prefer-module": "off",
