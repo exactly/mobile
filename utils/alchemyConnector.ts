@@ -19,6 +19,8 @@ import {
   turnkeyOrganizationId,
 } from "../utils/constants";
 
+alchemyConnector.type = "alchemy" as const;
+
 export default function alchemyConnector(provider: AlchemyProvider) {
   let account: LightSmartContractAccount | undefined;
   let turnkeyClient: TurnkeyClient | undefined;
@@ -33,6 +35,7 @@ export default function alchemyConnector(provider: AlchemyProvider) {
   >((config) => ({
     id: "alchemy",
     name: "Alchemy",
+    type: alchemyConnector.type,
     async setup() {
       if (typeof window === "undefined") return;
       const store = await this.loadStore();
