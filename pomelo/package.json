@@ -1,6 +1,9 @@
 {
   "name": "@exactly/pomelo",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@vercel/node": "^3.0.11"
   },
