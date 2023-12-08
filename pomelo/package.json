@@ -8,7 +8,10 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@vercel/node": "^3.0.11"
+    "@vercel/node": "^3.0.11",
+    "@wagmi/core": "2.0.0-beta.6",
+    "viem": "2.0.0-beta.15",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
