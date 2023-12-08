@@ -10,6 +10,7 @@
     "test": "concurrently 'npm:test:*' --group -c auto",
     "test:ts:expo": "tsc",
     "test:ts:node": "tsc -p tsconfig.node.json",
+    "test:pomelo": "bun run --cwd pomelo test",
     "test:eslint": "eslint --max-warnings=0 ."
   },
   "workspaces": [

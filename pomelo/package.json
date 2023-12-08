@@ -1,6 +1,9 @@
 {
   "name": "@exactly/pomelo",
   "type": "module",
+  "scripts": {
+    "test": "tsc"
+  },
   "engines": {
     "node": ">=20.0.0"
   },
