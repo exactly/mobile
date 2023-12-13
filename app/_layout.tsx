@@ -11,6 +11,7 @@ import { type FontSource, useFonts } from "expo-font";
 import { Slot, SplashScreen } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
+import { OneSignal } from "react-native-onesignal";
 import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider, createConfig, custom } from "wagmi";
@@ -18,7 +19,7 @@ import { WagmiProvider, createConfig, custom } from "wagmi";
 import metadata from "../package.json";
 import tamaguiConfig from "../tamagui.config";
 import alchemyConnector from "../utils/alchemyConnector";
-import { alchemyAPIKey, chain } from "../utils/constants";
+import { alchemyAPIKey, chain, oneSignalAPPId } from "../utils/constants";
 import handleError from "../utils/handleError";
 
 export { ErrorBoundary } from "expo-router";
@@ -36,6 +37,10 @@ Sentry.init({
   attachViewHierarchy: true,
   autoSessionTracking: true,
 });
+
+if (oneSignalAPPId) {
+  OneSignal.initialize(oneSignalAPPId);
+}
 
 const provider = new AlchemyProvider({ apiKey: alchemyAPIKey, chain });
 const wagmiConfig = createConfig({
@@ -57,7 +62,9 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
+    if (!loaded) return;
+    SplashScreen.hideAsync();
+    if (oneSignalAPPId) OneSignal.login("0000000");
   }, [loaded]);
 
   useEffect(() => {
