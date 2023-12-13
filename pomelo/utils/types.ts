@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const country = z.enum(["ARG", "BRA", "MEX", "COL", "PER", "CHL"]);
 
-const date = z.string().datetime();
+const date = z.string();
 
 const address = z.object({
   street_name: z.string(),
@@ -110,19 +110,22 @@ export type CreateCardRequest = z.infer<typeof createCardRequest>;
 export const authorizationRequest = z.object({
   transaction: z.object({
     id: z.string().regex(/^ctx-.*/),
+    country_code: z.string(),
     type: z.string(),
     point_type: z.string(),
     entry_mode: z.string(),
-    country_code: z.string(),
     origin: z.string(),
-    source: z.string(),
-    original_transaction_id: z.string().regex(/^ctx-.*/),
+    source: z.string().optional(),
     local_date_time: date,
+    original_transaction_id: z
+      .string()
+      .regex(/^ctx-.*/)
+      .nullish(),
   }),
   merchant: z.object({
     id: z.string(),
     mcc: z.string(),
-    address: z.string(),
+    address: z.string().nullish(),
     name: z.string(),
   }),
   card: card.pick({
@@ -140,7 +143,7 @@ export const authorizationRequest = z.object({
       .object({
         type: z.string(),
         currency: z.string(),
-        amount: z.string(),
+        amount: z.number(),
         name: z.string(),
       })
       .array(),
