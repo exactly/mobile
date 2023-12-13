@@ -12,6 +12,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@onesignal/node-onesignal": "^2.0.1-beta2",
     "@vercel/node": "^3.0.11",
     "@vercel/postgres": "^0.5.1",
     "@wagmi/core": "2.0.0-beta.6",
