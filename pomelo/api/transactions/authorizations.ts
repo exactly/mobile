@@ -25,7 +25,7 @@ export default async function authorizations(request: VercelRequest, response: V
     return response.status(403).end("forbidden");
   }
 
-  const parsed = authorizationRequest.safeParse(raw);
+  const parsed = authorizationRequest.safeParse(JSON.parse(raw));
 
   if (parsed.success) {
     const tx = await processTransaction(parsed.data);

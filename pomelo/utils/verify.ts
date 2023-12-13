@@ -15,11 +15,11 @@ export function verifySignature(request: VercelRequest, body: string) {
   let signature = request.headers["x-signature"];
   const apiKey = request.headers["x-api-key"];
 
-  if (!valid(endpoint) || !valid(timestamp) || !valid(apiKey) || Array.isArray(apiKey) || !valid(signature)) {
+  if (!valid(endpoint) || !valid(timestamp) || !valid(apiKey) || !valid(signature)) {
     return false;
   }
 
-  if (!POMELO_API_KEY) return false;
+  if (apiKey !== POMELO_API_KEY || !POMELO_API_SECRET) return false;
 
   if (signature.startsWith("hmac-sha256")) {
     signature = signature.replace("hmac-sha256 ", "");
@@ -28,7 +28,7 @@ export function verifySignature(request: VercelRequest, body: string) {
   }
 
   const hmac = crypto
-    .createHmac("sha256", Buffer.from(POMELO_API_KEY, "base64"))
+    .createHmac("sha256", Buffer.from(POMELO_API_SECRET, "base64"))
     .update(timestamp)
     .update(endpoint)
     .update(body);
@@ -47,11 +47,11 @@ export function signResponse(request: VercelRequest, response: VercelResponse, t
     return response.status(400).end("bad request");
   }
 
-  if (!POMELO_API_KEY) return response.status(500).end("internal server error");
+  if (apiKey !== POMELO_API_KEY || !POMELO_API_SECRET) return response.status(500).end("internal server error");
 
   const timestamp = Math.floor(Date.now() / 1000).toString();
 
-  const hmac = crypto.createHmac("sha256", Buffer.from(POMELO_API_KEY, "base64")).update(timestamp).update(endpoint);
+  const hmac = crypto.createHmac("sha256", Buffer.from(POMELO_API_SECRET, "base64")).update(timestamp).update(endpoint);
   if (text) hmac.update(text);
 
   const hash = hmac.digest("base64");
