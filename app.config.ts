@@ -28,6 +28,7 @@ export default {
     ],
     "expo-router",
     "sentry-expo",
+    ["onesignal-expo-plugin", { mode: "development" }],
   ],
   experiments: { typedRoutes: true },
   hooks: {

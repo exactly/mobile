@@ -51,6 +51,7 @@
     "expo-system-ui": "~2.4.0",
     "expo-web-browser": "~12.3.2",
     "js-base64": "^3.7.5",
+    "onesignal-expo-plugin": "^2.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-native": "0.72.6",
