@@ -62,13 +62,12 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (!loaded) return;
-    SplashScreen.hideAsync();
-    if (oneSignalAPPId) OneSignal.login("0000000");
+    if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
   useEffect(() => {
     reconnect(wagmiConfig).catch(handleError);
+    if (oneSignalAPPId) OneSignal.login("0000000");
   }, []);
 
   if (!loaded) return;

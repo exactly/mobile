@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 import buffer from "../../utils/buffer.js";
+import { sendPushNotification } from "../../utils/notifications.js";
 import processTransaction from "../../utils/transaction.js";
 import { authorizationRequest } from "../../utils/types.js";
 import { signResponse, verifySignature } from "../../utils/verify.js";
@@ -29,6 +30,7 @@ export default async function authorizations(request: VercelRequest, response: V
 
   if (parsed.success) {
     const tx = await processTransaction(parsed.data);
+    await sendPushNotification({ userId: "0000000", headings: { en: "test" }, contents: { en: "test" } });
     return signResponse(request, response.status(200), JSON.stringify(tx));
   } else {
     return response.status(400).end("bad request");
