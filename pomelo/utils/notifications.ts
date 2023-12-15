@@ -27,9 +27,7 @@ export async function sendPushNotification({ userId, headings, contents }: Notif
   notification.headings = headings;
   notification.contents = contents;
 
-  await client.createNotification(notification).catch(() => {
-    // TODO(jg): handle it, don't 500 because of this...
-  });
+  return client.createNotification(notification);
 }
 
 export default client;

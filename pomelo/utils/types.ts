@@ -111,27 +111,43 @@ const createCardRequest = z.intersection(
 
 export type CreateCardRequest = z.infer<typeof createCardRequest>;
 
+const transaction = z.object({
+  id: z.string().regex(/^ctx-.*/),
+  country_code: z.string(),
+  type: z.enum([
+    "PURCHASE",
+    "WITHDRAWAL",
+    "EXTRACASH",
+    "BALANCE_INQUIRY",
+    "REFUND",
+    "PAYMENT",
+    "REVERSAL_PURCHASE",
+    "REVERSAL_WITHDRAWAL",
+    "REVERSAL_EXTRACASH",
+    "REVERSAL_REFUND",
+    "REVERSAL_PAYMENT",
+  ]),
+  point_type: z.enum(["POS", "ECOMMERCE", "ATM", "MOTO"]),
+  entry_mode: z.enum(["MANUAL", "CHIP", "CONTACTLESS", "CREDENTIAL_ON_FILE", "MAG_STRIPE", "OTHER", "UNKNOWN"]),
+  origin: z.enum(["DOMESTIC", "INTERNATIONAL"]),
+  source: z.string().optional(),
+  local_date_time: date,
+  original_transaction_id: z
+    .string()
+    .regex(/^ctx-.*/)
+    .nullish(),
+});
+
+const merchant = z.object({
+  id: z.string(),
+  mcc: z.string(),
+  address: z.string().nullish(),
+  name: z.string(),
+});
+
 export const authorizationRequest = z.object({
-  transaction: z.object({
-    id: z.string().regex(/^ctx-.*/),
-    country_code: z.string(),
-    type: z.string(),
-    point_type: z.string(),
-    entry_mode: z.string(),
-    origin: z.string(),
-    source: z.string().optional(),
-    local_date_time: date,
-    original_transaction_id: z
-      .string()
-      .regex(/^ctx-.*/)
-      .nullish(),
-  }),
-  merchant: z.object({
-    id: z.string(),
-    mcc: z.string(),
-    address: z.string().nullish(),
-    name: z.string(),
-  }),
+  transaction,
+  merchant,
   card: card.pick({
     id: true,
     product_type: true,
@@ -155,6 +171,21 @@ export const authorizationRequest = z.object({
 });
 
 export type AuthorizationRequest = z.infer<typeof authorizationRequest>;
+
+export const notificationRequest = z.object({
+  event_id: z.string(),
+  event_detail: z.object({
+    transaction,
+    merchant,
+    card: authorizationRequest.shape.card,
+    user: authorizationRequest.shape.user,
+    amount: authorizationRequest.shape.amount,
+    status: z.string(),
+    status_detail: z.string(),
+    extra_detail: z.string(),
+  }),
+  idempotency_key: z.string(),
+});
 
 const authorizationResponse = z.intersection(
   z.object({

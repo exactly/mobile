@@ -67,6 +67,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     reconnect(wagmiConfig).catch(handleError);
+    // TODO(jg): use real user id
     if (oneSignalAPPId) OneSignal.login("0000000");
   }, []);
 
