@@ -1,0 +1,15 @@
+{
+  "name": "@exactly/contracts",
+  "scripts": {
+    "test": "concurrently 'npm:test:*' --group -c auto",
+    "test:fmt": "forge fmt --check",
+    "test:forge": "forge test",
+    "test:solhint": "solhint '{src,script,test}/**/*.sol'",
+    "test:slither": "slither .",
+    "prepare": "git submodule update --init --recursive"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "solhint": "^4.0.0"
+  }
+}

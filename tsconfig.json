@@ -8,5 +8,15 @@
     "noUncheckedIndexedAccess": true
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["**/node_modules", "**/build", "**/dist", ".tamagui", "*.config.ts", "pomelo", "webauthn", ".vercel"]
+  "exclude": [
+    "contracts",
+    "pomelo",
+    "webauthn",
+    "**/node_modules",
+    "**/build",
+    "**/dist",
+    "*.config.ts",
+    ".tamagui",
+    ".vercel"
+  ]
 }
