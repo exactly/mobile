@@ -1,5 +1,6 @@
 import type { ExpoConfig } from "expo/config";
 import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-properties/build/pluginConfig";
+import type { OneSignalPluginProps } from "onesignal-expo-plugin/types/types";
 
 import metadata from "./package.json";
 
@@ -28,7 +29,14 @@ export default {
     ],
     "expo-router",
     "sentry-expo",
-    ["onesignal-expo-plugin", { mode: "development" }],
+    [
+      "onesignal-expo-plugin",
+      {
+        mode: "development",
+        smallIcons: ["./assets/notifications-default.png"],
+        largeIcons: ["./assets/notifications-default-large.png"],
+      } as OneSignalPluginProps,
+    ],
   ],
   experiments: { typedRoutes: true },
   hooks: {
