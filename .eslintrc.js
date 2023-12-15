@@ -30,7 +30,7 @@ module.exports = {
     "unicorn/filename-case": "off", // use default export name
     "unicorn/prefer-top-level-await": "off", // unsupported in react-native
   },
-  ignorePatterns: ["build/", "dist/", ".expo/types/**/*.ts", "expo-env.d.ts", "contracts/lib/"],
+  ignorePatterns: ["build/", "dist/", ".expo/types/**/*.ts", "expo-env.d.ts", "contracts/lib/", "public/"],
   overrides: [
     {
       files: [...nodeFiles, "pomelo/**"],
