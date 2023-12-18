@@ -1,2 +1,9 @@
+@openzeppelin/contracts/=lib/light-account/lib/openzeppelin-contracts/contracts/
+account-abstraction/=lib/light-account/lib/account-abstraction/contracts/
 light-account/=lib/light-account/src/
+
+@exactly/protocol/=../node_modules/@exactly/protocol/contracts/
+@openzeppelin/contracts-upgradeable/=../node_modules/@openzeppelin/contracts-upgradeable/
+solmate/=../node_modules/@exactly/protocol/node_modules/solmate
+
 forge-std/=lib/forge-std/src/
