@@ -3,6 +3,7 @@ solc = "0.8.23"
 optimizer = true
 optimizer_runs = 200
 verbosity = 3
+libs = ["lib", "../node_modules"]
 
 [fmt]
 tab_width = 2

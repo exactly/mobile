@@ -28,7 +28,7 @@
     "@alchemy/aa-alchemy": "^1.2.4",
     "@alchemy/aa-core": "^1.2.4",
     "@craftzdog/react-native-buffer": "^6.0.5",
-    "@exactly/protocol": "^0.2.19",
+    "@exactly/protocol": "exactly/protocol#34f9095316657a957215f72e14275f62133af388",
     "@expo/vector-icons": "^13.0.0",
     "@onesignal/node-onesignal": "^2.0.1-beta2",
     "@peculiar/webcrypto": "^1.4.3",
