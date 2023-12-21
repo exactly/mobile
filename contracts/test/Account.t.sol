@@ -6,8 +6,10 @@ import { Test, StdStorage, stdStorage } from "forge-std/Test.sol";
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
 import { Market, ERC20, ERC4626 } from "@exactly/protocol/Market.sol";
+import { MockBalancerVault } from "@exactly/protocol/mocks/MockBalancerVault.sol";
 import { MockInterestRateModel } from "@exactly/protocol/mocks/MockInterestRateModel.sol";
 import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
+import { DebtManager, IPermit2, IBalancerVault } from "@exactly/protocol/periphery/DebtManager.sol";
 
 import { IERC1271 } from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -32,6 +34,7 @@ contract AccountTest is Test {
   uint256 public constant KEEPER_PRIVATE_KEY = 2;
   address payable public constant BENEFICIARY = payable(address(0xbe9ef1c1a2ee));
   address public eoaAddress;
+  address public keeperAddress;
   A public account;
   A public contractOwnedAccount;
   EntryPoint public entryPoint;
@@ -41,6 +44,7 @@ contract AccountTest is Test {
   Auditor public auditor;
   Market public market;
   MockERC20 public asset;
+  DebtManager public debtManager;
 
   function setUp() external {
     auditor = Auditor(address(new ERC1967Proxy(address(new Auditor(18)), "")));
@@ -48,20 +52,32 @@ contract AccountTest is Test {
     vm.label(address(auditor), "Auditor");
     InterestRateModel irm = InterestRateModel(address(new MockInterestRateModel(0.1e18)));
     asset = new MockERC20("EXA", "EXA", 18);
+    vm.label(address(asset), "EXA");
     market = Market(address(new ERC1967Proxy(address(new Market(asset, auditor)), "")));
     market.initialize(3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
     vm.label(address(market), "MarketEXA");
     auditor.enableMarket(market, new MockPriceFeed(18, 1e18), 0.8e18);
 
+    IBalancerVault balancer = IBalancerVault(address(new MockBalancerVault()));
+    asset.mint(address(balancer), 1_000_000e18);
+    debtManager =
+      DebtManager(address(new ERC1967Proxy(address(new DebtManager(auditor, IPermit2(address(0)), balancer)), "")));
+    debtManager.initialize();
+    vm.label(address(debtManager), "DebtManager");
+
     eoaAddress = vm.addr(EOA_PRIVATE_KEY);
+    keeperAddress = vm.addr(KEEPER_PRIVATE_KEY);
+    vm.label(address(eoaAddress), "eoa");
+    vm.label(address(keeperAddress), "keeper");
     entryPoint = new EntryPoint();
-    AccountFactory factory = new AccountFactory(entryPoint, auditor, address(this));
+    AccountFactory factory = new AccountFactory(entryPoint, auditor, debtManager, address(this));
     account = factory.createAccount(eoaAddress, 1);
+    vm.label(address(account), "account");
     vm.deal(address(account), 1 << 128);
     lightSwitch = new LightSwitch();
     contractOwner = new Owner();
 
-    factory.ACCOUNT_IMPLEMENTATION().grantRole(account.KEEPER_ROLE(), vm.addr(KEEPER_PRIVATE_KEY));
+    factory.ACCOUNT_IMPLEMENTATION().grantRole(account.KEEPER_ROLE(), keeperAddress);
     asset.mint(address(account), 1000e18);
   }
 
@@ -189,14 +205,14 @@ contract AccountTest is Test {
   }
 
   function testInitialize() external {
-    AccountFactory factory = new AccountFactory(entryPoint, auditor, address(this));
+    AccountFactory factory = new AccountFactory(entryPoint, auditor, debtManager, address(this));
     vm.expectEmit(true, false, false, false);
     emit Initialized(0);
     account = factory.createAccount(eoaAddress, 1);
   }
 
   function testCannotInitializeWithZeroOwner() external {
-    AccountFactory factory = new AccountFactory(entryPoint, auditor, address(this));
+    AccountFactory factory = new AccountFactory(entryPoint, auditor, debtManager, address(this));
     vm.expectRevert(abi.encodeWithSelector(LightAccount.InvalidOwner.selector, (address(0))));
     account = factory.createAccount(address(0), 1);
   }

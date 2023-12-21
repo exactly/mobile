@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { Market, ERC20, ERC4626 } from "@exactly/protocol/Market.sol";
+import { DebtManager } from "@exactly/protocol/periphery/DebtManager.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
@@ -13,11 +14,15 @@ contract Account is AccessControl, LightAccount {
   using ECDSA for bytes32;
 
   Auditor public immutable AUDITOR;
+  DebtManager public immutable DEBT_MANAGER;
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
-  constructor(IEntryPoint anEntryPoint, Auditor auditor, address admin) LightAccount(anEntryPoint) {
+  constructor(IEntryPoint anEntryPoint, Auditor auditor, DebtManager debtManager, address admin)
+    LightAccount(anEntryPoint)
+  {
     AUDITOR = auditor;
+    DEBT_MANAGER = debtManager;
 
     _grantRole(DEFAULT_ADMIN_ROLE, admin);
   }
@@ -50,14 +55,21 @@ contract Account is AccessControl, LightAccount {
     address dest = address(bytes20(callData[16:36]));
     bytes4 selector = bytes4(callData[132:136]);
 
+    if (selector == Market.borrow.selector) {
+      (uint256 amount,,) = abi.decode(callData[136:], (uint256, address, address));
+      return _isMarket(dest) && amount <= _accountStorage().maxBorrow[Market(dest).asset()];
+    }
+
     if (selector == ERC4626.deposit.selector) {
       (, address recipient) = abi.decode(callData[136:], (uint256, address));
       return recipient == address(this) && _isMarket(dest);
     }
 
+    if (selector == Keep.rollFixedToFloating.selector) return dest == address(DEBT_MANAGER);
+
     if (selector == ERC20.approve.selector) {
       (address spender,) = abi.decode(callData[136:], (address, uint256));
-      return _isMarket(spender);
+      return spender == address(DEBT_MANAGER) || _isMarket(spender);
     }
 
     if (selector == Auditor.enterMarket.selector) return dest == address(AUDITOR);
@@ -93,5 +105,9 @@ contract Account is AccessControl, LightAccount {
 }
 
 struct AccountStorage {
-  mapping(address => bool) keepers;
+  mapping(ERC20 asset => uint256 amount) maxBorrow;
+}
+
+interface Keep {
+  function rollFixedToFloating(Market market, uint256 maturity, uint256 maxRepayAssets, uint256 percentage) external;
 }
