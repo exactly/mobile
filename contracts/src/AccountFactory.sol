@@ -6,13 +6,13 @@ import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy
 
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 
-import { Account, LightAccount, Auditor } from "./Account.sol";
+import { Account, LightAccount, Auditor, DebtManager } from "./Account.sol";
 
 contract AccountFactory {
   Account public immutable ACCOUNT_IMPLEMENTATION;
 
-  constructor(IEntryPoint anEntryPoint, Auditor auditor, address admin) {
-    ACCOUNT_IMPLEMENTATION = new Account(anEntryPoint, auditor, admin);
+  constructor(IEntryPoint anEntryPoint, Auditor auditor, DebtManager debtManager, address admin) {
+    ACCOUNT_IMPLEMENTATION = new Account(anEntryPoint, auditor, debtManager, admin);
   }
 
   function createAccount(address owner, uint256 salt) public returns (Account ret) {
