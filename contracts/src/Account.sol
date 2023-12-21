@@ -3,22 +3,23 @@ pragma solidity ^0.8.23;
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { Market, ERC20, ERC4626 } from "@exactly/protocol/Market.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import { TokenCallbackHandler } from "account-abstraction/samples/callback/TokenCallbackHandler.sol";
 import { LightAccount, IEntryPoint, UserOperation } from "light-account/LightAccount.sol";
 
-contract Account is LightAccount {
+contract Account is AccessControl, LightAccount {
   using ECDSA for bytes32;
 
   Auditor public immutable AUDITOR;
 
-  constructor(IEntryPoint anEntryPoint, Auditor auditor) LightAccount(anEntryPoint) {
-    AUDITOR = auditor;
-  }
+  bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
-  function initialize(address anOwner) public override {
-    super.initialize(anOwner);
-    _accountStorage().keepers[0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF] = true;
+  constructor(IEntryPoint anEntryPoint, Auditor auditor, address admin) LightAccount(anEntryPoint) {
+    AUDITOR = auditor;
+
+    _grantRole(DEFAULT_ADMIN_ROLE, admin);
   }
 
   function _validateSignature(UserOperation calldata userOp, bytes32 userOpHash)
@@ -32,12 +33,16 @@ contract Account is LightAccount {
     if (
       (
         error == ECDSA.RecoverError.NoError
-          && (recovered == _owner || (_isKeep(userOp.callData) && _accountStorage().keepers[recovered]))
+          && (recovered == _owner || (_isKeep(userOp.callData) && _isKeeper(recovered)))
       ) || SignatureChecker.isValidERC1271SignatureNow(_owner, userOpHash, userOp.signature)
     ) {
       return 0;
     }
     return SIG_VALIDATION_FAILED;
+  }
+
+  function _isKeeper(address addr) internal view returns (bool) {
+    return AccessControl(payable(_getImplementation())).hasRole(KEEPER_ROLE, addr);
   }
 
   function _isKeep(bytes calldata callData) internal view returns (bool) {
@@ -75,6 +80,15 @@ contract Account is LightAccount {
       // solhint-enable no-inline-assembly
       storageStruct.slot := position
     }
+  }
+
+  function supportsInterface(bytes4 interfaceId)
+    public
+    view
+    override(AccessControl, TokenCallbackHandler)
+    returns (bool)
+  {
+    return super.supportsInterface(interfaceId);
   }
 }
 

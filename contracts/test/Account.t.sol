@@ -11,6 +11,7 @@ import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
 
 import { IERC1271 } from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
@@ -54,12 +55,13 @@ contract AccountTest is Test {
 
     eoaAddress = vm.addr(EOA_PRIVATE_KEY);
     entryPoint = new EntryPoint();
-    AccountFactory factory = new AccountFactory(entryPoint, auditor);
+    AccountFactory factory = new AccountFactory(entryPoint, auditor, address(this));
     account = factory.createAccount(eoaAddress, 1);
     vm.deal(address(account), 1 << 128);
     lightSwitch = new LightSwitch();
     contractOwner = new Owner();
 
+    factory.ACCOUNT_IMPLEMENTATION().grantRole(account.KEEPER_ROLE(), vm.addr(KEEPER_PRIVATE_KEY));
     asset.mint(address(account), 1000e18);
   }
 
@@ -187,14 +189,14 @@ contract AccountTest is Test {
   }
 
   function testInitialize() external {
-    AccountFactory factory = new AccountFactory(entryPoint, auditor);
+    AccountFactory factory = new AccountFactory(entryPoint, auditor, address(this));
     vm.expectEmit(true, false, false, false);
     emit Initialized(0);
     account = factory.createAccount(eoaAddress, 1);
   }
 
   function testCannotInitializeWithZeroOwner() external {
-    AccountFactory factory = new AccountFactory(entryPoint, auditor);
+    AccountFactory factory = new AccountFactory(entryPoint, auditor, address(this));
     vm.expectRevert(abi.encodeWithSelector(LightAccount.InvalidOwner.selector, (address(0))));
     account = factory.createAccount(address(0), 1);
   }
@@ -304,6 +306,10 @@ contract AccountTest is Test {
     SimpleAccount newImplementation = new SimpleAccount(newEntryPoint);
     vm.expectRevert(abi.encodeWithSelector(LightAccount.NotAuthorized.selector, (address(this))));
     account.upgradeToAndCall(address(newImplementation), abi.encodeCall(SimpleAccount.initialize, (address(this))));
+  }
+
+  function testERC165InterfaceSupport() external {
+    assertTrue(account.supportsInterface(type(IERC721Receiver).interfaceId));
   }
 
   function testStorageSlots() external {
