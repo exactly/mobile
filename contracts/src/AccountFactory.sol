@@ -6,13 +6,13 @@ import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy
 
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 
-import { Account, Auditor } from "./Account.sol";
+import { Account, LightAccount, Auditor } from "./Account.sol";
 
 contract AccountFactory {
   Account public immutable ACCOUNT_IMPLEMENTATION;
 
-  constructor(IEntryPoint anEntryPoint, Auditor auditor) {
-    ACCOUNT_IMPLEMENTATION = new Account(anEntryPoint, auditor);
+  constructor(IEntryPoint anEntryPoint, Auditor auditor, address admin) {
+    ACCOUNT_IMPLEMENTATION = new Account(anEntryPoint, auditor, admin);
   }
 
   function createAccount(address owner, uint256 salt) public returns (Account ret) {
@@ -24,7 +24,7 @@ contract AccountFactory {
     ret = Account(
       payable(
         new ERC1967Proxy{ salt: bytes32(salt) }(
-          address(ACCOUNT_IMPLEMENTATION), abi.encodeCall(Account.initialize, (owner))
+          address(ACCOUNT_IMPLEMENTATION), abi.encodeCall(LightAccount.initialize, (owner))
         )
       )
     );
@@ -37,7 +37,7 @@ contract AccountFactory {
       keccak256(
         abi.encodePacked(
           type(ERC1967Proxy).creationCode,
-          abi.encode(address(ACCOUNT_IMPLEMENTATION), abi.encodeCall(Account.initialize, (owner)))
+          abi.encode(address(ACCOUNT_IMPLEMENTATION), abi.encodeCall(LightAccount.initialize, (owner)))
         )
       )
     );
