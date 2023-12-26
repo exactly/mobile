@@ -9,8 +9,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { reconnect } from "@wagmi/core";
 import { type FontSource, useFonts } from "expo-font";
 import { Slot, SplashScreen } from "expo-router";
+import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
+import { Platform } from "react-native";
 import { OneSignal } from "react-native-onesignal";
 import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
@@ -75,6 +77,23 @@ export default function RootLayout() {
 
   return (
     <>
+      {Platform.OS === "web" && (
+        <Head>
+          <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+              window.OneSignalDeferred = window.OneSignalDeferred || [];
+              OneSignalDeferred.push(function(OneSignal) {
+                OneSignal.init({
+                  appId: "${process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID}",
+                });
+              });`,
+            }}
+          />
+        </Head>
+      )}
+
       <StatusBar translucent={false} />
       <TamaguiProvider config={tamaguiConfig}>
         <WagmiProvider config={wagmiConfig}>
