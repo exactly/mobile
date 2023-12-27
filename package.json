@@ -62,6 +62,7 @@
     "react-native-safe-area-context": "4.6.3",
     "react-native-screens": "~3.22.0",
     "react-native-web": "^0.19.9",
+    "react-onesignal": "^3.0.1",
     "sentry-expo": "^7.1.1",
     "tamagui": "^1.79.7",
     "text-encoding": "^0.7.0",
