@@ -9,11 +9,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { reconnect } from "@wagmi/core";
 import { type FontSource, useFonts } from "expo-font";
 import { Slot, SplashScreen } from "expo-router";
-import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
-import { Platform } from "react-native";
-import { OneSignal } from "react-native-onesignal";
 import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider, createConfig, custom } from "wagmi";
@@ -21,8 +18,9 @@ import { WagmiProvider, createConfig, custom } from "wagmi";
 import metadata from "../package.json";
 import tamaguiConfig from "../tamagui.config";
 import alchemyConnector from "../utils/alchemyConnector";
-import { alchemyAPIKey, chain, oneSignalAPPId } from "../utils/constants";
+import { alchemyAPIKey, chain } from "../utils/constants";
 import handleError from "../utils/handleError";
+import useOneSignal from "../utils/onesignal";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -39,10 +37,6 @@ Sentry.init({
   attachViewHierarchy: true,
   autoSessionTracking: true,
 });
-
-if (oneSignalAPPId) {
-  OneSignal.initialize(oneSignalAPPId);
-}
 
 const provider = new AlchemyProvider({ apiKey: alchemyAPIKey, chain });
 const wagmiConfig = createConfig({
@@ -69,31 +63,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     reconnect(wagmiConfig).catch(handleError);
-    // TODO(jg): use real user id
-    if (oneSignalAPPId) OneSignal.login("0000000");
   }, []);
 
-  if (!loaded) return;
+  const initialized = useOneSignal({});
+
+  if (!loaded || !initialized) return;
 
   return (
     <>
-      {Platform.OS === "web" && (
-        <Head>
-          <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer />
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-              window.OneSignalDeferred = window.OneSignalDeferred || [];
-              OneSignalDeferred.push(function(OneSignal) {
-                OneSignal.init({
-                  appId: "${process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID}",
-                });
-              });`,
-            }}
-          />
-        </Head>
-      )}
-
       <StatusBar translucent={false} />
       <TamaguiProvider config={tamaguiConfig}>
         <WagmiProvider config={wagmiConfig}>
