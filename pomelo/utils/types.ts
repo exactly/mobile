@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-const country = z.enum(["ARG", "BRA", "MEX", "COL", "PER", "CHL"]);
+export const OPERATION_COUNTRIES = ["ARG", "BRA", "MEX", "COL", "PER", "CHL"] as const;
+export const CARD_STATUS = ["ACTIVE", "BLOCKED", "DISABLED"] as const;
+export const USER_STATUS = ["ACTIVE", "BLOCKED"] as const;
+
+const country = z.enum(OPERATION_COUNTRIES);
 
 const date = z.string();
 
@@ -49,7 +53,7 @@ export const user = z.object({
   id: z.string().regex(/^usr-.*/),
   client_id: z.string().regex(/^cli-.*/),
   email: z.string().email(),
-  status: z.enum(["ACTIVE", "BLOCKED"]),
+  status: z.enum(USER_STATUS),
   operation_country: country,
   name: z.string().optional(),
   surname: z.string().optional(),
@@ -80,7 +84,7 @@ export const card = z.object({
   affinity_group_id: z.string().regex(/^afg-.*/),
   card_type: z.enum(["VIRTUAL", "PHYSICAL"]),
   product_type: z.enum(["PREPAID", "DEBIT", "CREDIT"]).optional(),
-  status: z.enum(["ACTIVE", "BLOCKED", "DISABLED"]).optional(),
+  status: z.enum(CARD_STATUS).optional(),
   shipment_id: z
     .string()
     .regex(/^shi-.*/)

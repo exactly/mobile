@@ -5,6 +5,7 @@ node_modules/
 build/
 dist/
 web-build/
+drizzle/
 /android/
 /ios/
 

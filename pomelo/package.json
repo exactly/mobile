@@ -2,19 +2,27 @@
   "name": "@exactly/pomelo",
   "type": "module",
   "scripts": {
-    "test": "tsc"
+    "test": "tsc",
+    "db:migration:generate": "drizzle-kit generate:pg --schema=./database/schema.ts",
+    "db:migration:push": "bun run database/migrate.ts",
+    "db:migrate": "bun db:migration:generate && bun db:migration:push",
+    "dev": "bun run --cwd .. vercel dev"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
     "@vercel/node": "^3.0.11",
+    "@vercel/postgres": "^0.5.1",
     "@wagmi/core": "2.0.0-beta.6",
+    "drizzle-orm": "^0.29.1",
     "viem": "2.0.0-beta.15",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "debug": "^4.3.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
+    "drizzle-kit": "^0.20.6",
     "typescript": "^5.3.3",
     "vercel": "^32.6.1"
   }
