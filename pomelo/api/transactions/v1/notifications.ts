@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 import buffer from "../../../utils/buffer.js";
 import { sendPushNotification } from "../../../utils/notifications.js";
+import { captureException } from "../../../utils/sentry.js";
 import { notificationRequest } from "../../../utils/types.js";
 import { signResponse, verifySignature } from "../../../utils/verify.js";
 
@@ -40,8 +41,8 @@ export default async function notifications(request: VercelRequest, response: Ve
         },
       });
       return signResponse(request, response.status(200), JSON.stringify(true));
-    } catch {
-      // TODO(jg): log errors..
+    } catch (error: unknown) {
+      captureException(error, { request, message: "failed to send notification to user" });
       return response.status(500).end("internal server error");
     }
   } else {
