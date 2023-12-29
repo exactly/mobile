@@ -13,13 +13,14 @@
   },
   "dependencies": {
     "@onesignal/node-onesignal": "^2.0.1-beta2",
+    "@sentry/node": "^7.91.0",
     "@vercel/node": "^3.0.11",
     "@vercel/postgres": "^0.5.1",
     "@wagmi/core": "2.0.0-beta.6",
+    "debug": "^4.3.4",
     "drizzle-orm": "^0.29.1",
     "viem": "2.0.0-beta.15",
-    "zod": "^3.22.4",
-    "debug": "^4.3.4"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
