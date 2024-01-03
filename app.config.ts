@@ -33,8 +33,8 @@ export default {
       "onesignal-expo-plugin",
       {
         mode: "development",
-        smallIcons: ["./assets/notifications-default.png"],
-        largeIcons: ["./assets/notifications-default-large.png"],
+        smallIcons: ["./assets/notifications_default.png"],
+        largeIcons: ["./assets/notifications_default_large.png"],
       } as OneSignalPluginProps,
     ],
   ],
