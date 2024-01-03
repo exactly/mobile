@@ -26,6 +26,7 @@ export default function useOneSignal({ userId }: OneSignalProperties) {
   useEffect(() => {
     const load = async function () {
       if (!oneSignalAPPId) {
+        setInitialized(true);
         return;
       }
 
