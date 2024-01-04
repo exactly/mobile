@@ -10,6 +10,7 @@ module.exports = {
     "expo-linking",
     "expo-router",
     "expo-splash-screen",
+    "expo-sqlite",
     "expo-status-bar",
     "expo-system-ui",
     "expo-web-browser",
