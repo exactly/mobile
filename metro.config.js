@@ -11,7 +11,7 @@ module.exports = {
       ...(Array.isArray(defaultConfig.resolver?.blockList)
         ? defaultConfig.resolver.blockList
         : [defaultConfig.resolver?.blockList]),
-      /\/contracts\/lib\//,
+      /\/contracts\/lib\/light-account\//,
     ],
   },
 };
