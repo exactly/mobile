@@ -48,6 +48,7 @@
     "expo-linking": "~5.0.2",
     "expo-router": "^2.0.0",
     "expo-splash-screen": "~0.20.5",
+    "expo-sqlite": "~11.3.3",
     "expo-status-bar": "~1.6.0",
     "expo-system-ui": "~2.4.0",
     "expo-web-browser": "~12.3.2",
@@ -84,7 +85,7 @@
     "@typescript-eslint/parser": "^6.13.2",
     "babel-plugin-transform-inline-environment-variables": "^0.4.4",
     "concurrently": "^8.2.2",
-    "eas-cli": "^5.9.1",
+    "eas-cli": "^5.9.3",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-universe": "^12.0.0",
@@ -104,9 +105,7 @@
     "typescript": "^5.3.3"
   },
   "overrides": {
-    "tslib": "^2.6.2",
-    "ts-node": "10.9.2",
-    "typescript": "5.3.3"
+    "tslib": "^2.6.2"
   },
   "trustedDependencies": [
     "@sentry/cli",
