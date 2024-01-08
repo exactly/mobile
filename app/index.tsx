@@ -151,9 +151,7 @@ export default function Home() {
     <XStack flex={1} alignItems="center" space>
       <YStack flex={1} alignItems="center" space>
         <Text textAlign="center">{txHash && `${txHash} ${isSuccess ? "✅" : ""}`}</Text>
-        <Text textAlign="center">
-          {accountLiquidity && `${accountLiquidity.map((v) => formatEther(v)).join(", ")}`}
-        </Text>
+        <Text textAlign="center">{accountLiquidity && accountLiquidity.map((v) => formatEther(v)).join(", ")}</Text>
         <Button onPress={createAccount}>create account</Button>
         <Button disabled={!connector || isConnecting} onPress={address ? disconnectAccount : connectAccount}>
           {isConnecting ? <Spinner size="small" /> : address ?? "connect"}
