@@ -29,7 +29,8 @@ function stringify(value: unknown) {
 }
 
 function parse(text: string) {
-  return JSON.parse(text, (key, v) => {
+  let clientExtensionResults: AuthenticationExtensionsClientOutputs = {};
+  const credential = JSON.parse(text, (key, v) => {
     if (
       typeof v === "string" &&
       (key === "rawId" ||
@@ -37,11 +38,16 @@ function parse(text: string) {
         key === "signature" ||
         key === "userHandle" ||
         key === "clientDataJSON" ||
-        key === "authenticatorData" ||
-        key === "clientExtensionResults")
+        key === "authenticatorData")
     ) {
       return decode(v.replaceAll("-", "+").replaceAll("_", "/"));
     }
+    if (key === "clientExtensionResults") {
+      clientExtensionResults = v as AuthenticationExtensionsClientOutputs;
+      return;
+    }
     return v as unknown;
   }) as PublicKeyCredential;
+  credential.getClientExtensionResults = () => clientExtensionResults;
+  return credential;
 }
