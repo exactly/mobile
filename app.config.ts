@@ -23,7 +23,7 @@ export default {
     [
       "expo-build-properties",
       {
-        android: { compileSdkVersion: 34, targetSdkVersion: 34 },
+        android: { compileSdkVersion: 34, targetSdkVersion: 34, packagingOptions: { pickFirst: ["**/libcrypto.so"] } },
         ios: { deploymentTarget: "13.4" },
       } as BuildPropertiesConfig,
     ],
