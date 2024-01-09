@@ -8,6 +8,7 @@ module.exports = {
     "expo-device",
     "expo-font",
     "expo-linking",
+    "expo-module-scripts",
     "expo-router",
     "expo-splash-screen",
     "expo-sqlite",
