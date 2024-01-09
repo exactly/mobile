@@ -19,34 +19,35 @@ if (ExpoWebauthn) {
   global.window.PublicKeyCredential ??= {} as PublicKeyCredential; // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 }
 
-function stringify(value: unknown) {
-  return JSON.stringify(value, (_, v) => {
-    if (v instanceof ArrayBuffer) {
-      return encode(v).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+function stringify(object: unknown) {
+  return JSON.stringify(object, (_, value) => {
+    if (value instanceof ArrayBuffer) {
+      return encode(value).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
     }
-    return v as unknown;
+    return value as unknown;
   });
 }
 
 function parse(text: string) {
   let clientExtensionResults: AuthenticationExtensionsClientOutputs = {};
-  const credential = JSON.parse(text, (key, v) => {
+  const credential = JSON.parse(text, (key, value) => {
     if (
-      typeof v === "string" &&
+      typeof value === "string" &&
       (key === "rawId" ||
         key === "publicKey" ||
         key === "signature" ||
         key === "userHandle" ||
         key === "clientDataJSON" ||
+        key === "attestationObject" ||
         key === "authenticatorData")
     ) {
-      return decode(v.replaceAll("-", "+").replaceAll("_", "/"));
+      return decode(value.replaceAll("-", "+").replaceAll("_", "/"));
     }
     if (key === "clientExtensionResults") {
-      clientExtensionResults = v as AuthenticationExtensionsClientOutputs;
+      clientExtensionResults = value as AuthenticationExtensionsClientOutputs;
       return;
     }
-    return v as unknown;
+    return value as unknown;
   }) as PublicKeyCredential;
   credential.getClientExtensionResults = () => clientExtensionResults;
   return credential;
