@@ -17,6 +17,9 @@ drizzle/
 *.mobileprovision
 *.pem
 
+*.aab
+*.apk
+
 .vscode/
 .env
 .env*.local
