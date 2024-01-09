@@ -53,6 +53,8 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+  useOneSignal({});
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -65,9 +67,7 @@ export default function RootLayout() {
     reconnect(wagmiConfig).catch(handleError);
   }, []);
 
-  const initialized = useOneSignal({});
-
-  if (!loaded || !initialized) return;
+  if (!loaded) return;
 
   return (
     <>

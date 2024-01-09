@@ -35,20 +35,14 @@ export default function useOneSignal({ userId }: OneSignalProperties) {
       }
     };
 
-    load().catch(() => {
-      setInitialized(true);
-    });
+    load().catch(() => {});
 
     return () => {
       if (!userId || !instance.current) {
         return;
       }
 
-      instance.current.logout().catch(() => {
-        // ignore
-      });
+      instance.current.logout().catch(() => {});
     };
   }, [userId, initialized]);
-
-  return initialized;
 }

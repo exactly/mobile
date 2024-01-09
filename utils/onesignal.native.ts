@@ -40,8 +40,8 @@ export default function useOneSignal({ userId }: OneSignalProperties) {
       }
 
       instance.current.logout();
+
+      setInitialized(false);
     };
   }, [userId, initialized]);
-
-  return initialized;
 }

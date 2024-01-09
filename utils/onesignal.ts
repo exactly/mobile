@@ -4,7 +4,7 @@ type OneSignalProperties = {
   userId?: string;
 };
 
-type OneSignal = (parameters: OneSignalProperties) => boolean;
+type OneSignal = (parameters: OneSignalProperties) => void;
 
 export default Platform.select<OneSignal>({
   // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module
