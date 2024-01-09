@@ -6,7 +6,7 @@
     "test:forge": "forge test",
     "test:solhint": "solhint '{src,script,test}/**/*.sol'",
     "test:slither": "slither .",
-    "prepare": "git submodule update --init --recursive"
+    "prepare": "if git status &>/dev/null; then git submodule update --init --recursive; fi"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
