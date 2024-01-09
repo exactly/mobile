@@ -20,7 +20,7 @@ import tamaguiConfig from "../tamagui.config";
 import alchemyConnector from "../utils/alchemyConnector";
 import { alchemyAPIKey, chain } from "../utils/constants";
 import handleError from "../utils/handleError";
-import useOneSignal from "../utils/onesignal";
+import useOneSignal from "../utils/useOneSignal";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -53,6 +53,8 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+  useOneSignal();
+
   useEffect(() => {
     if (error) throw error;
   }, [error]);
@@ -65,9 +67,7 @@ export default function RootLayout() {
     reconnect(wagmiConfig).catch(handleError);
   }, []);
 
-  const initialized = useOneSignal({});
-
-  if (!loaded || !initialized) return;
+  if (!loaded) return;
 
   return (
     <>
