@@ -20,7 +20,7 @@ import tamaguiConfig from "../tamagui.config";
 import alchemyConnector from "../utils/alchemyConnector";
 import { alchemyAPIKey, chain } from "../utils/constants";
 import handleError from "../utils/handleError";
-import useOneSignal from "../utils/onesignal";
+import useOneSignal from "../utils/useOneSignal";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -52,6 +52,8 @@ export default function RootLayout() {
     InterBold: InterBold as FontSource,
     ...FontAwesome.font,
   });
+
+  useOneSignal();
 
   useEffect(() => {
     if (error) throw error;

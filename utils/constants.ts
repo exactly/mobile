@@ -14,7 +14,7 @@ export const alchemyGasPolicyId = process.env.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID;
 export const turnkeyAPIPublicKey = process.env.EXPO_PUBLIC_TURNKEY_API_PUBLIC_KEY;
 export const turnkeyAPIPrivateKey = process.env.EXPO_PUBLIC_TURNKEY_API_PRIVATE_KEY;
 export const turnkeyOrganizationId = process.env.EXPO_PUBLIC_TURNKEY_ORGANIZATION_ID;
-export const oneSignalAPPId = process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID;
+export const oneSignalAppId = process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID;
 
 export const chain = {
   ...goerli,
