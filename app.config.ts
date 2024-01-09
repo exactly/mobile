@@ -37,6 +37,7 @@ export default {
         largeIcons: ["./assets/notifications_default_large.png"],
       } as OneSignalPluginProps,
     ],
+    "@config-plugins/detox",
   ],
   experiments: { typedRoutes: true },
   hooks: {
