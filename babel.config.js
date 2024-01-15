@@ -8,6 +8,7 @@ module.exports = function (api) {
       "transform-inline-environment-variables",
       ["@babel/plugin-transform-private-methods", { loose: true }],
       ["@tamagui/babel-plugin", { components: ["tamagui"], config: "tamagui.config.ts", logTimings: true }],
+      ["module-resolver", { alias: { "@turnkey/api-key-stamper": "@turnkey/api-key-stamper/dist/index.js" } }],
     ],
   };
 };
