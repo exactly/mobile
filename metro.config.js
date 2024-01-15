@@ -2,6 +2,7 @@ const { getDefaultConfig } = require("expo/metro-config");
 
 const defaultConfig = getDefaultConfig(__dirname);
 
+/** @type {import('metro-config').InputConfigT} */
 module.exports = {
   ...defaultConfig,
   resolver: {
