@@ -13,19 +13,19 @@
   },
   "dependencies": {
     "@onesignal/node-onesignal": "^2.0.1-beta2",
-    "@sentry/node": "^7.92.0",
-    "@vercel/node": "^3.0.15",
+    "@sentry/node": "^7.93.0",
+    "@vercel/node": "^3.0.16",
     "@vercel/postgres": "^0.5.1",
-    "@wagmi/core": "2.0.2",
+    "@wagmi/core": "2.2.1",
     "debug": "^4.3.4",
     "drizzle-orm": "^0.29.3",
-    "viem": "2.0.3",
+    "viem": "2.0.10",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^20.10.8",
-    "drizzle-kit": "^0.20.10",
+    "@types/node": "^20.11.3",
+    "drizzle-kit": "^0.20.12",
     "typescript": "^5.3.3",
-    "vercel": "^33.0.2"
+    "vercel": "^33.1.0"
   }
 }
