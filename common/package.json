@@ -1,0 +1,6 @@
+{
+  "name": "@exactly/common",
+  "dependencies": {
+    "wagmi": "2.2.1"
+  }
+}
