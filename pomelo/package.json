@@ -19,7 +19,7 @@
     "@wagmi/core": "2.2.1",
     "debug": "^4.3.4",
     "drizzle-orm": "^0.29.3",
-    "viem": "2.0.10",
+    "viem": "2.1.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
