@@ -1,5 +1,8 @@
 module.exports = {
   reject: [
+    "@alchemy/aa-accounts",
+    "@alchemy/aa-alchemy",
+    "@alchemy/aa-core",
     "@react-native-async-storage/async-storage",
     "@tanstack/react-query",
     "expo-application",
