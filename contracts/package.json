@@ -1,5 +1,6 @@
 {
   "name": "@exactly/contracts",
+  "private": true,
   "scripts": {
     "test": "concurrently 'npm:test:*' --group -c auto",
     "test:fmt": "forge fmt --check",

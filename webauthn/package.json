@@ -9,6 +9,7 @@
     "url": "https://github.com/exactly/mobile.git",
     "directory": "webauthn"
   },
+  "private": true,
   "scripts": {
     "build": "expo-module build",
     "clean": "expo-module clean",

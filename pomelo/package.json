@@ -1,6 +1,6 @@
 {
   "name": "@exactly/pomelo",
-  "type": "module",
+  "private": true,
   "scripts": {
     "test": "tsc",
     "db:migration:generate": "drizzle-kit generate:pg --schema=./database/schema.ts",
@@ -11,6 +11,7 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "type": "module",
   "dependencies": {
     "@onesignal/node-onesignal": "^2.0.1-beta2",
     "@sentry/node": "^7.93.0",
