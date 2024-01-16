@@ -16,15 +16,15 @@
     "@sentry/node": "^7.93.0",
     "@vercel/node": "^3.0.16",
     "@vercel/postgres": "^0.5.1",
-    "@wagmi/core": "2.2.1",
     "debug": "^4.3.4",
     "drizzle-orm": "^0.29.3",
-    "viem": "2.1.0",
+    "viem": "2.1.1",
+    "wagmi": "2.2.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^20.11.3",
-    "drizzle-kit": "^0.20.12",
+    "@types/node": "^20.11.4",
+    "drizzle-kit": "^0.20.13",
     "typescript": "^5.3.3",
     "vercel": "^33.1.0"
   }
