@@ -1,6 +1,6 @@
 import { jsonb, pgEnum, pgTable, text, numeric } from "drizzle-orm/pg-core";
 
-import { CARD_STATUS, OPERATION_COUNTRIES, USER_STATUS } from "../utils/types";
+import { CARD_STATUS, OPERATION_COUNTRIES, USER_STATUS } from "../utils/types.js";
 
 export const userStatusEnum = pgEnum("status", USER_STATUS);
 export const countryEnum = pgEnum("operation_country", OPERATION_COUNTRIES);
@@ -41,4 +41,17 @@ export const transaction = pgTable("transactions", {
   txHash: text("txHash"),
   transaction_status: transactionStatusEnum("transaction_status").notNull(),
   payload: jsonb("payload").notNull(),
+});
+
+export const credential = pgTable("credentials", {
+  credentialID: text("credentialID").notNull(),
+  transports: text("transports").array(),
+  userID: text("userID").notNull(),
+  credentialPublicKey: text("credentialPublicKey").notNull(),
+  counter: numeric("counter").notNull(),
+});
+
+export const challenge = pgTable("challenge", {
+  userID: text("userID").primaryKey(),
+  value: text("value").notNull(),
 });
