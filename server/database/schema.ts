@@ -42,3 +42,16 @@ export const transaction = pgTable("transactions", {
   transaction_status: transactionStatusEnum("transaction_status").notNull(),
   payload: jsonb("payload").notNull(),
 });
+
+export const credential = pgTable("credentials", {
+  credentialID: text("credentialID").notNull(),
+  transports: text("transports").array(),
+  userID: text("userID").notNull(),
+  credentialPublicKey: text("credentialPublicKey").notNull(),
+  counter: numeric("counter").notNull(),
+});
+
+export const challenge = pgTable("challenge", {
+  userID: text("userID").primaryKey(),
+  value: text("value").notNull(),
+});

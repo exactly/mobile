@@ -12,9 +12,12 @@
   "dependencies": {
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
     "@sentry/node": "^8.8.0",
+    "@simplewebauthn/server": "^10.0.0",
+    "@simplewebauthn/types": "^10.0.0",
     "@vercel/node": "^3.1.7",
     "@vercel/postgres": "^0.8.0",
     "@wagmi/core": "2.10.5",
+    "base64-arraybuffer": "^1.0.2",
     "debug": "^4.3.5",
     "drizzle-orm": "^0.31.2",
     "viem": "^2.13.8",
