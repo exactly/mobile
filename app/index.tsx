@@ -22,6 +22,7 @@ import base64URLEncode from "../utils/base64URLEncode";
 import { rpId, turnkeyAPIPrivateKey, turnkeyAPIPublicKey, turnkeyOrganizationId } from "../utils/constants";
 import generateRandomBuffer from "../utils/generateRandomBuffer";
 import handleError from "../utils/handleError";
+import useKYC from "../utils/useKYC";
 
 export default function Home() {
   const {
@@ -147,6 +148,8 @@ export default function Home() {
     writeContract(borrowUSDCSimulation.request);
   }, [borrowUSDCSimulation, writeContract]);
 
+  const startKYC = useKYC();
+
   return (
     <XStack flex={1} alignItems="center" space>
       <YStack flex={1} alignItems="center" space>
@@ -162,6 +165,7 @@ export default function Home() {
         <Button disabled={!borrowUSDCSimulation || isSending || isWaiting} onPress={borrowUSDC}>
           borrow 1 USDC
         </Button>
+        <Button onPress={startKYC}>Start KYC</Button>
       </YStack>
     </XStack>
   );
