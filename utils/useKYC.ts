@@ -1,21 +1,48 @@
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Platform } from "react-native";
-import { Inquiry, Environment } from "react-native-persona";
+import { Inquiry } from "react-native-persona";
 
-const TEMPLATE = "itmpl_F55H8zDZBk9gqy8mRK1aC27X";
+import handleError from "./handleError";
+import type { UserInquiry, Workflow } from "../pomelo/utils/kyc";
+
+async function getUserInquiry({ workflow }: { workflow: Workflow }) {
+  const sp = new URLSearchParams({ workflow });
+  const response = await fetch("http://localhost:3000/api/kyc?" + sp.toString());
+  const kyc = (await response.json()) as UserInquiry;
+  return kyc;
+}
 
 export default () => {
-  const native = useCallback(() => {
-    const instance = Inquiry.fromTemplate(TEMPLATE)
-      .environment(Environment.SANDBOX)
-      .onComplete((inquiryId, status, fields) => console.log(inquiryId, status, fields))
-      .onCanceled((inquiryId) => {})
-      .build();
+  const [loading, setLoading] = useState(true);
+  const [inquiry, setInquiry] = useState<UserInquiry>();
 
-    instance.start();
+  useEffect(() => {
+    const load = async () => {
+      setInquiry(await getUserInquiry({ workflow: Platform.OS === "web" ? "hosted" : "native" }));
+    };
+
+    load()
+      .catch(handleError)
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
-  const hosted = useCallback(() => {}, []);
+  const native = useCallback(() => {
+    if (!inquiry) {
+      return;
+    }
 
-  return Platform.OS === "web" ? hosted : native;
+    Inquiry.fromInquiry(inquiry.id).build().start();
+  }, [inquiry]);
+
+  const hosted = useCallback(() => {
+    if (!inquiry || !inquiry.url) {
+      return;
+    }
+
+    window.location.href = inquiry.url;
+  }, [inquiry]);
+
+  return [Platform.OS === "web" ? hosted : native, loading] as const;
 };
