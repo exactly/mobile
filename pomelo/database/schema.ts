@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   name: text("name"),
   surname: text("surname"),
   payload: jsonb("payload").notNull(),
+  inquiry_id: text("inquiry_id"),
 });
 
 export const card = pgTable("cards", {

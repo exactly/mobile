@@ -22,6 +22,7 @@ import base64URLEncode from "../utils/base64URLEncode";
 import { rpId, turnkeyAPIPrivateKey, turnkeyAPIPublicKey, turnkeyOrganizationId } from "../utils/constants";
 import generateRandomBuffer from "../utils/generateRandomBuffer";
 import handleError from "../utils/handleError";
+import useKYC from "../utils/useKYC";
 
 export default function Home() {
   const {
@@ -85,7 +86,7 @@ export default function Home() {
       .then(async (attestation) => {
         const client = new TurnkeyClient(
           { baseUrl: "https://api.turnkey.com" },
-          new ApiKeyStamper({ apiPublicKey: turnkeyAPIPublicKey, apiPrivateKey: turnkeyAPIPrivateKey }),
+          new ApiKeyStamper({ apiPublicKey: turnkeyAPIPublicKey, apiPrivateKey: turnkeyAPIPrivateKey })
         );
         const activityPoller = createActivityPoller({ client, requestFn: client.createSubOrganization });
         const {
@@ -147,6 +148,8 @@ export default function Home() {
     writeContract(borrowUSDCSimulation.request);
   }, [borrowUSDCSimulation, writeContract]);
 
+  const [startKYC, loading] = useKYC();
+
   return (
     <XStack flex={1} alignItems="center" space>
       <YStack flex={1} alignItems="center" space>
@@ -161,6 +164,9 @@ export default function Home() {
         </Button>
         <Button disabled={!borrowUSDCSimulation || isSending || isWaiting} onPress={borrowUSDC}>
           borrow 1 USDC
+        </Button>
+        <Button onPress={startKYC} disabled={loading}>
+          Start KYC
         </Button>
       </YStack>
     </XStack>
