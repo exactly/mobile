@@ -1,15 +1,24 @@
 import request from "./request.js";
 import type { CreateUserRequest, User } from "./types.js";
-import { user as userSchema } from "./types.js";
+import { paginated, responseData, user as userSchema } from "./types.js";
 
 export async function getUser(userId: User["id"]) {
-  try {
-    return request<User>(`/users/v1/${userId}`, { method: "GET" }, userSchema);
-  } catch {
-    // couldn't find user, return undefined
-  }
+  return request<{ data: User }>(`/users/v1/${userId}`, { method: "GET" }, responseData(userSchema));
 }
 
-export function createUser(user: CreateUserRequest) {
-  return request<User>("/users/v1", { method: "POST", body: user }, userSchema);
+export async function getUserByEmail(email: User["email"]) {
+  const response = await request<{ data: User[] }>(
+    `/users/v1/?filter[email]=${email}`,
+    { method: "GET" },
+    paginated(userSchema),
+  );
+  return response.data[0];
+}
+
+export async function getUserByCredentialID(credentialID: string) {
+  return getUserByEmail(`${credentialID}@exactly.account`);
+}
+
+export async function createUser(user: CreateUserRequest) {
+  return request<{ data: User }>("/users/v1", { method: "POST", body: user }, responseData(userSchema));
 }

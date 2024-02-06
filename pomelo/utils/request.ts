@@ -41,7 +41,7 @@ export default async function request<Response>(
   });
 
   const response = await fetch(_request);
-  const json = response.json();
+  const json: unknown = await response.json();
 
   if (!response.ok) {
     const {
@@ -68,5 +68,12 @@ export default async function request<Response>(
     }
   }
 
-  return validator.parse(json);
+  try {
+    return validator.parse(json);
+  } catch {
+    // TODO: review with team
+    // dont throw when validation fails?
+    // maybe just report to sentry?
+    return json as Response;
+  }
 }
