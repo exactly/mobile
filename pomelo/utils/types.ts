@@ -61,10 +61,10 @@ export const user = z.object({
   identification_value: z.string().optional(),
   birthdate: date.optional(),
   gender: z.string().optional(),
-  phone: z.number(),
+  phone: z.number().optional(),
   tax_identification_type: z.enum(["CUIL", "CUIT", "CDI", "CPF", "RUT", "RUC", "RFC", "NIT"]).optional(),
   tax_identification_value: z.string().optional(),
-  nationality: country,
+  nationality: country.optional(),
   legal_address: address.optional(),
 });
 
@@ -77,6 +77,7 @@ const createUserRequest = user.omit({
 });
 
 export type CreateUserRequest = z.infer<typeof createUserRequest>;
+export type CreateUserForm = Omit<CreateUserRequest, "operation_country">;
 
 export const card = z.object({
   id: z.string().regex(/^crd-.*/),
@@ -207,13 +208,15 @@ export type AuthorizationResponse = z.infer<typeof authorizationResponse>;
 
 export const paginated = <T extends z.ZodType<object>>(data: T) =>
   z.object({
-    data: data.array(),
+    data: z.array(data),
     meta: z.object({
       pagination: z.object({
         total_pages: z.number(),
-        current: z.number(),
+        current_page: z.number(),
       }),
     }),
   });
+
+export const responseData = <T extends z.ZodType<object>>(data: T) => z.object({ data });
 
 export type Paginated<T extends z.ZodType<object>> = z.infer<ReturnType<typeof paginated<T>>>;
