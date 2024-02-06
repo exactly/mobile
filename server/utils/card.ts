@@ -1,21 +1,22 @@
 import request from "./request.js";
 import type { Card, CreateCardRequest, Paginated, User } from "./types.js";
-import { card as cardSchema, paginated } from "./types.js";
+import { card as cardSchema, paginated, responseData } from "./types.js";
 
 export function getCard(id: Card["id"]) {
   return request(`/cards/v1/${id}`, { method: "GET" }, cardSchema);
 }
 
-export function getCardByUserID(userId: User["id"]) {
-  return request<Paginated<typeof cardSchema>>(
+export async function getCardsByUserID(userId: User["id"]) {
+  const response = await request<Paginated<typeof cardSchema>>(
     `/cards/v1?filter[user_id]=${userId}`,
     { method: "GET" },
     paginated(cardSchema),
   );
+  return response.data;
 }
 
 export function createCard(card: CreateCardRequest) {
-  return request<Card>(
+  return request<{ data: Card }>(
     "/cards/v1",
     {
       method: "POST",
@@ -24,6 +25,6 @@ export function createCard(card: CreateCardRequest) {
         "x-idempotency-key": card.user_id, // TODO use a real idempotency key
       },
     },
-    cardSchema,
+    responseData(cardSchema),
   );
 }
