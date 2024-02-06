@@ -46,12 +46,11 @@ export const transaction = pgTable("transactions", {
 export const credential = pgTable("credentials", {
   credentialID: text("credentialID").notNull(),
   transports: text("transports").array(),
-  userID: text("userID").notNull(),
   credentialPublicKey: text("credentialPublicKey").notNull(),
   counter: numeric("counter").notNull(),
 });
 
 export const challenge = pgTable("challenge", {
-  userID: text("userID").primaryKey(),
+  id: text("id").primaryKey(),
   value: text("value").notNull(),
 });
