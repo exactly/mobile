@@ -34,6 +34,10 @@
     "@peculiar/webcrypto": "^1.4.3",
     "@react-native-async-storage/async-storage": "1.18.2",
     "@sentry/react-native": "^5.16.0",
+    "@simplewebauthn/browser": "^8.3.4",
+    "@simplewebauthn/types": "^9.0.1",
+    "@tanstack/react-form": "^0.13.3",
+    "@tanstack/zod-form-adapter": "^0.13.3",
     "@tamagui/config": "^1.85.12",
     "@tanstack/react-query": "5.8.4",
     "@turnkey/api-key-stamper": "^0.3.1",
@@ -65,6 +69,7 @@
     "react-native-quick-crypto": "^0.6.1",
     "react-native-safe-area-context": "4.6.3",
     "react-native-screens": "~3.22.0",
+    "react-native-svg": "13.9.0",
     "react-native-web": "^0.19.10",
     "react-onesignal": "^3.0.1",
     "sentry-expo": "^7.1.1",
@@ -106,8 +111,10 @@
     "expo-build-properties": "~0.8.3",
     "prettier": "^3.2.2",
     "react-devtools": "^5.0.0",
+    "react-native-svg-transformer": "^1.3.0",
     "sharp-cli": "^2.1.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "@simplewebauthn/typescript-types": "^8.3.4"
   },
   "overrides": {
     "react-native-reanimated": "~3.5.4",
