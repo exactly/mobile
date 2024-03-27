@@ -47,20 +47,37 @@ contract ExaPluginTest is Test {
 
   Auditor public auditor;
   Market public market;
+  Market public marketUSDC;
   MockERC20 public asset;
+  MockERC20 public usdc;
   DebtManager public debtManager;
+
+  // TODO
+  // use mock asset with price != 1
+  // use price feed for that asset with 8 decimals
+
+  // TODO
+  // add the debt manager to the plugin so we can roll fixed to floating
 
   function setUp() external {
     auditor = Auditor(address(new ERC1967Proxy(address(new Auditor(18)), "")));
     auditor.initialize(Auditor.LiquidationIncentive(0.09e18, 0.01e18));
     vm.label(address(auditor), "Auditor");
     InterestRateModel irm = InterestRateModel(address(new MockInterestRateModel(0.1e18)));
-    asset = new MockERC20("EXA", "EXA", 18);
+    // exa
+    asset = new MockERC20("Exactly Token", "EXA", 18);
     vm.label(address(asset), "EXA");
     market = Market(address(new ERC1967Proxy(address(new Market(asset, auditor)), "")));
     market.initialize(3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
     vm.label(address(market), "MarketEXA");
-    auditor.enableMarket(market, new MockPriceFeed(18, 1e18), 0.8e18);
+    auditor.enableMarket(market, new MockPriceFeed(18, 5e18), 0.8e18);
+    // usdc
+    usdc = new MockERC20("USD Coin", "USDC", 6);
+    vm.label(address(usdc), "USDC");
+    marketUSDC = Market(address(new ERC1967Proxy(address(new Market(usdc, auditor)), "")));
+    marketUSDC.initialize(3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    vm.label(address(marketUSDC), "MarketUSDC");
+    auditor.enableMarket(marketUSDC, new MockPriceFeed(18, 1e18), 0.9e18);
 
     IBalancerVault balancer = IBalancerVault(address(new MockBalancerVault()));
     asset.mint(address(balancer), 1_000_000e18);
@@ -83,13 +100,13 @@ contract ExaPluginTest is Test {
     owners = new address[](1);
     owners[0] = owner1;
     account1 = UpgradeableModularAccount(payable(factory.createAccount(0, owners)));
-    vm.deal(address(account1), 100 ether);
+    vm.deal(address(account1), 10_000 ether);
     vm.label(address(account1), "account1");
 
     (keeper1, keeper1Key) = makeAddrAndKey("keeper1");
     vm.label(keeper1, "keeper1");
 
-    exaPlugin = new ExaPlugin(auditor);
+    exaPlugin = new ExaPlugin(auditor, beneficiary);
 
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper1);
     bytes32 manifestHash = keccak256(abi.encode(exaPlugin.pluginManifest()));
@@ -106,7 +123,8 @@ contract ExaPluginTest is Test {
       dependencies: dependencies
     });
 
-    asset.mint(address(account1), 1000e18);
+    asset.mint(address(account1), 10_000e18);
+    usdc.mint(address(account1), 100_000e6);
   }
 
   function testEnterMarketSuccess() external {
@@ -149,6 +167,63 @@ contract ExaPluginTest is Test {
       )
     );
     exaPlugin.deposit(account1, market, 100 ether);
+  }
+
+  function testBorrowSuccess() external {
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, 100 ether);
+    exaPlugin.deposit(account1, market, 100 ether);
+
+    uint256 prevBalance = asset.balanceOf(beneficiary);
+    uint256 borrowAmount = 10 ether;
+    exaPlugin.borrow(account1, market, borrowAmount);
+    assertEq(asset.balanceOf(beneficiary), prevBalance + borrowAmount);
+  }
+
+  function testBorrowLimitExceeded() external {
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, 2000 ether);
+    exaPlugin.deposit(account1, market, 2000 ether);
+
+    exaPlugin.borrow(account1, market, 200 ether);
+
+    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    exaPlugin.borrow(account1, market, 1 ether);
+  }
+
+  function testBorrowCrossMarketSuccess() external {
+    address bob = address(0x420);
+    vm.startPrank(bob);
+    usdc.mint(bob, 10_000e6);
+    usdc.approve(address(marketUSDC), 10_000e6);
+    marketUSDC.deposit(10_000e6, bob);
+
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, 2000 ether);
+    exaPlugin.deposit(account1, market, 2000 ether);
+    exaPlugin.enterMarket(account1, market);
+
+    uint256 balance = usdc.balanceOf(beneficiary);
+    exaPlugin.borrow(account1, marketUSDC, 1000e6);
+    assertEq(usdc.balanceOf(beneficiary), balance + 1000e6);
+  }
+
+  function testBorrowCrossMarketLimitExceeded() external {
+    address bob = address(0x420);
+    vm.startPrank(bob);
+    usdc.mint(bob, 10_000e6);
+    usdc.approve(address(marketUSDC), 10_000e6);
+    marketUSDC.deposit(10_000e6, bob);
+
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, 2000 ether);
+    exaPlugin.deposit(account1, market, 2000 ether);
+    exaPlugin.enterMarket(account1, market);
+
+    exaPlugin.borrow(account1, marketUSDC, 1000e6);
+
+    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    exaPlugin.borrow(account1, marketUSDC, 1e6);
   }
 
   function _getUnsignedOp(UpgradeableModularAccount account, bytes memory callData)

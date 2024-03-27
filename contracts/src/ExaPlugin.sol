@@ -12,13 +12,20 @@ import {
 } from "@alchemy/modular-account/interfaces/IPlugin.sol";
 import { IMultiOwnerPlugin } from "@alchemy/modular-account/plugins/owner/IMultiOwnerPlugin.sol";
 
-import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
-import { Auditor, Market, ERC20 } from "@exactly/protocol/Market.sol";
+import { Auditor, IPriceFeed } from "@exactly/protocol/Auditor.sol";
+import { Market, ERC20 } from "@exactly/protocol/Market.sol";
+
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
+import { FixedPointMathLib } from "solmate/src/utils/FixedPointMathLib.sol";
+import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
 
 /// @title Exa Plugin
 /// @author Exactly
 contract ExaPlugin is BasePlugin, AccessControl {
+  using FixedPointMathLib for uint256;
+  using SafeCast for int256;
   using SafeTransferLib for ERC20;
 
   // metadata used by the pluginMetadata() method down below
@@ -32,10 +39,18 @@ contract ExaPlugin is BasePlugin, AccessControl {
 
   uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
 
-  constructor(Auditor auditor_) {
+  uint256 public constant BORROW_LIMIT = 1000e18;
+
+  address public beneficiary;
+  uint256 public immutable INTERVAL = 30 days;
+  mapping(IPluginExecutor account => uint256 limit) public borrowLimits;
+  mapping(IPluginExecutor account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
+
+  constructor(Auditor auditor_, address beneficiary_) {
     auditor = auditor_;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    setBeneficiary(beneficiary_);
   }
 
   function enterMarket(IPluginExecutor account, Market market) external onlyRole(KEEPER_ROLE) {
@@ -60,8 +75,29 @@ contract ExaPlugin is BasePlugin, AccessControl {
     );
   }
 
+  function borrow(IPluginExecutor account, Market market, uint256 amount) external onlyRole(KEEPER_ROLE) {
+    (, uint8 decimals,,, IPriceFeed priceFeed) = auditor.markets(market);
+
+    uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
+      + amount.mulDivDown(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
+
+    if (newAmount > borrowLimits[account]) revert("ExaPlugin: borrow limit exceeded");
+
+    borrows[account][block.timestamp % INTERVAL] = newAmount;
+
+    account.executeFromPluginExternal(
+      address(market), 0, abi.encodeCall(market.borrow, (amount, beneficiary, address(account)))
+    );
+  }
+
+  function setBeneficiary(address beneficiary_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    beneficiary = beneficiary_;
+  }
+
   /// @inheritdoc BasePlugin
-  function onInstall(bytes calldata) external pure override { }
+  function onInstall(bytes calldata) external override {
+    borrowLimits[IPluginExecutor(msg.sender)] = 1000e18;
+  }
 
   /// @inheritdoc BasePlugin
   function onUninstall(bytes calldata) external pure override { }
