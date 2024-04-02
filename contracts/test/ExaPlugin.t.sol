@@ -15,7 +15,7 @@ import { FunctionReferenceLib } from "@alchemy/modular-account/helpers/FunctionR
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
-import { Market, ERC20, ERC4626 } from "@exactly/protocol/Market.sol";
+import { Market, ERC20, ERC4626, FixedLib } from "@exactly/protocol/Market.sol";
 import { MockBalancerVault } from "@exactly/protocol/mocks/MockBalancerVault.sol";
 import { MockInterestRateModel } from "@exactly/protocol/mocks/MockInterestRateModel.sol";
 import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
@@ -226,6 +226,42 @@ contract ExaPluginTest is Test {
     exaPlugin.borrow(account1, marketUSDC, 1e6);
   }
 
+  function testBorrowAtMaturitySuccess() external {
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, 100 ether);
+    exaPlugin.deposit(account1, market, 100 ether);
+
+    uint256 prevBalance = asset.balanceOf(beneficiary);
+    uint256 borrowAmount = 10 ether;
+    exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, borrowAmount, 100 ether);
+    assertEq(asset.balanceOf(beneficiary), prevBalance + borrowAmount);
+  }
+
+  function testBorrowAtMaturityLimitExceeded() external {
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, 2000 ether);
+    exaPlugin.deposit(account1, market, 2000 ether);
+
+    exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 200 ether, 210 ether);
+
+    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 1 ether, 1.1 ether);
+  }
+
+  function testBorrowAtMaturityAsNotKeeper() external {
+    vm.prank(keeper1);
+    exaPlugin.approve(account1, market, 100 ether);
+
+    vm.expectRevert(
+      abi.encodePacked(
+        "AccessControl: account ",
+        Strings.toHexString(address(this)),
+        " is missing role ",
+        Strings.toHexString(uint256(exaPlugin.KEEPER_ROLE()), 32)
+      )
+    );
+    exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 10 ether, 100 ether);
+  }
   function _getUnsignedOp(UpgradeableModularAccount account, bytes memory callData)
     internal
     view

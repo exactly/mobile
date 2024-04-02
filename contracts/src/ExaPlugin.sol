@@ -76,6 +76,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
   }
 
   function borrow(IPluginExecutor account, Market market, uint256 amount) external onlyRole(KEEPER_ROLE) {
+    /// @dev the next call validates the market
     (, uint8 decimals,,, IPriceFeed priceFeed) = auditor.markets(market);
 
     uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
@@ -87,6 +88,27 @@ contract ExaPlugin is BasePlugin, AccessControl {
 
     account.executeFromPluginExternal(
       address(market), 0, abi.encodeCall(market.borrow, (amount, beneficiary, address(account)))
+    );
+  }
+
+  function borrowAtMaturity(IPluginExecutor account, Market market, uint256 maturity, uint256 amount, uint256 maxAmount)
+    external
+    onlyRole(KEEPER_ROLE)
+  {
+    {
+      /// @dev the next call validates the market
+      (, uint8 decimals,,, IPriceFeed priceFeed) = auditor.markets(market);
+      uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
+        + amount.mulDivDown(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
+
+      if (newAmount > borrowLimits[account]) revert("ExaPlugin: borrow limit exceeded");
+
+      borrows[account][block.timestamp % INTERVAL] = newAmount;
+    }
+    account.executeFromPluginExternal(
+      address(market),
+      0,
+      abi.encodeCall(market.borrowAtMaturity, (maturity, amount, maxAmount, beneficiary, address(account)))
     );
   }
 
