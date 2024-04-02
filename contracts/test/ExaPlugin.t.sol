@@ -28,12 +28,16 @@ import { FunctionReferenceLib } from "modular-account-libs/libraries/FunctionRef
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
-import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
+import { PublicKey, WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
-import { Auditor, ExaPlugin, Market } from "../src/ExaPlugin.sol";
+import {
+  Auditor, BorrowLimitExceeded, ExaPlugin, FunctionId, Market, NoProposal, Timelocked
+} from "../src/ExaPlugin.sol";
 
+// solhint-disable max-states-count
 contract ExaPluginTest is Test {
   using stdStorage for StdStorage;
+  using TestLib for address;
   using ECDSA for bytes32;
 
   address internal owner1;
@@ -44,6 +48,7 @@ contract ExaPluginTest is Test {
   address payable internal beneficiary;
   UpgradeableModularAccount internal account1;
   IEntryPoint internal entryPoint;
+  WebauthnOwnerPlugin internal ownerPlugin;
   ExaPlugin internal exaPlugin;
 
   Auditor internal auditor;
@@ -52,13 +57,6 @@ contract ExaPluginTest is Test {
   MockERC20 internal asset;
   MockERC20 internal usdc;
   DebtManager internal debtManager;
-
-  // TODO
-  // use mock asset with price != 1
-  // use price feed for that asset with 8 decimals
-
-  // TODO
-  // add the debt manager to the plugin so we can roll fixed to floating
 
   function setUp() external {
     auditor = Auditor(address(new ERC1967Proxy(address(new Auditor(18)), "")));
@@ -88,7 +86,7 @@ contract ExaPluginTest is Test {
     vm.label(address(debtManager), "DebtManager");
 
     entryPoint = IEntryPoint(address(new EntryPoint()));
-    WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
+    ownerPlugin = new WebauthnOwnerPlugin();
     MultiOwnerModularAccountFactory factory = new MultiOwnerModularAccountFactory(
       address(this),
       address(ownerPlugin),
@@ -188,7 +186,7 @@ contract ExaPluginTest is Test {
 
     exaPlugin.borrow(account1, market, 200 ether);
 
-    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    vm.expectRevert(BorrowLimitExceeded.selector);
     exaPlugin.borrow(account1, market, 1 ether);
   }
 
@@ -223,7 +221,7 @@ contract ExaPluginTest is Test {
 
     exaPlugin.borrow(account1, marketUSDC, 1000e6);
 
-    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    vm.expectRevert(BorrowLimitExceeded.selector);
     exaPlugin.borrow(account1, marketUSDC, 1e6);
   }
 
@@ -245,7 +243,7 @@ contract ExaPluginTest is Test {
 
     exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 200 ether, 210 ether);
 
-    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    vm.expectRevert(BorrowLimitExceeded.selector);
     exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 1 ether, 1.1 ether);
   }
 
@@ -266,21 +264,71 @@ contract ExaPluginTest is Test {
 
   function testWithdrawSuccess() external {
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
-    exaPlugin.deposit(account1, market, 100 ether);
+    uint256 amount = 100 ether;
+    exaPlugin.approve(account1, market, amount);
+    exaPlugin.deposit(account1, market, amount);
+
+    _propose(market, amount);
+    skip(5 minutes);
 
     uint256 prevBalance = asset.balanceOf(beneficiary);
-    exaPlugin.withdraw(account1, market, 100 ether);
-    assertEq(asset.balanceOf(beneficiary), prevBalance + 100 ether);
+    exaPlugin.withdraw(account1, market, amount);
+    assertEq(asset.balanceOf(beneficiary), prevBalance + amount);
   }
 
-  function testWithdrawFailure() external {
+  function testWithdrawNoProposal() external {
     vm.startPrank(keeper1);
     exaPlugin.approve(account1, market, 100 ether);
     exaPlugin.deposit(account1, market, 100 ether);
 
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.VALIDATION_PROPOSAL,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    exaPlugin.withdraw(account1, market, 100 ether);
+  }
+
+  function testWithdrawMoreThanBalance() external {
+    uint256 amount = 100 ether;
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, amount);
+    exaPlugin.deposit(account1, market, amount);
+
+    _propose(market, amount);
+    skip(5 minutes);
+
     vm.expectRevert(stdError.arithmeticError);
-    exaPlugin.withdraw(account1, market, 200 ether);
+    exaPlugin.withdraw(account1, market, amount + 1);
+  }
+
+  function testWithdrawTimelocked() external {
+    vm.startPrank(keeper1);
+    uint256 amount = 100 ether;
+    exaPlugin.approve(account1, market, amount);
+    exaPlugin.deposit(account1, market, amount);
+
+    _propose(market, amount);
+    skip(1);
+
+    uint256 prevBalance = asset.balanceOf(beneficiary);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.VALIDATION_PROPOSAL,
+        abi.encodePacked(Timelocked.selector)
+      )
+    );
+    exaPlugin.withdraw(account1, market, amount);
+    assertEq(asset.balanceOf(beneficiary), prevBalance);
+
+    (, uint256 ts, uint256 proposed) = exaPlugin.proposals(address(account1));
+    assertEq(ts, block.timestamp - 1);
+    assertEq(proposed, amount);
   }
 
   function testWithdrawNotKeeper() external {
@@ -296,6 +344,12 @@ contract ExaPluginTest is Test {
       )
     );
     exaPlugin.withdraw(account1, market, 100 ether);
+  }
+
+  function _propose(Market market_, uint256 amount) internal {
+    UserOperation[] memory userOps = new UserOperation[](1);
+    userOps[0] = _getSignedOp(account1, abi.encodeCall(ExaPlugin.propose, (market_, amount)), owner1Key);
+    entryPoint.handleOps(userOps, beneficiary);
   }
 
   function _getUnsignedOp(UpgradeableModularAccount account, bytes memory callData)
@@ -324,12 +378,21 @@ contract ExaPluginTest is Test {
     returns (UserOperation memory)
   {
     UserOperation memory op = _getUnsignedOp(account, callData);
-    op.signature = _sign(privateKey, entryPoint.getUserOpHash(op).toEthSignedMessageHash());
+    op.signature = abi.encodePacked(
+      ownerPlugin.ownerIndexOf(address(account), vm.addr(privateKey).toPublicKey()),
+      _sign(privateKey, entryPoint.getUserOpHash(op).toEthSignedMessageHash())
+    );
     return op;
   }
 
   function _sign(uint256 privateKey, bytes32 digest) internal pure returns (bytes memory) {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
     return abi.encodePacked(r, s, v);
+  }
+}
+
+library TestLib {
+  function toPublicKey(address ownerAddress) internal pure returns (PublicKey memory) {
+    return PublicKey(uint256(uint160(ownerAddress)), 0);
   }
 }
