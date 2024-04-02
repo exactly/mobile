@@ -112,6 +112,16 @@ contract ExaPlugin is BasePlugin, AccessControl {
     );
   }
 
+  function withdraw(IPluginExecutor account, Market market, uint256 amount)
+    external
+    onlyRole(KEEPER_ROLE)
+    onlyMarket(market)
+  {
+    account.executeFromPluginExternal(
+      address(market), 0, abi.encodeCall(market.withdraw, (amount, beneficiary, address(account)))
+    );
+  }
+
   function setBeneficiary(address beneficiary_) public onlyRole(DEFAULT_ADMIN_ROLE) {
     beneficiary = beneficiary_;
   }

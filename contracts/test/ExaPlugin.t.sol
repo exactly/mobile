@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.25; // solhint-disable-line one-contract-per-file
 
-import { Test, StdStorage, stdStorage } from "forge-std/Test.sol";
+import { Test, stdError, StdStorage, stdStorage } from "forge-std/Test.sol";
 
 import { UpgradeableModularAccount } from "@alchemy/modular-account/account/UpgradeableModularAccount.sol";
 import { IEntryPoint } from "@alchemy/modular-account/interfaces/erc4337/IEntryPoint.sol";
@@ -262,6 +262,41 @@ contract ExaPluginTest is Test {
     );
     exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 10 ether, 100 ether);
   }
+
+  function testWithdrawSuccess() external {
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, 100 ether);
+    exaPlugin.deposit(account1, market, 100 ether);
+
+    uint256 prevBalance = asset.balanceOf(beneficiary);
+    exaPlugin.withdraw(account1, market, 100 ether);
+    assertEq(asset.balanceOf(beneficiary), prevBalance + 100 ether);
+  }
+
+  function testWithdrawFailure() external {
+    vm.startPrank(keeper1);
+    exaPlugin.approve(account1, market, 100 ether);
+    exaPlugin.deposit(account1, market, 100 ether);
+
+    vm.expectRevert(stdError.arithmeticError);
+    exaPlugin.withdraw(account1, market, 200 ether);
+  }
+
+  function testWithdrawNotKeeper() external {
+    vm.prank(keeper1);
+    exaPlugin.approve(account1, market, 100 ether);
+
+    vm.expectRevert(
+      abi.encodePacked(
+        "AccessControl: account ",
+        Strings.toHexString(address(this)),
+        " is missing role ",
+        Strings.toHexString(uint256(exaPlugin.KEEPER_ROLE()), 32)
+      )
+    );
+    exaPlugin.withdraw(account1, market, 100 ether);
+  }
+
   function _getUnsignedOp(UpgradeableModularAccount account, bytes memory callData)
     internal
     view
