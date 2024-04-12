@@ -3,16 +3,6 @@ pragma solidity ^0.8.25; // solhint-disable-line one-contract-per-file
 
 import { Test, stdError, StdStorage, stdStorage } from "forge-std/Test.sol";
 
-import { UpgradeableModularAccount } from "@alchemy/modular-account/account/UpgradeableModularAccount.sol";
-import { IEntryPoint } from "@alchemy/modular-account/interfaces/erc4337/IEntryPoint.sol";
-import { UserOperation } from "@alchemy/modular-account/interfaces/erc4337/UserOperation.sol";
-import { EntryPoint } from "@eth-infinitism/account-abstraction/core/EntryPoint.sol";
-
-import { IMultiOwnerPlugin } from "@alchemy/modular-account/plugins/owner/IMultiOwnerPlugin.sol";
-import { MultiOwnerModularAccountFactory } from "@alchemy/modular-account/factory/MultiOwnerModularAccountFactory.sol";
-import { FunctionReference } from "@alchemy/modular-account/interfaces/IPluginManager.sol";
-import { FunctionReferenceLib } from "@alchemy/modular-account/helpers/FunctionReferenceLib.sol";
-
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
 import { Market, ERC20, ERC4626, FixedLib } from "@exactly/protocol/Market.sol";
@@ -26,6 +16,16 @@ import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+
+import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
+
+import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
+import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
+import { UserOperation } from "modular-account/src/interfaces/erc4337/UserOperation.sol";
+import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
+import { MultiOwnerModularAccountFactory } from "modular-account/src/factory/MultiOwnerModularAccountFactory.sol";
+import { FunctionReference } from "modular-account/src/interfaces/IPluginManager.sol";
+import { FunctionReferenceLib } from "modular-account/src/helpers/FunctionReferenceLib.sol";
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 

@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.25;
 
-import { BasePlugin } from "@alchemy/modular-account/plugins/BasePlugin.sol";
-import { IPluginExecutor } from "@alchemy/modular-account/interfaces/IPluginExecutor.sol";
+import { Auditor, IPriceFeed } from "@exactly/protocol/Auditor.sol";
+import { Market, ERC20 } from "@exactly/protocol/Market.sol";
+
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
+import { BasePlugin } from "modular-account/src/plugins/BasePlugin.sol";
+import { IPluginExecutor } from "modular-account/src/interfaces/IPluginExecutor.sol";
 import {
   ManifestFunction,
   ManifestAssociatedFunctionType,
   ManifestAssociatedFunction,
   PluginManifest,
   PluginMetadata
-} from "@alchemy/modular-account/interfaces/IPlugin.sol";
-import { IMultiOwnerPlugin } from "@alchemy/modular-account/plugins/owner/IMultiOwnerPlugin.sol";
-
-import { Auditor, IPriceFeed } from "@exactly/protocol/Auditor.sol";
-import { Market, ERC20 } from "@exactly/protocol/Market.sol";
-
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+} from "modular-account/src/interfaces/IPlugin.sol";
+import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
 
 import { FixedPointMathLib } from "solmate/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
