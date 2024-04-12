@@ -4,3 +4,6 @@
 [submodule "contracts/lib/modular-account"]
 	path = contracts/lib/modular-account
 	url = https://github.com/alchemyplatform/modular-account
+[submodule "contracts/lib/webauthn-owner-plugin"]
+	path = contracts/lib/webauthn-owner-plugin
+	url = https://github.com/exactly/webauthn-owner-plugin

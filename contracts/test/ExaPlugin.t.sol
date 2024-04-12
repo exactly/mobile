@@ -7,7 +7,7 @@ import { UpgradeableModularAccount } from "@alchemy/modular-account/account/Upgr
 import { IEntryPoint } from "@alchemy/modular-account/interfaces/erc4337/IEntryPoint.sol";
 import { UserOperation } from "@alchemy/modular-account/interfaces/erc4337/UserOperation.sol";
 import { EntryPoint } from "@eth-infinitism/account-abstraction/core/EntryPoint.sol";
-import { MultiOwnerPlugin } from "@alchemy/modular-account/plugins/owner/MultiOwnerPlugin.sol";
+
 import { IMultiOwnerPlugin } from "@alchemy/modular-account/plugins/owner/IMultiOwnerPlugin.sol";
 import { MultiOwnerModularAccountFactory } from "@alchemy/modular-account/factory/MultiOwnerModularAccountFactory.sol";
 import { FunctionReference } from "@alchemy/modular-account/interfaces/IPluginManager.sol";
@@ -28,6 +28,8 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
+
+import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaPlugin, Auditor, Market } from "../src/ExaPlugin.sol";
 
@@ -87,12 +89,12 @@ contract ExaPluginTest is Test {
     vm.label(address(debtManager), "DebtManager");
 
     entryPoint = IEntryPoint(address(new EntryPoint()));
-    MultiOwnerPlugin multiOwnerPlugin = new MultiOwnerPlugin();
+    WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
     MultiOwnerModularAccountFactory factory = new MultiOwnerModularAccountFactory(
       address(this),
-      address(multiOwnerPlugin),
+      address(ownerPlugin),
       address(new UpgradeableModularAccount(entryPoint)),
-      keccak256(abi.encode(multiOwnerPlugin.pluginManifest())),
+      keccak256(abi.encode(ownerPlugin.pluginManifest())),
       entryPoint
     );
     beneficiary = payable(makeAddr("beneficiary"));
@@ -113,7 +115,7 @@ contract ExaPluginTest is Test {
 
     FunctionReference[] memory dependencies = new FunctionReference[](1);
     dependencies[0] =
-      FunctionReferenceLib.pack(address(multiOwnerPlugin), uint8(IMultiOwnerPlugin.FunctionId.USER_OP_VALIDATION_OWNER));
+      FunctionReferenceLib.pack(address(ownerPlugin), uint8(IMultiOwnerPlugin.FunctionId.USER_OP_VALIDATION_OWNER));
 
     vm.prank(owner1);
     account1.installPlugin({

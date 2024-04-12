@@ -1,5 +1,7 @@
 @eth-infinitism/account-abstraction/=lib/modular-account/lib/account-abstraction/contracts/
 @openzeppelin/contracts/=lib/modular-account/lib/openzeppelin-contracts/contracts/
+openzeppelin-contracts/=lib/webauthn-owner-plugin/lib/webauthn-sol/lib/openzeppelin-contracts/
+
 @alchemy/modular-account/=lib/modular-account/src/
 
 @exactly/protocol/=../node_modules/@exactly/protocol/contracts/
