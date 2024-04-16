@@ -1,4 +1,4 @@
-import { goerli } from "@wagmi/core/chains";
+import { optimismSepolia } from "@wagmi/core/chains";
 import { Platform } from "react-native";
 
 export const rpId = __DEV__ && Platform.OS === "web" ? "localhost" : "exactly.app";
@@ -17,17 +17,17 @@ export const turnkeyOrganizationId = process.env.EXPO_PUBLIC_TURNKEY_ORGANIZATIO
 export const oneSignalAppId = process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID;
 
 export const chain = {
-  ...goerli,
+  ...optimismSepolia,
   fees: undefined,
-  network: "goerli",
+  network: "op-sepolia",
   rpcUrls: {
-    ...goerli.rpcUrls,
+    ...optimismSepolia.rpcUrls,
     public: {
-      http: ["https://rpc.ankr.com/eth_goerli"],
+      http: ["https://sepolia.optimism.io/"],
     },
     alchemy: {
-      http: ["https://eth-goerli.g.alchemy.com/v2"],
-      webSocket: ["wss://eth-goerli.g.alchemy.com/v2"],
+      http: ["https://opt-sepolia.g.alchemy.com/v2"],
+      webSocket: ["wss://opt-sepolia.g.alchemy.com/v2"],
     },
   },
 };

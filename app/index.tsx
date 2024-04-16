@@ -1,6 +1,6 @@
-import Auditor from "@exactly/protocol/deployments/goerli/Auditor.json";
-import MarketUSDC from "@exactly/protocol/deployments/goerli/MarketUSDC.json";
-import MarketWETH from "@exactly/protocol/deployments/goerli/MarketWETH.json";
+import Auditor from "@exactly/protocol/deployments/op-sepolia/Auditor.json";
+import MarketUSDC from "@exactly/protocol/deployments/op-sepolia/MarketUSDC.e.json";
+import MarketWETH from "@exactly/protocol/deployments/op-sepolia/MarketWETH.json";
 import { ApiKeyStamper } from "@turnkey/api-key-stamper";
 import { TurnkeyClient, createActivityPoller, getWebAuthnAttestation } from "@turnkey/http";
 import { deviceName } from "expo-device";

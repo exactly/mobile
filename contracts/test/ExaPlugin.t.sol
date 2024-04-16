@@ -70,14 +70,14 @@ contract ExaPluginTest is Test {
     asset = new MockERC20("Exactly Token", "EXA", 18);
     vm.label(address(asset), "EXA");
     market = Market(address(new ERC1967Proxy(address(new Market(asset, auditor)), "")));
-    market.initialize(3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    market.initialize("EXA", 3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
     vm.label(address(market), "MarketEXA");
     auditor.enableMarket(market, new MockPriceFeed(18, 5e18), 0.8e18);
     // usdc
     usdc = new MockERC20("USD Coin", "USDC", 6);
     vm.label(address(usdc), "USDC");
     marketUSDC = Market(address(new ERC1967Proxy(address(new Market(usdc, auditor)), "")));
-    marketUSDC.initialize(3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    marketUSDC.initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
     vm.label(address(marketUSDC), "MarketUSDC");
     auditor.enableMarket(marketUSDC, new MockPriceFeed(18, 1e18), 0.9e18);
 

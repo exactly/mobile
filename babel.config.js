@@ -4,7 +4,6 @@ module.exports = function (api) {
   return {
     presets: ["babel-preset-expo"],
     plugins: [
-      "expo-router/babel",
       "transform-inline-environment-variables",
       ["@babel/plugin-transform-private-methods", { loose: true }],
       ["@tamagui/babel-plugin", { components: ["tamagui"], config: "tamagui.config.ts", logTimings: true }],

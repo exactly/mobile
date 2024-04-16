@@ -1,8 +1,9 @@
+import "expo-webauthn";
 import "../utils/polyfill";
-import "../webauthn/dist";
 
 import { AlchemyProvider } from "@alchemy/aa-alchemy";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import * as Sentry from "@sentry/react-native";
 import InterBold from "@tamagui/font-inter/otf/Inter-Bold.otf";
 import Inter from "@tamagui/font-inter/otf/Inter-Medium.otf";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -11,7 +12,6 @@ import { type FontSource, useFonts } from "expo-font";
 import { Slot, SplashScreen } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
-import * as Sentry from "sentry-expo";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider, createConfig, custom } from "wagmi";
 
@@ -46,7 +46,7 @@ const wagmiConfig = createConfig({
 });
 const queryClient = new QueryClient();
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   const [loaded, error] = useFonts({
     Inter: Inter as FontSource,
     InterBold: InterBold as FontSource,
@@ -81,4 +81,4 @@ export default function RootLayout() {
       </TamaguiProvider>
     </>
   );
-}
+});

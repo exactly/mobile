@@ -1,17 +1,15 @@
-const { getDefaultConfig } = require("expo/metro-config");
+const { getSentryExpoConfig } = require("@sentry/react-native/metro");
 
-const defaultConfig = getDefaultConfig(__dirname);
+const config = getSentryExpoConfig(__dirname);
 
 /** @type {import('metro-config').InputConfigT} */
 module.exports = {
-  ...defaultConfig,
+  ...config,
   resolver: {
-    ...defaultConfig.resolver,
-    sourceExts: [...(defaultConfig.resolver?.sourceExts ?? []), "mjs"],
+    ...config.resolver,
+    sourceExts: [...(config.resolver?.sourceExts ?? []), "mjs"],
     blockList: [
-      ...(Array.isArray(defaultConfig.resolver?.blockList)
-        ? defaultConfig.resolver.blockList
-        : [defaultConfig.resolver?.blockList]),
+      ...(Array.isArray(config.resolver?.blockList) ? config.resolver.blockList : [config.resolver?.blockList]),
       new RegExp(`${__dirname}/contracts/`),
     ],
     extraNodeModules: {

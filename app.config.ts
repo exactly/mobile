@@ -28,7 +28,7 @@ export default {
       } as BuildPropertiesConfig,
     ],
     "expo-router",
-    "sentry-expo",
+    ["@sentry/react-native/expo", { organization: "exactly", project: "mobile" }],
     [
       "onesignal-expo-plugin",
       {
@@ -39,9 +39,6 @@ export default {
     ],
   ],
   experiments: { typedRoutes: true },
-  hooks: {
-    postPublish: [{ file: "sentry-expo/upload-sourcemaps", config: { organization: "exactly", project: "mobile" } }],
-  },
 
   extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
   owner: "exactly",

@@ -1,6 +1,6 @@
-import * as Sentry from "sentry-expo";
+import * as Sentry from "@sentry/react-native";
 
 export default function handleError(error: unknown) {
   console.error(error); // eslint-disable-line no-console
-  (Sentry.Native ?? Sentry.React).captureException(error); // eslint-disable-line @typescript-eslint/no-unnecessary-condition
+  Sentry.captureException(error);
 }

@@ -5,6 +5,7 @@ module.exports = {
     "@alchemy/aa-core",
     "@react-native-async-storage/async-storage",
     "@tanstack/react-query",
+    "eslint",
     "expo-application",
     "expo-build-properties",
     "expo-constants",
