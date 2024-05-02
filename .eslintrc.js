@@ -26,7 +26,7 @@ module.exports = {
     "import/prefer-default-export": "error",
     "no-console": "error",
     "no-shadow": "off", // @typescript-eslint/no-shadow
-    "react-native/no-raw-text": ["error", { skip: ["Button"] }],
+    "react-native/no-raw-text": ["error", { skip: ["Button", "Link", "SubmitButton", "LinkButton"] }],
     "unicorn/filename-case": "off", // use default export name
     "unicorn/prefer-top-level-await": "off", // unsupported in react-native
   },
