@@ -1,4 +1,4 @@
 {
-  "detectors_to_exclude": "solc-version,naming-convention",
+  "detectors_to_exclude": "naming-convention",
   "filter_paths": "lib/|node_modules/"
 }

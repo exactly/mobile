@@ -3,7 +3,7 @@ import { createConfiguration, DefaultApi, Notification as OSNotification } from 
 const APP_ID = process.env.ONE_SIGNAL_APP_ID;
 
 const config = createConfiguration({
-  appKey: process.env.ONE_SIGNAL_API_KEY,
+  restApiKey: process.env.ONE_SIGNAL_API_KEY,
 });
 
 const client = new DefaultApi(config);
@@ -22,7 +22,7 @@ export async function sendPushNotification({ userId, headings, contents }: Notif
   const notification = new OSNotification();
   notification.app_id = APP_ID;
   notification.target_channel = "push";
-  notification.include_external_user_ids = [userId];
+  notification.include_aliases = { external_id: [userId] };
 
   notification.headings = headings;
   notification.contents = contents;

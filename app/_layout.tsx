@@ -1,11 +1,11 @@
 import "expo-webauthn";
 import "../utils/polyfill";
 
-import { AlchemyProvider } from "@alchemy/aa-alchemy";
+import { createAlchemyPublicRpcClient } from "@alchemy/aa-alchemy";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import * as Sentry from "@sentry/react-native";
-import InterBold from "@tamagui/font-inter/otf/Inter-Bold.otf";
-import Inter from "@tamagui/font-inter/otf/Inter-Medium.otf";
+import InterBold from "@tamagui/font-inter/otf/Inter-Bold.otf"; // eslint-disable-line import/no-unresolved
+import Inter from "@tamagui/font-inter/otf/Inter-Medium.otf"; // eslint-disable-line import/no-unresolved
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { reconnect } from "@wagmi/core";
 import { type FontSource, useFonts } from "expo-font";
@@ -26,7 +26,7 @@ export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = { initialRouteName: "/" };
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(handleError);
 
 Sentry.init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -38,11 +38,12 @@ Sentry.init({
   autoSessionTracking: true,
 });
 
-const provider = new AlchemyProvider({ apiKey: alchemyAPIKey, chain });
+const client = createAlchemyPublicRpcClient({ chain, connectionConfig: { apiKey: alchemyAPIKey } });
+
 const wagmiConfig = createConfig({
   chains: [chain],
-  connectors: [alchemyConnector(provider)],
-  transports: { [chain.id]: custom(provider) },
+  connectors: [alchemyConnector(client)],
+  transports: { [chain.id]: custom(client) },
 });
 const queryClient = new QueryClient();
 
@@ -60,7 +61,7 @@ export default Sentry.wrap(function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
+    if (loaded) SplashScreen.hideAsync().catch(handleError);
   }, [loaded]);
 
   useEffect(() => {

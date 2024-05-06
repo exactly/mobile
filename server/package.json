@@ -12,20 +12,20 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@onesignal/node-onesignal": "^2.0.1-beta2",
-    "@sentry/node": "^7.110.1",
-    "@vercel/node": "^3.0.26",
+    "@onesignal/node-onesignal": "^5.0.0-alpha-01",
+    "@sentry/node": "^8.8.0",
+    "@vercel/node": "^3.1.7",
     "@vercel/postgres": "^0.8.0",
-    "@wagmi/core": "2.6.17",
-    "debug": "^4.3.4",
-    "drizzle-orm": "^0.30.8",
-    "viem": "2.9.19",
-    "zod": "^3.22.4"
+    "@wagmi/core": "2.10.5",
+    "debug": "^4.3.5",
+    "drizzle-orm": "^0.31.2",
+    "viem": "^2.13.8",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.12.7",
-    "drizzle-kit": "^0.20.14",
+    "@types/node": "^20.14.2",
+    "drizzle-kit": "^0.22.7",
     "typescript": "^5.4.5",
-    "vercel": "^34.0.0"
+    "vercel": "^34.2.6"
   }
 }

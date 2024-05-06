@@ -1,13 +1,10 @@
 import Auditor from "@exactly/protocol/deployments/op-sepolia/Auditor.json";
 import MarketUSDC from "@exactly/protocol/deployments/op-sepolia/MarketUSDC.e.json";
 import MarketWETH from "@exactly/protocol/deployments/op-sepolia/MarketWETH.json";
-import { ApiKeyStamper } from "@turnkey/api-key-stamper";
-import { TurnkeyClient, createActivityPoller, getWebAuthnAttestation } from "@turnkey/http";
-import { deviceName } from "expo-device";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useCallback } from "react";
 import { Button, Spinner, Text, XStack, YStack } from "tamagui";
-import { UAParser } from "ua-parser-js";
-import { formatEther, getAddress, parseUnits, zeroAddress } from "viem";
+import { bytesToHex, formatEther, getAddress, parseUnits, zeroAddress } from "viem";
 import {
   useAccount,
   useConnect,
@@ -18,8 +15,8 @@ import {
   useWriteContract,
 } from "wagmi";
 
-import base64URLEncode from "../utils/base64URLEncode";
-import { rpId, turnkeyAPIPrivateKey, turnkeyAPIPublicKey, turnkeyOrganizationId } from "../utils/constants";
+import base64URLDecode from "../utils/base64URLDecode";
+import { rpId } from "../utils/constants";
 import generateRandomBuffer from "../utils/generateRandomBuffer";
 import handleError from "../utils/handleError";
 
@@ -70,60 +67,36 @@ export default function Home() {
   const { writeContract, data: txHash, isPending: isSending } = useWriteContract();
   const { isSuccess, isLoading: isWaiting } = useWaitForTransactionReceipt({ hash: txHash });
 
-  const createAccount = useCallback(() => {
+  const createCredential = useCallback(() => {
     const name = `exactly, ${new Date().toISOString()}`;
     const challenge = generateRandomBuffer();
-    getWebAuthnAttestation({
-      publicKey: {
-        rp: { id: rpId, name: "exactly" },
-        user: { id: challenge, name, displayName: name },
-        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-        authenticatorSelection: { requireResidentKey: true, residentKey: "required", userVerification: "required" },
-        challenge,
-      },
-    })
-      .then(async (attestation) => {
-        const client = new TurnkeyClient(
-          { baseUrl: "https://api.turnkey.com" },
-          new ApiKeyStamper({ apiPublicKey: turnkeyAPIPublicKey, apiPrivateKey: turnkeyAPIPrivateKey }),
+    navigator.credentials
+      .create({
+        publicKey: {
+          rp: { id: rpId, name: "exactly" },
+          user: { id: challenge, name, displayName: name },
+          pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+          authenticatorSelection: { requireResidentKey: true, residentKey: "required", userVerification: "required" },
+          challenge,
+        },
+      })
+      .then(async (credential) => {
+        if (!credential) throw new Error("no credential");
+        const response = (credential as PublicKeyCredential).response as AuthenticatorAttestationResponse;
+        const publicKey = response.getPublicKey();
+        if (!publicKey) throw new Error("no public key");
+        const cryptoKey = await crypto.subtle.importKey(
+          "spki",
+          publicKey,
+          { name: "ECDSA", namedCurve: "P-256" },
+          true,
+          [],
         );
-        const activityPoller = createActivityPoller({ client, requestFn: client.createSubOrganization });
-        const {
-          result: { createSubOrganizationResultV4 },
-        } = await activityPoller({
-          type: "ACTIVITY_TYPE_CREATE_SUB_ORGANIZATION_V4",
-          timestampMs: String(Date.now()),
-          organizationId: turnkeyOrganizationId,
-          parameters: {
-            subOrganizationName: attestation.credentialId,
-            rootQuorumThreshold: 1,
-            rootUsers: [
-              {
-                apiKeys: [],
-                userName: "account",
-                authenticators: [
-                  {
-                    authenticatorName: deviceName ?? new UAParser(navigator.userAgent).getBrowser().name ?? "unknown",
-                    challenge: base64URLEncode(challenge),
-                    attestation,
-                  },
-                ],
-              },
-            ],
-            wallet: {
-              walletName: "default",
-              accounts: [
-                {
-                  curve: "CURVE_SECP256K1",
-                  addressFormat: "ADDRESS_FORMAT_ETHEREUM",
-                  pathFormat: "PATH_FORMAT_BIP32",
-                  path: "m/44'/60'/0'/0/0",
-                },
-              ],
-            },
-          },
-        });
-        if (!createSubOrganizationResultV4?.wallet?.addresses[0]) throw new Error("sub-org creation failed");
+        const jwt = await crypto.subtle.exportKey("jwk", cryptoKey);
+        if (!jwt.x || !jwt.y) throw new Error("no x or y");
+        const x = bytesToHex(new Uint8Array(base64URLDecode(jwt.x)));
+        const y = bytesToHex(new Uint8Array(base64URLDecode(jwt.y)));
+        await AsyncStorage.setItem("account.store", JSON.stringify({ credentialId: credential.id, x, y }));
       })
       .catch(handleError);
   }, []);
@@ -152,7 +125,7 @@ export default function Home() {
       <YStack flex={1} alignItems="center" space>
         <Text textAlign="center">{txHash && `${txHash} ${isSuccess ? "✅" : ""}`}</Text>
         <Text textAlign="center">{accountLiquidity && accountLiquidity.map((v) => formatEther(v)).join(", ")}</Text>
-        <Button onPress={createAccount}>create account</Button>
+        <Button onPress={createCredential}>create account</Button>
         <Button disabled={!connector || isConnecting} onPress={address ? disconnectAccount : connectAccount}>
           {isConnecting ? <Spinner size="small" /> : address ?? "connect"}
         </Button>

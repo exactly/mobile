@@ -1,9 +1,10 @@
 @openzeppelin/contracts/=lib/modular-account/lib/openzeppelin-contracts/contracts/
-openzeppelin-contracts/=lib/webauthn-owner-plugin/lib/webauthn-sol/lib/openzeppelin-contracts/
+openzeppelin-contracts/=lib/webauthn-sol/lib/openzeppelin-contracts/
 
 @exactly/protocol/=../node_modules/@exactly/protocol/contracts/
 @openzeppelin/contracts-upgradeable/=../node_modules/@openzeppelin/contracts-upgradeable/
-solmate/=../node_modules/@exactly/protocol/node_modules/solmate
+solmate/=../node_modules/@exactly/protocol/node_modules/solmate/
+webauthn-owner-plugin/=../node_modules/webauthn-owner-plugin/src/
 
 forge-std/=lib/forge-std/src/
 ds-test/=lib/forge-std/lib/ds-test/src/

@@ -10,6 +10,6 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "solhint": "^4.5.4"
+    "solhint": "^5.0.1"
   }
 }

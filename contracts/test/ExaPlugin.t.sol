@@ -1,58 +1,57 @@
-// SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.25; // solhint-disable-line one-contract-per-file
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
 
-import { Test, stdError, StdStorage, stdStorage } from "forge-std/Test.sol";
+import { StdStorage, Test, stdError, stdStorage } from "forge-std/Test.sol";
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
-import { Market, ERC20, ERC4626, FixedLib } from "@exactly/protocol/Market.sol";
+import { FixedLib, Market } from "@exactly/protocol/Market.sol";
 import { MockBalancerVault } from "@exactly/protocol/mocks/MockBalancerVault.sol";
 import { MockInterestRateModel } from "@exactly/protocol/mocks/MockInterestRateModel.sol";
 import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
-import { DebtManager, IPermit2, IBalancerVault } from "@exactly/protocol/periphery/DebtManager.sol";
+import { DebtManager, IBalancerVault, IPermit2 } from "@exactly/protocol/periphery/DebtManager.sol";
 
-import { IERC1271 } from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
-import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
-import { UserOperation } from "modular-account/src/interfaces/erc4337/UserOperation.sol";
-import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
 import { MultiOwnerModularAccountFactory } from "modular-account/src/factory/MultiOwnerModularAccountFactory.sol";
-import { FunctionReference } from "modular-account/src/interfaces/IPluginManager.sol";
-import { FunctionReferenceLib } from "modular-account/src/helpers/FunctionReferenceLib.sol";
+import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
+import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
+
+import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
+import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
+import { FunctionReferenceLib } from "modular-account-libs/libraries/FunctionReferenceLib.sol";
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
-import { ExaPlugin, Auditor, Market } from "../src/ExaPlugin.sol";
+import { Auditor, ExaPlugin, Market } from "../src/ExaPlugin.sol";
 
 contract ExaPluginTest is Test {
   using stdStorage for StdStorage;
   using ECDSA for bytes32;
 
-  address public owner1;
-  uint256 public owner1Key;
-  address public keeper1;
-  uint256 public keeper1Key;
-  address[] public owners;
-  address payable public beneficiary;
-  UpgradeableModularAccount public account1;
-  IEntryPoint public entryPoint;
-  ExaPlugin exaPlugin;
+  address internal owner1;
+  uint256 internal owner1Key;
+  address internal keeper1;
+  uint256 internal keeper1Key;
+  address[] internal owners;
+  address payable internal beneficiary;
+  UpgradeableModularAccount internal account1;
+  IEntryPoint internal entryPoint;
+  ExaPlugin internal exaPlugin;
 
-  Auditor public auditor;
-  Market public market;
-  Market public marketUSDC;
-  MockERC20 public asset;
-  MockERC20 public usdc;
-  DebtManager public debtManager;
+  Auditor internal auditor;
+  Market internal market;
+  Market internal marketUSDC;
+  MockERC20 internal asset;
+  MockERC20 internal usdc;
+  DebtManager internal debtManager;
 
   // TODO
   // use mock asset with price != 1

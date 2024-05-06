@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.0;
 
 import { Auditor, IPriceFeed } from "@exactly/protocol/Auditor.sol";
-import { Market, ERC20 } from "@exactly/protocol/Market.sol";
+import { ERC20, Market } from "@exactly/protocol/Market.sol";
 
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import { BasePlugin } from "modular-account/src/plugins/BasePlugin.sol";
-import { IPluginExecutor } from "modular-account/src/interfaces/IPluginExecutor.sol";
+import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
+
 import {
-  ManifestFunction,
-  ManifestAssociatedFunctionType,
   ManifestAssociatedFunction,
+  ManifestAssociatedFunctionType,
+  ManifestFunction,
   PluginManifest,
   PluginMetadata
-} from "modular-account/src/interfaces/IPlugin.sol";
-import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
+} from "modular-account-libs/interfaces/IPlugin.sol";
+import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
+import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
 import { FixedPointMathLib } from "solmate/src/utils/FixedPointMathLib.sol";
 import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
@@ -35,7 +36,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
-  Auditor public immutable auditor;
+  Auditor public immutable AUDITOR;
 
   uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
 
@@ -47,14 +48,14 @@ contract ExaPlugin is BasePlugin, AccessControl {
   mapping(IPluginExecutor account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
 
   constructor(Auditor auditor_, address beneficiary_) {
-    auditor = auditor_;
+    AUDITOR = auditor_;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setBeneficiary(beneficiary_);
   }
 
   function enterMarket(IPluginExecutor account, Market market) external onlyRole(KEEPER_ROLE) {
-    account.executeFromPluginExternal(address(auditor), 0, abi.encodeCall(Auditor.enterMarket, (market)));
+    account.executeFromPluginExternal(address(AUDITOR), 0, abi.encodeCall(Auditor.enterMarket, (market)));
   }
 
   function deposit(IPluginExecutor account, Market market, uint256 amount)
@@ -77,7 +78,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
 
   function borrow(IPluginExecutor account, Market market, uint256 amount) external onlyRole(KEEPER_ROLE) {
     /// @dev the next call validates the market
-    (, uint8 decimals,,, IPriceFeed priceFeed) = auditor.markets(market);
+    (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
 
     uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
       + amount.mulDivDown(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
@@ -97,7 +98,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
   {
     {
       /// @dev the next call validates the market
-      (, uint8 decimals,,, IPriceFeed priceFeed) = auditor.markets(market);
+      (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
       uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
         + amount.mulDivDown(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
@@ -130,9 +131,6 @@ contract ExaPlugin is BasePlugin, AccessControl {
   function onInstall(bytes calldata) external override {
     borrowLimits[IPluginExecutor(msg.sender)] = 1000e18;
   }
-
-  /// @inheritdoc BasePlugin
-  function onUninstall(bytes calldata) external pure override { }
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory) {
@@ -194,7 +192,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
   }
 
   function checkIsMarket(Market market) public view {
-    (,,, bool isMarket,) = auditor.markets(market);
+    (,,, bool isMarket,) = AUDITOR.markets(market);
     if (!isMarket) revert("ExaPlugin: not a market");
   }
 
