@@ -1,5 +1,5 @@
 import { config } from "@tamagui/config/v2";
-import { createTamagui, createTokens } from "tamagui";
+import { createFont, createTamagui, createTokens } from "tamagui";
 
 const tokens = createTokens({
   color: {
@@ -29,6 +29,8 @@ const tokens = createTokens({
     borderSoft: "#E6E9E8",
     backgroundBrandMild: "#E0F8F3",
     textSuccessPrimary: "#218358",
+    backgroundBrandSoft: "#F3FBF9",
+    borderSeparator: "#DFE2E0",
   },
   size: {
     sm: 38,
@@ -61,5 +63,24 @@ export default createTamagui({
   tokens: {
     ...config.tokens,
     ...tokens,
+  },
+
+  fonts: {
+    body: createFont({
+      family: "BDOGrotesk",
+      face: {
+        "200": { normal: "BDOGrotesk_Light" },
+        "400": { normal: "BDOGrotesk_Regular" },
+        "600": { normal: "BDOGrotesk_Medium" },
+        "700": { normal: "BDOGrotesk_Bold" },
+        bold: { normal: "BDOGrotesk_Bold" },
+        normal: { normal: "BDOGrotesk_Regular" },
+      },
+      size: {
+        1: 12,
+        2: 14,
+        3: 15,
+      },
+    }),
   },
 });

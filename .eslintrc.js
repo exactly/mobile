@@ -29,6 +29,7 @@ module.exports = {
     "react-native/no-raw-text": ["error", { skip: ["Button", "Link", "SubmitButton", "LinkButton"] }],
     "unicorn/filename-case": "off", // use default export name
     "unicorn/prefer-top-level-await": "off", // unsupported in react-native
+    "unicorn/no-null": "off",
   },
   ignorePatterns: ["build/", "dist/", ".expo/types/**/*.ts", "expo-env.d.ts", "contracts/lib/", "public/"],
   overrides: [

@@ -1,8 +1,8 @@
+import { ClockClockwise, CreditCard, HandCoins, QrCode } from "@phosphor-icons/react";
 import React from "react";
 import { Stack, Text, View } from "tamagui";
 
 import LinkButton from "../components/LinkButton";
-import { ClockClockwise, CreditCard, HandCoins, QrCode } from "@phosphor-icons/react";
 
 const FEATURES = [
   {

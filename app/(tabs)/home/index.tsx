@@ -9,15 +9,10 @@ import {
   Gear,
 } from "@phosphor-icons/react";
 import { TrendUp } from "@phosphor-icons/react/dist/ssr";
-import { useFonts } from "expo-font";
+
 import React from "react";
 import { Image, ScrollView, Text, View } from "tamagui";
 
-import BDOGrotesk_Bold from "../../../assets/fonts/BDOGrotesk-Bold.ttf";
-import BDOGrotesk_Light from "../../../assets/fonts/BDOGrotesk-Light.ttf";
-import BDOGrotesk_Medium from "../../../assets/fonts/BDOGrotesk-Medium.ttf";
-import BDOGrotesk_Regular from "../../../assets/fonts/BDOGrotesk-Regular.ttf";
-import IBMPlexMono_Regular from "../../../assets/fonts/IBMPlexMono-Regular.ttf";
 import Button from "../../components/Button";
 import LinkButton from "../../components/LinkButton";
 
@@ -120,14 +115,6 @@ const LatestActivity = () => (
   </View>
 );
 export default function Home() {
-  useFonts({
-    BDOGrotesk: BDOGrotesk_Regular,
-    "BDOGrotesk-Bold": BDOGrotesk_Bold,
-    "BDOGrotesk-Light": BDOGrotesk_Light,
-    "BDOGrotesk-Medium": BDOGrotesk_Medium,
-    IBMPlexMono: IBMPlexMono_Regular,
-  });
-
   return (
     <ScrollView>
       <View backgroundColor="$backgroundMild" display="flex" flexDirection="column" gap="32px" paddingBottom="51px">

@@ -5,7 +5,7 @@ import onboarding1 from "../../assets/onboarding1.png";
 import LinkButton from "../components/LinkButton";
 import PageIndicators from "../components/PageIndicators";
 
-export default function Home() {
+export default function Onboarding() {
   return (
     <Stack display="flex" flexDirection="column" height="100vh">
       <View flex={1} display="flex" justifyContent="space-around" alignItems="center">
