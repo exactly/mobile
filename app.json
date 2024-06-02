@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/BDOGrotesk-Bold.ttf",
+            "./assets/fonts/BDOGrotesk-Light.ttf",
+            "./assets/fonts/BDOGrotesk-Medium.ttf",
+            "./assets/fonts/BDOGrotesk-Regular.ttf"
+          ]
+        }
+      ]
+    ]
+  }
+}

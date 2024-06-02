@@ -8,8 +8,13 @@ import InterBold from "@tamagui/font-inter/otf/Inter-Bold.otf";
 import Inter from "@tamagui/font-inter/otf/Inter-Medium.otf";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { reconnect } from "@wagmi/core";
+import BDOGrotesk_Bold from "../assets/fonts/BDOGrotesk-Bold.ttf";
+import BDOGrotesk_Light from "../assets/fonts/BDOGrotesk-Light.ttf";
+import BDOGrotesk_Medium from "../assets/fonts/BDOGrotesk-Medium.ttf";
+import BDOGrotesk_Regular from "../assets/fonts/BDOGrotesk-Regular.ttf";
+import IBMPlexMono_Regular from "../assets/fonts/IBMPlexMono-Regular.ttf";
 import { type FontSource, useFonts } from "expo-font";
-import { Slot, SplashScreen } from "expo-router";
+import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { TamaguiProvider } from "tamagui";
@@ -67,6 +72,14 @@ export default Sentry.wrap(function RootLayout() {
     reconnect(wagmiConfig).catch(handleError);
   }, []);
 
+  useFonts({
+    BDOGrotesk: BDOGrotesk_Regular,
+    "BDOGrotesk-Bold": BDOGrotesk_Bold,
+    "BDOGrotesk-Light": BDOGrotesk_Light,
+    "BDOGrotesk-Medium": BDOGrotesk_Medium,
+    IBMPlexMono: IBMPlexMono_Regular,
+  });
+
   if (!loaded) return;
 
   return (
@@ -75,7 +88,15 @@ export default Sentry.wrap(function RootLayout() {
       <TamaguiProvider config={tamaguiConfig}>
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
-            <Slot />
+            <Stack
+              initialRouteName="home"
+              screenOptions={{
+                headerShown: false,
+              }}
+            >
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+            </Stack>
           </QueryClientProvider>
         </WagmiProvider>
       </TamaguiProvider>
