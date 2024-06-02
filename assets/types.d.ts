@@ -5,6 +5,11 @@ declare module "*.otf" {
   export default value;
 }
 
+declare module "*.ttf" {
+  const value: FontSource;
+  export default value;
+}
+
 declare module "*.png" {
   const value: ImageSourcePropType;
   export = value;
