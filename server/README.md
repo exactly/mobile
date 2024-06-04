@@ -1,6 +1,6 @@
 # Setup
 
-Project uses Vercel serverless functions to provide endpoints for Pomelo integration.
+Project uses Vercel serverless functions to provide endpoints for server integration.
 All exposed endpoints are found under `/api`.
 
 ## Local Development
@@ -14,7 +14,7 @@ bun i
 Spin up dev server
 
 ```bash
-bun pomelo 
+bun server 
 ```
 
 ## Database

@@ -3,7 +3,7 @@ import { migrate } from "drizzle-orm/vercel-postgres/migrator";
 
 import database from "./index.js";
 
-const log = debug("pomelo");
+const log = debug("server");
 
 try {
   log("🏗️ migration started");

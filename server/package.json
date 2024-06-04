@@ -1,5 +1,5 @@
 {
-  "name": "@exactly/pomelo",
+  "name": "@exactly/server",
   "type": "module",
   "scripts": {
     "test": "tsc",

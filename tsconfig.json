@@ -10,7 +10,7 @@
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "index.js"],
   "exclude": [
     "contracts",
-    "pomelo",
+    "server",
     "webauthn",
     "**/node_modules",
     "**/build",
