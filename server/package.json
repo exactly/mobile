@@ -3,9 +3,7 @@
   "type": "module",
   "scripts": {
     "test": "tsc",
-    "db:migration:generate": "drizzle-kit generate:pg --schema=./database/schema.ts",
-    "db:migration:push": "bun run database/migrate.ts",
-    "db:migrate": "bun db:migration:generate && bun db:migration:push",
+    "db:migrate": "drizzle-kit migrate",
     "dev": "bun run --cwd .. vercel dev"
   },
   "engines": {
