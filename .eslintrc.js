@@ -29,6 +29,7 @@ module.exports = {
     "react-native/no-raw-text": ["error", { skip: ["Button", "Heading", "SizableText"] }],
     "unicorn/filename-case": "off", // use default export name
     "unicorn/prefer-top-level-await": "off", // unsupported in react-native
+    "unicorn/switch-case-braces": ["error", "avoid"], // consistently avoid braces
   },
   overrides: [
     {
