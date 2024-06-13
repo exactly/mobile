@@ -20,6 +20,7 @@ drizzle/
 *.aab
 *.apk
 
+*.log
 .vscode/
 .env
 .env*.local
