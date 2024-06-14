@@ -25,6 +25,7 @@ module.exports = {
     "eslint-comments/no-unused-disable": "error",
     "import/prefer-default-export": "error",
     "no-console": "error",
+    "no-restricted-imports": ["error", { patterns: ["./server/"] }],
     "no-shadow": "off", // @typescript-eslint/no-shadow
     "react-native/no-raw-text": ["error", { skip: ["Button", "Heading", "SizableText"] }],
     "unicorn/filename-case": "off", // use default export name
