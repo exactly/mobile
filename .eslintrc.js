@@ -29,6 +29,7 @@ module.exports = {
     "no-shadow": "off", // @typescript-eslint/no-shadow
     "react-native/no-raw-text": ["error", { skip: ["Button", "Heading", "SizableText"] }],
     "unicorn/filename-case": "off", // use default export name
+    "unicorn/number-literal-case": "off", // incompatible with prettier
     "unicorn/prefer-top-level-await": "off", // unsupported in react-native
     "unicorn/switch-case-braces": ["error", "avoid"], // consistently avoid braces
   },
