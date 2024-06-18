@@ -1,6 +1,7 @@
 {
   "name": "@exactly/mobile",
   "version": "0.0.1",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
