@@ -1,8 +1,8 @@
 import type { Address } from "viem";
 
-import type { AuthorizationRequest, AuthorizationResponse, User } from "./types.js";
+import type { AuthorizationRequest, AuthorizationResponse, User } from "./types.ts";
 
-function getAddress(userID: User["id"]): Address {
+function getAddress(userId: User["id"]): Address {
   // TODO implement w/ DB
   return "0x1234567890123456789012345678901234567890";
 }

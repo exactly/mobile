@@ -1,123 +1,73 @@
 import { standardExecutor } from "@alchemy/aa-accounts";
-import type { ClientWithAlchemyMethods } from "@alchemy/aa-alchemy";
-import { getEntryPoint, toSmartContractAccount, type SmartContractAccount } from "@alchemy/aa-core";
-import { p256 } from "@noble/curves/p256";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { type ClientWithAlchemyMethods, alchemyGasManagerMiddleware } from "@alchemy/aa-alchemy";
 import {
+  type SmartAccountClient,
+  type SmartContractAccount,
+  createSmartAccountClient,
+  deepHexlify,
+  getEntryPoint,
+  resolveProperties,
+  toSmartContractAccount,
+} from "@alchemy/aa-core";
+import { ECDSASigValue } from "@peculiar/asn1-ecc";
+import { AsnParser } from "@peculiar/asn1-schema";
+import { base64URLStringToBuffer, bufferToBase64URLString } from "@simplewebauthn/browser";
+import {
+  type Chain,
+  type Hex,
+  SwitchChainError,
+  type Transport,
   bytesToBigInt,
   bytesToHex,
   concatHex,
   custom,
   encodeAbiParameters,
   encodeFunctionData,
+  encodePacked,
   getAddress,
   hashMessage,
   hexToBytes,
-  SwitchChainError,
+  maxUint256,
 } from "viem";
 import { ChainNotConfiguredError, createConnector } from "wagmi";
 import deployments from "webauthn-owner-plugin/broadcast/Deploy.s.sol/11155420/run-1716346701.json";
 
-import base64URLDecode from "./base64URLDecode";
+import { chain, rpId } from "@exactly/common/constants";
+import type { Passkey } from "@exactly/common/types";
+
+import createPasskey from "./createPasskey";
 import handleError from "./handleError";
-import { alchemyGasPolicyId, chain, rpId } from "../utils/constants";
+import loadPasskey from "./loadPasskey";
+import { alchemyGasPolicyId } from "../utils/constants";
 
 alchemyConnector.type = "alchemy" as const;
+export default function alchemyConnector(publicClient: ClientWithAlchemyMethods) {
+  let accountClient: SmartAccountClient<Transport, Chain, SmartContractAccount<"WebauthnAccount", "0.6.0">> | undefined;
 
-export default function alchemyConnector(client: ClientWithAlchemyMethods) {
-  let account: SmartContractAccount | undefined;
-
-  return createConnector<
-    ClientWithAlchemyMethods,
-    {
-      loadStore: () => Promise<PublicKey | undefined>;
-      getAccount: (publicKey: PublicKey) => Promise<SmartContractAccount>;
-    }
-  >((config) => ({
-    id: "alchemy",
-    name: "Alchemy",
-    type: alchemyConnector.type,
-    async setup() {
-      if (typeof window === "undefined") return;
-      const publicKey = await this.loadStore();
-      if (!publicKey) return;
-      account = await this.getAccount(publicKey);
-      config.emitter.emit("connect", { accounts: [account.address], chainId: chain.id });
-    },
-    async connect({ chainId, isReconnecting } = {}) {
-      if (chainId && chainId !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());
-
-      let publicKey: PublicKey;
-      try {
-        if (!isReconnecting) throw new Error("new connection");
-        const store = await this.loadStore();
-        if (!store) throw new Error("no account");
-        publicKey = store;
-      } catch {
-        throw new Error("not implemented"); // TODO retrieve public key from server via credentialId
-      }
-
-      account = await this.getAccount(publicKey);
-      return { accounts: [account.address], chainId: chain.id };
-    },
-    disconnect() {
-      account = undefined;
-      return Promise.resolve();
-    },
-    getAccounts() {
-      return Promise.resolve(account ? [account.address] : []);
-    },
-    getChainId() {
-      return Promise.resolve(chain.id);
-    },
-    getProvider() {
-      return Promise.resolve(client);
-    },
-    isAuthorized() {
-      return Promise.resolve(!!account);
-    },
-    switchChain({ chainId }) {
-      if (chainId !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());
-      return Promise.resolve(chain);
-    },
-    onAccountsChanged(accounts) {
-      if (accounts.length === 0) this.onDisconnect();
-      else config.emitter.emit("change", { accounts: accounts.map((a) => getAddress(a)) });
-    },
-    onChainChanged(chainId) {
-      config.emitter.emit("change", { chainId: Number(chainId) });
-    },
-    onDisconnect(error) {
-      config.emitter.emit("disconnect");
-      account = undefined;
-      handleError(error);
-    },
-    async loadStore() {
-      const json = await AsyncStorage.getItem("account.store");
-      if (!json) return;
-      const { credentialId, x, y } = JSON.parse(json) as PublicKey;
-      if (!credentialId || !x || !y) return;
-      return { credentialId, x, y };
-    },
-    getAccount({ credentialId, x, y }: PublicKey) {
-      return toSmartContractAccount({
+  async function createAccountClient({ credentialId, x, y }: Passkey) {
+    const transport = custom(publicClient);
+    return createSmartAccountClient({
+      chain,
+      transport,
+      account: await toSmartContractAccount({
         chain,
-        source: "WebauthnAccount",
-        transport: custom(client),
+        transport,
+        source: "WebauthnAccount" as const,
         entryPoint: getEntryPoint(chain, { version: "0.6.0" }),
         getAccountInitCode() {
-          if (!deployments.transactions[2]) throw new Error("no factory deployment found");
+          const [, factory] = deployments.transactions;
+          if (!factory) throw new Error("no factory deployment found");
           return Promise.resolve(
             concatHex([
-              deployments.transactions[2].contractAddress as `0x${string}`,
+              getAddress(factory.contractAddress),
               encodeFunctionData({
                 abi: [
                   {
                     type: "function",
                     name: "createAccount",
                     inputs: [
-                      { type: "uint256" },
-                      { type: "tuple[]", components: [{ type: "uint256" }, { type: "uint256" }] },
+                      { type: "uint256", name: "salt" },
+                      { type: "tuple[]", name: "owners", components: [{ type: "uint256" }, { type: "uint256" }] },
                     ],
                   },
                 ],
@@ -126,61 +76,144 @@ export default function alchemyConnector(client: ClientWithAlchemyMethods) {
             ]),
           );
         },
-        getDummySignature: () =>
-          "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000000170000000000000000000000000000000000000000000000000000000000000001ed5ceca76138d2343d904fceda12f81765ebde445fbb03a77ca39bf0420202af15327ecdfec88bfe1b53cabfa4fb27eef85ead50e75676043911dd1450d8c0a6000000000000000000000000000000000000000000000000000000000000002549960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008a7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a226868774f387a34383459445946416a453179777a7749346952736e365853533738736862786c5464784e73222c226f726967696e223a2268747470733a2f2f7369676e2e636f696e626173652e636f6d222c2263726f73734f726967696e223a66616c73657d00000000000000000000000000000000000000000000",
+        getDummySignature: () => "0x",
         async signUserOperationHash(uoHash) {
           const credential = (await navigator.credentials.get({
             publicKey: {
               rpId,
               challenge: hexToBytes(hashMessage({ raw: uoHash }), { size: 32 }),
-              allowCredentials: [{ id: base64URLDecode(credentialId), type: "public-key" }],
-              userVerification: "required",
+              allowCredentials: [{ id: base64URLStringToBuffer(credentialId), type: "public-key" }],
+              userVerification: "preferred",
             },
           })) as PublicKeyCredential | null;
           if (!credential) throw new Error("no credential");
           const response = credential.response as AuthenticatorAssertionResponse;
-          const sig = new Uint8Array(response.signature);
-          let offset = 2;
-          const rLength = sig[offset + 1];
-          if (rLength === undefined) throw new Error("invalid signature");
-          const r = bytesToBigInt(sig.slice(offset + 2, offset + 2 + rLength));
-          offset += 2 + rLength;
-          const sLength = sig[offset + 1];
-          if (sLength === undefined) throw new Error("invalid signature");
-          let s = bytesToBigInt(sig.slice(offset + 2, offset + 2 + sLength));
-          if (s > p256.CURVE.n / 2n) s = p256.CURVE.n - s;
-          const decoder = new TextDecoder();
-          const clientDataJSON = decoder.decode(response.clientDataJSON);
+          const clientDataJSON = new TextDecoder().decode(response.clientDataJSON);
           const typeIndex = BigInt(clientDataJSON.indexOf('"type":"'));
           const challengeIndex = BigInt(clientDataJSON.indexOf('"challenge":"'));
           const authenticatorData = bytesToHex(new Uint8Array(response.authenticatorData));
-          const webauthn = encodeAbiParameters(
-            [
-              {
-                type: "tuple",
-                components: [
-                  { type: "bytes", name: "authenticatorData" },
-                  { type: "string", name: "clientDataJSON" },
-                  { type: "uint256", name: "challengeIndex" },
-                  { type: "uint256", name: "typeIndex" },
-                  { type: "uint256", name: "r" },
-                  { type: "uint256", name: "s" },
-                ],
-              },
-            ],
-            [{ authenticatorData, clientDataJSON, challengeIndex, typeIndex, r, s }],
-          );
-          return encodeAbiParameters(
-            [{ type: "tuple", components: [{ type: "uint256" }, { type: "bytes" }] }],
-            [[0n, webauthn]],
-          );
+          const signature = AsnParser.parse(response.signature, ECDSASigValue);
+          const r = bytesToBigInt(new Uint8Array(signature.r));
+          let s = bytesToBigInt(new Uint8Array(signature.s));
+          if (s > P256_N / 2n) s = P256_N - s; // pass malleability guard
+          return webauthn({ authenticatorData, clientDataJSON, challengeIndex, typeIndex, r, s });
         },
-        signMessage: ({ message }) => Promise.resolve("0x..."),
-        signTypedData: (typedData) => Promise.resolve("0x..."),
+        signMessage: ({ message }) => Promise.resolve("0x..."), // TODO implement
+        signTypedData: (typedData) => Promise.resolve("0x..."), // TODO implement
         ...standardExecutor,
-      });
+      }),
+      ...alchemyGasManagerMiddleware(publicClient, { policyId: alchemyGasPolicyId }),
+      async customMiddleware(userOp) {
+        if ((await userOp.signature) === "0x") {
+          // dynamic dummy signature
+          userOp.signature = webauthn({
+            authenticatorData: "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
+            clientDataJSON: `{"type":"webauthn.get","challenge":"${bufferToBase64URLString(
+              hexToBytes(hashMessage({ raw: deepHexlify(await resolveProperties(userOp)) as Hex }), { size: 32 }),
+            )}","origin":"https://exactly.app","crossOrigin":false}`,
+            typeIndex: 1n,
+            challengeIndex: 23n,
+            r: maxUint256,
+            s: P256_N / 2n,
+          });
+        }
+        return userOp;
+      },
+    });
+  }
+
+  return createConnector<SmartAccountClient | ClientWithAlchemyMethods>(({ emitter }) => ({
+    id: "alchemy" as const,
+    name: "Alchemy" as const,
+    type: alchemyConnector.type,
+    async getAccounts() {
+      try {
+        accountClient ??= await createAccountClient(await loadPasskey());
+        return [accountClient.account.address];
+      } catch {
+        return [];
+      }
     },
+    async isAuthorized() {
+      const accounts = await this.getAccounts();
+      return accounts.length > 0;
+    },
+    async connect({ chainId, isReconnecting } = {}) {
+      if (chainId && chainId !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());
+      accountClient ??= await createAccountClient(
+        await loadPasskey().catch((error: unknown) => {
+          if (isReconnecting) throw error;
+          return createPasskey();
+        }),
+      );
+      return { accounts: [accountClient.account.address], chainId: chain.id };
+    },
+    disconnect() {
+      accountClient = undefined;
+      return Promise.resolve();
+    },
+    switchChain({ chainId }) {
+      if (chainId !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());
+      return Promise.resolve(chain);
+    },
+    onAccountsChanged(accounts) {
+      if (accounts.length === 0) this.onDisconnect();
+      else emitter.emit("change", { accounts: accounts.map((a) => getAddress(a)) });
+    },
+    onChainChanged(chainId) {
+      if (Number(chainId) !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());
+      emitter.emit("change", { chainId: Number(chainId) });
+    },
+    onDisconnect(error) {
+      emitter.emit("disconnect");
+      accountClient = undefined;
+      if (error) handleError(error);
+    },
+    getProvider({ chainId } = {}) {
+      if (chainId && chainId !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());
+      return Promise.resolve(accountClient ?? publicClient);
+    },
+    getChainId: () => Promise.resolve(chain.id),
   }));
 }
 
-type PublicKey = { credentialId: string; x: string; y: string };
+const P256_N = 0xff_ff_ff_ff_00_00_00_00_ff_ff_ff_ff_ff_ff_ff_ff_bc_e6_fa_ad_a7_17_9e_84_f3_b9_ca_c2_fc_63_25_51n;
+
+function webauthn({
+  authenticatorData,
+  clientDataJSON,
+  challengeIndex,
+  typeIndex,
+  r,
+  s,
+}: {
+  authenticatorData: Hex;
+  clientDataJSON: string;
+  challengeIndex: bigint;
+  typeIndex: bigint;
+  r: bigint;
+  s: bigint;
+}) {
+  return encodePacked(
+    ["uint8", "bytes"],
+    [
+      0,
+      encodeAbiParameters(
+        [
+          {
+            type: "tuple",
+            components: [
+              { type: "bytes", name: "authenticatorData" },
+              { type: "string", name: "clientDataJSON" },
+              { type: "uint256", name: "challengeIndex" },
+              { type: "uint256", name: "typeIndex" },
+              { type: "uint256", name: "r" },
+              { type: "uint256", name: "s" },
+            ],
+          },
+        ],
+        [{ authenticatorData, clientDataJSON, challengeIndex, typeIndex, r, s }],
+      ),
+    ],
+  );
+}

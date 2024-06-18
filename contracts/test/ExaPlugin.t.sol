@@ -32,6 +32,9 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { Auditor, ExaPlugin, Market } from "../src/ExaPlugin.sol";
 
+// TODO use mock asset with price != 1
+// TODO use price feed for that asset with 8 decimals
+// TODO add the debt manager to the plugin so we can roll fixed to floating
 contract ExaPluginTest is Test {
   using stdStorage for StdStorage;
   using ECDSA for bytes32;
@@ -52,13 +55,6 @@ contract ExaPluginTest is Test {
   MockERC20 internal asset;
   MockERC20 internal usdc;
   DebtManager internal debtManager;
-
-  // TODO
-  // use mock asset with price != 1
-  // use price feed for that asset with 8 decimals
-
-  // TODO
-  // add the debt manager to the plugin so we can roll fixed to floating
 
   function setUp() external {
     auditor = Auditor(address(new ERC1967Proxy(address(new Auditor(18)), "")));

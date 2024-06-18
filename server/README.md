@@ -27,7 +27,7 @@ DB auth is handled by `@vercel/postgres` when running `vercel dev`
 After changing the schema declaration in `database/schema.ts` you can run
 
 ```bash
-bun db:migrate
+bun db:push
 ```
 
 to apply schema changes directly to DB.

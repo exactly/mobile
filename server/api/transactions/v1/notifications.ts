@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import buffer from "../../../utils/buffer.js";
-import { sendPushNotification } from "../../../utils/notifications.js";
-import { captureException } from "../../../utils/sentry.js";
-import { notificationRequest } from "../../../utils/types.js";
-import { signResponse, verifySignature } from "../../../utils/verify.js";
+import buffer from "../../../utils/buffer.ts";
+import { sendPushNotification } from "../../../utils/notifications.ts";
+import { captureException } from "../../../utils/sentry.ts";
+import { notificationRequest } from "../../../utils/types.ts";
+import { signResponse, verifySignature } from "../../../utils/verify.ts";
 
 export const runtime = "nodejs";
 
@@ -40,7 +40,7 @@ export default async function notifications(request: VercelRequest, response: Ve
           en: event.status_detail,
         },
       });
-      return signResponse(request, response.status(200), JSON.stringify(true));
+      return signResponse(request, response, JSON.stringify(true));
     } catch (error: unknown) {
       captureException(error, { request, message: "failed to send notification to user" });
       return response.status(500).end("internal server error");

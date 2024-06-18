@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import buffer from "../../utils/buffer.js";
-import processTransaction from "../../utils/transaction.js";
-import { authorizationRequest } from "../../utils/types.js";
-import { signResponse, verifySignature } from "../../utils/verify.js";
+import buffer from "../../utils/buffer.ts";
+import processTransaction from "../../utils/transaction.ts";
+import { authorizationRequest } from "../../utils/types.ts";
+import { signResponse, verifySignature } from "../../utils/verify.ts";
 
 export const runtime = "nodejs";
 
@@ -29,7 +29,7 @@ export default async function authorizations(request: VercelRequest, response: V
 
   if (parsed.success) {
     const tx = await processTransaction(parsed.data);
-    return signResponse(request, response.status(200), JSON.stringify(tx));
+    return signResponse(request, response, JSON.stringify(tx));
   } else {
     return response.status(400).end("bad request");
   }

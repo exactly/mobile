@@ -1,31 +1,31 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import { authenticated } from "../utils/auth.js";
-import allowCors from "../utils/cors.js";
-import type { CreateUserForm } from "../utils/types.js";
-import { createUser, getUserByCredentialID } from "../utils/user.js";
+import auth from "../middleware/auth.ts";
+import cors from "../middleware/cors.ts";
+import type { CreateUserForm } from "../utils/types.ts";
+import { createUser, getUserByCredentialID } from "../utils/user.ts";
 
-async function handler(request: VercelRequest, response: VercelResponse, credentialID: string) {
-  if (request.method === "POST") {
-    try {
-      const body = request.body as CreateUserForm; // TODO validate request body
-      const user = await createUser({
-        ...body,
-        operation_country: "MEX", // TODO only for sandbox. For prod will be "PER"
-        email: `${credentialID}@exactly.account`,
-      });
-      response.status(200).json(user);
-    } catch (error) {
-      response.status(400).end(error instanceof Error ? error.message : "Unknown error");
+export default cors(
+  auth(async function handler({ method, body }: VercelRequest, response: VercelResponse, credentialId: string) {
+    switch (method) {
+      case "GET": {
+        const user = await getUserByCredentialID(credentialId);
+        if (!user) return response.status(404).end("User not found");
+        return response.json(user);
+      }
+      case "POST":
+        try {
+          const user = await createUser({
+            ...(body as CreateUserForm), // TODO validate request body
+            operation_country: "MEX", // TODO only for sandbox. For prod will be "PER"
+            email: `${credentialId}@exactly.account`,
+          });
+          return response.json(user);
+        } catch (error) {
+          return response.status(400).end(error instanceof Error ? error.message : error);
+        }
+      default:
+        return response.status(405).end("method not allowed");
     }
-  } else if (request.method === "GET") {
-    const user = await getUserByCredentialID(credentialID);
-    if (user) {
-      response.status(200).json(user);
-    } else {
-      response.status(404).end("User not found");
-    }
-  }
-}
-
-export default allowCors(authenticated(handler));
+  }),
+);

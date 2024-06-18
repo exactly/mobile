@@ -3,32 +3,32 @@
   "type": "module",
   "scripts": {
     "test": "tsc",
-    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
     "dev": "bun run --cwd .. vercel dev"
   },
   "engines": {
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@exactly/common": "workspace:*",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
-    "@sentry/node": "^8.8.0",
+    "@sentry/node": "^8.9.2",
     "@simplewebauthn/server": "^10.0.0",
     "@simplewebauthn/types": "^10.0.0",
+    "@vercel/kv": "^2.0.0",
     "@vercel/node": "^3.1.7",
     "@vercel/postgres": "^0.8.0",
-    "@wagmi/core": "2.10.5",
-    "base64-arraybuffer": "^1.0.2",
-    "debug": "^4.3.5",
+    "@wagmi/core": "2.11.2",
     "drizzle-orm": "^0.31.2",
-    "jsonwebtoken": "^9.0.2",
-    "viem": "^2.13.8",
+    "jose": "^5.4.1",
+    "valibot": "^0.33.1",
+    "viem": "^2.15.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.14.2",
+    "@types/node": "^20.14.5",
     "drizzle-kit": "^0.22.7",
     "typescript": "^5.4.5",
-    "vercel": "^34.2.6"
+    "vercel": "^34.2.7"
   }
 }

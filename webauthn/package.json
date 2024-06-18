@@ -17,13 +17,15 @@
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly"
   },
+  "dependencies": {
+    "base64-arraybuffer": "^1.0.2"
+  },
   "devDependencies": {
     "@expo/config-plugins": "^8.0.5",
     "@expo/prebuild-config": "^7.0.6",
     "expo-module-scripts": "^3.5.2"
   },
   "peerDependencies": {
-    "base64-arraybuffer": "*",
     "expo": "*",
     "expo-constants": "*",
     "expo-modules-core": "*",

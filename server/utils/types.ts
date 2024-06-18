@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"; // TODO use valibot
 
 export const OPERATION_COUNTRIES = ["ARG", "BRA", "MEX", "COL", "PER", "CHL"] as const;
 export const CARD_STATUS = ["ACTIVE", "BLOCKED", "DISABLED"] as const;

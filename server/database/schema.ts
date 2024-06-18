@@ -1,18 +1,20 @@
-import { jsonb, pgEnum, pgTable, text, numeric } from "drizzle-orm/pg-core";
+import { customType, integer, jsonb, numeric, pgEnum, pgTable, text } from "drizzle-orm/pg-core";
 
-import { CARD_STATUS, OPERATION_COUNTRIES, USER_STATUS } from "../utils/types";
+import { CARD_STATUS, OPERATION_COUNTRIES, USER_STATUS } from "../utils/types.ts";
 
 export const userStatusEnum = pgEnum("status", USER_STATUS);
 export const countryEnum = pgEnum("operation_country", OPERATION_COUNTRIES);
 export const cardStatusEnum = pgEnum("status", CARD_STATUS);
 export const transactionStatusEnum = pgEnum("transaction_status", ["APPROVED", "REJECTED"]);
 
+const bytea = customType<{ data: Uint8Array; default: false }>({ dataType: () => "bytea" });
+
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
-  client_id: text("client_id"),
+  clientId: text("client_id"),
   email: text("email"),
   status: userStatusEnum("status"),
-  operation_country: countryEnum("operation_country"),
+  operationCountry: countryEnum("operation_country"),
   name: text("name"),
   surname: text("surname"),
   payload: jsonb("payload").notNull(),
@@ -20,37 +22,32 @@ export const users = pgTable("users", {
 
 export const card = pgTable("cards", {
   id: text("id").primaryKey(),
-  user_id: text("user_id")
+  userId: text("user_id")
     .references(() => users.id)
     .notNull(),
-  affinity_group_id: text("affinity_group_id").notNull(),
+  affinityGroupId: text("affinity_group_id").notNull(),
   status: cardStatusEnum("status").notNull(),
-  last_four: text("last_four"),
+  lastFour: text("last_four"),
   payload: jsonb("payload").notNull(),
 });
 
 export const transaction = pgTable("transactions", {
   id: text("id").primaryKey(),
-  card_id: text("card_id")
+  cardId: text("card_id")
     .references(() => card.id)
     .notNull(),
-  user_id: text("user_id")
+  userId: text("user_id")
     .references(() => users.id)
     .notNull(),
-  settlement_amount: numeric("settlement_amount").notNull(),
-  txHash: text("txHash"),
-  transaction_status: transactionStatusEnum("transaction_status").notNull(),
+  settlementAmount: numeric("settlement_amount").notNull(),
+  txHash: text("tx_hash"),
+  status: transactionStatusEnum("status").notNull(),
   payload: jsonb("payload").notNull(),
 });
 
 export const credential = pgTable("credentials", {
-  credentialID: text("credentialID").notNull(),
-  transports: text("transports").array(),
-  credentialPublicKey: text("credentialPublicKey").notNull(),
-  counter: numeric("counter").notNull(),
-});
-
-export const challenge = pgTable("challenge", {
   id: text("id").primaryKey(),
-  value: text("value").notNull(),
+  publicKey: bytea("public_key").notNull(),
+  transports: text("transports").array(),
+  counter: integer("counter").notNull(),
 });

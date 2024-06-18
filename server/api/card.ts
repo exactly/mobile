@@ -1,30 +1,21 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import { authenticated } from "../utils/auth.js";
-import { createCard, getCardsByUserID } from "../utils/card.js";
-import allowCors from "../utils/cors.js";
-import { getUserByCredentialID } from "../utils/user.js";
+import auth from "../middleware/auth.ts";
+import cors from "../middleware/cors.ts";
+import { createCard } from "../utils/cryptomate.ts";
 
-async function handler(request: VercelRequest, response: VercelResponse, credentialID: string) {
-  const user = await getUserByCredentialID(credentialID);
-  if (!user) {
-    response.status(404).end("User not found");
-    return;
-  }
-  if (request.method === "POST") {
-    try {
-      const card = await createCard({
-        user_id: user.id,
-        card_type: "VIRTUAL",
-        affinity_group_id: "afg-2VfIFzzjDX9eRD2VVgmKnB6YmWm", // TODO use env. note: we'll probably use the same affinity group for all cards
-      });
-      response.status(200).json(card);
-    } catch (error) {
-      response.status(400).end(error instanceof Error ? error.message : "There was an error");
+export default cors(
+  auth(async function handler({ method }: VercelRequest, response: VercelResponse, credentialId: string) {
+    switch (method) {
+      case "POST":
+        try {
+          const card = await createCard("Satoshi Nakamoto");
+          return response.json(card);
+        } catch (error) {
+          return response.status(400).end(error instanceof Error ? error.message : error);
+        }
+      default:
+        return response.status(405).end("method not allowed");
     }
-  } else if (request.method === "GET") {
-    const cards = await getCardsByUserID(user.id);
-    response.status(200).json(cards);
-  }
-}
-export default allowCors(authenticated(handler));
+  }),
+);

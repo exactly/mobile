@@ -1,0 +1,15 @@
+{
+  "name": "@exactly/common",
+  "type": "module",
+  "scripts": {
+    "test": "tsc"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@alchemy/aa-core": "^3.18.2",
+    "valibot": "^0.33.1",
+    "viem": "^2.15.1"
+  }
+}

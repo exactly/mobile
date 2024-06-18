@@ -1,24 +1,10 @@
 import Auditor from "@exactly/protocol/deployments/op-sepolia/Auditor.json";
 import MarketUSDC from "@exactly/protocol/deployments/op-sepolia/MarketUSDC.e.json";
 import MarketWETH from "@exactly/protocol/deployments/op-sepolia/MarketWETH.json";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useCallback } from "react";
 import { Button, Spinner, Text, XStack, YStack } from "tamagui";
-import { bytesToHex, formatEther, getAddress, parseUnits, zeroAddress } from "viem";
-import {
-  useAccount,
-  useConnect,
-  useDisconnect,
-  useReadContract,
-  useSimulateContract,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from "wagmi";
-
-import base64URLDecode from "../utils/base64URLDecode";
-import { rpId } from "../utils/constants";
-import generateRandomBuffer from "../utils/generateRandomBuffer";
-import handleError from "../utils/handleError";
+import { formatEther, getAddress, parseUnits, zeroAddress } from "viem";
+import { useAccount, useConnect, useDisconnect, useReadContract, useSimulateContract, useWriteContract } from "wagmi";
 
 export default function Home() {
   const {
@@ -65,41 +51,6 @@ export default function Home() {
     query: { enabled: !!address },
   });
   const { writeContract, data: txHash, isPending: isSending } = useWriteContract();
-  const { isSuccess, isLoading: isWaiting } = useWaitForTransactionReceipt({ hash: txHash });
-
-  const createCredential = useCallback(() => {
-    const name = `exactly, ${new Date().toISOString()}`;
-    const challenge = generateRandomBuffer();
-    navigator.credentials
-      .create({
-        publicKey: {
-          rp: { id: rpId, name: "exactly" },
-          user: { id: challenge, name, displayName: name },
-          pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-          authenticatorSelection: { requireResidentKey: true, residentKey: "required", userVerification: "required" },
-          challenge,
-        },
-      })
-      .then(async (credential) => {
-        if (!credential) throw new Error("no credential");
-        const response = (credential as PublicKeyCredential).response as AuthenticatorAttestationResponse;
-        const publicKey = response.getPublicKey();
-        if (!publicKey) throw new Error("no public key");
-        const cryptoKey = await crypto.subtle.importKey(
-          "spki",
-          publicKey,
-          { name: "ECDSA", namedCurve: "P-256" },
-          true,
-          [],
-        );
-        const jwt = await crypto.subtle.exportKey("jwk", cryptoKey);
-        if (!jwt.x || !jwt.y) throw new Error("no x or y");
-        const x = bytesToHex(new Uint8Array(base64URLDecode(jwt.x)));
-        const y = bytesToHex(new Uint8Array(base64URLDecode(jwt.y)));
-        await AsyncStorage.setItem("account.store", JSON.stringify({ credentialId: credential.id, x, y }));
-      })
-      .catch(handleError);
-  }, []);
 
   const connectAccount = useCallback(() => {
     if (!connector) throw new Error("no connector");
@@ -123,16 +74,15 @@ export default function Home() {
   return (
     <XStack flex={1} alignItems="center" space>
       <YStack flex={1} alignItems="center" space>
-        <Text textAlign="center">{txHash && `${txHash} ${isSuccess ? "✅" : ""}`}</Text>
+        <Text textAlign="center">{txHash}</Text>
         <Text textAlign="center">{accountLiquidity && accountLiquidity.map((v) => formatEther(v)).join(", ")}</Text>
-        <Button onPress={createCredential}>create account</Button>
         <Button disabled={!connector || isConnecting} onPress={address ? disconnectAccount : connectAccount}>
           {isConnecting ? <Spinner size="small" /> : address ?? "connect"}
         </Button>
-        <Button disabled={!enterWETHSimulation || isSending || isWaiting} onPress={enterWETH}>
+        <Button disabled={!enterWETHSimulation || isSending} onPress={enterWETH}>
           enter WETH market
         </Button>
-        <Button disabled={!borrowUSDCSimulation || isSending || isWaiting} onPress={borrowUSDC}>
+        <Button disabled={!borrowUSDCSimulation || isSending} onPress={borrowUSDC}>
           borrow 1 USDC
         </Button>
       </YStack>

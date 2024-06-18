@@ -1,6 +1,6 @@
-import request from "./request.js";
-import type { Card, CreateCardRequest, Paginated, User } from "./types.js";
-import { card as cardSchema, paginated, responseData } from "./types.js";
+import request from "./request.ts";
+import type { Card, CreateCardRequest, Paginated, User } from "./types.ts";
+import { card as cardSchema, paginated, responseData } from "./types.ts";
 
 export function getCard(id: Card["id"]) {
   return request(`/cards/v1/${id}`, { method: "GET" }, cardSchema);
@@ -21,9 +21,7 @@ export function createCard(card: CreateCardRequest) {
     {
       method: "POST",
       body: card,
-      headers: {
-        "x-idempotency-key": card.user_id, // TODO use a real idempotency key
-      },
+      headers: { "x-idempotency-key": card.user_id }, // TODO use a real idempotency key
     },
     responseData(cardSchema),
   );

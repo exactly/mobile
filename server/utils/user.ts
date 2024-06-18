@@ -1,6 +1,6 @@
-import request from "./request.js";
-import type { CreateUserRequest, User } from "./types.js";
-import { paginated, responseData, user as userSchema } from "./types.js";
+import request from "./request.ts";
+import type { CreateUserRequest, User } from "./types.ts";
+import { paginated, responseData, user as userSchema } from "./types.ts";
 
 export async function getUser(userId: User["id"]) {
   return request<{ data: User }>(`/users/v1/${userId}`, { method: "GET" }, responseData(userSchema));
@@ -15,8 +15,8 @@ export async function getUserByEmail(email: User["email"]) {
   return response.data[0];
 }
 
-export async function getUserByCredentialID(credentialID: string) {
-  return getUserByEmail(`${credentialID}@exactly.account`);
+export async function getUserByCredentialID(credentialId: string) {
+  return getUserByEmail(`${credentialId}@exactly.account`);
 }
 
 export async function createUser(user: CreateUserRequest) {
