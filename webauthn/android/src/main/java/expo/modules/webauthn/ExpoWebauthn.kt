@@ -11,6 +11,7 @@ import expo.modules.kotlin.functions.Coroutine
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
+@Suppress("unused")
 class ExpoWebauthn : Module() {
   override fun definition() = ModuleDefinition {
     Name("ExpoWebauthn")
