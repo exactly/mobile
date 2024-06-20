@@ -140,12 +140,17 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
     },
     async connect({ chainId, isReconnecting } = {}) {
       if (chainId && chainId !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());
-      accountClient ??= await createAccountClient(
-        await loadPasskey().catch((error: unknown) => {
-          if (isReconnecting) throw error;
-          return createPasskey();
-        }),
-      );
+      try {
+        accountClient ??= await createAccountClient(
+          await loadPasskey().catch((error: unknown) => {
+            if (isReconnecting) throw error;
+            return createPasskey();
+          }),
+        );
+      } catch (error: unknown) {
+        handleError(error);
+        throw error;
+      }
       return { accounts: [accountClient.account.address], chainId: chain.id };
     },
     disconnect() {
