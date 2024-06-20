@@ -12,21 +12,21 @@
   "dependencies": {
     "@exactly/common": "workspace:*",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
-    "@sentry/node": "^8.9.2",
+    "@sentry/node": "^8.10.0",
     "@simplewebauthn/server": "^10.0.0",
     "@simplewebauthn/types": "^10.0.0",
     "@vercel/kv": "^2.0.0",
     "@vercel/node": "^3.1.7",
     "@vercel/postgres": "^0.8.0",
-    "@wagmi/core": "2.11.2",
+    "@wagmi/core": "2.11.3",
     "drizzle-orm": "^0.31.2",
     "jose": "^5.4.1",
-    "valibot": "^0.33.1",
+    "valibot": "^0.33.3",
     "viem": "^2.15.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.14.5",
+    "@types/node": "^20.14.6",
     "drizzle-kit": "^0.22.7",
     "typescript": "^5.4.5",
     "vercel": "^34.2.7"
