@@ -18,7 +18,8 @@ export default cors(async function handler({ method, query, body }: VercelReques
       const options = await generateRegistrationOptions({
         rpID: rpId,
         rpName: "exactly",
-        userName: "username", // TODO change username
+        userName: "user", // TODO change username
+        userDisplayName: "user", // TODO change display name
         attestationType: "direct",
         supportedAlgorithmIDs: [cose.COSEALG.ES256],
         authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
