@@ -38,7 +38,7 @@ import type { Passkey } from "@exactly/common/types";
 import createPasskey from "./createPasskey";
 import handleError from "./handleError";
 import loadPasskey from "./loadPasskey";
-import { alchemyGasPolicyId } from "../utils/constants";
+import { alchemyGasPolicyId } from "../constants";
 
 alchemyConnector.type = "alchemy" as const;
 export default function alchemyConnector(publicClient: ClientWithAlchemyMethods) {

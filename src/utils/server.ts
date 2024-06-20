@@ -7,8 +7,8 @@ import type {
 
 import type { Base64URL, Passkey } from "@exactly/common/types";
 
-import { serverURL } from "./constants";
 import loadPasskey from "./loadPasskey";
+import { serverURL } from "../constants";
 
 export function registrationOptions() {
   return server<PublicKeyCredentialCreationOptionsJSON>("/auth/registration");

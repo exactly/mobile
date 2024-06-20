@@ -18,10 +18,10 @@ import { WagmiProvider, createConfig, createStorage, custom } from "wagmi";
 
 import { chain } from "@exactly/common/constants";
 
-import metadata from "../package.json";
-import tamaguiConfig from "../tamagui.config";
+import metadata from "../../package.json";
+import tamaguiConfig from "../../tamagui.config";
+import { alchemyAPIKey } from "../constants";
 import alchemyConnector from "../utils/alchemyConnector";
-import { alchemyAPIKey } from "../utils/constants";
 import handleError from "../utils/handleError";
 import useOneSignal from "../utils/useOneSignal";
 

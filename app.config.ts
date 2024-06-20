@@ -10,14 +10,14 @@ export default {
   scheme: "exactly",
   version: metadata.version,
 
-  icon: "./assets/icon.png",
+  icon: "src/assets/icon.png",
   orientation: "portrait",
   assetBundlePatterns: ["**/*"],
-  splash: { image: "./assets/splash.png", resizeMode: "contain" },
+  splash: { image: "src/assets/splash.png", resizeMode: "contain" },
 
-  android: { package: "app.exactly.mobile", adaptiveIcon: { foregroundImage: "./assets/adaptive-icon.png" } },
+  android: { package: "app.exactly.mobile", adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" } },
   ios: { bundleIdentifier: "app.exactly.mobile", supportsTablet: true },
-  web: { bundler: "metro", favicon: "./assets/favicon.png" },
+  web: { bundler: "metro", favicon: "src/assets/favicon.png" },
 
   plugins: [
     [
@@ -39,8 +39,8 @@ export default {
       "onesignal-expo-plugin",
       {
         mode: "development",
-        smallIcons: ["./assets/notifications_default.png"],
-        largeIcons: ["./assets/notifications_default_large.png"],
+        smallIcons: ["src/assets/notifications_default.png"],
+        largeIcons: ["src/assets/notifications_default_large.png"],
       } as OneSignalPluginProps,
     ],
   ],

@@ -3,8 +3,8 @@ import { Platform } from "react-native";
 import type OneSignalNative from "react-native-onesignal";
 import type OneSignalWeb from "react-onesignal";
 
-import { oneSignalAppId as appId } from "./constants";
 import handleError from "./handleError";
+import { oneSignalAppId as appId } from "../constants";
 
 const { initialization, login, logout } = (
   Platform.OS === "web"
