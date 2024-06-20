@@ -58,7 +58,9 @@ export default cors(async function handler({ method, query, body }: VercelReques
 
       await kv.del(userId);
 
-      const { credentialID, credentialPublicKey, counter } = registrationInfo;
+      const { credentialID, credentialPublicKey, credentialDeviceType, counter } = registrationInfo;
+      if (credentialDeviceType !== "multiDevice") return response.status(400).end("backup eligibility required"); // TODO improve ux
+
       const publicKey = decodeCredentialPublicKey(credentialPublicKey);
       if (!cose.isCOSEPublicKeyEC2(publicKey)) return response.status(400).end("bad public key");
 
