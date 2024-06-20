@@ -13,6 +13,7 @@ if (global.window) {
   // @ts-expect-error -- enough for mipd
   global.CustomEvent ??= class {}; // eslint-disable-line @typescript-eslint/no-extraneous-class
   global.window.addEventListener ??= () => {};
+  global.window.removeEventListener ??= () => {};
   global.window.dispatchEvent ??= () => false;
 }
 
