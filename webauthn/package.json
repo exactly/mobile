@@ -18,7 +18,7 @@
     "prepublishOnly": "expo-module prepublishOnly"
   },
   "dependencies": {
-    "base64-arraybuffer": "^1.0.2"
+    "@simplewebauthn/browser": "^10.0.0"
   },
   "devDependencies": {
     "@expo/config-plugins": "^8.0.5",
@@ -27,7 +27,6 @@
   },
   "peerDependencies": {
     "expo": "*",
-    "expo-constants": "*",
     "expo-modules-core": "*",
     "react": "*",
     "react-native": "*"

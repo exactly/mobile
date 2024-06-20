@@ -1,10 +1,8 @@
-import ExpoConstants, { ExecutionEnvironment } from "expo-constants";
+import { isRunningInExpoGo } from "expo";
 import { requireNativeModule } from "expo-modules-core";
 
-const isExpoGo = ExpoConstants.executionEnvironment === ExecutionEnvironment.StoreClient;
-
-export default isExpoGo
-  ? undefined
+export default isRunningInExpoGo()
+  ? undefined // TODO mock
   : requireNativeModule<{
       create: (requestJSON: string) => Promise<string>;
       get(requestJSON: string): Promise<string>;
