@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import auth from "../middleware/auth.ts";
-import cors from "../middleware/cors.ts";
-import { createCard } from "../utils/cryptomate.ts";
+import auth from "../middleware/auth.js";
+import cors from "../middleware/cors.js";
+import { createCard } from "../utils/cryptomate.js";
 
 export default cors(
   auth(async function handler({ method }: VercelRequest, response: VercelResponse, credentialId: string) {

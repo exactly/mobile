@@ -1,5 +1,5 @@
-import { rpId } from "@exactly/common/constants.ts";
-import { Base64URL } from "@exactly/common/types.ts";
+import { rpId } from "@exactly/common/constants.js";
+import { Base64URL } from "@exactly/common/types.js";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { cose, decodeCredentialPublicKey } from "@simplewebauthn/server/helpers";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
@@ -8,9 +8,9 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { safeParse } from "valibot";
 import { bytesToHex } from "viem";
 
-import database, { credential } from "../../database/index.ts";
-import cors, { ORIGIN } from "../../middleware/cors.ts";
-import handleError from "../../utils/handleError.ts";
+import database, { credential } from "../../database/index.js";
+import cors, { ORIGIN } from "../../middleware/cors.js";
+import handleError from "../../utils/handleError.js";
 
 export default cors(async function handler({ method, query, body }: VercelRequest, response: VercelResponse) {
   switch (method) {

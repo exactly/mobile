@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import buffer from "../../utils/buffer.ts";
-import processTransaction from "../../utils/transaction.ts";
-import { authorizationRequest } from "../../utils/types.ts";
-import { signResponse, verifySignature } from "../../utils/verify.ts";
+import buffer from "../../utils/buffer.js";
+import processTransaction from "../../utils/transaction.js";
+import { authorizationRequest } from "../../utils/types.js";
+import { signResponse, verifySignature } from "../../utils/verify.js";
 
 export const runtime = "nodejs";
 

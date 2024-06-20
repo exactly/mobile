@@ -1,6 +1,6 @@
 import { customType, integer, jsonb, numeric, pgEnum, pgTable, text } from "drizzle-orm/pg-core";
 
-import { CARD_STATUS, OPERATION_COUNTRIES, USER_STATUS } from "../utils/types.ts";
+import { CARD_STATUS, OPERATION_COUNTRIES, USER_STATUS } from "../utils/types.js";
 
 export const userStatusEnum = pgEnum("status", USER_STATUS);
 export const countryEnum = pgEnum("operation_country", OPERATION_COUNTRIES);

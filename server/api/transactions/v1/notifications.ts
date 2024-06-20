@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import buffer from "../../../utils/buffer.ts";
-import { sendPushNotification } from "../../../utils/notifications.ts";
-import { captureException } from "../../../utils/sentry.ts";
-import { notificationRequest } from "../../../utils/types.ts";
-import { signResponse, verifySignature } from "../../../utils/verify.ts";
+import buffer from "../../../utils/buffer.js";
+import { sendPushNotification } from "../../../utils/notifications.js";
+import { captureException } from "../../../utils/sentry.js";
+import { notificationRequest } from "../../../utils/types.js";
+import { signResponse, verifySignature } from "../../../utils/verify.js";
 
 export const runtime = "nodejs";
 

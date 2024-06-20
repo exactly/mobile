@@ -1,6 +1,6 @@
-import request from "./request.ts";
-import type { Card, CreateCardRequest, Paginated, User } from "./types.ts";
-import { card as cardSchema, paginated, responseData } from "./types.ts";
+import request from "./request.js";
+import type { Card, CreateCardRequest, Paginated, User } from "./types.js";
+import { card as cardSchema, paginated, responseData } from "./types.js";
 
 export function getCard(id: Card["id"]) {
   return request(`/cards/v1/${id}`, { method: "GET" }, cardSchema);

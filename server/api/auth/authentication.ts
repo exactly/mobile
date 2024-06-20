@@ -1,5 +1,5 @@
-import { rpId } from "@exactly/common/constants.ts";
-import { Base64URL } from "@exactly/common/types.ts";
+import { rpId } from "@exactly/common/constants.js";
+import { Base64URL } from "@exactly/common/types.js";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticationResponseJSON, AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { kv } from "@vercel/kv";
@@ -8,11 +8,11 @@ import { eq } from "drizzle-orm";
 import { SignJWT } from "jose";
 import { safeParse } from "valibot";
 
-import database, { credential } from "../../database/index.ts";
-import takeUniqueOrThrow from "../../database/takeUniqueOrThrow.ts";
-import cors, { ORIGIN } from "../../middleware/cors.ts";
-import handleError from "../../utils/handleError.ts";
-import jwtSecret from "../../utils/jwtSecret.ts";
+import database, { credential } from "../../database/index.js";
+import takeUniqueOrThrow from "../../database/takeUniqueOrThrow.js";
+import cors, { ORIGIN } from "../../middleware/cors.js";
+import handleError from "../../utils/handleError.js";
+import jwtSecret from "../../utils/jwtSecret.js";
 
 export default cors(async function handler({ method, query, body }: VercelRequest, response: VercelResponse) {
   switch (method) {

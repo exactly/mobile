@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-import auth from "../middleware/auth.ts";
-import cors from "../middleware/cors.ts";
-import type { CreateUserForm } from "../utils/types.ts";
-import { createUser, getUserByCredentialID } from "../utils/user.ts";
+import auth from "../middleware/auth.js";
+import cors from "../middleware/cors.js";
+import type { CreateUserForm } from "../utils/types.js";
+import { createUser, getUserByCredentialID } from "../utils/user.js";
 
 export default cors(
   auth(async function handler({ method, body }: VercelRequest, response: VercelResponse, credentialId: string) {

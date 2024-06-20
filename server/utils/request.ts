@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import { type AccessTokenResponse, errorPayload } from "./types.ts";
+import { type AccessTokenResponse, errorPayload } from "./types.js";
 
 const { POMELO_CLIENT_ID, POMELO_CLIENT_SECRET, POMELO_AUDIENCE } = process.env;
 if (!POMELO_CLIENT_ID || !POMELO_CLIENT_SECRET || !POMELO_AUDIENCE) throw new Error("missing pomelo vars");

@@ -1,9 +1,9 @@
-import type { Base64URL } from "@exactly/common/types.ts";
+import type { Base64URL } from "@exactly/common/types.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { jwtVerify } from "jose";
 
-import handleError from "../utils/handleError.ts";
-import jwtSecret from "../utils/jwtSecret.ts";
+import handleError from "../utils/handleError.js";
+import jwtSecret from "../utils/jwtSecret.js";
 
 export default function auth(
   handler: (

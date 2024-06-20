@@ -1,6 +1,6 @@
-import request from "./request.ts";
-import type { CreateUserRequest, User } from "./types.ts";
-import { paginated, responseData, user as userSchema } from "./types.ts";
+import request from "./request.js";
+import type { CreateUserRequest, User } from "./types.js";
+import { paginated, responseData, user as userSchema } from "./types.js";
 
 export async function getUser(userId: User["id"]) {
   return request<{ data: User }>(`/users/v1/${userId}`, { method: "GET" }, responseData(userSchema));
