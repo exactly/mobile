@@ -3,5 +3,6 @@
   "outputDirectory": "/",
   "trailingSlash": false,
   "cleanUrls": true,
+  "rewrites": [{ "source": "/:path((?!api/).*)", "destination": "/app/:path*" }],
   "$schema": "https://openapi.vercel.sh/vercel.json"
 }
