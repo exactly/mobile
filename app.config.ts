@@ -17,7 +17,7 @@ export default {
 
   android: { package: "app.exactly.mobile", adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" } },
   ios: { bundleIdentifier: "app.exactly.mobile", supportsTablet: true },
-  web: { bundler: "metro", favicon: "src/assets/favicon.png" },
+  web: { output: "static", favicon: "src/assets/favicon.png" },
 
   plugins: [
     [
