@@ -1,5 +1,7 @@
 {
   "buildCommand": "bun run build:app",
   "outputDirectory": "/",
+  "trailingSlash": false,
+  "cleanUrls": true,
   "$schema": "https://openapi.vercel.sh/vercel.json"
 }
