@@ -27,9 +27,7 @@
   },
   "peerDependencies": {
     "expo": "*",
-    "expo-modules-core": "*",
-    "react": "*",
-    "react-native": "*"
+    "expo-modules-core": "*"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts"
