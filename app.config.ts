@@ -16,7 +16,11 @@ export default {
   splash: { image: "src/assets/splash.png", resizeMode: "contain" },
 
   android: { package: "app.exactly.mobile", adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" } },
-  ios: { bundleIdentifier: "app.exactly.mobile", supportsTablet: true },
+  ios: {
+    bundleIdentifier: "app.exactly.mobile",
+    associatedDomains: ["webcredentials:web.exactly.app"],
+    supportsTablet: true,
+  },
   web: { output: "static", favicon: "src/assets/favicon.png" },
 
   plugins: [
