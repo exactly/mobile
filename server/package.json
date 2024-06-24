@@ -4,7 +4,7 @@
   "scripts": {
     "test": "tsc",
     "db:push": "drizzle-kit push",
-    "build:app": "cd .. && expo export --platform web --source-maps --output-dir server/app",
+    "build:app": "bun run --filter expo-webauthn prepare && cd .. && expo export --platform web --source-maps --output-dir server/app",
     "dev": "bun run --cwd .. vercel dev"
   },
   "engines": {
