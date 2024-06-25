@@ -110,7 +110,7 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
             authenticatorData: "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
             clientDataJSON: `{"type":"webauthn.get","challenge":"${bufferToBase64URLString(
               hexToBytes(hashMessage({ raw: deepHexlify(await resolveProperties(userOp)) as Hex }), { size: 32 }),
-            )}","origin":"https://exactly.app","crossOrigin":false}`,
+            )}","origin":"https://web.exactly.app","crossOrigin":false}`,
             typeIndex: 1n,
             challengeIndex: 23n,
             r: maxUint256,

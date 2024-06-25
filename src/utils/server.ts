@@ -8,7 +8,7 @@ import type {
 import type { Base64URL, Passkey } from "@exactly/common/types";
 
 import loadPasskey from "./loadPasskey";
-import { serverURL } from "../constants";
+import { apiURL } from "../constants";
 
 export function registrationOptions() {
   return server<PublicKeyCredentialCreationOptionsJSON>("/auth/registration");
@@ -53,7 +53,7 @@ async function server<T = unknown>(
     method = body === undefined ? "GET" : "POST",
   }: { body?: unknown; token?: string; method?: "GET" | "POST" } = {},
 ) {
-  const response = await fetch(`${serverURL}${url}`, {
+  const response = await fetch(`${apiURL}${url}`, {
     method,
     headers: {
       "Content-Type": "application/json",

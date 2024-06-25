@@ -1,6 +1,7 @@
+import { rpId } from "@exactly/common/constants.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-export const ORIGIN = "http://localhost:8081"; // TODO this works for local development only
+export const ORIGIN = rpId === "localhost" ? "http://localhost:8081" : `https://${rpId}`;
 
 export default function cors(
   handler: (request: VercelRequest, response: VercelResponse) => VercelResponse | Promise<VercelResponse>,

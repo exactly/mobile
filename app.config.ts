@@ -53,3 +53,7 @@ export default {
   extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
   owner: "exactly",
 } as ExpoConfig;
+
+const vercelURL =
+  process.env.VERCEL_ENV === "production" ? process.env.VERCEL_PROJECT_PRODUCTION_URL : process.env.VERCEL_BRANCH_URL;
+if (vercelURL) process.env.EXPO_PUBLIC_URL ??= vercelURL;
