@@ -12,7 +12,7 @@ import { isRunningInExpoGo } from "expo";
 import { type FontSource, useFonts } from "expo-font";
 import { Slot, SplashScreen, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useLayoutEffect } from "react";
+import React, { useEffect } from "react";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider, createConfig, createStorage, custom } from "wagmi";
 
@@ -62,7 +62,7 @@ export default wrap(function RootLayout() {
 
   useOneSignal();
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (loaded) SplashScreen.hideAsync().catch(handleError);
   }, [loaded]);
 
