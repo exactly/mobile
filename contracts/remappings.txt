@@ -9,3 +9,4 @@ webauthn-owner-plugin/=../node_modules/webauthn-owner-plugin/src/
 
 forge-std/=lib/forge-std/src/
 ds-test/=lib/forge-std/lib/ds-test/src/
+account-abstraction/=lib/modular-account/lib/account-abstraction/contracts/
