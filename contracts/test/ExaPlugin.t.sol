@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
+pragma solidity ^0.8.0;
 
 import { StdStorage, Test, stdError, stdStorage } from "forge-std/Test.sol";
 
@@ -14,7 +14,6 @@ import { DebtManager, IBalancerVault, IPermit2 } from "@exactly/protocol/periphe
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
-import { MultiOwnerModularAccountFactory } from "modular-account/src/factory/MultiOwnerModularAccountFactory.sol";
 import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
 import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
 
@@ -28,6 +27,8 @@ import { MessageHashUtils } from "openzeppelin-contracts/contracts/utils/cryptog
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
+import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
+import { WebauthnModularAccountFactory } from "webauthn-owner-plugin/WebauthnModularAccountFactory.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { BorrowLimitExceeded, ExaPlugin, IAuditor, IMarket } from "../src/ExaPlugin.sol";
@@ -38,6 +39,7 @@ import { BorrowLimitExceeded, ExaPlugin, IAuditor, IMarket } from "../src/ExaPlu
 contract ExaPluginTest is Test {
   using MessageHashUtils for bytes32;
   using stdStorage for StdStorage;
+  using OwnersLib for address[];
 
   address internal owner1;
   uint256 internal owner1Key;
@@ -85,7 +87,7 @@ contract ExaPluginTest is Test {
 
     entryPoint = IEntryPoint(address(new EntryPoint()));
     WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
-    MultiOwnerModularAccountFactory factory = new MultiOwnerModularAccountFactory(
+    WebauthnModularAccountFactory factory = new WebauthnModularAccountFactory(
       address(this),
       address(ownerPlugin),
       address(new UpgradeableModularAccount(entryPoint)),
@@ -96,7 +98,7 @@ contract ExaPluginTest is Test {
     (owner1, owner1Key) = makeAddrAndKey("owner1");
     owners = new address[](1);
     owners[0] = owner1;
-    account1 = UpgradeableModularAccount(payable(factory.createAccount(0, owners)));
+    account1 = UpgradeableModularAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
     vm.deal(address(account1), 10_000 ether);
     vm.label(address(account1), "account1");
 
@@ -116,7 +118,7 @@ contract ExaPluginTest is Test {
     account1.installPlugin({
       plugin: address(exaPlugin),
       manifestHash: manifestHash,
-      pluginInstallData: "0x",
+      pluginInstallData: "",
       dependencies: dependencies
     });
 
