@@ -38,16 +38,16 @@ contract ExaPlugin is BasePlugin, AccessControl {
 
   uint256 public constant BORROW_LIMIT = 1000e18;
 
-  address public beneficiary;
+  address public paymentReceiver;
   uint256 public immutable INTERVAL = 30 days;
   mapping(IPluginExecutor account => uint256 limit) public borrowLimits;
   mapping(IPluginExecutor account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
 
-  constructor(IAuditor auditor_, address beneficiary_) {
+  constructor(IAuditor auditor_, address paymentReceiver_) {
     AUDITOR = auditor_;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    setBeneficiary(beneficiary_);
+    setPaymentReceiver(paymentReceiver_);
   }
 
   function enterMarket(IPluginExecutor account, IMarket market) external onlyRole(KEEPER_ROLE) {
@@ -84,7 +84,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
     borrows[account][block.timestamp % INTERVAL] = newAmount;
 
     account.executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.borrow, (amount, beneficiary, address(account)))
+      address(market), 0, abi.encodeCall(market.borrow, (amount, paymentReceiver, address(account)))
     );
   }
 
@@ -108,7 +108,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
     account.executeFromPluginExternal(
       address(market),
       0,
-      abi.encodeCall(market.borrowAtMaturity, (maturity, amount, maxAmount, beneficiary, address(account)))
+      abi.encodeCall(market.borrowAtMaturity, (maturity, amount, maxAmount, paymentReceiver, address(account)))
     );
   }
 
@@ -118,12 +118,12 @@ contract ExaPlugin is BasePlugin, AccessControl {
     onlyMarket(market)
   {
     account.executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.withdraw, (amount, beneficiary, address(account)))
+      address(market), 0, abi.encodeCall(market.withdraw, (amount, paymentReceiver, address(account)))
     );
   }
 
-  function setBeneficiary(address beneficiary_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    beneficiary = beneficiary_;
+  function setPaymentReceiver(address paymentReceiver_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    paymentReceiver = paymentReceiver_;
   }
 
   /// @inheritdoc BasePlugin
