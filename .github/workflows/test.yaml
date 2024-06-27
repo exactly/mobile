@@ -14,9 +14,9 @@ jobs:
           node-version: 20
       - uses: oven-sh/setup-bun@v1
       - uses: foundry-rs/foundry-toolchain@v1
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: pip
           cache-dependency-path: contracts/requirements.txt
       - run: pip install -r contracts/requirements.txt
