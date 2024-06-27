@@ -11,10 +11,6 @@ import { MockInterestRateModel } from "@exactly/protocol/mocks/MockInterestRateM
 import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
 import { DebtManager, IBalancerVault, IPermit2 } from "@exactly/protocol/periphery/DebtManager.sol";
 
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
@@ -26,18 +22,22 @@ import { FunctionReference } from "modular-account-libs/interfaces/IPluginManage
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
 import { FunctionReferenceLib } from "modular-account-libs/libraries/FunctionReferenceLib.sol";
 
+import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
+import { ERC1967Proxy } from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import { MessageHashUtils } from "openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
+
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
-import { Auditor, ExaPlugin, Market } from "../src/ExaPlugin.sol";
+import { ExaPlugin, IAuditor, IMarket } from "../src/ExaPlugin.sol";
 
 // TODO use mock asset with price != 1
 // TODO use price feed for that asset with 8 decimals
 // TODO add the debt manager to the plugin so we can roll fixed to floating
 contract ExaPluginTest is Test {
+  using MessageHashUtils for bytes32;
   using stdStorage for StdStorage;
-  using ECDSA for bytes32;
 
   address internal owner1;
   uint256 internal owner1Key;
@@ -50,8 +50,8 @@ contract ExaPluginTest is Test {
   ExaPlugin internal exaPlugin;
 
   Auditor internal auditor;
-  Market internal market;
-  Market internal marketUSDC;
+  IMarket internal market;
+  IMarket internal marketUSDC;
   MockERC20 internal asset;
   MockERC20 internal usdc;
   DebtManager internal debtManager;
@@ -64,17 +64,17 @@ contract ExaPluginTest is Test {
     // exa
     asset = new MockERC20("Exactly Token", "EXA", 18);
     vm.label(address(asset), "EXA");
-    market = Market(address(new ERC1967Proxy(address(new Market(asset, auditor)), "")));
-    market.initialize("EXA", 3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    market = IMarket(address(new ERC1967Proxy(address(new Market(asset, auditor)), "")));
+    Market(address(market)).initialize("EXA", 3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
     vm.label(address(market), "MarketEXA");
-    auditor.enableMarket(market, new MockPriceFeed(18, 5e18), 0.8e18);
+    auditor.enableMarket(Market(address(market)), new MockPriceFeed(18, 5e18), 0.8e18);
     // usdc
     usdc = new MockERC20("USD Coin", "USDC", 6);
     vm.label(address(usdc), "USDC");
-    marketUSDC = Market(address(new ERC1967Proxy(address(new Market(usdc, auditor)), "")));
-    marketUSDC.initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    marketUSDC = IMarket(address(new ERC1967Proxy(address(new Market(usdc, auditor)), "")));
+    Market(address(marketUSDC)).initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
     vm.label(address(marketUSDC), "MarketUSDC");
-    auditor.enableMarket(marketUSDC, new MockPriceFeed(18, 1e18), 0.9e18);
+    auditor.enableMarket(Market(address(marketUSDC)), new MockPriceFeed(18, 1e18), 0.9e18);
 
     IBalancerVault balancer = IBalancerVault(address(new MockBalancerVault()));
     asset.mint(address(balancer), 1_000_000e18);
@@ -103,7 +103,7 @@ contract ExaPluginTest is Test {
     (keeper1, keeper1Key) = makeAddrAndKey("keeper1");
     vm.label(keeper1, "keeper1");
 
-    exaPlugin = new ExaPlugin(auditor, beneficiary);
+    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), beneficiary);
 
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper1);
     bytes32 manifestHash = keccak256(abi.encode(exaPlugin.pluginManifest()));
@@ -133,11 +133,8 @@ contract ExaPluginTest is Test {
 
   function testEnterMarketNotKeeper() external {
     vm.expectRevert(
-      abi.encodePacked(
-        "AccessControl: account ",
-        Strings.toHexString(address(this)),
-        " is missing role ",
-        Strings.toHexString(uint256(exaPlugin.KEEPER_ROLE()), 32)
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), exaPlugin.KEEPER_ROLE()
       )
     );
     exaPlugin.enterMarket(account1, market);
@@ -156,11 +153,8 @@ contract ExaPluginTest is Test {
     exaPlugin.approve(account1, market, 100 ether);
 
     vm.expectRevert(
-      abi.encodePacked(
-        "AccessControl: account ",
-        Strings.toHexString(address(this)),
-        " is missing role ",
-        Strings.toHexString(uint256(exaPlugin.KEEPER_ROLE()), 32)
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), exaPlugin.KEEPER_ROLE()
       )
     );
     exaPlugin.deposit(account1, market, 100 ether);
@@ -250,11 +244,8 @@ contract ExaPluginTest is Test {
     exaPlugin.approve(account1, market, 100 ether);
 
     vm.expectRevert(
-      abi.encodePacked(
-        "AccessControl: account ",
-        Strings.toHexString(address(this)),
-        " is missing role ",
-        Strings.toHexString(uint256(exaPlugin.KEEPER_ROLE()), 32)
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), exaPlugin.KEEPER_ROLE()
       )
     );
     exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 10 ether, 100 ether);
@@ -284,11 +275,8 @@ contract ExaPluginTest is Test {
     exaPlugin.approve(account1, market, 100 ether);
 
     vm.expectRevert(
-      abi.encodePacked(
-        "AccessControl: account ",
-        Strings.toHexString(address(this)),
-        " is missing role ",
-        Strings.toHexString(uint256(exaPlugin.KEEPER_ROLE()), 32)
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), exaPlugin.KEEPER_ROLE()
       )
     );
     exaPlugin.withdraw(account1, market, 100 ether);

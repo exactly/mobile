@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import { Auditor, IPriceFeed } from "@exactly/protocol/Auditor.sol";
-import { ERC20, Market } from "@exactly/protocol/Market.sol";
-
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { AccessControl } from "openzeppelin-contracts/contracts/access/AccessControl.sol";
+import { IERC20, IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 
 import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
 
@@ -19,15 +16,14 @@ import {
 import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
-import { FixedPointMathLib } from "solmate/src/utils/FixedPointMathLib.sol";
-import { SafeTransferLib } from "solmate/src/utils/SafeTransferLib.sol";
+import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
 /// @title Exa Plugin
 /// @author Exactly
 contract ExaPlugin is BasePlugin, AccessControl {
   using FixedPointMathLib for uint256;
-  using SafeCast for int256;
-  using SafeTransferLib for ERC20;
+  using SafeCastLib for int256;
 
   // metadata used by the pluginMetadata() method down below
   string public constant NAME = "Account Plugin";
@@ -36,7 +32,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
-  Auditor public immutable AUDITOR;
+  IAuditor public immutable AUDITOR;
 
   uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
 
@@ -47,18 +43,18 @@ contract ExaPlugin is BasePlugin, AccessControl {
   mapping(IPluginExecutor account => uint256 limit) public borrowLimits;
   mapping(IPluginExecutor account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
 
-  constructor(Auditor auditor_, address beneficiary_) {
+  constructor(IAuditor auditor_, address beneficiary_) {
     AUDITOR = auditor_;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setBeneficiary(beneficiary_);
   }
 
-  function enterMarket(IPluginExecutor account, Market market) external onlyRole(KEEPER_ROLE) {
-    account.executeFromPluginExternal(address(AUDITOR), 0, abi.encodeCall(Auditor.enterMarket, (market)));
+  function enterMarket(IPluginExecutor account, IMarket market) external onlyRole(KEEPER_ROLE) {
+    account.executeFromPluginExternal(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
   }
 
-  function deposit(IPluginExecutor account, Market market, uint256 amount)
+  function deposit(IPluginExecutor account, IMarket market, uint256 amount)
     external
     onlyRole(KEEPER_ROLE)
     onlyMarket(market)
@@ -66,22 +62,22 @@ contract ExaPlugin is BasePlugin, AccessControl {
     account.executeFromPluginExternal(address(market), 0, abi.encodeCall(market.deposit, (amount, address(account))));
   }
 
-  function approve(IPluginExecutor account, Market market, uint256 amount)
+  function approve(IPluginExecutor account, IMarket market, uint256 amount)
     external
     onlyRole(KEEPER_ROLE)
     onlyMarket(market)
   {
     account.executeFromPluginExternal(
-      address(market.asset()), 0, abi.encodeCall(ERC20.approve, (address(market), amount))
+      address(market.asset()), 0, abi.encodeCall(IERC20.approve, (address(market), amount))
     );
   }
 
-  function borrow(IPluginExecutor account, Market market, uint256 amount) external onlyRole(KEEPER_ROLE) {
+  function borrow(IPluginExecutor account, IMarket market, uint256 amount) external onlyRole(KEEPER_ROLE) {
     /// @dev the next call validates the market
     (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
 
-    uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
-      + amount.mulDivDown(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
+    uint256 newAmount =
+      borrows[account][block.timestamp % INTERVAL] + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
     if (newAmount > borrowLimits[account]) revert("ExaPlugin: borrow limit exceeded");
 
@@ -92,15 +88,18 @@ contract ExaPlugin is BasePlugin, AccessControl {
     );
   }
 
-  function borrowAtMaturity(IPluginExecutor account, Market market, uint256 maturity, uint256 amount, uint256 maxAmount)
-    external
-    onlyRole(KEEPER_ROLE)
-  {
+  function borrowAtMaturity(
+    IPluginExecutor account,
+    IMarket market,
+    uint256 maturity,
+    uint256 amount,
+    uint256 maxAmount
+  ) external onlyRole(KEEPER_ROLE) {
     {
       /// @dev the next call validates the market
       (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
       uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
-        + amount.mulDivDown(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
+        + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
       if (newAmount > borrowLimits[account]) revert("ExaPlugin: borrow limit exceeded");
 
@@ -113,7 +112,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
     );
   }
 
-  function withdraw(IPluginExecutor account, Market market, uint256 amount)
+  function withdraw(IPluginExecutor account, IMarket market, uint256 amount)
     external
     onlyRole(KEEPER_ROLE)
     onlyMarket(market)
@@ -191,12 +190,12 @@ contract ExaPlugin is BasePlugin, AccessControl {
     return metadata;
   }
 
-  function checkIsMarket(Market market) public view {
+  function checkIsMarket(IMarket market) public view {
     (,,, bool isMarket,) = AUDITOR.markets(market);
     if (!isMarket) revert("ExaPlugin: not a market");
   }
 
-  modifier onlyMarket(Market market) {
+  modifier onlyMarket(IMarket market) {
     checkIsMarket(market);
     _;
   }
@@ -204,4 +203,23 @@ contract ExaPlugin is BasePlugin, AccessControl {
   function supportsInterface(bytes4 interfaceId) public view override(AccessControl, BasePlugin) returns (bool) {
     return super.supportsInterface(interfaceId);
   }
+}
+
+interface IAuditor {
+  function markets(IMarket market)
+    external
+    view
+    returns (uint128 adjustFactor, uint8 decimals, uint8 index, bool isListed, IPriceFeed priceFeed);
+  function enterMarket(IMarket market) external;
+}
+
+interface IMarket is IERC4626 {
+  function borrow(uint256 assets, address receiver, address borrower) external returns (uint256 borrowShares);
+  function borrowAtMaturity(uint256 maturity, uint256 assets, uint256 maxAssets, address receiver, address borrower)
+    external
+    returns (uint256 assetsOwed);
+}
+
+interface IPriceFeed {
+  function latestAnswer() external view returns (int256);
 }

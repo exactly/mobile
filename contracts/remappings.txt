@@ -1,7 +1,8 @@
-@openzeppelin/contracts/=lib/modular-account/lib/openzeppelin-contracts/contracts/
 openzeppelin-contracts/=lib/webauthn-sol/lib/openzeppelin-contracts/
+solady/=lib/webauthn-sol/lib/solady/src/
 
 @exactly/protocol/=../node_modules/@exactly/protocol/contracts/
+@openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/
 @openzeppelin/contracts-upgradeable/=../node_modules/@openzeppelin/contracts-upgradeable/
 solmate/=../node_modules/solmate/
 webauthn-owner-plugin/=../node_modules/webauthn-owner-plugin/src/
