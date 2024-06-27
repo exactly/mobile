@@ -1,11 +1,5 @@
-import { atob, btoa } from "react-native-quick-base64";
-import { TextEncoder } from "text-encoding";
-
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
-global.atob ??= atob;
-global.btoa ??= btoa;
-global.TextEncoder ??= TextEncoder;
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, unicorn/prefer-module
 global.crypto ??= new (require("@peculiar/webcrypto").Crypto)();
 
