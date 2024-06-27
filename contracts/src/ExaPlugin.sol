@@ -79,7 +79,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
     uint256 newAmount =
       borrows[account][block.timestamp % INTERVAL] + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
-    if (newAmount > borrowLimits[account]) revert("ExaPlugin: borrow limit exceeded");
+    if (newAmount > borrowLimits[account]) revert BorrowLimitExceeded();
 
     borrows[account][block.timestamp % INTERVAL] = newAmount;
 
@@ -101,7 +101,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
       uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
         + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
-      if (newAmount > borrowLimits[account]) revert("ExaPlugin: borrow limit exceeded");
+      if (newAmount > borrowLimits[account]) revert BorrowLimitExceeded();
 
       borrows[account][block.timestamp % INTERVAL] = newAmount;
     }
@@ -192,7 +192,7 @@ contract ExaPlugin is BasePlugin, AccessControl {
 
   function checkIsMarket(IMarket market) public view {
     (,,, bool isMarket,) = AUDITOR.markets(market);
-    if (!isMarket) revert("ExaPlugin: not a market");
+    if (!isMarket) revert NotMarket();
   }
 
   modifier onlyMarket(IMarket market) {
@@ -204,6 +204,9 @@ contract ExaPlugin is BasePlugin, AccessControl {
     return super.supportsInterface(interfaceId);
   }
 }
+
+error BorrowLimitExceeded();
+error NotMarket();
 
 interface IAuditor {
   function markets(IMarket market)

@@ -30,7 +30,7 @@ import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
-import { ExaPlugin, IAuditor, IMarket } from "../src/ExaPlugin.sol";
+import { BorrowLimitExceeded, ExaPlugin, IAuditor, IMarket } from "../src/ExaPlugin.sol";
 
 // TODO use mock asset with price != 1
 // TODO use price feed for that asset with 8 decimals
@@ -178,7 +178,7 @@ contract ExaPluginTest is Test {
 
     exaPlugin.borrow(account1, market, 200 ether);
 
-    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    vm.expectRevert(BorrowLimitExceeded.selector);
     exaPlugin.borrow(account1, market, 1 ether);
   }
 
@@ -213,7 +213,7 @@ contract ExaPluginTest is Test {
 
     exaPlugin.borrow(account1, marketUSDC, 1000e6);
 
-    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    vm.expectRevert(BorrowLimitExceeded.selector);
     exaPlugin.borrow(account1, marketUSDC, 1e6);
   }
 
@@ -235,7 +235,7 @@ contract ExaPluginTest is Test {
 
     exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 200 ether, 210 ether);
 
-    vm.expectRevert("ExaPlugin: borrow limit exceeded");
+    vm.expectRevert(BorrowLimitExceeded.selector);
     exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 1 ether, 1.1 ether);
   }
 
