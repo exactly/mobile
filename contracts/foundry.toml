@@ -3,6 +3,7 @@ solc_version = "0.8.26"
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 999_999
+deny_warnings = true
 verbosity = 3
 isolate = true
 libs = ["lib", "../node_modules"]
