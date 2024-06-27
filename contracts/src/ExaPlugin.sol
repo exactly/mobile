@@ -21,7 +21,7 @@ import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
 /// @title Exa Plugin
 /// @author Exactly
-contract ExaPlugin is BasePlugin, AccessControl {
+contract ExaPlugin is AccessControl, BasePlugin {
   using FixedPointMathLib for uint256;
   using SafeCastLib for int256;
 
