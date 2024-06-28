@@ -16,11 +16,10 @@ import React, { useEffect } from "react";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider, createConfig, createStorage, custom } from "wagmi";
 
-import { chain } from "@exactly/common/constants";
+import { alchemyAPIKey, chain } from "@exactly/common/constants";
 
 import metadata from "../../package.json";
 import tamaguiConfig from "../../tamagui.config";
-import { alchemyAPIKey } from "../constants";
 import alchemyConnector from "../utils/alchemyConnector";
 import handleError from "../utils/handleError";
 import useOneSignal from "../utils/useOneSignal";

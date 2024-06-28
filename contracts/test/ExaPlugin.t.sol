@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
-import { StdStorage, Test, stdError, stdStorage } from "forge-std/Test.sol";
+import { Test, stdError } from "forge-std/Test.sol";
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
@@ -35,7 +35,6 @@ import { BorrowLimitExceeded, ExaPlugin, IAuditor, IMarket } from "../src/ExaPlu
 // TODO add the debt manager to the plugin so we can roll fixed to floating
 contract ExaPluginTest is Test {
   using MessageHashUtils for bytes32;
-  using stdStorage for StdStorage;
   using OwnersLib for address[];
 
   address internal owner1;

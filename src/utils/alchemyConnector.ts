@@ -32,13 +32,12 @@ import {
 import { ChainNotConfiguredError, createConnector } from "wagmi";
 import deployments from "webauthn-owner-plugin/broadcast/Deploy.s.sol/11155420/run-1716346701.json";
 
-import { chain, rpId } from "@exactly/common/constants";
+import { alchemyGasPolicyId, chain, rpId } from "@exactly/common/constants";
 import type { Passkey } from "@exactly/common/types";
 
 import createPasskey from "./createPasskey";
 import handleError from "./handleError";
 import loadPasskey from "./loadPasskey";
-import { alchemyGasPolicyId } from "../constants";
 
 alchemyConnector.type = "alchemy" as const;
 export default function alchemyConnector(publicClient: ClientWithAlchemyMethods) {
