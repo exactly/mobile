@@ -21,7 +21,7 @@
     "@simplewebauthn/browser": "^10.0.0"
   },
   "devDependencies": {
-    "@expo/config-plugins": "^8.0.5",
+    "@expo/config-plugins": "^8.0.6",
     "@expo/prebuild-config": "^7.0.6",
     "expo-module-scripts": "^3.5.2"
   },
