@@ -15,11 +15,8 @@ import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
 import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
-import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
 
-import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
-import { FunctionReferenceLib } from "modular-account-libs/libraries/FunctionReferenceLib.sol";
 
 import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
 import { ERC1967Proxy } from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -28,9 +25,9 @@ import { MessageHashUtils } from "openzeppelin-contracts/contracts/utils/cryptog
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
-import { WebauthnModularAccountFactory } from "webauthn-owner-plugin/WebauthnModularAccountFactory.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
+import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import { BorrowLimitExceeded, ExaPlugin, IAuditor, IMarket } from "../src/ExaPlugin.sol";
 
 // TODO use mock asset with price != 1
@@ -86,41 +83,24 @@ contract ExaPluginTest is Test {
     vm.label(address(debtManager), "DebtManager");
 
     entryPoint = IEntryPoint(address(new EntryPoint()));
-    WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
-    WebauthnModularAccountFactory factory = new WebauthnModularAccountFactory(
-      address(this),
-      address(ownerPlugin),
-      address(new UpgradeableModularAccount(entryPoint)),
-      keccak256(abi.encode(ownerPlugin.pluginManifest())),
-      entryPoint
-    );
     paymentReceiver = payable(makeAddr("paymentReceiver"));
     (owner1, owner1Key) = makeAddrAndKey("owner1");
     owners = new address[](1);
     owners[0] = owner1;
-    account1 = UpgradeableModularAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
-    vm.deal(address(account1), 10_000 ether);
-    vm.label(address(account1), "account1");
-
     (keeper1, keeper1Key) = makeAddrAndKey("keeper1");
     vm.label(keeper1, "keeper1");
 
     exaPlugin = new ExaPlugin(IAuditor(address(auditor)), paymentReceiver);
-
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper1);
-    bytes32 manifestHash = keccak256(abi.encode(exaPlugin.pluginManifest()));
 
-    FunctionReference[] memory dependencies = new FunctionReference[](1);
-    dependencies[0] =
-      FunctionReferenceLib.pack(address(ownerPlugin), uint8(IMultiOwnerPlugin.FunctionId.USER_OP_VALIDATION_OWNER));
+    WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
+    ExaAccountFactory factory = new ExaAccountFactory(
+      address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(entryPoint)), entryPoint
+    );
 
-    vm.prank(owner1);
-    account1.installPlugin({
-      plugin: address(exaPlugin),
-      manifestHash: manifestHash,
-      pluginInstallData: "",
-      dependencies: dependencies
-    });
+    account1 = UpgradeableModularAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
+    vm.deal(address(account1), 10_000 ether);
+    vm.label(address(account1), "account1");
 
     asset.mint(address(account1), 10_000e18);
     usdc.mint(address(account1), 100_000e6);
