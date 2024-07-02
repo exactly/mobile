@@ -10,11 +10,12 @@ import { safeParse } from "valibot";
 
 import database, { credential } from "../../database/index.js";
 import takeUniqueOrThrow from "../../database/takeUniqueOrThrow.js";
-import cors, { ORIGIN } from "../../middleware/cors.js";
+import cors from "../../middleware/cors.js";
+import expectedOrigin from "../../utils/expectedOrigin.js";
 import handleError from "../../utils/handleError.js";
 import jwtSecret from "../../utils/jwtSecret.js";
 
-export default cors(async function handler({ method, query, body }: VercelRequest, response: VercelResponse) {
+export default cors(async function handler({ method, headers, query, body }: VercelRequest, response: VercelResponse) {
   switch (method) {
     case "GET": {
       const { success, output: credentialId } = safeParse(Base64URL, query.credentialId);
@@ -45,7 +46,7 @@ export default cors(async function handler({ method, query, body }: VercelReques
         verification = await verifyAuthenticationResponse({
           response: assertion,
           expectedRPID: rpId,
-          expectedOrigin: ORIGIN,
+          expectedOrigin: expectedOrigin(headers["user-agent"]),
           expectedChallenge: challenge,
           authenticator: {
             credentialID: credentialId,

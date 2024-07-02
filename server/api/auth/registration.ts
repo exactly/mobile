@@ -9,10 +9,11 @@ import { safeParse } from "valibot";
 import { bytesToHex } from "viem";
 
 import database, { credential } from "../../database/index.js";
-import cors, { ORIGIN } from "../../middleware/cors.js";
+import cors from "../../middleware/cors.js";
+import expectedOrigin from "../../utils/expectedOrigin.js";
 import handleError from "../../utils/handleError.js";
 
-export default cors(async function handler({ method, query, body }: VercelRequest, response: VercelResponse) {
+export default cors(async function handler({ method, headers, query, body }: VercelRequest, response: VercelResponse) {
   switch (method) {
     case "GET": {
       const options = await generateRegistrationOptions({
@@ -45,7 +46,7 @@ export default cors(async function handler({ method, query, body }: VercelReques
         verification = await verifyRegistrationResponse({
           response: attestation,
           expectedRPID: rpId,
-          expectedOrigin: ORIGIN,
+          expectedOrigin: expectedOrigin(headers["user-agent"]),
           expectedChallenge: challenge,
           supportedAlgorithmIDs: [cose.COSEALG.ES256],
         });
