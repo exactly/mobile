@@ -16,3 +16,11 @@ number_underscore = "thousands"
 
 [profile.production.fuzz]
 runs = 66_666
+
+[rpc_endpoints]
+optimism = "${OPTIMISM_RPC_URL}"
+optimism_sepolia = "${OPTIMISM_SEPOLIA_RPC_URL}"
+
+[etherscan]
+optimism = { key = "${OPTIMISM_ETHERSCAN_KEY}" }
+optimism_sepolia = { key = "${OPTIMISM_ETHERSCAN_KEY}" }
