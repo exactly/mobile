@@ -30,6 +30,7 @@
     "@alchemy/aa-core": "^3.18.2",
     "@alchemy/aa-ethers": "^3.18.2",
     "@craftzdog/react-native-buffer": "^6.0.5",
+    "@exactly/plugin": "workspace:*",
     "@exactly/protocol": "exactly/protocol#8ae3561",
     "@expo/vector-icons": "^14.0.2",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
