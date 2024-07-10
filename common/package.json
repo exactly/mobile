@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.18.2",
-    "valibot": "^0.35.0",
-    "viem": "^2.17.1"
+    "valibot": "^0.36.0",
+    "viem": "^2.17.3"
   }
 }
