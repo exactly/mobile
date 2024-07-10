@@ -36,6 +36,7 @@
     "@peculiar/asn1-ecc": "^2.3.8",
     "@peculiar/asn1-schema": "^2.3.8",
     "@peculiar/webcrypto": "^1.5.0",
+    "@phosphor-icons/react": "^2.1.7",
     "@react-native-async-storage/async-storage": "~1.23.1",
     "@sentry/react-native": "^5.25.0",
     "@simplewebauthn/browser": "^10.0.0",
