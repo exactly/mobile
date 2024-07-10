@@ -8,10 +8,6 @@ module.exports = {
   resolver: {
     ...config.resolver,
     sourceExts: [...(config.resolver?.sourceExts ?? []), "mjs"],
-    blockList: [
-      ...(Array.isArray(config.resolver?.blockList) ? config.resolver.blockList : [config.resolver?.blockList]),
-      new RegExp(`${__dirname}/contracts/`),
-    ],
     extraNodeModules: {
       buffer: require.resolve("@craftzdog/react-native-buffer"),
       crypto: require.resolve("react-native-quick-crypto"),
