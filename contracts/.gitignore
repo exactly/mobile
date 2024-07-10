@@ -5,5 +5,8 @@ out/
 !/broadcast
 /broadcast/*/31337/
 /broadcast/**/dry-run/
+/broadcast/**/run-latest.json
+/broadcast/*
+!/broadcast/Deploy.s.sol
 
 .env
