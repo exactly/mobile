@@ -30,7 +30,7 @@ import {
   maxUint256,
 } from "viem";
 import { ChainNotConfiguredError, createConnector } from "wagmi";
-import deployments from "webauthn-owner-plugin/broadcast/Deploy.s.sol/11155420/run-1716346701.json";
+import deployments from "webauthn-owner-plugin/broadcast/Deploy.s.sol/11155420/run-1720127816.json";
 
 import { alchemyGasPolicyId, chain, rpId } from "@exactly/common/constants";
 import type { Passkey } from "@exactly/common/types";
