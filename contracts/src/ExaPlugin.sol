@@ -36,8 +36,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   IAuditor public immutable AUDITOR;
 
-  uint256 internal constant _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION = 0;
-
   uint256 public constant BORROW_LIMIT = 1000e18;
 
   address public paymentReceiver;
