@@ -1,53 +1,25 @@
-import { customType, integer, jsonb, numeric, pgEnum, pgTable, text } from "drizzle-orm/pg-core";
-
-import { CARD_STATUS, OPERATION_COUNTRIES, USER_STATUS } from "../utils/types.js";
-
-export const userStatusEnum = pgEnum("status", USER_STATUS);
-export const countryEnum = pgEnum("operation_country", OPERATION_COUNTRIES);
-export const cardStatusEnum = pgEnum("status", CARD_STATUS);
-export const transactionStatusEnum = pgEnum("transaction_status", ["APPROVED", "REJECTED"]);
+import { relations } from "drizzle-orm";
+import { customType, integer, pgTable, text } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Uint8Array; default: false }>({ dataType: () => "bytea" });
 
-export const users = pgTable("users", {
-  id: text("id").primaryKey(),
-  clientId: text("client_id"),
-  email: text("email"),
-  status: userStatusEnum("status"),
-  operationCountry: countryEnum("operation_country"),
-  name: text("name"),
-  surname: text("surname"),
-  payload: jsonb("payload").notNull(),
-});
-
-export const card = pgTable("cards", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .references(() => users.id)
-    .notNull(),
-  affinityGroupId: text("affinity_group_id").notNull(),
-  status: cardStatusEnum("status").notNull(),
-  lastFour: text("last_four"),
-  payload: jsonb("payload").notNull(),
-});
-
-export const transaction = pgTable("transactions", {
-  id: text("id").primaryKey(),
-  cardId: text("card_id")
-    .references(() => card.id)
-    .notNull(),
-  userId: text("user_id")
-    .references(() => users.id)
-    .notNull(),
-  settlementAmount: numeric("settlement_amount").notNull(),
-  txHash: text("tx_hash"),
-  status: transactionStatusEnum("status").notNull(),
-  payload: jsonb("payload").notNull(),
-});
-
-export const credential = pgTable("credentials", {
+export const credentials = pgTable("credentials", {
   id: text("id").primaryKey(),
   publicKey: bytea("public_key").notNull(),
   transports: text("transports").array(),
   counter: integer("counter").notNull(),
 });
+
+export const cards = pgTable("cards", {
+  id: text("id").primaryKey(),
+  credentialId: text("credential_id")
+    .references(() => credentials.id)
+    .notNull(),
+  lastFour: text("last_four").notNull(),
+});
+
+export const credentialsRelations = relations(credentials, ({ many }) => ({ cards: many(cards) }));
+
+export const cardsRelations = relations(cards, ({ one }) => ({
+  credential: one(credentials, { fields: [cards.credentialId], references: [credentials.id] }),
+}));

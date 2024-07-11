@@ -8,7 +8,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { safeParse } from "valibot";
 import { bytesToHex } from "viem";
 
-import database, { credential } from "../../database/index.js";
+import database, { credentials } from "../../database/index.js";
 import cors from "../../middleware/cors.js";
 import expectedOrigin from "../../utils/expectedOrigin.js";
 import handleError from "../../utils/handleError.js";
@@ -70,7 +70,7 @@ export default cors(async function handler({ method, headers, query, body }: Ver
       if (!x || !y) return response.status(400).end("bad public key");
 
       await database
-        .insert(credential)
+        .insert(credentials)
         .values([
           { id: credentialID, publicKey: credentialPublicKey, transports: attestation.response.transports, counter },
         ]);

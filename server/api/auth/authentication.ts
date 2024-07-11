@@ -8,8 +8,7 @@ import { eq } from "drizzle-orm";
 import { SignJWT } from "jose";
 import { safeParse } from "valibot";
 
-import database, { credential } from "../../database/index.js";
-import takeUniqueOrThrow from "../../database/takeUniqueOrThrow.js";
+import database, { credentials } from "../../database/index.js";
 import cors from "../../middleware/cors.js";
 import expectedOrigin from "../../utils/expectedOrigin.js";
 import handleError from "../../utils/handleError.js";
@@ -38,11 +37,8 @@ export default cors(async function handler({ method, headers, query, body }: Ver
       const assertion = body as AuthenticationResponseJSON;
       let verification: Awaited<ReturnType<typeof verifyAuthenticationResponse>>;
       try {
-        const { publicKey, transports, counter } = await database
-          .select()
-          .from(credential)
-          .where(eq(credential.id, credentialId))
-          .then(takeUniqueOrThrow);
+        const credential = await database.query.credentials.findFirst({ where: eq(credentials.id, credentialId) });
+        if (!credential) return response.status(400).end("unknown credential");
         verification = await verifyAuthenticationResponse({
           response: assertion,
           expectedRPID: rpId,
@@ -50,9 +46,9 @@ export default cors(async function handler({ method, headers, query, body }: Ver
           expectedChallenge: challenge,
           authenticator: {
             credentialID: credentialId,
-            credentialPublicKey: publicKey,
-            transports: transports ? (transports as AuthenticatorTransportFuture[]) : undefined,
-            counter,
+            credentialPublicKey: credential.publicKey,
+            transports: credential.transports ? (credential.transports as AuthenticatorTransportFuture[]) : undefined,
+            counter: credential.counter,
           },
         });
       } catch (error) {
@@ -67,7 +63,7 @@ export default cors(async function handler({ method, headers, query, body }: Ver
 
       await kv.del(credentialId);
 
-      await database.update(credential).set({ counter: newCounter }).where(eq(credential.id, credentialID));
+      await database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID));
       return response.send({
         token: await new SignJWT({ credentialId })
           .setProtectedHeader({ alg: "HS256" })
