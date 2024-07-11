@@ -1,15 +1,16 @@
 import { rpId } from "@exactly/common/constants.js";
 import { Base64URL } from "@exactly/common/types.js";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
-import { cose, decodeCredentialPublicKey } from "@simplewebauthn/server/helpers";
+import { cose } from "@simplewebauthn/server/helpers";
 import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { kv } from "@vercel/kv";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { safeParse } from "valibot";
-import { bytesToHex } from "viem";
+import type { Hash } from "viem";
 
 import database, { credentials } from "../../database/index.js";
 import cors from "../../middleware/cors.js";
+import decodePublicKey from "../../utils/decodePublicKey.js";
 import expectedOrigin from "../../utils/expectedOrigin.js";
 import handleError from "../../utils/handleError.js";
 
@@ -60,12 +61,12 @@ export default cors(async function handler({ method, headers, query, body }: Ver
       const { credentialID, credentialPublicKey, credentialDeviceType, counter } = registrationInfo;
       if (credentialDeviceType !== "multiDevice") return response.status(400).end("backup eligibility required"); // TODO improve ux
 
-      const publicKey = decodeCredentialPublicKey(credentialPublicKey);
-      if (!cose.isCOSEPublicKeyEC2(publicKey)) return response.status(400).end("bad public key");
-
-      const x = publicKey.get(cose.COSEKEYS.x);
-      const y = publicKey.get(cose.COSEKEYS.y);
-      if (!x || !y) return response.status(400).end("bad public key");
+      let x: Hash, y: Hash;
+      try {
+        ({ x, y } = decodePublicKey(credentialPublicKey));
+      } catch (error) {
+        return response.status(400).end(error instanceof Error ? error.message : error);
+      }
 
       await Promise.all([
         database
@@ -76,7 +77,7 @@ export default cors(async function handler({ method, headers, query, body }: Ver
         kv.del(userId),
       ]);
 
-      return response.send({ credentialId: credentialID, x: bytesToHex(x), y: bytesToHex(y) });
+      return response.send({ credentialId: credentialID, x, y });
     }
     default:
       return response.status(405).end("method not allowed");
