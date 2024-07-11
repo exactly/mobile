@@ -138,9 +138,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   /// @inheritdoc BasePlugin
-  function pluginManifest() external pure override returns (PluginManifest memory) {
-    PluginManifest memory manifest;
-
+  function pluginManifest() external pure override returns (PluginManifest memory manifest) {
     manifest.executionFunctions = new bytes4[](6);
     manifest.executionFunctions[0] = this.enterMarket.selector;
     manifest.executionFunctions[1] = this.approve.selector;
@@ -187,12 +185,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   /// @inheritdoc BasePlugin
-  function pluginMetadata() external pure virtual override returns (PluginMetadata memory) {
-    PluginMetadata memory metadata;
+  function pluginMetadata() external pure virtual override returns (PluginMetadata memory metadata) {
     metadata.name = NAME;
     metadata.version = VERSION;
     metadata.author = AUTHOR;
-    return metadata;
   }
 
   function checkIsMarket(IMarket market) public view {
