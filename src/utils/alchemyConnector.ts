@@ -33,7 +33,7 @@ import { ChainNotConfiguredError, createConnector } from "wagmi";
 
 import { alchemyGasPolicyId, chain, rpId } from "@exactly/common/constants";
 import type { Passkey } from "@exactly/common/types";
-import deployments from "@exactly/plugin/broadcast/Deploy.s.sol/11155420/run-1720647540.json";
+import deployments from "@exactly/plugin/broadcast/Deploy.s.sol/11155420/run-1720660063.json";
 
 import createPasskey from "./createPasskey";
 import handleError from "./handleError";
