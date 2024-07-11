@@ -109,6 +109,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function setPaymentReceiver(address paymentReceiver_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    if (paymentReceiver_ == address(0)) revert ZeroAddress();
     paymentReceiver = paymentReceiver_;
   }
 
@@ -202,3 +203,5 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 enum FunctionId {
   RUNTIME_VALIDATION_KEEPER
 }
+
+error ZeroAddress();

@@ -29,7 +29,7 @@ contract ExaAccountFactoryTest is Test {
 
   function setUp() external {
     ownerPlugin = new WebauthnOwnerPlugin();
-    exaPlugin = new ExaPlugin(IAuditor(address(0)), address(0));
+    exaPlugin = new ExaPlugin(IAuditor(address(0)), address(this));
 
     IEntryPoint entryPoint = IEntryPoint(address(new EntryPoint()));
     factory = new ExaAccountFactory(
