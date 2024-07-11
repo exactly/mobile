@@ -57,8 +57,6 @@ export default cors(async function handler({ method, headers, query, body }: Ver
       const { verified, registrationInfo } = verification;
       if (!verified || !registrationInfo) return response.status(400).end("bad registration");
 
-      await kv.del(userId);
-
       const { credentialID, credentialPublicKey, credentialDeviceType, counter } = registrationInfo;
       if (credentialDeviceType !== "multiDevice") return response.status(400).end("backup eligibility required"); // TODO improve ux
 
@@ -69,11 +67,14 @@ export default cors(async function handler({ method, headers, query, body }: Ver
       const y = publicKey.get(cose.COSEKEYS.y);
       if (!x || !y) return response.status(400).end("bad public key");
 
-      await database
-        .insert(credentials)
-        .values([
-          { id: credentialID, publicKey: credentialPublicKey, transports: attestation.response.transports, counter },
-        ]);
+      await Promise.all([
+        database
+          .insert(credentials)
+          .values([
+            { id: credentialID, publicKey: credentialPublicKey, transports: attestation.response.transports, counter },
+          ]),
+        kv.del(userId),
+      ]);
 
       return response.send({ credentialId: credentialID, x: bytesToHex(x), y: bytesToHex(y) });
     }
