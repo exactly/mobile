@@ -51,25 +51,28 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function enterMarket(IMarket market) external {
+    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market))
     );
   }
 
   function deposit(IMarket market, uint256 amount) external onlyMarket(market) {
+    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market), 0, abi.encodeCall(market.deposit, (amount, msg.sender))
     );
   }
 
   function approve(IMarket market, uint256 amount) external onlyMarket(market) {
+    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market.asset()), 0, abi.encodeCall(IERC20.approve, (address(market), amount))
     );
   }
 
   function borrow(IMarket market, uint256 amount) external {
-    /// @dev the next call validates the market
+    // slither-disable-next-line unused-return -- unneeded
     (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
 
     // slither-disable-next-line weak-prng -- not prng
@@ -81,6 +84,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     // slither-disable-next-line weak-prng -- not prng
     borrows[msg.sender][block.timestamp % INTERVAL] = newAmount;
 
+    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market), 0, abi.encodeCall(market.borrow, (amount, paymentReceiver, msg.sender))
     );
@@ -88,7 +92,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function borrowAtMaturity(IMarket market, uint256 maturity, uint256 amount, uint256 maxAmount) external {
     {
-      /// @dev the next call validates the market
+      // slither-disable-next-line unused-return -- unneeded
       (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
       // slither-disable-next-line weak-prng -- not prng
       uint256 newAmount = borrows[msg.sender][block.timestamp % INTERVAL]
@@ -99,6 +103,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       // slither-disable-next-line weak-prng -- not prng
       borrows[msg.sender][block.timestamp % INTERVAL] = newAmount;
     }
+    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market),
       0,
@@ -107,6 +112,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function withdraw(IMarket market, uint256 amount) external onlyMarket(market) {
+    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market), 0, abi.encodeCall(market.withdraw, (amount, paymentReceiver, msg.sender))
     );
@@ -190,6 +196,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function checkIsMarket(IMarket market) public view {
+    // slither-disable-next-line unused-return -- unneeded
     (,,, bool isMarket,) = AUDITOR.markets(market);
     if (!isMarket) revert NotMarket();
   }
