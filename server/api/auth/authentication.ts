@@ -61,18 +61,17 @@ export default cors(async function handler({ method, headers, query, body }: Ver
       } = verification;
       if (!verified) return response.status(400).end("bad authentication");
 
-      await Promise.all([
-        database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID)),
-        kv.del(credentialId),
-      ]);
-
-      return response.send({
-        token: await new SignJWT({ credentialId })
+      const [token] = await Promise.all([
+        new SignJWT({ credentialId })
           .setProtectedHeader({ alg: "HS256" })
           .setIssuedAt()
           .setExpirationTime("24h")
           .sign(jwtSecret),
-      });
+        database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID)),
+        kv.del(credentialId),
+      ]);
+
+      return response.send({ token });
     }
     default:
       return response.status(405).end("method not allowed");
