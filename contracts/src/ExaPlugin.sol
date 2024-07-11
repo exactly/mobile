@@ -72,11 +72,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     /// @dev the next call validates the market
     (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
 
+    // slither-disable-next-line weak-prng -- not prng
     uint256 newAmount = borrows[msg.sender][block.timestamp % INTERVAL]
       + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
     if (newAmount > borrowLimits[msg.sender]) revert BorrowLimitExceeded();
 
+    // slither-disable-next-line weak-prng -- not prng
     borrows[msg.sender][block.timestamp % INTERVAL] = newAmount;
 
     IPluginExecutor(msg.sender).executeFromPluginExternal(
@@ -88,11 +90,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     {
       /// @dev the next call validates the market
       (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
+      // slither-disable-next-line weak-prng -- not prng
       uint256 newAmount = borrows[msg.sender][block.timestamp % INTERVAL]
         + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
       if (newAmount > borrowLimits[msg.sender]) revert BorrowLimitExceeded();
 
+      // slither-disable-next-line weak-prng -- not prng
       borrows[msg.sender][block.timestamp % INTERVAL] = newAmount;
     }
     IPluginExecutor(msg.sender).executeFromPluginExternal(
