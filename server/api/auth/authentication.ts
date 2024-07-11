@@ -31,14 +31,16 @@ export default cors(async function handler({ method, headers, query, body }: Ver
       const { success, output: credentialId } = safeParse(Base64URL, query.credentialId);
       if (!success) return response.status(400).end("bad credential");
 
-      const challenge = await kv.get<string>(credentialId);
+      const [credential, challenge] = await Promise.all([
+        database.query.credentials.findFirst({ where: eq(credentials.id, credentialId) }),
+        kv.get<string>(credentialId),
+      ]);
+      if (!credential) return response.status(400).end("unknown credential");
       if (!challenge) return response.status(400).end("no authentication");
 
       const assertion = body as AuthenticationResponseJSON;
       let verification: Awaited<ReturnType<typeof verifyAuthenticationResponse>>;
       try {
-        const credential = await database.query.credentials.findFirst({ where: eq(credentials.id, credentialId) });
-        if (!credential) return response.status(400).end("unknown credential");
         verification = await verifyAuthenticationResponse({
           response: assertion,
           expectedRPID: rpId,
