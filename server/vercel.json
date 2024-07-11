@@ -1,5 +1,5 @@
 {
-  "buildCommand": "bun run build:app",
+  "buildCommand": "if [ -z \"${__VERCEL_DEV_RUNNING+1}\" ]; then bun run build:app; fi",
   "outputDirectory": "/",
   "trailingSlash": false,
   "cleanUrls": true,
