@@ -19,10 +19,8 @@ import {
   type Transport,
   bytesToBigInt,
   bytesToHex,
-  concatHex,
   custom,
   encodeAbiParameters,
-  encodeFunctionData,
   encodePacked,
   getAddress,
   hashMessage,
@@ -31,9 +29,9 @@ import {
 } from "viem";
 import { ChainNotConfiguredError, createConnector } from "wagmi";
 
+import accountInitCode from "@exactly/common/accountInitCode";
 import { alchemyGasPolicyId, chain, rpId } from "@exactly/common/constants";
 import type { Passkey } from "@exactly/common/types";
-import deployments from "@exactly/plugin/broadcast/Deploy.s.sol/11155420/run-1720660063.json";
 
 import createPasskey from "./createPasskey";
 import handleError from "./handleError";
@@ -53,28 +51,7 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
         transport,
         source: "WebauthnAccount" as const,
         entryPoint: getEntryPoint(chain, { version: "0.6.0" }),
-        getAccountInitCode() {
-          const [, factory] = deployments.transactions;
-          if (!factory) throw new Error("no factory deployment found");
-          return Promise.resolve(
-            concatHex([
-              getAddress(factory.contractAddress),
-              encodeFunctionData({
-                abi: [
-                  {
-                    type: "function",
-                    name: "createAccount",
-                    inputs: [
-                      { type: "uint256", name: "salt" },
-                      { type: "tuple[]", name: "owners", components: [{ type: "uint256" }, { type: "uint256" }] },
-                    ],
-                  },
-                ],
-                args: [0, [[x, y]]],
-              }),
-            ]),
-          );
-        },
+        getAccountInitCode: () => Promise.resolve(accountInitCode({ x, y })),
         getDummySignature: () => "0x",
         async signUserOperationHash(uoHash) {
           const credential = (await navigator.credentials.get({
