@@ -6,13 +6,17 @@ import { Test } from "forge-std/Test.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
+import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
 
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
-import { MAX_OWNERS, WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
+import { MAX_OWNERS } from "webauthn-owner-plugin/IWebauthnOwnerPlugin.sol";
+import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
+import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
-import { ExaAccountFactory, IEntryPoint, OwnersLib } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin, IAuditor } from "../src/ExaPlugin.sol";
+import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
+import { ExaPlugin } from "../src/ExaPlugin.sol";
+import { IAuditor } from "../src/IExaAccount.sol";
 
 // solhint-disable func-name-mixedcase
 contract ExaAccountFactoryTest is Test {

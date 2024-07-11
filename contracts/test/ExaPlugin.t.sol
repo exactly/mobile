@@ -18,7 +18,6 @@ import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.
 
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
 
-import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
 import { ERC1967Proxy } from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { MessageHashUtils } from "openzeppelin-contracts/contracts/utils/cryptography/MessageHashUtils.sol";
 
@@ -28,7 +27,9 @@ import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
-import { BorrowLimitExceeded, ExaPlugin, IAuditor, IMarket } from "../src/ExaPlugin.sol";
+
+import { ExaPlugin, FunctionId } from "../src/ExaPlugin.sol";
+import { BorrowLimitExceeded, IAuditor, IExaAccount, IMarket, NotAuthorized } from "../src/IExaAccount.sol";
 
 // TODO use mock asset with price != 1
 // TODO use price feed for that asset with 8 decimals
@@ -43,7 +44,7 @@ contract ExaPluginTest is Test {
   uint256 internal keeper1Key;
   address[] internal owners;
   address payable internal paymentReceiver;
-  UpgradeableModularAccount internal account1;
+  IExaAccount internal account1;
   IEntryPoint internal entryPoint;
   ExaPlugin internal exaPlugin;
 
@@ -97,7 +98,7 @@ contract ExaPluginTest is Test {
       address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(entryPoint)), entryPoint
     );
 
-    account1 = UpgradeableModularAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
+    account1 = IExaAccount(factory.createAccount(0, owners.toPublicKeys()));
     vm.deal(address(account1), 10_000 ether);
     vm.label(address(account1), "account1");
 
@@ -107,7 +108,7 @@ contract ExaPluginTest is Test {
 
   function testEnterMarketSuccess() external {
     vm.prank(keeper1);
-    exaPlugin.enterMarket(account1, market);
+    account1.enterMarket(market);
 
     assertEq(auditor.accountMarkets(address(account1)), 1);
   }
@@ -115,52 +116,58 @@ contract ExaPluginTest is Test {
   function testEnterMarketNotKeeper() external {
     vm.expectRevert(
       abi.encodeWithSelector(
-        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), exaPlugin.KEEPER_ROLE()
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER,
+        abi.encodeWithSelector(NotAuthorized.selector)
       )
     );
-    exaPlugin.enterMarket(account1, market);
+    account1.enterMarket(market);
   }
 
   function testDepositSuccess() external {
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
-    exaPlugin.deposit(account1, market, 100 ether);
+    account1.approve(market, 100 ether);
+    account1.deposit(market, 100 ether);
 
     assertEq(market.maxWithdraw(address(account1)), 100 ether);
   }
 
   function testDepositNotKeeper() external {
     vm.prank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
+    account1.approve(market, 100 ether);
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), exaPlugin.KEEPER_ROLE()
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER,
+        abi.encodeWithSelector(NotAuthorized.selector)
       )
     );
-    exaPlugin.deposit(account1, market, 100 ether);
+    account1.deposit(market, 100 ether);
   }
 
   function testBorrowSuccess() external {
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
-    exaPlugin.deposit(account1, market, 100 ether);
+    account1.approve(market, 100 ether);
+    account1.deposit(market, 100 ether);
 
     uint256 prevBalance = asset.balanceOf(paymentReceiver);
     uint256 borrowAmount = 10 ether;
-    exaPlugin.borrow(account1, market, borrowAmount);
+    account1.borrow(market, borrowAmount);
     assertEq(asset.balanceOf(paymentReceiver), prevBalance + borrowAmount);
   }
 
   function testBorrowLimitExceeded() external {
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 2000 ether);
-    exaPlugin.deposit(account1, market, 2000 ether);
+    account1.approve(market, 2000 ether);
+    account1.deposit(market, 2000 ether);
 
-    exaPlugin.borrow(account1, market, 200 ether);
+    account1.borrow(market, 200 ether);
 
     vm.expectRevert(BorrowLimitExceeded.selector);
-    exaPlugin.borrow(account1, market, 1 ether);
+    account1.borrow(market, 1 ether);
   }
 
   function testBorrowCrossMarketSuccess() external {
@@ -171,12 +178,12 @@ contract ExaPluginTest is Test {
     marketUSDC.deposit(10_000e6, bob);
 
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 2000 ether);
-    exaPlugin.deposit(account1, market, 2000 ether);
-    exaPlugin.enterMarket(account1, market);
+    account1.approve(market, 2000 ether);
+    account1.deposit(market, 2000 ether);
+    account1.enterMarket(market);
 
     uint256 balance = usdc.balanceOf(paymentReceiver);
-    exaPlugin.borrow(account1, marketUSDC, 1000e6);
+    account1.borrow(marketUSDC, 1000e6);
     assertEq(usdc.balanceOf(paymentReceiver), balance + 1000e6);
   }
 
@@ -188,79 +195,85 @@ contract ExaPluginTest is Test {
     marketUSDC.deposit(10_000e6, bob);
 
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 2000 ether);
-    exaPlugin.deposit(account1, market, 2000 ether);
-    exaPlugin.enterMarket(account1, market);
+    account1.approve(market, 2000 ether);
+    account1.deposit(market, 2000 ether);
+    account1.enterMarket(market);
 
-    exaPlugin.borrow(account1, marketUSDC, 1000e6);
+    account1.borrow(marketUSDC, 1000e6);
 
     vm.expectRevert(BorrowLimitExceeded.selector);
-    exaPlugin.borrow(account1, marketUSDC, 1e6);
+    account1.borrow(marketUSDC, 1e6);
   }
 
   function testBorrowAtMaturitySuccess() external {
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
-    exaPlugin.deposit(account1, market, 100 ether);
+    account1.approve(market, 100 ether);
+    account1.deposit(market, 100 ether);
 
     uint256 prevBalance = asset.balanceOf(paymentReceiver);
     uint256 borrowAmount = 10 ether;
-    exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, borrowAmount, 100 ether);
+    account1.borrowAtMaturity(market, FixedLib.INTERVAL, borrowAmount, 100 ether);
     assertEq(asset.balanceOf(paymentReceiver), prevBalance + borrowAmount);
   }
 
   function testBorrowAtMaturityLimitExceeded() external {
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 2000 ether);
-    exaPlugin.deposit(account1, market, 2000 ether);
+    account1.approve(market, 2000 ether);
+    account1.deposit(market, 2000 ether);
 
-    exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 200 ether, 210 ether);
+    account1.borrowAtMaturity(market, FixedLib.INTERVAL, 200 ether, 210 ether);
 
     vm.expectRevert(BorrowLimitExceeded.selector);
-    exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 1 ether, 1.1 ether);
+    account1.borrowAtMaturity(market, FixedLib.INTERVAL, 1 ether, 1.1 ether);
   }
 
   function testBorrowAtMaturityAsNotKeeper() external {
     vm.prank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
+    account1.approve(market, 100 ether);
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), exaPlugin.KEEPER_ROLE()
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER,
+        abi.encodeWithSelector(NotAuthorized.selector)
       )
     );
-    exaPlugin.borrowAtMaturity(account1, market, FixedLib.INTERVAL, 10 ether, 100 ether);
+    account1.borrowAtMaturity(market, FixedLib.INTERVAL, 10 ether, 100 ether);
   }
 
   function testWithdrawSuccess() external {
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
-    exaPlugin.deposit(account1, market, 100 ether);
+    account1.approve(market, 100 ether);
+    account1.deposit(market, 100 ether);
 
     uint256 prevBalance = asset.balanceOf(paymentReceiver);
-    exaPlugin.withdraw(account1, market, 100 ether);
+    account1.withdraw(market, 100 ether);
     assertEq(asset.balanceOf(paymentReceiver), prevBalance + 100 ether);
   }
 
   function testWithdrawFailure() external {
     vm.startPrank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
-    exaPlugin.deposit(account1, market, 100 ether);
+    account1.approve(market, 100 ether);
+    account1.deposit(market, 100 ether);
 
     vm.expectRevert(stdError.arithmeticError);
-    exaPlugin.withdraw(account1, market, 200 ether);
+    account1.withdraw(market, 200 ether);
   }
 
   function testWithdrawNotKeeper() external {
     vm.prank(keeper1);
-    exaPlugin.approve(account1, market, 100 ether);
+    account1.approve(market, 100 ether);
 
     vm.expectRevert(
       abi.encodeWithSelector(
-        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), exaPlugin.KEEPER_ROLE()
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER,
+        abi.encodeWithSelector(NotAuthorized.selector)
       )
     );
-    exaPlugin.withdraw(account1, market, 100 ether);
+    account1.withdraw(market, 100 ether);
   }
 
   function _getUnsignedOp(UpgradeableModularAccount account, bytes memory callData)

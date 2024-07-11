@@ -2,9 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { AccessControl } from "openzeppelin-contracts/contracts/access/AccessControl.sol";
-import { IERC20, IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
-
-import { IMultiOwnerPlugin } from "modular-account/src/plugins/owner/IMultiOwnerPlugin.sol";
+import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 
 import {
   ManifestAssociatedFunction,
@@ -19,14 +17,18 @@ import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
+import {
+  BorrowLimitExceeded, IAuditor, IExaAccount, IMarket, IPriceFeed, NotAuthorized, NotMarket
+} from "./IExaAccount.sol";
+
 /// @title Exa Plugin
 /// @author Exactly
-contract ExaPlugin is AccessControl, BasePlugin {
+contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   using FixedPointMathLib for uint256;
   using SafeCastLib for int256;
 
   // metadata used by the pluginMetadata() method down below
-  string public constant NAME = "Account Plugin";
+  string public constant NAME = "Exa Plugin";
   string public constant VERSION = "0.0.1";
   string public constant AUTHOR = "Exactly";
 
@@ -40,8 +42,8 @@ contract ExaPlugin is AccessControl, BasePlugin {
 
   address public paymentReceiver;
   uint256 public immutable INTERVAL = 30 days;
-  mapping(IPluginExecutor account => uint256 limit) public borrowLimits;
-  mapping(IPluginExecutor account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
+  mapping(address account => uint256 limit) public borrowLimits;
+  mapping(address account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
 
   constructor(IAuditor auditor_, address paymentReceiver_) {
     AUDITOR = auditor_;
@@ -50,75 +52,61 @@ contract ExaPlugin is AccessControl, BasePlugin {
     setPaymentReceiver(paymentReceiver_);
   }
 
-  function enterMarket(IPluginExecutor account, IMarket market) external onlyRole(KEEPER_ROLE) {
-    account.executeFromPluginExternal(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
+  function enterMarket(IMarket market) external {
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market))
+    );
   }
 
-  function deposit(IPluginExecutor account, IMarket market, uint256 amount)
-    external
-    onlyRole(KEEPER_ROLE)
-    onlyMarket(market)
-  {
-    account.executeFromPluginExternal(address(market), 0, abi.encodeCall(market.deposit, (amount, address(account))));
+  function deposit(IMarket market, uint256 amount) external onlyMarket(market) {
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(market), 0, abi.encodeCall(market.deposit, (amount, msg.sender))
+    );
   }
 
-  function approve(IPluginExecutor account, IMarket market, uint256 amount)
-    external
-    onlyRole(KEEPER_ROLE)
-    onlyMarket(market)
-  {
-    account.executeFromPluginExternal(
+  function approve(IMarket market, uint256 amount) external onlyMarket(market) {
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market.asset()), 0, abi.encodeCall(IERC20.approve, (address(market), amount))
     );
   }
 
-  function borrow(IPluginExecutor account, IMarket market, uint256 amount) external onlyRole(KEEPER_ROLE) {
+  function borrow(IMarket market, uint256 amount) external {
     /// @dev the next call validates the market
     (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
 
-    uint256 newAmount =
-      borrows[account][block.timestamp % INTERVAL] + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
+    uint256 newAmount = borrows[msg.sender][block.timestamp % INTERVAL]
+      + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
-    if (newAmount > borrowLimits[account]) revert BorrowLimitExceeded();
+    if (newAmount > borrowLimits[msg.sender]) revert BorrowLimitExceeded();
 
-    borrows[account][block.timestamp % INTERVAL] = newAmount;
+    borrows[msg.sender][block.timestamp % INTERVAL] = newAmount;
 
-    account.executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.borrow, (amount, paymentReceiver, address(account)))
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(market), 0, abi.encodeCall(market.borrow, (amount, paymentReceiver, msg.sender))
     );
   }
 
-  function borrowAtMaturity(
-    IPluginExecutor account,
-    IMarket market,
-    uint256 maturity,
-    uint256 amount,
-    uint256 maxAmount
-  ) external onlyRole(KEEPER_ROLE) {
+  function borrowAtMaturity(IMarket market, uint256 maturity, uint256 amount, uint256 maxAmount) external {
     {
       /// @dev the next call validates the market
       (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
-      uint256 newAmount = borrows[account][block.timestamp % INTERVAL]
+      uint256 newAmount = borrows[msg.sender][block.timestamp % INTERVAL]
         + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
 
-      if (newAmount > borrowLimits[account]) revert BorrowLimitExceeded();
+      if (newAmount > borrowLimits[msg.sender]) revert BorrowLimitExceeded();
 
-      borrows[account][block.timestamp % INTERVAL] = newAmount;
+      borrows[msg.sender][block.timestamp % INTERVAL] = newAmount;
     }
-    account.executeFromPluginExternal(
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market),
       0,
-      abi.encodeCall(market.borrowAtMaturity, (maturity, amount, maxAmount, paymentReceiver, address(account)))
+      abi.encodeCall(market.borrowAtMaturity, (maturity, amount, maxAmount, paymentReceiver, msg.sender))
     );
   }
 
-  function withdraw(IPluginExecutor account, IMarket market, uint256 amount)
-    external
-    onlyRole(KEEPER_ROLE)
-    onlyMarket(market)
-  {
-    account.executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.withdraw, (amount, paymentReceiver, address(account)))
+  function withdraw(IMarket market, uint256 amount) external onlyMarket(market) {
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(market), 0, abi.encodeCall(market.withdraw, (amount, paymentReceiver, msg.sender))
     );
   }
 
@@ -127,53 +115,61 @@ contract ExaPlugin is AccessControl, BasePlugin {
   }
 
   /// @inheritdoc BasePlugin
+  function runtimeValidationFunction(uint8 functionId, address sender, uint256, bytes calldata) external view override {
+    if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_KEEPER)) {
+      if (!hasRole(KEEPER_ROLE, sender)) revert NotAuthorized();
+      return;
+    }
+    revert NotImplemented(msg.sig, functionId);
+  }
+
+  /// @inheritdoc BasePlugin
   function onInstall(bytes calldata) external override {
-    borrowLimits[IPluginExecutor(msg.sender)] = 1000e18;
+    borrowLimits[msg.sender] = 1000e18;
   }
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory) {
     PluginManifest memory manifest;
 
-    manifest.dependencyInterfaceIds = new bytes4[](1);
-    manifest.dependencyInterfaceIds[0] = type(IMultiOwnerPlugin).interfaceId;
-
-    manifest.executionFunctions = new bytes4[](2);
+    manifest.executionFunctions = new bytes4[](6);
     manifest.executionFunctions[0] = this.enterMarket.selector;
-    manifest.executionFunctions[1] = this.deposit.selector;
+    manifest.executionFunctions[1] = this.approve.selector;
+    manifest.executionFunctions[2] = this.deposit.selector;
+    manifest.executionFunctions[3] = this.withdraw.selector;
+    manifest.executionFunctions[4] = this.borrow.selector;
+    manifest.executionFunctions[5] = this.borrowAtMaturity.selector;
 
-    ManifestFunction memory ownerUserOpValidationFunction = ManifestFunction({
-      functionType: ManifestAssociatedFunctionType.DEPENDENCY,
-      functionId: 0,
-      dependencyIndex: _MANIFEST_DEPENDENCY_INDEX_OWNER_USER_OP_VALIDATION
-    });
-
-    manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](2);
-    manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
-      executionSelector: this.enterMarket.selector,
-      associatedFunction: ownerUserOpValidationFunction
-    });
-    manifest.userOpValidationFunctions[1] = ManifestAssociatedFunction({
-      executionSelector: this.deposit.selector,
-      associatedFunction: ownerUserOpValidationFunction
+    ManifestFunction memory keeperRuntimeValidationFunction = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.SELF,
+      functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER),
+      dependencyIndex: 0
     });
 
-    manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](2);
-    manifest.preRuntimeValidationHooks[0] = ManifestAssociatedFunction({
-      executionSelector: this.enterMarket.selector,
-      associatedFunction: ManifestFunction({
-        functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
-        functionId: 0,
-        dependencyIndex: 0
-      })
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](6);
+    manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.enterMarket.selector,
+      associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.preRuntimeValidationHooks[1] = ManifestAssociatedFunction({
-      executionSelector: this.deposit.selector,
-      associatedFunction: ManifestFunction({
-        functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
-        functionId: 0,
-        dependencyIndex: 0
-      })
+    manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.approve.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.deposit.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.withdraw.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.borrow.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.borrowAtMaturity.selector,
+      associatedFunction: keeperRuntimeValidationFunction
     });
 
     manifest.permitAnyExternalAddress = true;
@@ -201,28 +197,10 @@ contract ExaPlugin is AccessControl, BasePlugin {
   }
 
   function supportsInterface(bytes4 interfaceId) public view override(AccessControl, BasePlugin) returns (bool) {
-    return super.supportsInterface(interfaceId);
+    return interfaceId == type(IExaAccount).interfaceId || super.supportsInterface(interfaceId);
   }
 }
 
-error BorrowLimitExceeded();
-error NotMarket();
-
-interface IAuditor {
-  function markets(IMarket market)
-    external
-    view
-    returns (uint128 adjustFactor, uint8 decimals, uint8 index, bool isListed, IPriceFeed priceFeed);
-  function enterMarket(IMarket market) external;
-}
-
-interface IMarket is IERC4626 {
-  function borrow(uint256 assets, address receiver, address borrower) external returns (uint256 borrowShares);
-  function borrowAtMaturity(uint256 maturity, uint256 assets, uint256 maxAssets, address receiver, address borrower)
-    external
-    returns (uint256 assetsOwed);
-}
-
-interface IPriceFeed {
-  function latestAnswer() external view returns (int256);
+enum FunctionId {
+  RUNTIME_VALIDATION_KEEPER
 }
