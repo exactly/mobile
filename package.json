@@ -78,6 +78,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.8",
+    "@babel/plugin-syntax-import-attributes": "^7.24.7",
     "@simplewebauthn/types": "^10.0.0",
     "@tamagui/babel-plugin": "^1.102.1",
     "@types/babel__core": "^7.20.5",
