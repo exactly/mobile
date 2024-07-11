@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { customType, integer, pgTable, text } from "drizzle-orm/pg-core";
+import { customType, integer, jsonb, pgTable, text } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Uint8Array; driverData: string }>({
   dataType: () => "bytea",
@@ -21,8 +21,22 @@ export const cards = pgTable("cards", {
   lastFour: text("last_four").notNull(),
 });
 
+export const transactions = pgTable("transactions", {
+  id: text("id").primaryKey(),
+  cardId: text("card_id")
+    .references(() => cards.id)
+    .notNull(),
+  hash: text("hash").notNull(),
+  payload: jsonb("payload").notNull(),
+});
+
 export const credentialsRelations = relations(credentials, ({ many }) => ({ cards: many(cards) }));
 
-export const cardsRelations = relations(cards, ({ one }) => ({
+export const cardsRelations = relations(cards, ({ many, one }) => ({
   credential: one(credentials, { fields: [cards.credentialId], references: [credentials.id] }),
+  transactions: many(transactions),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  card: one(cards, { fields: [transactions.cardId], references: [cards.id] }),
 }));
