@@ -1,4 +1,4 @@
-import deployments from "@exactly/plugin/broadcast/Deploy.s.sol/11155420/run-1720660063.json" with { type: "json" };
+import deployments from "@exactly/plugin/broadcast/Deploy.s.sol/11155420/run-1720825024.json" with { type: "json" };
 import { concatHex, encodeFunctionData, getAddress, type Hash } from "viem";
 
 if (!deployments.transactions[1]) throw new Error("no factory deployment found");
