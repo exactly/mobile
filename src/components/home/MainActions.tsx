@@ -14,15 +14,13 @@ const MainActions = () => {
       <ActionButton
         content="Add funds"
         onPress={onAddFunds}
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        icon={<ArrowLineDown size={24} color={theme.textInteractiveBaseBrandDefault.val} />}
+        icon={<ArrowLineDown size={24} color={theme.textInteractiveBaseBrandDefault?.val as string} />}
         variant="primary"
       />
       <ActionButton
         content="Send"
         onPress={onSend}
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        icon={<ArrowUpRight size={24} color={theme.textInteractiveBaseBrandSoftDefault.val} />}
+        icon={<ArrowUpRight size={24} color={theme.textInteractiveBaseBrandSoftDefault?.val as string} />}
         variant="secondary"
       />
     </View>
