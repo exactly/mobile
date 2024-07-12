@@ -38,16 +38,16 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   uint256 public constant BORROW_LIMIT = 1000e18;
 
-  address public paymentReceiver;
+  address public collector;
   uint256 public immutable INTERVAL = 30 days;
   mapping(address account => uint256 limit) public borrowLimits;
   mapping(address account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
 
-  constructor(IAuditor auditor_, address paymentReceiver_) {
+  constructor(IAuditor auditor_, address collector_) {
     AUDITOR = auditor_;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    setPaymentReceiver(paymentReceiver_);
+    setCollector(collector_);
   }
 
   function enterMarket(IMarket market) external {
@@ -86,7 +86,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.borrow, (amount, paymentReceiver, msg.sender))
+      address(market), 0, abi.encodeCall(market.borrow, (amount, collector, msg.sender))
     );
   }
 
@@ -105,22 +105,20 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     }
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market),
-      0,
-      abi.encodeCall(market.borrowAtMaturity, (maturity, amount, maxAmount, paymentReceiver, msg.sender))
+      address(market), 0, abi.encodeCall(market.borrowAtMaturity, (maturity, amount, maxAmount, collector, msg.sender))
     );
   }
 
   function withdraw(IMarket market, uint256 amount) external onlyMarket(market) {
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.withdraw, (amount, paymentReceiver, msg.sender))
+      address(market), 0, abi.encodeCall(market.withdraw, (amount, collector, msg.sender))
     );
   }
 
-  function setPaymentReceiver(address paymentReceiver_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    if (paymentReceiver_ == address(0)) revert ZeroAddress();
-    paymentReceiver = paymentReceiver_;
+  function setCollector(address collector_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    if (collector_ == address(0)) revert ZeroAddress();
+    collector = collector_;
   }
 
   /// @inheritdoc BasePlugin

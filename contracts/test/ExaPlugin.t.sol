@@ -43,7 +43,7 @@ contract ExaPluginTest is Test {
   address internal keeper1;
   uint256 internal keeper1Key;
   address[] internal owners;
-  address payable internal paymentReceiver;
+  address payable internal collector;
   IExaAccount internal account1;
   IEntryPoint internal entryPoint;
   ExaPlugin internal exaPlugin;
@@ -83,14 +83,14 @@ contract ExaPluginTest is Test {
     vm.label(address(debtManager), "DebtManager");
 
     entryPoint = IEntryPoint(address(new EntryPoint()));
-    paymentReceiver = payable(makeAddr("paymentReceiver"));
+    collector = payable(makeAddr("collector"));
     (owner1, owner1Key) = makeAddrAndKey("owner1");
     owners = new address[](1);
     owners[0] = owner1;
     (keeper1, keeper1Key) = makeAddrAndKey("keeper1");
     vm.label(keeper1, "keeper1");
 
-    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), paymentReceiver);
+    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), collector);
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper1);
 
     WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
@@ -153,10 +153,10 @@ contract ExaPluginTest is Test {
     account1.approve(market, 100 ether);
     account1.deposit(market, 100 ether);
 
-    uint256 prevBalance = asset.balanceOf(paymentReceiver);
+    uint256 prevBalance = asset.balanceOf(collector);
     uint256 borrowAmount = 10 ether;
     account1.borrow(market, borrowAmount);
-    assertEq(asset.balanceOf(paymentReceiver), prevBalance + borrowAmount);
+    assertEq(asset.balanceOf(collector), prevBalance + borrowAmount);
   }
 
   function testBorrowLimitExceeded() external {
@@ -182,9 +182,9 @@ contract ExaPluginTest is Test {
     account1.deposit(market, 2000 ether);
     account1.enterMarket(market);
 
-    uint256 balance = usdc.balanceOf(paymentReceiver);
+    uint256 balance = usdc.balanceOf(collector);
     account1.borrow(marketUSDC, 1000e6);
-    assertEq(usdc.balanceOf(paymentReceiver), balance + 1000e6);
+    assertEq(usdc.balanceOf(collector), balance + 1000e6);
   }
 
   function testBorrowCrossMarketLimitExceeded() external {
@@ -210,10 +210,10 @@ contract ExaPluginTest is Test {
     account1.approve(market, 100 ether);
     account1.deposit(market, 100 ether);
 
-    uint256 prevBalance = asset.balanceOf(paymentReceiver);
+    uint256 prevBalance = asset.balanceOf(collector);
     uint256 borrowAmount = 10 ether;
     account1.borrowAtMaturity(market, FixedLib.INTERVAL, borrowAmount, 100 ether);
-    assertEq(asset.balanceOf(paymentReceiver), prevBalance + borrowAmount);
+    assertEq(asset.balanceOf(collector), prevBalance + borrowAmount);
   }
 
   function testBorrowAtMaturityLimitExceeded() external {
@@ -247,9 +247,9 @@ contract ExaPluginTest is Test {
     account1.approve(market, 100 ether);
     account1.deposit(market, 100 ether);
 
-    uint256 prevBalance = asset.balanceOf(paymentReceiver);
+    uint256 prevBalance = asset.balanceOf(collector);
     account1.withdraw(market, 100 ether);
-    assertEq(asset.balanceOf(paymentReceiver), prevBalance + 100 ether);
+    assertEq(asset.balanceOf(collector), prevBalance + 100 ether);
   }
 
   function testWithdrawFailure() external {
