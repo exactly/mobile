@@ -12,8 +12,11 @@ import {
   PluginMetadata
 } from "modular-account-libs/interfaces/IPlugin.sol";
 import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
+import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
+import { SIG_VALIDATION_FAILED, SIG_VALIDATION_PASSED } from "modular-account-libs/libraries/Constants.sol";
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
+import { ECDSA } from "solady/utils/ECDSA.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
@@ -26,6 +29,7 @@ import {
 contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   using FixedPointMathLib for uint256;
   using SafeCastLib for int256;
+  using ECDSA for bytes32;
 
   // metadata used by the pluginMetadata() method down below
   string public constant NAME = "Exa Plugin";
@@ -122,6 +126,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   /// @inheritdoc BasePlugin
+  function userOpValidationFunction(uint8 functionId, UserOperation calldata userOp, bytes32 userOpHash)
+    external
+    view
+    override
+    returns (uint256)
+  {
+    if (functionId == uint8(FunctionId.USER_OP_VALIDATION_KEEPER)) {
+      address signer = userOpHash.toEthSignedMessageHash().tryRecoverCalldata(userOp.signature);
+      if (signer != address(0) && hasRole(KEEPER_ROLE, signer)) return SIG_VALIDATION_PASSED;
+      return SIG_VALIDATION_FAILED;
+    }
+    revert NotImplemented(msg.sig, functionId);
+  }
+
+  /// @inheritdoc BasePlugin
   function runtimeValidationFunction(uint8 functionId, address sender, uint256, bytes calldata) external view override {
     if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_KEEPER)) {
       if (!hasRole(KEEPER_ROLE, sender)) revert NotAuthorized();
@@ -145,12 +164,42 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.executionFunctions[4] = this.borrow.selector;
     manifest.executionFunctions[5] = this.borrowAtMaturity.selector;
 
+    ManifestFunction memory keeperUserOpValidationFunction = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.SELF,
+      functionId: uint8(FunctionId.USER_OP_VALIDATION_KEEPER),
+      dependencyIndex: 0
+    });
+    manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](6);
+    manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.enterMarket.selector,
+      associatedFunction: keeperUserOpValidationFunction
+    });
+    manifest.userOpValidationFunctions[1] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.approve.selector,
+      associatedFunction: keeperUserOpValidationFunction
+    });
+    manifest.userOpValidationFunctions[2] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.deposit.selector,
+      associatedFunction: keeperUserOpValidationFunction
+    });
+    manifest.userOpValidationFunctions[3] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.withdraw.selector,
+      associatedFunction: keeperUserOpValidationFunction
+    });
+    manifest.userOpValidationFunctions[4] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.borrow.selector,
+      associatedFunction: keeperUserOpValidationFunction
+    });
+    manifest.userOpValidationFunctions[5] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.borrowAtMaturity.selector,
+      associatedFunction: keeperUserOpValidationFunction
+    });
+
     ManifestFunction memory keeperRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER),
       dependencyIndex: 0
     });
-
     manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](6);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.enterMarket.selector,
@@ -206,7 +255,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 }
 
 enum FunctionId {
-  RUNTIME_VALIDATION_KEEPER
+  RUNTIME_VALIDATION_KEEPER,
+  USER_OP_VALIDATION_KEEPER
 }
 
 error ZeroAddress();
