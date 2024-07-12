@@ -1,13 +1,14 @@
-openzeppelin-contracts/=lib/webauthn-sol/lib/openzeppelin-contracts/
-solady/=lib/webauthn-sol/lib/solady/src/
+solady/=../node_modules/solady/src/
+modular-account/=../node_modules/modular-account/
+modular-account-libs/=../node_modules/modular-account-libs/src/
+FreshCryptoLib/=../node_modules/fresh-crypto-lib/solidity/src/
+openzeppelin-contracts/=../node_modules/openzeppelin-contracts/
 
-@exactly/protocol/=../node_modules/@exactly/protocol/contracts/
 @openzeppelin/contracts/=../node_modules/@openzeppelin/contracts-v4/
-@openzeppelin/contracts-v4/=../node_modules/@openzeppelin/contracts-v4/
 @openzeppelin/contracts-upgradeable-v4/=../node_modules/@openzeppelin/contracts-upgradeable-v4/
+@openzeppelin/contracts-v4/=../node_modules/@openzeppelin/contracts-v4/
+@exactly/protocol/=../node_modules/@exactly/protocol/contracts/
+account-abstraction/=../node_modules/account-abstraction/contracts/
+forge-std/=../node_modules/forge-std/src/
 solmate/=../node_modules/solmate/
-webauthn-owner-plugin/=../node_modules/webauthn-owner-plugin/src/
-
-forge-std/=lib/forge-std/src/
-ds-test/=lib/forge-std/lib/ds-test/src/
-account-abstraction/=lib/modular-account/lib/account-abstraction/contracts/
+webauthn-owner-plugin/=../node_modules/webauthn-owner-plugin/src

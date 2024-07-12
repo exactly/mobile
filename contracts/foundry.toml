@@ -6,7 +6,7 @@ optimizer_runs = 999_999
 deny_warnings = true
 verbosity = 3
 isolate = true
-libs = ["lib", "../node_modules"]
+libs = ["../node_modules"]
 fs_permissions = [
   { access = "read", path = "broadcast" },
   { access = "read", path = "../node_modules" },

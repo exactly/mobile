@@ -2,6 +2,7 @@ module.exports = {
   reject: [
     "@react-native-async-storage/async-storage",
     "@types/react",
+    "account-abstraction",
     "eslint",
     "expo-application",
     "expo-build-properties",

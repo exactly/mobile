@@ -30,7 +30,7 @@
     "@alchemy/aa-core": "^3.18.2",
     "@alchemy/aa-ethers": "^3.18.2",
     "@exactly/plugin": "workspace:*",
-    "@exactly/protocol": "exactly/protocol#461ad08",
+    "@exactly/protocol": "exactly/protocol#0872c11",
     "@expo/vector-icons": "^14.0.2",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
     "@peculiar/asn1-ecc": "^2.3.8",
@@ -73,7 +73,6 @@
     "ua-parser-js": "^1.0.38",
     "viem": "^2.17.3",
     "wagmi": "^2.10.10",
-    "webauthn-owner-plugin": "exactly/webauthn-owner-plugin#c87cbae",
     "zustand": "^4.5.4"
   },
   "devDependencies": {
