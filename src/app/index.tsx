@@ -77,7 +77,7 @@ export default function Home() {
         <Text textAlign="center">{txHash}</Text>
         <Text textAlign="center">{accountLiquidity && accountLiquidity.map((v) => formatEther(v)).join(", ")}</Text>
         <Button disabled={!connector || isConnecting} onPress={address ? disconnectAccount : connectAccount}>
-          {isConnecting ? <Spinner size="small" /> : address ?? "connect"}
+          {isConnecting ? <Spinner size="small" /> : (address ?? "connect")}
         </Button>
         <Button disabled={!enterWETHSimulation || isSending} onPress={enterWETH}>
           enter WETH market
