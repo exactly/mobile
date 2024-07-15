@@ -12,7 +12,7 @@
     "modular-account": "alchemyplatform/modular-account#c81e712",
     "modular-account-libs": "erc6900/modular-account-libs#v0.7.1",
     "openzeppelin-contracts": "openzeppelin/openzeppelin-contracts",
-    "solady": "^0.0.218",
+    "solady": "^0.0.221",
     "webauthn-owner-plugin": "exactly/webauthn-owner-plugin#38db52d",
     "webauthn-sol": "base-org/webauthn-sol"
   },
