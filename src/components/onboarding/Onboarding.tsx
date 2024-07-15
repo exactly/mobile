@@ -1,19 +1,17 @@
 import React from "react";
-import { Text } from "tamagui";
 
+import Carousel from "./Carousel";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
 
-const Activity = () => {
+const Onboarding = () => {
   return (
     <SafeView>
       <BaseLayout>
-        <Text fontSize={40} fontFamily="$mono" fontWeight={700}>
-          Activity
-        </Text>
+        <Carousel />
       </BaseLayout>
     </SafeView>
   );
 };
 
-export default Activity;
+export default Onboarding;

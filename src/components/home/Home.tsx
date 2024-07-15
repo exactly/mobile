@@ -1,27 +1,35 @@
+import { router } from "expo-router";
 import React from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { ScrollView, View } from "tamagui";
+import { Button, View } from "tamagui";
 
 import Balance from "./Balance";
-import MainActions from "./MainActions";
+import BaseLayout from "../shared/BaseLayout";
 import ProfileHeader from "../shared/ProfileHeader";
+import SafeView from "../shared/SafeView";
 
-const screenStyle = { flex: 1, backgroundColor: "transparent" };
-const scrollViewStyle = { flex: 1, backgroundColor: "transparent", gap: 20 };
+const startOnboarding = () => {
+  router.push("onboarding");
+};
 
 const Home = () => {
   return (
-    <SafeAreaView style={screenStyle}>
-      <View flex={1} height="100%" gap={20} padding={16} backgroundColor="$backgroundSoft">
-        <ProfileHeader />
-        <ScrollView style={scrollViewStyle}>
-          <View gap={40}>
-            <Balance />
-            <MainActions />
-          </View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+    <SafeView>
+      <BaseLayout>
+        <View gap={40}>
+          <ProfileHeader />
+          <Balance />
+          <Button
+            variant="outlined"
+            backgroundColor="$interactiveBaseBrandDefault"
+            color="$textInteractiveBaseBrandDefault"
+            onPress={startOnboarding}
+            fontWeight={600}
+          >
+            Start Onboarding
+          </Button>
+        </View>
+      </BaseLayout>
+    </SafeView>
   );
 };
 

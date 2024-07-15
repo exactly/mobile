@@ -1,6 +1,7 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { TouchableWithoutFeedback } from "react-native";
+import { moderateScale } from "react-native-size-matters";
 import { View, Text, ButtonIcon, useTheme } from "tamagui";
 
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -11,7 +12,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       flexDirection="row"
       alignItems="center"
       justifyContent="center"
-      height={83}
+      height={moderateScale(83)}
       padding={5}
       gap={10}
       backgroundColor="$backgroundSoft"
@@ -38,15 +39,8 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           }
         };
 
-        const onLongPress = () => {
-          navigation.emit({
-            type: "tabLongPress",
-            target: route.key,
-          });
-        };
-
         return (
-          <TouchableWithoutFeedback key={route.key} role="button" onPress={onPress} onLongPress={onLongPress}>
+          <TouchableWithoutFeedback key={route.key} role="button" onPress={onPress}>
             <View display="flex" flexDirection="column" gap={2} alignContent="center" alignItems="center" flex={1}>
               <ButtonIcon>
                 {icon?.({

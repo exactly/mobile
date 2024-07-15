@@ -48,7 +48,6 @@ export interface AppColors {
   backgroundBrand: string;
   interactiveBaseSuccessDefault: string;
   interactiveBaseBrandHover: string;
-  interactiveBaseBrandPressed: string;
   interactiveBaseBrandSoftDefault: string;
   interactiveBaseBrandSoftHover: string;
   interactiveBaseBrandSoftPressed: string;
@@ -71,6 +70,8 @@ export interface AppColors {
   interactiveBaseBrandDefault: string;
   textInteractiveBaseBrandDefault: string;
   textInteractiveBaseBrandSoftDefault: string;
+  interactiveBaseBrandPressed: string;
+  uiDarkGrey: string;
 }
 
 const lightTheme: AppColors = {
@@ -90,7 +91,6 @@ const lightTheme: AppColors = {
   backgroundBrand: "#12A594",
   interactiveBaseSuccessDefault: "#30A46C",
   interactiveBaseBrandHover: "#0D9B8A",
-  interactiveBaseBrandPressed: "#008573",
   interactiveBaseBrandSoftHover: "#CCF3EA",
   interactiveBaseBrandSoftPressed: "#B8EAE0",
   textSuccessSecondary: "#30A46C",
@@ -112,6 +112,8 @@ const lightTheme: AppColors = {
   textInteractiveBaseBrandDefault: "#E0F8F3",
   interactiveBaseBrandSoftDefault: "#E0F8F3",
   textInteractiveBaseBrandSoftDefault: "#12A594",
+  interactiveBaseBrandPressed: "#008573",
+  uiDarkGrey: "#343330",
 };
 
 export default lightTheme;
