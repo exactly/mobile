@@ -33,7 +33,7 @@ export default {
           compileSdkVersion: 34,
           packagingOptions: { pickFirst: ["**/libcrypto.so"] },
         },
-        ios: { deploymentTarget: "13.4" },
+        ios: { deploymentTarget: "15.0" },
       } as BuildPropertiesConfig,
     ],
     "expo-router",
