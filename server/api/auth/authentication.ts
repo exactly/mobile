@@ -19,7 +19,11 @@ export default cors(async function handler({ method, headers, query, body }: Ver
     case "GET": {
       const { success, output: credentialId } = safeParse(Base64URL, query.credentialId);
       if (!success) return response.status(400).end("bad credential");
-      const options = await generateAuthenticationOptions({ rpID: rpId, allowCredentials: [{ id: credentialId }] });
+      const options = await generateAuthenticationOptions({
+        rpID: rpId,
+        allowCredentials: [{ id: credentialId }],
+        timeout: 5 * 60_000,
+      });
       await kv.set(
         credentialId,
         options.challenge,

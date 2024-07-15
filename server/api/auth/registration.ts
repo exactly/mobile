@@ -26,6 +26,7 @@ export default cors(async function handler({ method, headers, query, body }: Ver
         supportedAlgorithmIDs: [cose.COSEALG.ES256],
         authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
         // TODO excludeCredentials?
+        timeout: 5 * 60_000,
       });
       await kv.set(
         options.user.id,
