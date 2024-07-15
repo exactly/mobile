@@ -12,6 +12,7 @@ import {
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import { base64URLStringToBuffer, bufferToBase64URLString } from "@simplewebauthn/browser";
+import { get } from "react-native-passkeys";
 import {
   type Chain,
   type Hex,
@@ -54,21 +55,19 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
         getAccountInitCode: () => Promise.resolve(accountInitCode({ x, y })),
         getDummySignature: () => "0x",
         async signUserOperationHash(uoHash) {
-          const credential = (await navigator.credentials.get({
-            publicKey: {
-              rpId,
-              challenge: hexToBytes(hashMessage({ raw: uoHash }), { size: 32 }),
-              allowCredentials: [{ id: base64URLStringToBuffer(credentialId), type: "public-key" }],
-              userVerification: "preferred",
-            },
-          })) as PublicKeyCredential | null;
+          const credential = await get({
+            rpId,
+            challenge: bufferToBase64URLString(hexToBytes(hashMessage({ raw: uoHash }), { size: 32 })),
+            allowCredentials: [{ id: credentialId, type: "public-key" }],
+            userVerification: "preferred",
+          });
           if (!credential) throw new Error("no credential");
-          const response = credential.response as AuthenticatorAssertionResponse;
-          const clientDataJSON = new TextDecoder().decode(response.clientDataJSON);
+          const response = credential.response;
+          const clientDataJSON = new TextDecoder().decode(base64URLStringToBuffer(response.clientDataJSON));
           const typeIndex = BigInt(clientDataJSON.indexOf('"type":"'));
           const challengeIndex = BigInt(clientDataJSON.indexOf('"challenge":"'));
-          const authenticatorData = bytesToHex(new Uint8Array(response.authenticatorData));
-          const signature = AsnParser.parse(response.signature, ECDSASigValue);
+          const authenticatorData = bytesToHex(new Uint8Array(base64URLStringToBuffer(response.authenticatorData)));
+          const signature = AsnParser.parse(base64URLStringToBuffer(response.signature), ECDSASigValue);
           const r = bytesToBigInt(new Uint8Array(signature.r));
           let s = bytesToBigInt(new Uint8Array(signature.s));
           if (s > P256_N / 2n) s = P256_N - s; // pass malleability guard

@@ -2,8 +2,11 @@ import { startAuthentication } from "@simplewebauthn/browser";
 import type {
   PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
-  RegistrationResponseJSON,
 } from "@simplewebauthn/types";
+import type {
+  AuthenticationExtensionsLargeBlobInputs,
+  RegistrationResponseJSON,
+} from "react-native-passkeys/build/ReactNativePasskeys.types";
 
 import type { Base64URL, Passkey } from "@exactly/common/types";
 
@@ -11,7 +14,11 @@ import loadPasskey from "./loadPasskey";
 import { apiURL } from "../constants";
 
 export function registrationOptions() {
-  return server<PublicKeyCredentialCreationOptionsJSON>("/auth/registration");
+  return server<
+    Omit<PublicKeyCredentialCreationOptionsJSON, "extensions"> & {
+      extensions?: { largeBlob?: AuthenticationExtensionsLargeBlobInputs };
+    } & Pick<CredentialCreationOptions, "signal">
+  >("/auth/registration");
 }
 
 export function verifyRegistration({

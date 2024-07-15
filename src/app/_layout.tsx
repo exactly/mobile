@@ -1,4 +1,3 @@
-import "expo-webauthn";
 import "../utils/polyfill";
 
 import { createAlchemyPublicRpcClient } from "@alchemy/aa-alchemy";
