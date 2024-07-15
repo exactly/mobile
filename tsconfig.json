@@ -12,7 +12,6 @@
   "exclude": [
     "contracts",
     "server",
-    "webauthn",
     "**/node_modules",
     "**/build",
     "**/dist",

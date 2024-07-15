@@ -18,8 +18,7 @@
   "workspaces": [
     "common",
     "contracts",
-    "server",
-    "webauthn"
+    "server"
   ],
   "engines": {
     "node": ">=20.0.0"
@@ -123,7 +122,6 @@
     "electron",
     "es5-ext",
     "esbuild",
-    "expo-webauthn",
     "keccak",
     "secp256k1",
     "sharp",

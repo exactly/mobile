@@ -1,9 +1,0 @@
-{
-  "platforms": ["android", "ios", "web"],
-  "android": {
-    "modules": ["expo.modules.webauthn.ExpoWebauthn"]
-  },
-  "ios": {
-    "modules": ["ExpoWebauthn"]
-  }
-}
