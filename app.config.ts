@@ -19,9 +19,9 @@ export default {
   assetBundlePatterns: ["**/*"],
   splash: { image: "src/assets/splash.png", resizeMode: "contain" },
 
-  android: { package: "app.exactly.mobile", adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" } },
+  android: { package: "app.exactly", adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" } },
   ios: {
-    bundleIdentifier: "app.exactly.mobile",
+    bundleIdentifier: "app.exactly",
     associatedDomains: [`webcredentials:${vercelURL || "web.exactly.app"}?mode=developer`], // TODO remove developer mode
     supportsTablet: true,
   },
