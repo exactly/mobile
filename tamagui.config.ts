@@ -31,7 +31,7 @@ const ibmPlexMonoFont = createFont({
   },
 });
 
-export default createTamagui({
+const tamaguiConfig = createTamagui({
   ...config,
   defaultFont: "body",
   tokens: {
@@ -43,3 +43,6 @@ export default createTamagui({
     mono: ibmPlexMonoFont,
   },
 });
+
+export type Config = typeof tamaguiConfig;
+export default tamaguiConfig;
