@@ -1,10 +1,7 @@
 import { relations } from "drizzle-orm";
 import { customType, integer, jsonb, pgTable, text } from "drizzle-orm/pg-core";
 
-const bytea = customType<{ data: Uint8Array; driverData: string }>({
-  dataType: () => "bytea",
-  fromDriver: (value) => Buffer.from(value.slice(2), "hex"),
-});
+const bytea = customType<{ data: Uint8Array; driverData: string }>({ dataType: () => "bytea" });
 
 export const credentials = pgTable("credentials", {
   id: text("id").primaryKey(),
