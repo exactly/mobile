@@ -14,6 +14,7 @@ module.exports = function config(api) {
           logTimings: true,
         },
       ],
+      "react-native-reanimated/plugin",
     ],
   };
 };
