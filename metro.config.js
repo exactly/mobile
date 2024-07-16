@@ -10,5 +10,11 @@ module.exports = {
     extraNodeModules: {
       crypto: require.resolve("react-native-quick-crypto"),
     },
+    assetExts: config.resolver?.assetExts?.filter((extension) => extension !== "svg"),
+    sourceExts: [...(config.resolver?.sourceExts ?? []), "svg"],
+  },
+  transformer: {
+    ...config.transformer,
+    babelTransformerPath: require.resolve("react-native-svg-transformer/expo"),
   },
 };
