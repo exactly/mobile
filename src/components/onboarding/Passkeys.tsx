@@ -1,9 +1,10 @@
 import { router } from "expo-router";
 import { Key, X } from "phosphor-react-native";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { TouchableOpacity } from "react-native";
 import { moderateScale } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
+import { useConnect } from "wagmi";
 
 import PasskeysAbout from "./PasskeysAbout";
 import Blob from "../../assets/images/onboarding-blob-05.svg";
@@ -19,7 +20,16 @@ const close = () => {
 
 const Passkeys = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const {
+    connect,
+    connectors: [connector],
+  } = useConnect();
   const theme = useTheme();
+
+  const connectAccount = useCallback(() => {
+    if (!connector) throw new Error("no connector");
+    connect({ connector });
+  }, [connect, connector]);
 
   const learnMore = () => {
     setIsModalOpen(true);
@@ -89,7 +99,7 @@ const Passkeys = () => {
               <DelayedActionButton
                 content="Set passkey and create account"
                 onPress={() => {
-                  router.push("onboarding/success"); // TODO Replace with actual implementation
+                  connectAccount();
                 }}
                 Icon={Key}
               />
