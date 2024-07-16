@@ -36,7 +36,7 @@ export default {
       } as BuildPropertiesConfig,
     ],
     "expo-router",
-    "expo-font",
+    ["expo-font", { sources: ["src/assets/fonts"] }],
     ["@sentry/react-native/expo", { organization: "exactly", project: "mobile" }],
     [
       "onesignal-expo-plugin",
