@@ -27,7 +27,10 @@ module.exports = {
     "no-console": "warn",
     "no-restricted-imports": ["error", { patterns: ["./server/"] }],
     "no-shadow": "off", // @typescript-eslint/no-shadow
-    "react-native/no-raw-text": ["error", { skip: ["Button", "Heading", "SizableText"] }],
+    "react-native/no-raw-text": [
+      "error",
+      { skip: ["Button", "Link", "SubmitButton", "LinkButton", "Heading", "SizableText"] },
+    ],
     "unicorn/filename-case": "off", // use default export name
     "unicorn/number-literal-case": "off", // incompatible with prettier
     "unicorn/prefer-top-level-await": "off", // unsupported in react-native
