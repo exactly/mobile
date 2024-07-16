@@ -22,7 +22,6 @@ export default cors(async function handler({ method, headers, query, body }: Ver
         rpName: "exactly",
         userName: "user", // TODO change username
         userDisplayName: "user", // TODO change display name
-        attestationType: "direct",
         supportedAlgorithmIDs: [cose.COSEALG.ES256],
         authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
         // TODO excludeCredentials?
