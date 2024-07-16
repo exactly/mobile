@@ -1,12 +1,5 @@
-import { startAuthentication } from "@simplewebauthn/browser";
-import type {
-  PublicKeyCredentialCreationOptionsJSON,
-  PublicKeyCredentialRequestOptionsJSON,
-} from "@simplewebauthn/types";
-import type {
-  AuthenticationExtensionsLargeBlobInputs,
-  RegistrationResponseJSON,
-} from "react-native-passkeys/build/ReactNativePasskeys.types";
+import { type create, get } from "react-native-passkeys";
+import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 
 import type { Base64URL, Passkey } from "@exactly/common/types";
 
@@ -14,11 +7,7 @@ import loadPasskey from "./loadPasskey";
 import { apiURL } from "../constants";
 
 export function registrationOptions() {
-  return server<
-    Omit<PublicKeyCredentialCreationOptionsJSON, "extensions"> & {
-      extensions?: { largeBlob?: AuthenticationExtensionsLargeBlobInputs };
-    } & Pick<CredentialCreationOptions, "signal">
-  >("/auth/registration");
+  return server<Parameters<typeof create>[0]>("/auth/registration");
 }
 
 export function verifyRegistration({
@@ -42,9 +31,10 @@ export function createCard(name: string) {
 async function accessToken() {
   const { credentialId } = await loadPasskey();
   const query = `?credentialId=${credentialId}`;
-  const options = await server<PublicKeyCredentialRequestOptionsJSON>(`/auth/authentication${query}`);
-  const body = await startAuthentication(options);
-  const { token } = await server<{ token: string }>(`/auth/authentication${query}`, { body });
+  const options = await server<Parameters<typeof get>[0]>(`/auth/authentication${query}`);
+  const assertion = await get(options);
+  if (!assertion) throw new Error("bad assertion");
+  const { token } = await server<{ token: string }>(`/auth/authentication${query}`, { body: assertion });
   return token;
 }
 
