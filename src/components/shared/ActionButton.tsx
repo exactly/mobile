@@ -2,7 +2,7 @@ import type { IconProps } from "phosphor-react-native";
 import React from "react";
 import type { PressableProps } from "react-native";
 import { Pressable } from "react-native";
-import { moderateScale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
 
 interface ActionButtonProperties extends PressableProps {
@@ -49,14 +49,14 @@ const ActionButton = ({ content, Icon, secondary, ...rest }: ActionButtonPropert
             backgroundColor={backgroundColor}
             alignItems="center"
             justifyContent="space-between"
-            gap={moderateScale(10)}
-            height={moderateScale(64)}
-            paddingHorizontal={moderateScale(20)}
+            gap={ms(10)}
+            height={ms(64)}
+            paddingHorizontal={ms(20)}
             borderRadius={10}
-            minWidth={moderateScale(150)}
-            maxHeight={moderateScale(64)}
+            minWidth={ms(150)}
+            maxHeight={ms(64)}
           >
-            <Text color={textColor} fontSize={moderateScale(14)} fontWeight="bold">
+            <Text color={textColor} fontSize={ms(14)} fontWeight="bold">
               {content}
             </Text>
             {Icon && <Icon color={textColor} weight="bold" />}
