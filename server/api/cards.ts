@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { eq } from "drizzle-orm";
 
+import database, { cards } from "../database/index.js";
 import auth from "../middleware/auth.js";
 import cors from "../middleware/cors.js";
 import { createCard } from "../utils/cryptomate.js";
@@ -7,6 +9,15 @@ import { createCard } from "../utils/cryptomate.js";
 export default cors(
   auth(async function handler({ method }: VercelRequest, response: VercelResponse, credentialId: string) {
     switch (method) {
+      case "GET":
+        return response
+          .json(
+            await database.query.cards.findMany({
+              columns: { lastFour: true },
+              where: eq(cards.credentialId, credentialId),
+            }),
+          )
+          .end();
       case "POST":
         try {
           const card = await createCard("Satoshi Nakamoto");
