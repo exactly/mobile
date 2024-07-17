@@ -11,6 +11,7 @@ import { Slot, SplashScreen, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { useColorScheme } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider, createConfig, createStorage, custom } from "wagmi";
@@ -90,9 +91,11 @@ export default wrap(function RootLayout() {
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
           <WagmiProvider config={wagmiConfig}>
             <QueryClientProvider client={queryClient}>
-              <SafeAreaProvider>
-                <Slot />
-              </SafeAreaProvider>
+              <GestureHandlerRootView>
+                <SafeAreaProvider>
+                  <Slot />
+                </SafeAreaProvider>
+              </GestureHandlerRootView>
             </QueryClientProvider>
           </WagmiProvider>
         </ThemeProvider>
