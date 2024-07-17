@@ -4,10 +4,10 @@ import { createFont } from "tamagui";
 export const BDOGrotesk = createFont({
   family: "BDOGrotesk",
   face: {
-    600: { normal: "BDOGroteskBold" },
-    700: { normal: "BDOGroteskBold" },
-    bold: { normal: "BDOGroteskBold" },
-    normal: { normal: "BDOGroteskRegular" },
+    600: { normal: "BDOGrotesk-Bold" },
+    700: { normal: "BDOGrotesk-Bold" },
+    bold: { normal: "BDOGrotesk-Bold" },
+    normal: { normal: "BDOGrotesk-Regular" },
   },
   size: config.fonts.body.size,
   weight: {
@@ -19,10 +19,10 @@ export const BDOGrotesk = createFont({
 export const IBMPlexMono = createFont({
   family: "IBMPlexMono",
   face: {
-    600: { normal: "IBMPlexMonoSemiBold" },
-    700: { normal: "IBMPlexMonoBold" },
-    bold: { normal: "IBMPlexMonoBold" },
-    normal: { normal: "IBMPlexMonoRegular" },
+    600: { normal: "IBMPlexMono-SemiBold" },
+    700: { normal: "IBMPlexMono-Bold" },
+    bold: { normal: "IBMPlexMono-Bold" },
+    normal: { normal: "IBMPlexMono-Regular" },
   },
   size: config.fonts.mono.size,
   weight: {

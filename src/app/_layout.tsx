@@ -59,11 +59,11 @@ export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
   const colorScheme = useColorScheme();
   const [loaded, error] = useFonts({
-    BDOGroteskBold: BDOGroteskBold as FontSource,
-    BDOGroteskRegular: BDOGroteskRegular as FontSource,
-    IBMPlexMonoBold: IBMPlexMonoBold as FontSource,
-    IBMPlexMonoRegular: IBMPlexMonoRegular as FontSource,
-    IBMPlexMonoSemiBold: IBMPlexMonoSemiBold as FontSource,
+    "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
+    "BDOGrotesk-Regular": BDOGroteskRegular as FontSource,
+    "IBMPlexMono-Bold": IBMPlexMonoBold as FontSource,
+    "IBMPlexMono-Regular": IBMPlexMonoRegular as FontSource,
+    "IBMPlexMono-SemiBold": IBMPlexMonoSemiBold as FontSource,
     unset: BDOGroteskRegular as FontSource,
   });
 
