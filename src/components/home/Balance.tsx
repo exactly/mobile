@@ -1,6 +1,7 @@
 import { CaretDown, CaretUp } from "phosphor-react-native";
 import React, { useState } from "react";
 import { TouchableWithoutFeedback } from "react-native";
+import { ms } from "react-native-size-matters";
 import { View, Text, styled, ButtonIcon, useTheme } from "tamagui";
 
 import AssetChange from "./AssetChange";
@@ -23,7 +24,7 @@ const Balance = () => {
   };
 
   return (
-    <View display="flex" gap={20}>
+    <View display="flex" gap={20} paddingVertical={ms(20)}>
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
         <Text fontSize={15} lineHeight={21} fontWeight={600} color="$uiSecondary" textAlign="center" width="100%">
           Balance
@@ -33,7 +34,7 @@ const Balance = () => {
         <TouchableWithoutFeedback onPress={onPress}>
           <BalanceView>
             <Text fontFamily="$mono" fontSize={40} fontWeight={700}>
-              $1,000.00
+              $15,186.95
             </Text>
             <ButtonIcon>
               {isOpen ? (
@@ -46,8 +47,7 @@ const Balance = () => {
         </TouchableWithoutFeedback>
         <AssetChange />
       </View>
-
-      {isOpen ? <AssetList /> : <></>}
+      {isOpen && <AssetList />}
     </View>
   );
 };
