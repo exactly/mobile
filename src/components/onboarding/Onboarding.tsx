@@ -7,7 +7,7 @@ import SafeView from "../shared/SafeView";
 const Onboarding = () => {
   return (
     <SafeView>
-      <BaseLayout>
+      <BaseLayout flex={1}>
         <Carousel />
       </BaseLayout>
     </SafeView>

@@ -7,7 +7,7 @@ import SafeView from "../shared/SafeView";
 const Payments = () => {
   return (
     <SafeView>
-      <BaseLayout>
+      <BaseLayout flex={1}>
         <Text fontSize={40} fontFamily="$mono" fontWeight={700}>
           Payments
         </Text>

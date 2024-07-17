@@ -7,7 +7,7 @@ import SafeView from "../shared/SafeView";
 const Card = () => {
   return (
     <SafeView>
-      <BaseLayout>
+      <BaseLayout flex={1}>
         <Text fontSize={40} fontFamily="$mono" fontWeight={700}>
           Card
         </Text>

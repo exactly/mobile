@@ -12,7 +12,7 @@ import SafeView from "../shared/SafeView";
 const Success = () => {
   return (
     <SafeView>
-      <BaseLayout>
+      <BaseLayout flex={1}>
         <View flex={1}>
           <View display="flex" alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
             <View

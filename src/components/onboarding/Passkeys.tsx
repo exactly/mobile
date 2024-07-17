@@ -34,7 +34,7 @@ const Passkeys = () => {
 
   return (
     <SafeView>
-      <BaseLayout>
+      <BaseLayout flex={1}>
         <View flex={1}>
           <View position="absolute" top={ms(20)} right={ms(20)} zIndex={1}>
             <TouchableOpacity onPress={close}>
