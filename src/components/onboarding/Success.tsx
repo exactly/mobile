@@ -1,6 +1,6 @@
 import { ArrowRight } from "phosphor-react-native";
 import React from "react";
-import { moderateScale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
 import { Text, View } from "tamagui";
 
 import SuccessImage from "../../assets/images/account-created.svg";
@@ -22,7 +22,7 @@ const Success = () => {
               justifyContent="center"
               height="100%"
               position="absolute"
-              marginHorizontal={moderateScale(20)}
+              marginHorizontal={ms(20)}
             >
               <Blob />
             </View>
@@ -38,17 +38,12 @@ const Success = () => {
             </View>
           </View>
 
-          <View
-            flexDirection="column"
-            paddingVertical={moderateScale(10)}
-            paddingHorizontal={moderateScale(20)}
-            gap={moderateScale(40)}
-          >
-            <Text fontSize={moderateScale(28)} fontWeight={700} color="$interactiveBaseBrandDefault" textAlign="center">
+          <View flexDirection="column" paddingVertical={ms(10)} paddingHorizontal={ms(20)} gap={ms(40)}>
+            <Text fontSize={ms(28)} fontWeight={700} color="$interactiveBaseBrandDefault" textAlign="center">
               Account created successfully!
             </Text>
 
-            <View flexDirection="column" gap={moderateScale(10)}>
+            <View flexDirection="column" gap={ms(10)}>
               <DelayedActionButton
                 content="Start account setup"
                 onPress={() => {

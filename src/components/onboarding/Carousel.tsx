@@ -9,7 +9,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { moderateScale, scale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
 import type { SvgProps } from "react-native-svg";
 import { View, Text } from "tamagui";
 
@@ -27,7 +27,7 @@ import DelayedActionButton from "../shared/DelayedActionButton";
 
 const recoverButton = (
   <TouchableOpacity onPress={() => {}}>
-    <Text fontSize={scale(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
+    <Text fontSize={ms(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
       Recover an existing account
     </Text>
   </TouchableOpacity>
@@ -134,14 +134,14 @@ const Carousel = () => {
         showsHorizontalScrollIndicator={false}
       />
 
-      <View flexDirection="column" paddingVertical={moderateScale(10)} paddingHorizontal={moderateScale(20)} gap={10}>
+      <View flexDirection="column" paddingVertical={ms(10)} paddingHorizontal={ms(20)} gap={10}>
         <View gap={10}>
           <View>
             <Pagination length={pages.length} x={x} progress={progress} />
           </View>
 
           <View gap={10}>
-            <Text fontSize={scale(20)} fontWeight={700} color="$interactiveBaseBrandDefault" textAlign="center">
+            <Text fontSize={ms(20)} fontWeight={700} color="$interactiveBaseBrandDefault" textAlign="center">
               {content}
             </Text>
             {contentSecondary && (

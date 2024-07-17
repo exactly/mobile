@@ -1,7 +1,7 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { TouchableWithoutFeedback } from "react-native";
-import { moderateScale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
 import { View, Text, ButtonIcon, useTheme } from "tamagui";
 
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -12,7 +12,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       flexDirection="row"
       alignItems="center"
       justifyContent="center"
-      height={moderateScale(83)}
+      height={ms(83)}
       padding={5}
       gap={10}
       backgroundColor="$backgroundSoft"

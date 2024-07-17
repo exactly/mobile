@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { moderateScale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
 import { View, useWindowDimensions } from "tamagui";
 
 import type { Page } from "./Carousel";
@@ -17,7 +17,7 @@ interface ListItemProperties {
 const ListItem = ({ item, index, x }: ListItemProperties) => {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const itemWidth = width - insets.left - insets.right - moderateScale(20);
+  const itemWidth = width - insets.left - insets.right - ms(20);
 
   const rBackgroundStyle = useAnimatedStyle(() => {
     const animatedScale = interpolate(
@@ -53,7 +53,7 @@ const ListItem = ({ item, index, x }: ListItemProperties) => {
       alignContent="center"
       justifyContent="center"
       height="100%"
-      width={width - moderateScale(20)}
+      width={width - ms(20)}
       flex={1}
     >
       <Animated.View style={[styles.bgImage, rBackgroundStyle]}>

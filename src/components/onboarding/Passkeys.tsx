@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { Key, X } from "phosphor-react-native";
 import React, { useCallback } from "react";
 import { TouchableOpacity } from "react-native";
-import { moderateScale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
 import { useConnect } from "wagmi";
 
@@ -36,9 +36,9 @@ const Passkeys = () => {
     <SafeView>
       <BaseLayout>
         <View flex={1}>
-          <View position="absolute" top={moderateScale(20)} right={moderateScale(20)} zIndex={1}>
+          <View position="absolute" top={ms(20)} right={ms(20)} zIndex={1}>
             <TouchableOpacity onPress={close}>
-              <X size={moderateScale(25)} color={theme.uiDarkGrey.val as string} />
+              <X size={ms(25)} color={theme.uiDarkGrey.val as string} />
             </TouchableOpacity>
           </View>
           <View display="flex" alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
@@ -49,7 +49,7 @@ const Passkeys = () => {
               justifyContent="center"
               height="100%"
               position="absolute"
-              marginHorizontal={moderateScale(20)}
+              marginHorizontal={ms(20)}
             >
               <Blob />
             </View>
@@ -65,19 +65,9 @@ const Passkeys = () => {
             </View>
           </View>
 
-          <View
-            flexDirection="column"
-            paddingVertical={moderateScale(10)}
-            paddingHorizontal={moderateScale(20)}
-            gap={moderateScale(40)}
-          >
-            <View gap={moderateScale(10)}>
-              <Text
-                fontSize={moderateScale(20)}
-                fontWeight={700}
-                color="$interactiveBaseBrandDefault"
-                textAlign="center"
-              >
+          <View flexDirection="column" paddingVertical={ms(10)} paddingHorizontal={ms(20)} gap={ms(40)}>
+            <View gap={ms(10)}>
+              <Text fontSize={ms(20)} fontWeight={700} color="$interactiveBaseBrandDefault" textAlign="center">
                 A secure and easy way to access your account
               </Text>
               <Text fontSize={13} fontWeight={400} color="$uiBaseSecondary" textAlign="center">
@@ -86,7 +76,7 @@ const Passkeys = () => {
               </Text>
             </View>
 
-            <View flexDirection="column" gap={moderateScale(10)}>
+            <View flexDirection="column" gap={ms(10)}>
               <View flexDirection="row" alignItems="center" justifyContent="center">
                 <Text>By continuing, I accept the</Text>
                 <TouchableOpacity onPress={() => {}}>
@@ -102,7 +92,7 @@ const Passkeys = () => {
               />
               <View justifyContent="center" alignItems="center">
                 <TouchableOpacity onPress={learnMore}>
-                  <Text fontSize={moderateScale(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
+                  <Text fontSize={ms(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
                     Learn more about passkeys
                   </Text>
                 </TouchableOpacity>

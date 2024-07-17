@@ -4,7 +4,7 @@ import { StyleSheet } from "react-native";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { moderateScale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
 import { useTheme, useWindowDimensions, View } from "tamagui";
 
 type Properties = {
@@ -26,7 +26,7 @@ const PaginationComponent = ({
 }) => {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const itemWidth = width - insets.left - insets.right - moderateScale(20);
+  const itemWidth = width - insets.left - insets.right - ms(20);
 
   const rPaginatorStyle = useAnimatedStyle(() => {
     const interpolatedWidth = interpolate(

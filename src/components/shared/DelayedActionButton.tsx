@@ -3,7 +3,7 @@ import React from "react";
 import type { DimensionValue } from "react-native";
 import { TouchableWithoutFeedback, StyleSheet } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
-import { scale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
 
 interface DelayedActionButtonProperties {
@@ -39,13 +39,13 @@ const DelayedActionButton = ({ content, onPress, Icon }: DelayedActionButtonProp
 
   return (
     <TouchableWithoutFeedback onPressIn={handlePressIn} onPressOut={handlePressOut}>
-      <View borderRadius={10} height={scale(56)} overflow="hidden" position="relative">
+      <View borderRadius={10} height={ms(56)} overflow="hidden" position="relative">
         <View
           alignItems="center"
           flexDirection="row"
           height="100%"
           justifyContent="space-between"
-          paddingHorizontal={scale(20)}
+          paddingHorizontal={ms(20)}
           position="relative"
           $platform-android={{
             backgroundColor: theme.interactiveBaseBrandDefault.val as string,
@@ -63,9 +63,9 @@ const DelayedActionButton = ({ content, onPress, Icon }: DelayedActionButtonProp
           height="100%"
           width="100%"
           justifyContent="space-between"
-          paddingHorizontal={scale(20)}
+          paddingHorizontal={ms(20)}
         >
-          <Text fontSize={scale(14)} fontWeight={600} color="$textInteractiveBaseBrandDefault">
+          <Text fontSize={ms(14)} fontWeight={600} color="$textInteractiveBaseBrandDefault">
             {content}
           </Text>
           {Icon && <Icon color={theme.interactiveBaseBrandSoftDefault.get() as string} weight="bold" />}
@@ -75,7 +75,7 @@ const DelayedActionButton = ({ content, onPress, Icon }: DelayedActionButtonProp
           flexDirection="row"
           height="100%"
           justifyContent="space-between"
-          paddingHorizontal={scale(20)}
+          paddingHorizontal={ms(20)}
           position="relative"
           backgroundColor="$interactiveBaseBrandDefault"
         />
