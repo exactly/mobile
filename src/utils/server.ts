@@ -1,5 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type create, get } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
+import { type InferOutput, check, number, object, parse, pipe, regex, string } from "valibot";
 
 import type { Base64URL, Passkey } from "@exactly/common/types";
 
@@ -29,13 +31,28 @@ export function createCard(name: string) {
 }
 
 async function accessToken() {
+  try {
+    return await loadAccessToken();
+  } catch {
+    return createAccessToken();
+  }
+}
+
+async function createAccessToken() {
   const { credentialId } = await loadPasskey();
   const query = `?credentialId=${credentialId}`;
   const options = await server<Parameters<typeof get>[0]>(`/auth/authentication${query}`);
   const assertion = await get(options);
   if (!assertion) throw new Error("bad assertion");
-  const { token } = await server<{ token: string }>(`/auth/authentication${query}`, { body: assertion });
-  return token;
+  const jwt = await server<InferOutput<typeof JWT>>(`/auth/authentication${query}`, { body: assertion });
+  await AsyncStorage.setItem("exactly.jwt", JSON.stringify(parse(JWT, jwt)));
+  return jwt.token;
+}
+
+async function loadAccessToken() {
+  const store = await AsyncStorage.getItem("exactly.jwt");
+  if (!store) throw new Error("no token");
+  return parse(JWT, JSON.parse(store)).token;
 }
 
 async function auth<T = unknown>(url: `/${string}`, body?: unknown, method?: "GET" | "POST") {
@@ -61,3 +78,11 @@ async function server<T = unknown>(
   if (!response.ok) throw new Error(`${String(response.status)} ${await response.text()}`);
   return response.json() as Promise<T>;
 }
+
+const JWT = object({
+  token: pipe(string(), regex(/^([\w=]+)\.([\w=]+)\.([\w+/=-]*)/)),
+  expiresAt: pipe(
+    number(),
+    check((expiresAt) => expiresAt > Date.now() + 5 * 60_000),
+  ),
+});
