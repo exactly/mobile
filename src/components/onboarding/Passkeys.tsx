@@ -1,25 +1,26 @@
 import { router } from "expo-router";
 import { Key, X } from "phosphor-react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { TouchableOpacity } from "react-native";
 import { moderateScale } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
 import { useConnect } from "wagmi";
 
-import PasskeysAbout from "./PasskeysAbout";
 import Blob from "../../assets/images/onboarding-blob-05.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
 import BaseLayout from "../shared/BaseLayout";
 import DelayedActionButton from "../shared/DelayedActionButton";
 import SafeView from "../shared/SafeView";
-import SlideUpModal from "../shared/SlideUpModal";
 
 const close = () => {
   router.back();
 };
 
+const learnMore = () => {
+  router.push("onboarding/(passkeys)/passkeys-about");
+};
+
 const Passkeys = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const {
     connect,
     connectors: [connector],
@@ -30,10 +31,6 @@ const Passkeys = () => {
     if (!connector) throw new Error("no connector");
     connect({ connector });
   }, [connect, connector]);
-
-  const learnMore = () => {
-    setIsModalOpen(true);
-  };
 
   return (
     <SafeView>
@@ -113,14 +110,6 @@ const Passkeys = () => {
             </View>
           </View>
         </View>
-
-        <SlideUpModal isOpen={isModalOpen}>
-          <PasskeysAbout
-            onClose={() => {
-              setIsModalOpen(false);
-            }}
-          />
-        </SlideUpModal>
       </BaseLayout>
     </SafeView>
   );

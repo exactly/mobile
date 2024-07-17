@@ -156,7 +156,7 @@ const Carousel = () => {
           <DelayedActionButton
             content="Get started"
             onPress={() => {
-              router.push("onboarding/passkeys");
+              router.push("onboarding/(passkeys)/passkeys");
             }}
             Icon={ArrowRight}
           />

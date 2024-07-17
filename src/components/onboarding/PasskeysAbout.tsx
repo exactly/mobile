@@ -1,22 +1,39 @@
+import { router } from "expo-router";
 import { X } from "phosphor-react-native";
 import React from "react";
 import { TouchableOpacity } from "react-native";
 import { moderateScale } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
 
-interface PasskeysAboutProperties {
-  onClose: () => void;
-}
+const close = () => {
+  router.back();
+};
 
-const PasskeysAbout = ({ onClose }: PasskeysAboutProperties) => {
+const PasskeysAbout = () => {
   const theme = useTheme();
   return (
     <View flex={1} flexDirection="column" justifyContent="flex-end" alignItems="center">
-      <View backgroundColor="$backgroundSoft" padding={moderateScale(20)}>
-        <View gap={moderateScale(5)} display="flex">
-          <View display="flex" alignSelf="flex-end">
-            <TouchableOpacity onPress={onClose}>
-              <X size={moderateScale(25)} color={theme.uiDarkGrey.val as string} />
+      <View
+        backgroundColor="$backgroundSoft"
+        padding={moderateScale(20)}
+        borderTopLeftRadius={20}
+        borderTopRightRadius={20}
+      >
+        <View display="flex">
+          <View display="flex" flexDirection="row" justifyContent="flex-end" position="relative">
+            <View
+              position="absolute"
+              height={moderateScale(4)}
+              width={moderateScale(40)}
+              borderRadius={100}
+              backgroundColor="$backgroundMild"
+              left="50%"
+              transform={[{ translateX: -moderateScale(20) }]}
+            />
+            <TouchableOpacity onPress={close}>
+              <View borderRadius={100} backgroundColor="$backgroundMild" padding={moderateScale(2)}>
+                <X size={moderateScale(25)} color={theme.uiDarkGrey.val as string} />
+              </View>
             </TouchableOpacity>
           </View>
 
