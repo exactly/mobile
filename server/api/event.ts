@@ -2,6 +2,7 @@ import { getEntryPoint } from "@alchemy/aa-core";
 import accountInitCode from "@exactly/common/accountInitCode.js";
 import { chain } from "@exactly/common/constants.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { eq } from "drizzle-orm";
 import * as v from "valibot";
 import {
   type Address,
@@ -12,7 +13,7 @@ import {
 } from "viem";
 
 import exaUSDC from "../../node_modules/@exactly/protocol/deployments/op-sepolia/MarketUSDC.json" with { type: "json" }; // HACK fix ts-node monorepo resolution
-import database, { transactions } from "../database/index.js";
+import database, { cards, credentials, transactions } from "../database/index.js";
 import client from "../utils/chainClient.js";
 import decodePublicKey from "../utils/decodePublicKey.js";
 import handleError from "../utils/handleError.js";
@@ -23,17 +24,18 @@ export default async function handler({ method, body, headers }: VercelRequest, 
   const payload = v.safeParse(Payload, body);
   if (!payload.success) return response.status(400).json(payload); // HACK for debugging
 
-  const { card_id: cardId } = payload.output.data;
-  const card = await database.query.cards.findFirst({
-    where: (cards, { eq }) => eq(cards.id, cardId),
-    with: { credential: { columns: { publicKey: true } } },
-    columns: {},
-  });
-  if (!card) return response.status(400).end("unknown card");
+  const cardId = payload.output.data.card_id;
+  const [credential] = await database
+    .select({ publicKey: credentials.publicKey })
+    .from(cards)
+    .leftJoin(credentials, eq(cards.credentialId, credentials.id))
+    .where(eq(cards.id, cardId))
+    .limit(1);
+  if (!credential?.publicKey) return response.status(404).end("unknown card");
 
   let x: Hash, y: Hash;
   try {
-    ({ x, y } = decodePublicKey(card.credential.publicKey));
+    ({ x, y } = decodePublicKey(credential.publicKey));
   } catch (error) {
     return response.status(400).end(error instanceof Error ? error.message : error);
   }
