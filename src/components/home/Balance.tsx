@@ -37,9 +37,9 @@ const Balance = () => {
             </Text>
             <ButtonIcon>
               {isOpen ? (
-                <CaretUp size={32} color={theme.uiBrandSecondary?.val as string} />
+                <CaretUp size={32} color={theme.uiBrandSecondary.val as string} />
               ) : (
-                <CaretDown size={32} color={theme.uiBrandSecondary?.val as string} />
+                <CaretDown size={32} color={theme.uiBrandSecondary.val as string} />
               )}
             </ButtonIcon>
           </BalanceView>

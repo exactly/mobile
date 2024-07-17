@@ -6,7 +6,7 @@ const AssetChange = () => {
   const theme = useTheme();
   return (
     <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" gap={5}>
-      <TrendUp size={20} color={theme.uiSuccessSecondary?.val as string} />
+      <TrendUp size={20} color={theme.uiSuccessSecondary.val as string} />
       <Text
         fontSize={15}
         fontFamily="$mono"
