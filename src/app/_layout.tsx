@@ -30,7 +30,7 @@ import useOneSignal from "../utils/useOneSignal";
 
 export { ErrorBoundary } from "expo-router";
 
-export const unstable_settings = { initialRouteName: "index" };
+export const unstable_settings = { initialRouteName: "(tabs)" };
 
 SplashScreen.preventAutoHideAsync().catch(handleError);
 const routingInstrumentation = new ReactNavigationInstrumentation();
