@@ -1,17 +1,10 @@
 import React from "react";
-import { moderateScale } from "react-native-size-matters";
+import { ms } from "react-native-size-matters";
+import type { ViewProps } from "tamagui";
 import { View } from "tamagui";
 
-interface SafeViewProperties {
-  children: React.ReactNode;
-}
-
-const BaseLayout = ({ children }: SafeViewProperties) => {
-  return (
-    <View flex={1} paddingHorizontal={moderateScale(10)}>
-      {children}
-    </View>
-  );
+const BaseLayout = (properties: ViewProps) => {
+  return <View paddingHorizontal={ms(20)} {...properties} />;
 };
 
 export default BaseLayout;
