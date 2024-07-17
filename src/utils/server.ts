@@ -23,11 +23,11 @@ export function verifyRegistration({
 }
 
 export function getCards() {
-  return auth("/card");
+  return auth("/cards");
 }
 
 export function createCard(name: string) {
-  return auth("/card", name);
+  return auth("/cards", name);
 }
 
 async function accessToken() {
