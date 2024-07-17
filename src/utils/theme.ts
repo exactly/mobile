@@ -32,88 +32,88 @@ export const IBMPlexMono = createFont({
 });
 
 export interface AppColors {
-  white: string;
-  interactiveOnBrandDefault: string;
-  interactiveTextBrandDefault: string;
-  interactiveTextPlaceholder: string;
-  textTextBrand: string;
-  interactiveDisabled: string;
-  textBrandPrimary: string;
-  borderMild: string;
-  borderBrandSoft: string;
-  brandMild: string;
-  textPrimary: string;
-  interactiveOnBrandSoft: string;
-  textSecondary: string;
   backgroundBrand: string;
-  interactiveBaseSuccessDefault: string;
+  backgroundBrandMild: string;
+  backgroundBrandSoft: string;
+  backgroundSoft: string;
+  borderBrandSoft: string;
+  borderMild: string;
+  borderNavigation: string;
+  borderSeparator: string;
+  borderSoft: string;
+  brandMild: string;
   interactiveBaseBrandHover: string;
   interactiveBaseBrandSoftDefault: string;
   interactiveBaseBrandSoftHover: string;
   interactiveBaseBrandSoftPressed: string;
-  textSuccessSecondary: string;
-  backgroundSoft: string;
-  backgroundMild: string;
-  borderSoft: string;
-  backgroundBrandMild: string;
+  interactiveBaseSuccessDefault: string;
+  interactiveDisabled: string;
+  interactiveOnBrandDefault: string;
+  interactiveOnBrandSoft: string;
+  interactiveTextBrandDefault: string;
+  interactiveTextPlaceholder: string;
+  textBrandPrimary: string;
+  textPrimary: string;
+  textSecondary: string;
   textSuccessPrimary: string;
-  backgroundBrandSoft: string;
-  borderSeparator: string;
-  borderNavigation: string;
+  textSuccessSecondary: string;
+  textTextBrand: string;
+  white: string;
   // TODO review usage of colors above
-  uiPrimary: string;
-  uiSecondary: string;
-  uiNeutralPlaceholder: string;
+  backgroundMild: string;
   borderNeutralSoft: string;
-  uiBrandSecondary: string;
-  uiSuccessSecondary: string;
   interactiveBaseBrandDefault: string;
+  interactiveBaseBrandPressed: string;
   textInteractiveBaseBrandDefault: string;
   textInteractiveBaseBrandSoftDefault: string;
-  interactiveBaseBrandPressed: string;
+  uiBrandSecondary: string;
   uiDarkGrey: string;
+  uiNeutralPlaceholder: string;
+  uiPrimary: string;
+  uiSecondary: string;
+  uiSuccessSecondary: string;
 }
 
 const lightTheme: AppColors = {
-  white: "#FFFFFF",
-  interactiveOnBrandDefault: "#E0F8F3",
-  interactiveTextBrandDefault: "#12A594",
-  interactiveTextPlaceholder: "#868E8B",
-  textTextBrand: "#12A594",
-  interactiveDisabled: "#E6E9E8",
-  textBrandPrimary: "#008573",
-  borderMild: "#DFE2E0",
-  borderBrandSoft: "#CCF3EA",
-  brandMild: "#E0F8F3",
-  textPrimary: "#1A211E",
-  interactiveOnBrandSoft: "#12A594",
-  textSecondary: "#5F6563",
   backgroundBrand: "#12A594",
-  interactiveBaseSuccessDefault: "#30A46C",
+  backgroundBrandMild: "#E0F8F3",
+  backgroundBrandSoft: "#F3FBF9",
+  backgroundMild: "#F7F9F8",
+  backgroundSoft: "#FBFDFC",
+  borderBrandSoft: "#CCF3EA",
+  borderMild: "#DFE2E0",
+  borderNavigation: "#E6E9E8",
+  borderNeutralSoft: "#E6E9E8",
+  borderSeparator: "#DFE2E0",
+  borderSoft: "#E6E9E8",
+  brandMild: "#E0F8F3",
+  interactiveBaseBrandDefault: "#12A594",
   interactiveBaseBrandHover: "#0D9B8A",
+  interactiveBaseBrandPressed: "#008573",
+  interactiveBaseBrandSoftDefault: "#E0F8F3",
   interactiveBaseBrandSoftHover: "#CCF3EA",
   interactiveBaseBrandSoftPressed: "#B8EAE0",
-  textSuccessSecondary: "#30A46C",
-  backgroundMild: "#F7F9F8",
-  borderSoft: "#E6E9E8",
-  backgroundBrandMild: "#E0F8F3",
+  interactiveBaseSuccessDefault: "#30A46C",
+  interactiveDisabled: "#E6E9E8",
+  interactiveOnBrandDefault: "#E0F8F3",
+  interactiveOnBrandSoft: "#12A594",
+  interactiveTextBrandDefault: "#12A594",
+  interactiveTextPlaceholder: "#868E8B",
+  textBrandPrimary: "#008573",
+  textInteractiveBaseBrandDefault: "#E0F8F3",
+  textInteractiveBaseBrandSoftDefault: "#12A594",
+  textPrimary: "#1A211E",
+  textSecondary: "#5F6563",
   textSuccessPrimary: "#218358",
-  backgroundBrandSoft: "#F3FBF9",
-  borderSeparator: "#DFE2E0",
-  borderNavigation: "#E6E9E8",
+  textSuccessSecondary: "#30A46C",
+  textTextBrand: "#12A594",
+  uiBrandSecondary: "#12A594",
+  uiDarkGrey: "#343330",
+  uiNeutralPlaceholder: "#868E8B",
   uiPrimary: "#1A211E",
   uiSecondary: "#5F6563",
-  uiNeutralPlaceholder: "#868E8B",
-  backgroundSoft: "#FBFDFC",
-  borderNeutralSoft: "#E6E9E8",
-  uiBrandSecondary: "#12A594",
   uiSuccessSecondary: "#30A46C",
-  interactiveBaseBrandDefault: "#12A594",
-  textInteractiveBaseBrandDefault: "#E0F8F3",
-  interactiveBaseBrandSoftDefault: "#E0F8F3",
-  textInteractiveBaseBrandSoftDefault: "#12A594",
-  interactiveBaseBrandPressed: "#008573",
-  uiDarkGrey: "#343330",
+  white: "#FFFFFF",
 };
 
 export default lightTheme;
