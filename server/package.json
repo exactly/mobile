@@ -18,7 +18,7 @@
     "@simplewebauthn/server": "^10.0.0",
     "@simplewebauthn/types": "^10.0.0",
     "@vercel/kv": "^2.0.0",
-    "@vercel/node": "^3.2.5",
+    "@vercel/node": "^3.2.6",
     "@vercel/postgres": "^0.9.0",
     "drizzle-orm": "^0.32.0",
     "jose": "^5.6.3",
@@ -31,6 +31,6 @@
     "dotenv": "^16.4.5",
     "drizzle-kit": "^0.23.0",
     "typescript": "^5.4.5",
-    "vercel": "^35.0.1"
+    "vercel": "^35.0.3"
   }
 }

@@ -39,7 +39,7 @@
     "@simplewebauthn/browser": "^10.0.0",
     "@tamagui/config": "^1.102.2",
     "@tanstack/react-form": "^0.26.4",
-    "@tanstack/react-query": "^5.51.3",
+    "@tanstack/react-query": "^5.51.5",
     "@tanstack/valibot-form-adapter": "^0.26.4",
     "abitype": "^1.0.5",
     "expo": "~51.0.21",
@@ -73,7 +73,7 @@
     "tamagui": "^1.102.2",
     "ua-parser-js": "^1.0.38",
     "viem": "^2.17.4",
-    "wagmi": "^2.11.0",
+    "wagmi": "^2.11.1",
     "zustand": "^4.5.4"
   },
   "devDependencies": {
@@ -96,7 +96,7 @@
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.34.4",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-native": "^4.1.0",
@@ -109,10 +109,6 @@
     "typescript": "~5.3.3"
   },
   "overrides": {
-    "@turnkey/http": "npm:@favware/skip-dependency@1.2.2",
-    "@turnkey/iframe-stamper": "npm:@favware/skip-dependency@1.2.2",
-    "@turnkey/viem": "npm:@favware/skip-dependency@1.2.2",
-    "@turnkey/webauthn-stamper": "npm:@favware/skip-dependency@1.2.2",
     "typescript": "~5.3.3",
     "undici": "^6.18.2",
     "viem": "^2.17.4",
