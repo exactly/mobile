@@ -1,5 +1,6 @@
 import type { ExpoConfig } from "expo/config";
 import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-properties/build/pluginConfig";
+import type { FontProps } from "expo-font/plugin/build/withFonts";
 import type { OneSignalPluginProps } from "onesignal-expo-plugin/types/types";
 
 import metadata from "./package.json";
@@ -36,7 +37,18 @@ export default {
       } as BuildPropertiesConfig,
     ],
     "expo-router",
-    ["expo-font", { sources: ["src/assets/fonts"] }],
+    [
+      "expo-font",
+      {
+        fonts: [
+          "./src/assets/fonts/BDOGrotesk-Bold.otf",
+          "./src/assets/fonts/BDOGrotesk-Regular.otf",
+          "./src/assets/fonts/IBMPlexMono-Bold.otf",
+          "./src/assets/fonts/IBMPlexMono-Regular.otf",
+          "./src/assets/fonts/IBMPlexMono-SemiBold.otf",
+        ],
+      } as FontProps,
+    ],
     ["@sentry/react-native/expo", { organization: "exactly", project: "mobile" }],
     [
       "onesignal-expo-plugin",
