@@ -11,6 +11,7 @@ import PasskeysImage from "../../assets/images/passkeys.svg";
 import BaseLayout from "../shared/BaseLayout";
 import DelayedActionButton from "../shared/DelayedActionButton";
 import SafeView from "../shared/SafeView";
+import Spinner from "../shared/Spinner";
 
 const close = () => {
   router.back();
@@ -25,6 +26,7 @@ const Passkeys = () => {
     connect,
     connectors: [connector],
     isSuccess,
+    isPending,
   } = useConnect();
   const theme = useTheme();
 
@@ -37,7 +39,22 @@ const Passkeys = () => {
     if (isSuccess) {
       router.push("onboarding/success");
     }
-  }, [isSuccess]);
+  }, [connector, isSuccess]);
+
+  if (isPending) {
+    return (
+      <SafeView>
+        <BaseLayout flex={1}>
+          <View flex={1} justifyContent="center" alignItems="center" gap={ms(40)}>
+            <Spinner />
+            <Text fontSize={ms(16)} fontWeight="bold" color="$interactiveBaseBrandDefault" textAlign="center">
+              Creating your account. Please wait...
+            </Text>
+          </View>
+        </BaseLayout>
+      </SafeView>
+    );
+  }
 
   return (
     <SafeView>
@@ -52,7 +69,7 @@ const Passkeys = () => {
             <View position="absolute">
               <Blob />
             </View>
-            <View flex={1}>
+            <View position="absolute">
               <PasskeysImage />
             </View>
           </View>
