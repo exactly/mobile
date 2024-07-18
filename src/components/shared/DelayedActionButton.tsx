@@ -2,7 +2,7 @@ import type { IconProps } from "phosphor-react-native";
 import React from "react";
 import type { DimensionValue } from "react-native";
 import { TouchableWithoutFeedback, StyleSheet } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import { Spinner, Text, View, useTheme } from "tamagui";
 
@@ -19,14 +19,15 @@ const DelayedActionButton = ({ content, onPress, Icon, isLoading }: DelayedActio
   const fillAnim = useSharedValue(0);
 
   const handlePressIn = () => {
-    fillAnim.value = withTiming(1, { duration: 1000 });
+    fillAnim.value = withTiming(1, { duration: 1000 }, (finished) => {
+      if (finished) {
+        runOnJS(onPress)();
+      }
+    });
   };
 
   const handlePressOut = () => {
     fillAnim.value = withTiming(0, { duration: 300 });
-    if (fillAnim.value === 1) {
-      onPress();
-    }
   };
 
   const animatedStyle = useAnimatedStyle(() => {
