@@ -1,23 +1,13 @@
-import { getEntryPoint } from "@alchemy/aa-core";
-import accountInitCode from "@exactly/common/accountInitCode.js";
 import { chain } from "@exactly/common/constants.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { eq } from "drizzle-orm";
 import * as v from "valibot";
-import {
-  type Address,
-  BaseError,
-  ContractFunctionExecutionError,
-  ContractFunctionRevertedError,
-  encodeFunctionData,
-  getAddress,
-  type Hash,
-} from "viem";
+import { BaseError, ContractFunctionRevertedError, encodeFunctionData, getAddress } from "viem";
 import { getContractError, getEstimateGasError } from "viem/utils";
 
 import exaUSDC from "../../node_modules/@exactly/protocol/deployments/op-sepolia/MarketUSDC.json" with { type: "json" }; // HACK fix ts-node monorepo resolution
 import database, { cards, credentials, transactions } from "../database/index.js";
-import decodePublicKey from "../utils/decodePublicKey.js";
+import accountAddress from "../utils/accountAddress.js";
 import handleError from "../utils/handleError.js";
 import publicClient from "../utils/publicClient.js";
 import signTransactionSync, { signerAddress } from "../utils/signTransactionSync.js";
@@ -37,33 +27,6 @@ export default async function handler({ method, body, headers }: VercelRequest, 
     .limit(1);
   if (!credential?.publicKey) return response.status(404).end("unknown card");
 
-  let x: Hash, y: Hash;
-  try {
-    ({ x, y } = decodePublicKey(credential.publicKey));
-  } catch (error) {
-    return response.status(400).end(error instanceof Error ? error.message : error);
-  }
-
-  let accountAddress: Address;
-  try {
-    const initCode = accountInitCode({ x, y });
-    const { address, abi } = getEntryPoint(chain, { version: "0.6.0" });
-    await publicClient.simulateContract({ address, abi, functionName: "getSenderAddress", args: [initCode] }); // TODO calculate locally
-    return response.status(502).end("unable to get account address");
-  } catch (error: unknown) {
-    if (
-      error instanceof ContractFunctionExecutionError &&
-      error.cause instanceof ContractFunctionRevertedError &&
-      error.cause.data?.errorName === "SenderAddressResult" &&
-      error.cause.data.args?.length === 1
-    ) {
-      accountAddress = error.cause.data.args[0] as Address;
-    } else {
-      handleError(error);
-      return response.status(502).end("unable to get account address");
-    }
-  }
-
   try {
     const call = {
       functionName: "borrow",
@@ -72,7 +35,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
 
     const transaction = {
       from: signerAddress,
-      to: accountAddress,
+      to: await accountAddress(credential.publicKey), // TODO make sync
       data: encodeFunctionData({
         abi: [{ type: "function", name: "borrow", inputs: [{ type: "address" }, { type: "uint256" }], outputs: [] }],
         ...call,
