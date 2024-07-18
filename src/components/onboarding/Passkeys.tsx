@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { Key, X } from "phosphor-react-native";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { TouchableOpacity } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
@@ -24,6 +24,7 @@ const Passkeys = () => {
   const {
     connect,
     connectors: [connector],
+    isSuccess,
   } = useConnect();
   const theme = useTheme();
 
@@ -31,6 +32,12 @@ const Passkeys = () => {
     if (!connector) throw new Error("no connector");
     connect({ connector });
   }, [connect, connector]);
+
+  useEffect(() => {
+    if (isSuccess) {
+      router.push("onboarding/success");
+    }
+  }, [isSuccess]);
 
   return (
     <SafeView>
