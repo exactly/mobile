@@ -4,15 +4,16 @@ import type { DimensionValue } from "react-native";
 import { TouchableWithoutFeedback, StyleSheet } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
-import { Text, View, useTheme } from "tamagui";
+import { Spinner, Text, View, useTheme } from "tamagui";
 
 interface DelayedActionButtonProperties {
   content: string;
+  isLoading?: boolean;
   Icon?: React.FC<IconProps>;
   onPress: () => void;
 }
 
-const DelayedActionButton = ({ content, onPress, Icon }: DelayedActionButtonProperties) => {
+const DelayedActionButton = ({ content, onPress, Icon, isLoading }: DelayedActionButtonProperties) => {
   const theme = useTheme();
   const color = theme.interactiveBaseBrandPressed.get() as string;
   const fillAnim = useSharedValue(0);
@@ -55,6 +56,7 @@ const DelayedActionButton = ({ content, onPress, Icon }: DelayedActionButtonProp
           }}
         />
         <Animated.View style={[StyleSheet.absoluteFillObject, animatedStyle]} />
+
         <View
           position="absolute"
           backgroundColor="transparent"
@@ -64,11 +66,13 @@ const DelayedActionButton = ({ content, onPress, Icon }: DelayedActionButtonProp
           width="100%"
           justifyContent="space-between"
           paddingHorizontal={ms(20)}
+          gap={ms(10)}
         >
           <Text fontSize={ms(14)} fontWeight={600} color="$textInteractiveBaseBrandDefault">
-            {content}
+            {isLoading ? "Creating account..." : content}
           </Text>
-          {Icon && <Icon color={theme.interactiveBaseBrandSoftDefault.get() as string} weight="bold" />}
+          {isLoading && <Spinner color="$textInteractiveBaseBrandDefault" />}
+          {!isLoading && Icon && <Icon color={theme.interactiveBaseBrandSoftDefault.get() as string} weight="bold" />}
         </View>
         <View
           alignItems="center"
