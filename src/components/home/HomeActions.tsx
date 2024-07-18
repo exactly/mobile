@@ -24,7 +24,7 @@ const HomeActions = () => {
       gap={ms(10)}
       justifyContent="space-between"
       alignItems="center"
-      paddingVertical={ms(20)}
+      paddingVertical={ms(10)}
     >
       <ActionButton content="Add funds" onPress={onAddFunds} Icon={ArrowLineDown} style={homeActionStyle} />
       <ActionButton content="Send" onPress={onSend} Icon={ArrowUpRight} secondary style={homeActionStyle} />

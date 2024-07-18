@@ -16,7 +16,7 @@ const Balance = () => {
   };
 
   return (
-    <View display="flex" gap={ms(20)} paddingVertical={ms(20)}>
+    <View display="flex" gap={ms(20)}>
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
         <Text fontSize={15} lineHeight={21} fontWeight="bold" color="$uiSecondary" textAlign="center" width="100%">
           Balance
