@@ -1,5 +1,6 @@
 import { chain } from "@exactly/common/constants.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import createDebug from "debug";
 import { eq } from "drizzle-orm";
 import * as v from "valibot";
 import { BaseError, ContractFunctionRevertedError, encodeFunctionData, getAddress } from "viem";
@@ -12,11 +13,17 @@ import handleError from "../utils/handleError.js";
 import publicClient from "../utils/publicClient.js";
 import signTransactionSync, { signerAddress } from "../utils/signTransactionSync.js";
 
+const debug = createDebug("exa:server:event");
+
 export default async function handler({ method, body, headers }: VercelRequest, response: VercelResponse) {
   if (method !== "POST") return response.status(405).end("method not allowed");
 
   const payload = v.safeParse(Payload, body);
-  if (!payload.success) return response.status(400).json(payload); // HACK for debugging
+  if (!payload.success) {
+    debug(payload);
+    return response.status(400).end("bad request");
+  }
+  debug(body);
 
   const cardId = payload.output.data.card_id;
   const [credential] = await database
@@ -68,6 +75,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
         maxPriorityFeePerGas: 1_000_000n,
       }),
     });
+    debug("hash", hash);
 
     await database.insert(transactions).values([{ id: payload.output.operation_id, cardId, hash, payload: body }]);
 
