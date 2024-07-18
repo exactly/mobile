@@ -4,7 +4,7 @@ import React, { useCallback, useEffect } from "react";
 import { TouchableOpacity } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
-import { useConnect } from "wagmi";
+import { useConnect, ConnectorAlreadyConnectedError } from "wagmi";
 
 import Blob from "../../assets/images/onboarding-blob-05.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
@@ -26,6 +26,8 @@ const Passkeys = () => {
     connectors: [connector],
     isSuccess,
     isPending,
+    isError,
+    error,
   } = useConnect();
   const theme = useTheme();
 
@@ -35,10 +37,10 @@ const Passkeys = () => {
   }, [connect, connector]);
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess || (isError && error.name === ConnectorAlreadyConnectedError.name)) {
       router.push("onboarding/success");
     }
-  }, [connector, isSuccess]);
+  }, [isError, isSuccess, error]);
 
   return (
     <SafeView>
