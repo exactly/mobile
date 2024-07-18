@@ -27,14 +27,7 @@ const AssetChange = () => {
       >
         (2.94%)
       </Text>
-      <Text
-        fontSize={15}
-        fontFamily="$mono"
-        lineHeight={21}
-        fontWeight="bold"
-        textAlign="center"
-        color="$uiSuccessSecondary"
-      >
+      <Text fontSize={15} fontFamily="$mono" lineHeight={21} fontWeight="bold" textAlign="center" color="$uiSecondary">
         7D
       </Text>
     </View>

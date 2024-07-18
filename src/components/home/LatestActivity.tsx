@@ -66,7 +66,7 @@ const LatestActivity = () => {
 
   const getIcon = (change: "in" | "out" | "deposit") => {
     const Icon = assetChangeToIcon[change];
-    return <Icon size={ms(20)} color={theme.textSuccessPrimary.get() as string} />;
+    return <Icon size={ms(20)} color={theme.textSuccessPrimary.get() as string} weight="bold" />;
   };
 
   return (

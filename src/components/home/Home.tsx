@@ -6,10 +6,10 @@ import { ScrollView, Text, View, useTheme } from "tamagui";
 
 import Balance from "./Balance";
 import HomeActions from "./HomeActions";
-import InfoPreview from "./InfoPreview";
 import LatestActivity from "./LatestActivity";
 import AlertBadge from "../shared/AlertBadge";
 import BaseLayout from "../shared/BaseLayout";
+import InfoPreview from "../shared/InfoPreview";
 import ProfileHeader from "../shared/ProfileHeader";
 import SafeView from "../shared/SafeView";
 
@@ -34,7 +34,7 @@ const Home = () => {
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} />
+                    <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
                 </TouchableOpacity>
               }
@@ -51,7 +51,7 @@ const Home = () => {
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} />
+                    <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
                 </TouchableOpacity>
               }
@@ -68,7 +68,7 @@ const Home = () => {
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} />
+                    <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
                 </TouchableOpacity>
               }
@@ -86,7 +86,7 @@ const Home = () => {
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} />
+                    <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
                 </TouchableOpacity>
               }
