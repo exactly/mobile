@@ -9,6 +9,7 @@ import {
   BaseError,
   ContractFunctionExecutionError,
   ContractFunctionRevertedError,
+  encodeFunctionData,
   getAddress,
   type Hash,
 } from "viem";
@@ -62,14 +63,50 @@ export default async function handler({ method, body, headers }: VercelRequest, 
     }
   }
 
-  let simulation: Awaited<ReturnType<typeof client.simulateContract>>;
   try {
-    simulation = await client.simulateContract({
-      address: accountAddress,
-      abi: [{ type: "function", name: "borrow", inputs: [{ type: "address" }, { type: "uint256" }], outputs: [] }],
+    const call = {
       functionName: "borrow",
       args: [getAddress(exaUSDC.address), BigInt(payload.output.data.amount * 1e6)],
+    };
+
+    const transaction = {
+      from: client.account.address,
+      to: accountAddress,
+      data: encodeFunctionData({
+        abi: [{ type: "function", name: "borrow", inputs: [{ type: "address" }, { type: "uint256" }], outputs: [] }],
+        ...call,
+      }),
+    };
+
+    const [gas, nonce] = await Promise.all([
+      client
+        .request({ method: "eth_estimateGas", params: [transaction] })
+        .then(BigInt)
+        .catch((error: unknown) => {
+          throw getContractError(getEstimateGasError(error as BaseError, {}), {
+            abi: [{ type: "error", name: "InsufficientAccountLiquidity", inputs: [] }],
+            ...call,
+          }) as Error;
+        }),
+      client.getTransactionCount({ address: client.account.address, blockTag: "pending" }),
+    ]);
+
+    if (gas < 30_000n) return response.json({ response_code: "51" }).end(); // account not deployed // HACK needs success check
+
+    const serializedTransaction = await client.account.signTransaction({
+      ...transaction,
+      chainId: chain.id,
+      type: "eip1559",
+      gas,
+      nonce,
+      maxFeePerGas: 1_000_000n,
+      maxPriorityFeePerGas: 1_000_000n,
     });
+    const hash = await client.sendRawTransaction({ serializedTransaction });
+
+    await database.insert(transactions).values([{ id: payload.output.operation_id, cardId, hash, payload: body }]);
+
+    return response.json({ response_code: "00" }).end();
   } catch (error: unknown) {
     if (error instanceof BaseError && error.cause instanceof ContractFunctionRevertedError) {
       switch (error.cause.data?.errorName) {
@@ -83,11 +120,6 @@ export default async function handler({ method, body, headers }: VercelRequest, 
     handleError(error);
     return response.json({ response_code: "05" }).end();
   }
-  const hash = await client.writeContract(simulation.request);
-
-  await database.insert(transactions).values([{ id: payload.output.operation_id, cardId, hash, payload: body }]);
-
-  return response.json({ response_code: "00" }).end();
 }
 
 const Payload = v.variant("event_type", [
