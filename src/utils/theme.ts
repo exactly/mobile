@@ -61,6 +61,7 @@ const lightTheme = {
   backgroundMild: "#F7F9F8",
   backgroundSoft: "#FBFDFC",
   borderNeutralSoft: "#E6E9E8",
+  iconSecondary: "#5F6563",
   interactiveBaseBrandDefault: "#12A594",
   interactiveBaseBrandPressed: "#008573",
   interactiveDisabled: "#E6E9E8",
