@@ -13,6 +13,7 @@
   "dependencies": {
     "@alchemy/aa-core": "^3.18.2",
     "@exactly/common": "workspace:*",
+    "@noble/curves": "*",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
     "@sentry/node": "^8.18.0",
     "@simplewebauthn/server": "^10.0.0",

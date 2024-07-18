@@ -20,6 +20,7 @@ import database, { cards, credentials, transactions } from "../database/index.js
 import client from "../utils/chainClient.js";
 import decodePublicKey from "../utils/decodePublicKey.js";
 import handleError from "../utils/handleError.js";
+import signTransactionSync from "../utils/signTransactionSync.js";
 
 export default async function handler({ method, body, headers }: VercelRequest, response: VercelResponse) {
   if (method !== "POST") return response.status(405).end("method not allowed");
@@ -93,16 +94,17 @@ export default async function handler({ method, body, headers }: VercelRequest, 
 
     if (gas < 30_000n) return response.json({ response_code: "51" }).end(); // account not deployed // HACK needs success check
 
-    const serializedTransaction = await client.account.signTransaction({
-      ...transaction,
-      chainId: chain.id,
-      type: "eip1559",
-      gas,
-      nonce,
-      maxFeePerGas: 1_000_000n,
-      maxPriorityFeePerGas: 1_000_000n,
+    const hash = await client.sendRawTransaction({
+      serializedTransaction: signTransactionSync({
+        ...transaction,
+        gas,
+        nonce,
+        type: "eip1559",
+        chainId: chain.id,
+        maxFeePerGas: 1_000_000n,
+        maxPriorityFeePerGas: 1_000_000n,
+      }),
     });
-    const hash = await client.sendRawTransaction({ serializedTransaction });
 
     await database.insert(transactions).values([{ id: payload.output.operation_id, cardId, hash, payload: body }]);
 
