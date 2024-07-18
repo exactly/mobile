@@ -17,10 +17,10 @@ import { getContractError, getEstimateGasError } from "viem/utils";
 
 import exaUSDC from "../../node_modules/@exactly/protocol/deployments/op-sepolia/MarketUSDC.json" with { type: "json" }; // HACK fix ts-node monorepo resolution
 import database, { cards, credentials, transactions } from "../database/index.js";
-import client from "../utils/chainClient.js";
 import decodePublicKey from "../utils/decodePublicKey.js";
 import handleError from "../utils/handleError.js";
-import signTransactionSync from "../utils/signTransactionSync.js";
+import publicClient from "../utils/publicClient.js";
+import signTransactionSync, { signerAddress } from "../utils/signTransactionSync.js";
 
 export default async function handler({ method, body, headers }: VercelRequest, response: VercelResponse) {
   if (method !== "POST") return response.status(405).end("method not allowed");
@@ -48,7 +48,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
   try {
     const initCode = accountInitCode({ x, y });
     const { address, abi } = getEntryPoint(chain, { version: "0.6.0" });
-    await client.simulateContract({ address, abi, functionName: "getSenderAddress", args: [initCode] }); // TODO calculate locally
+    await publicClient.simulateContract({ address, abi, functionName: "getSenderAddress", args: [initCode] }); // TODO calculate locally
     return response.status(502).end("unable to get account address");
   } catch (error: unknown) {
     if (
@@ -71,7 +71,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
     };
 
     const transaction = {
-      from: client.account.address,
+      from: signerAddress,
       to: accountAddress,
       data: encodeFunctionData({
         abi: [{ type: "function", name: "borrow", inputs: [{ type: "address" }, { type: "uint256" }], outputs: [] }],
@@ -80,7 +80,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
     };
 
     const [gas, nonce] = await Promise.all([
-      client
+      publicClient
         .request({ method: "eth_estimateGas", params: [transaction] })
         .then(BigInt)
         .catch((error: unknown) => {
@@ -89,12 +89,12 @@ export default async function handler({ method, body, headers }: VercelRequest, 
             ...call,
           }) as Error;
         }),
-      client.getTransactionCount({ address: client.account.address, blockTag: "pending" }),
+      publicClient.getTransactionCount({ address: signerAddress, blockTag: "pending" }),
     ]);
 
     if (gas < 30_000n) return response.json({ response_code: "51" }).end(); // account not deployed // HACK needs success check
 
-    const hash = await client.sendRawTransaction({
+    const hash = await publicClient.sendRawTransaction({
       serializedTransaction: signTransactionSync({
         ...transaction,
         gas,
