@@ -1,17 +1,12 @@
-import React from "react";
+import React, { memo } from "react";
 import type { DimensionValue } from "react-native";
 import { StyleSheet } from "react-native";
 import type { SharedValue } from "react-native-reanimated";
-import Animated, { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import { useTheme, useWindowDimensions, View } from "tamagui";
 
-type Properties = {
-  length: number;
-  x: SharedValue<number>;
-  progress: SharedValue<number>;
-};
+import AnimatedView from "../shared/AnimatedView";
 
 const PaginationComponent = ({
   index,
@@ -25,8 +20,7 @@ const PaginationComponent = ({
   activeColor: string;
 }) => {
   const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const itemWidth = width - insets.left - insets.right - ms(20);
+  const itemWidth = width - ms(40);
 
   const rPaginatorStyle = useAnimatedStyle(() => {
     const interpolatedWidth = interpolate(
@@ -58,21 +52,27 @@ const PaginationComponent = ({
   }, [progress, x]);
 
   return (
-    <Animated.View style={[styles.itemStyle, rPaginatorStyle]}>
-      <Animated.View style={[StyleSheet.absoluteFill, rFillStyle]} />
-    </Animated.View>
+    <AnimatedView borderRadius={5} height={4} marginHorizontal={5} style={rPaginatorStyle}>
+      <AnimatedView style={[StyleSheet.absoluteFill, rFillStyle]} />
+    </AnimatedView>
   );
 };
 
-const Pagination = ({ length, x, progress }: Properties) => {
+interface PaginationProperties {
+  length: number;
+  x: SharedValue<number>;
+  progress: SharedValue<number>;
+}
+
+const Pagination = ({ length, x, progress }: PaginationProperties) => {
   const theme = useTheme();
   return (
-    <View alignItems="center" flexDirection="row" justifyContent="center" paddingVertical={10}>
+    <View flexDirection="row" alignItems="center" justifyContent="center">
       {Array.from({ length }).map((_, index) => {
         return (
           <PaginationComponent
-            index={index}
             key={index}
+            index={index}
             x={x}
             progress={progress}
             activeColor={theme.interactiveBaseBrandDefault.val as string}
@@ -83,12 +83,4 @@ const Pagination = ({ length, x, progress }: Properties) => {
   );
 };
 
-export default Pagination;
-
-const styles = StyleSheet.create({
-  itemStyle: {
-    borderRadius: 5,
-    height: 4,
-    marginHorizontal: 5,
-  },
-});
+export default memo(Pagination);

@@ -3,11 +3,11 @@ import { ArrowRight } from "phosphor-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TouchableOpacity, type ViewToken } from "react-native";
 import Animated, {
-  Easing,
   runOnJS,
   useAnimatedScrollHandler,
   useSharedValue,
   withTiming,
+  Easing,
 } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import type { SvgProps } from "react-native-svg";
@@ -34,8 +34,7 @@ const recoverButton = (
 );
 
 export interface Page {
-  content: string;
-  contentSecondary?: string;
+  title: string;
   image: React.FC<SvgProps>;
   backgroundImage: React.FC<SvgProps>;
   available?: boolean;
@@ -44,25 +43,25 @@ export interface Page {
 
 const pages: Page[] = [
   {
-    content: "The first onchain debit & credit card",
+    title: "The first onchain debit & credit card",
     image: exaCard,
     backgroundImage: blob1,
     button: recoverButton,
   },
   {
-    content: "Buy now, pay later, and hold your crypto",
+    title: "Buy now, pay later, and hold your crypto",
     image: calendar,
     backgroundImage: blob2,
     button: recoverButton,
   },
   {
-    content: "Maximize earnings, effortlessly.",
+    title: "Maximize earnings, effortlessly.",
     image: earnings,
     backgroundImage: blob3,
     button: recoverButton,
   },
   {
-    content: "In-store QR payments, with crypto",
+    title: "In-store QR payments, with crypto",
     image: qrCode,
     backgroundImage: blob4,
     button: recoverButton,
@@ -76,13 +75,16 @@ const Carousel = () => {
   const x = useSharedValue(0);
   const progress = useSharedValue(0);
   const currentItem = pages[activeIndex] || (pages[0] as Page);
-  const { content, contentSecondary, button } = currentItem;
+  const { title, button } = currentItem;
 
-  const onViewableItemsChanged = ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    const newValue = (viewableItems.length > 0 && viewableItems[0] !== undefined && viewableItems[0].index) || 0;
-    setActiveIndex(newValue);
-    progress.value = 0;
-  };
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      const newValue = viewableItems.length > 0 ? viewableItems[0]?.index : 0;
+      setActiveIndex(newValue ?? 0);
+      progress.value = 0;
+    },
+    [progress],
+  );
 
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -110,6 +112,7 @@ const Carousel = () => {
       progress.value = withTiming(progress.value + 0.2, { duration: 1000, easing: Easing.linear }, () => {
         if (progress.value >= 1) {
           runOnJS(scrollToNextPage)();
+          progress.value = 0;
         }
       });
     }, 1000);
@@ -126,6 +129,7 @@ const Carousel = () => {
         scrollEventThrottle={16}
         data={pages}
         keyExtractor={(_, index) => index.toString()}
+        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 80 }}
         renderItem={renderItem}
         onViewableItemsChanged={onViewableItemsChanged}
         horizontal
@@ -141,14 +145,9 @@ const Carousel = () => {
           </View>
 
           <View gap={10}>
-            <Text fontSize={ms(20)} fontWeight={700} color="$interactiveBaseBrandDefault" textAlign="center">
-              {content}
+            <Text fontSize={ms(20)} fontWeight="bold" color="$interactiveBaseBrandDefault" textAlign="center">
+              {title}
             </Text>
-            {contentSecondary && (
-              <Text fontSize={13} fontWeight={400} color="$uiBaseSecondary" textAlign="center">
-                {contentSecondary}
-              </Text>
-            )}
           </View>
         </View>
 

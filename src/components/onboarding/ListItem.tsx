@@ -1,12 +1,11 @@
-import React from "react";
-import { StyleSheet } from "react-native";
+import React, { memo } from "react";
 import type { SharedValue } from "react-native-reanimated";
-import Animated, { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import { View, useWindowDimensions } from "tamagui";
 
 import type { Page } from "./Carousel";
+import AnimatedView from "../shared/AnimatedView";
 
 interface ListItemProperties {
   item: Page;
@@ -16,8 +15,7 @@ interface ListItemProperties {
 
 const ListItem = ({ item, index, x }: ListItemProperties) => {
   const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const itemWidth = width - insets.left - insets.right - ms(20);
+  const itemWidth = width - ms(40);
 
   const rBackgroundStyle = useAnimatedStyle(() => {
     const animatedScale = interpolate(
@@ -46,37 +44,15 @@ const ListItem = ({ item, index, x }: ListItemProperties) => {
   }, [index, x]);
 
   return (
-    <View
-      style={styles.container}
-      display="flex"
-      alignItems="center"
-      alignContent="center"
-      justifyContent="center"
-      height="100%"
-      width={width - ms(20)}
-      flex={1}
-    >
-      <Animated.View style={[styles.bgImage, rBackgroundStyle]}>
+    <View width={itemWidth} height="100%" justifyContent="center" alignItems="center">
+      <AnimatedView position="absolute" style={rBackgroundStyle}>
         <item.backgroundImage />
-      </Animated.View>
-      <Animated.View style={[styles.image, rImageStyle]}>
+      </AnimatedView>
+      <AnimatedView position="absolute" style={rImageStyle}>
         <item.image />
-      </Animated.View>
+      </AnimatedView>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  bgImage: {
-    position: "absolute",
-  },
-  container: {
-    display: "flex",
-    flex: 1,
-  },
-  image: {
-    position: "absolute",
-  },
-});
-
-export default ListItem;
+export default memo(ListItem);
