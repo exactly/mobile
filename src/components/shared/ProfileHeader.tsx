@@ -1,11 +1,7 @@
 import { BellRinging, EyeClosed, Gear } from "phosphor-react-native";
 import React from "react";
+import { ms } from "react-native-size-matters";
 import { View, Text, Image, useTheme, styled } from "tamagui";
-
-// TODO Move elsewhere and export
-const HeaderWrapper = styled(View, {
-  backgroundColor: "transparent",
-});
 
 const OnlineIndicator = styled(View, {
   width: 12,
@@ -26,7 +22,7 @@ const ProfileHeader = () => {
   const theme = useTheme();
   const fullAddress = "0xfrdc.exa.eth";
 
-  // TODO Move elsewhere and export as util?
+  // TODO move elsewhere and export as util?
   const {
     name,
     domain,
@@ -39,7 +35,7 @@ const ProfileHeader = () => {
   };
 
   return (
-    <HeaderWrapper>
+    <View paddingVertical={ms(10)}>
       <View display="flex" flexDirection="row" justifyContent="space-between">
         <View display="flex" flexDirection="row" alignItems="center" gap={8}>
           <View position="relative">
@@ -54,10 +50,10 @@ const ProfileHeader = () => {
           </View>
 
           <View display="flex" flexDirection="row" alignItems="flex-start">
-            <Text fontSize={17} color={theme.textPrimary} fontWeight={400} lineHeight={23}>
+            <Text fontSize={17} color={theme.textPrimary} lineHeight={23}>
               {name}
             </Text>
-            <Text fontSize={17} color={theme.textSecondary} fontWeight={400} lineHeight={23}>
+            <Text fontSize={17} color={theme.textSecondary} lineHeight={23}>
               {domain}
             </Text>
           </View>
@@ -68,7 +64,7 @@ const ProfileHeader = () => {
           <Gear />
         </View>
       </View>
-    </HeaderWrapper>
+    </View>
   );
 };
 
