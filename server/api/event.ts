@@ -6,11 +6,13 @@ import { eq } from "drizzle-orm";
 import * as v from "valibot";
 import {
   type Address,
+  BaseError,
   ContractFunctionExecutionError,
   ContractFunctionRevertedError,
   getAddress,
   type Hash,
 } from "viem";
+import { getContractError, getEstimateGasError } from "viem/utils";
 
 import exaUSDC from "../../node_modules/@exactly/protocol/deployments/op-sepolia/MarketUSDC.json" with { type: "json" }; // HACK fix ts-node monorepo resolution
 import database, { cards, credentials, transactions } from "../database/index.js";
@@ -68,8 +70,18 @@ export default async function handler({ method, body, headers }: VercelRequest, 
       functionName: "borrow",
       args: [getAddress(exaUSDC.address), BigInt(payload.output.data.amount * 1e6)],
     });
-  } catch {
-    return response.json({ response_code: "51" }).end();
+  } catch (error: unknown) {
+    if (error instanceof BaseError && error.cause instanceof ContractFunctionRevertedError) {
+      switch (error.cause.data?.errorName) {
+        case "InsufficientAccountLiquidity":
+          return response.json({ response_code: "51" }).end();
+        default:
+          handleError(error);
+          return response.json({ response_code: "05" }).end();
+      }
+    }
+    handleError(error);
+    return response.json({ response_code: "05" }).end();
   }
   const hash = await client.writeContract(simulation.request);
 
