@@ -37,7 +37,7 @@ export interface Page {
   title: string;
   image: React.FC<SvgProps>;
   backgroundImage: React.FC<SvgProps>;
-  available?: boolean;
+  disabled?: boolean;
   button?: React.ReactNode;
 }
 
@@ -65,7 +65,7 @@ const pages: Page[] = [
     image: qrCode,
     backgroundImage: blob4,
     button: recoverButton,
-    available: false,
+    disabled: true,
   },
 ];
 
@@ -75,7 +75,7 @@ const Carousel = () => {
   const x = useSharedValue(0);
   const progress = useSharedValue(0);
   const currentItem = pages[activeIndex] || (pages[0] as Page);
-  const { title, button } = currentItem;
+  const { title, button, disabled } = currentItem;
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -137,20 +137,37 @@ const Carousel = () => {
         bounces={false}
         showsHorizontalScrollIndicator={false}
       />
-
-      <View flexDirection="column" paddingVertical={ms(10)} paddingHorizontal={ms(20)} gap={10}>
+      <View flexDirection="column" paddingVertical={ms(10)} paddingHorizontal={ms(20)} gap={ms(20)}>
         <View gap={10}>
           <View>
             <Pagination length={pages.length} x={x} progress={progress} />
           </View>
-
           <View gap={10}>
             <Text fontSize={ms(20)} fontWeight="bold" color="$interactiveBaseBrandDefault" textAlign="center">
               {title}
             </Text>
+            {disabled && (
+              <View
+                backgroundColor="$interactiveBaseBrandDefault"
+                paddingHorizontal={ms(4)}
+                paddingVertical={ms(2)}
+                borderRadius={5}
+                alignSelf="center"
+              >
+                <Text
+                  textAlign="center"
+                  paddingHorizontal={ms(4)}
+                  paddingVertical={ms(2)}
+                  color="$interactiveBaseBrandSoftDefault"
+                  fontSize={ms(11)}
+                  fontWeight="bold"
+                >
+                  COMING SOON
+                </Text>
+              </View>
+            )}
           </View>
         </View>
-
         <View flexDirection="column" gap={10}>
           <DelayedActionButton
             content="Get started"
