@@ -41,11 +41,11 @@ const Passkeys = () => {
               <X size={ms(25)} color={theme.uiDarkGrey.val as string} />
             </TouchableOpacity>
           </View>
-          <View display="flex" alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
-            <View display="flex" position="absolute" marginHorizontal={ms(20)}>
+          <View alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
+            <View position="absolute">
               <Blob />
             </View>
-            <View display="flex" flex={1}>
+            <View flex={1}>
               <PasskeysImage />
             </View>
           </View>

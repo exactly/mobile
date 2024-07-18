@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { ArrowRight } from "phosphor-react-native";
 import React from "react";
 import { ms } from "react-native-size-matters";
@@ -14,26 +15,11 @@ const Success = () => {
     <SafeView>
       <BaseLayout flex={1}>
         <View flex={1}>
-          <View display="flex" alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
-            <View
-              display="flex"
-              alignItems="center"
-              alignContent="center"
-              justifyContent="center"
-              height="100%"
-              position="absolute"
-              marginHorizontal={ms(20)}
-            >
+          <View alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
+            <View position="absolute">
               <Blob />
             </View>
-            <View
-              display="flex"
-              alignItems="center"
-              alignContent="center"
-              justifyContent="center"
-              height="100%"
-              flex={1}
-            >
+            <View position="absolute">
               <SuccessImage />
             </View>
           </View>
@@ -48,6 +34,7 @@ const Success = () => {
                 content="Start account setup"
                 onPress={() => {
                   // TODO Implement account setup
+                  router.push("(tabs)");
                 }}
                 Icon={ArrowRight}
               />
