@@ -11,7 +11,6 @@ import PasskeysImage from "../../assets/images/passkeys.svg";
 import BaseLayout from "../shared/BaseLayout";
 import DelayedActionButton from "../shared/DelayedActionButton";
 import SafeView from "../shared/SafeView";
-import Spinner from "../shared/Spinner";
 
 const close = () => {
   router.back();
@@ -41,30 +40,16 @@ const Passkeys = () => {
     }
   }, [connector, isSuccess]);
 
-  if (isPending) {
-    return (
-      <SafeView>
-        <BaseLayout flex={1}>
-          <View flex={1} justifyContent="center" alignItems="center" gap={ms(40)}>
-            <Spinner />
-            <Text fontSize={ms(16)} fontWeight="bold" color="$interactiveBaseBrandDefault" textAlign="center">
-              Creating your account. Please wait...
-            </Text>
-          </View>
-        </BaseLayout>
-      </SafeView>
-    );
-  }
-
   return (
     <SafeView>
       <BaseLayout flex={1}>
-        <View flex={1}>
+        <View flex={1} paddingTop={ms(40)}>
           <View position="absolute" top={ms(20)} right={0} zIndex={1}>
             <TouchableOpacity onPress={close}>
               <X size={ms(25)} color={theme.uiDarkGrey.val as string} />
             </TouchableOpacity>
           </View>
+
           <View alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
             <View position="absolute">
               <Blob />
@@ -93,6 +78,7 @@ const Passkeys = () => {
                 </TouchableOpacity>
               </View>
               <DelayedActionButton
+                isLoading={isPending}
                 content="Set passkey and create account"
                 onPress={() => {
                   connectAccount();
