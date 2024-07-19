@@ -17,7 +17,7 @@ const close = () => {
 };
 
 const learnMore = () => {
-  router.push("onboarding/(passkeys)/passkeys-about");
+  router.push("onboarding/(passkeys)/about");
 };
 
 const Passkeys = () => {

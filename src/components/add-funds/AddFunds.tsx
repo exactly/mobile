@@ -16,7 +16,7 @@ export default function AddFunds() {
       <BaseLayout>
         <TouchableOpacity onPress={back}>
           <View justifyContent="space-between" alignItems="center">
-            <Text>Back</Text>
+            <Text fontSize={24}>Back</Text>
           </View>
         </TouchableOpacity>
       </BaseLayout>

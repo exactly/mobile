@@ -5,7 +5,7 @@ import React from "react";
 import TabBar from "../../components/shared/TabBar.js";
 
 const tabs = [
-  { name: "index", title: "Home", Icon: House },
+  { name: "home", title: "Home", Icon: House },
   { name: "card", title: "Card", Icon: CreditCard },
   { name: "payments", title: "Payments", Icon: CoinVertical },
   { name: "activity", title: "Activity", Icon: Receipt },

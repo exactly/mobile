@@ -3,11 +3,11 @@ import React from "react";
 
 export default function OnboardingLayout() {
   return (
-    <Stack initialRouteName="index" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
+    <Stack initialRouteName="start" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="start" />
       <Stack.Screen name="(passkeys)/passkeys" />
       <Stack.Screen
-        name="(passkeys)/passkeys-about"
+        name="(passkeys)/about"
         options={{
           presentation: "modal",
         }}
