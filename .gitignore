@@ -7,6 +7,7 @@ dist/
 web-build/
 /android/
 /ios/
+/src/generated/
 
 *.orig.*
 *.jks

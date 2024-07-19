@@ -50,5 +50,13 @@ module.exports = {
       },
     },
   ],
-  ignorePatterns: [".expo/types/**/*.ts", "build/", "dist/", "expo-env.d.ts", "public/", "server/drizzle/"],
+  ignorePatterns: [
+    ".expo/types/**/*.ts",
+    "build/",
+    "dist/",
+    "expo-env.d.ts",
+    "public/",
+    "server/drizzle/",
+    "/src/generated/",
+  ],
 };
