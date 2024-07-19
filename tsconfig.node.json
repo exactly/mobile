@@ -3,6 +3,7 @@
     "lib": ["ESNext"],
     "target": "ESNext",
     "moduleResolution": "node",
+    "allowImportingTsExtensions": true,
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
