@@ -81,7 +81,7 @@ const Passkeys = () => {
               </View>
               <DelayedActionButton
                 isLoading={isPending}
-                content="Set passkey and create account"
+                content="Create account"
                 onPress={() => {
                   connectAccount();
                 }}
