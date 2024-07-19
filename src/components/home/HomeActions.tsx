@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { ArrowLineDown, ArrowUpRight } from "phosphor-react-native";
 import React from "react";
 import type { ViewStyle } from "react-native";
@@ -8,7 +9,7 @@ import { View } from "tamagui";
 import ActionButton from "../shared/ActionButton.js";
 
 const onAddFunds = () => {
-  Alert.alert("Add funds", "Add funds to your account", [{ text: "OK" }]);
+  router.push("add-funds");
 };
 const onSend = () => {
   Alert.alert("Send", "Send funds to another account", [{ text: "OK" }]);
