@@ -5,6 +5,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
 import LatestActivity from "./LatestActivity";
+import SpendingLimitButton from "./SpendingLimitButton";
 import BaseLayout from "../shared/BaseLayout";
 import InfoPreview from "../shared/InfoPreview";
 import SafeView from "../shared/SafeView";
@@ -76,12 +77,14 @@ const Card = () => {
                   ))}
                 </View>
 
-                <TouchableOpacity>
-                  <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
-                    <Text color="$uiSecondary">Learn more about installments</Text>
-                    <ArrowRight size={14} color={theme.iconSecondary.get() as string} />
-                  </View>
-                </TouchableOpacity>
+                <View borderTopWidth={1} borderTopColor="$borderSoft" paddingTop={ms(20)}>
+                  <TouchableOpacity>
+                    <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
+                      <Text color="$uiSecondary">Learn more about installments</Text>
+                      <ArrowRight size={14} color={theme.iconSecondary.get() as string} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
               </View>
             </InfoPreview>
 
@@ -98,9 +101,20 @@ const Card = () => {
                 </TouchableOpacity>
               }
             >
-              <Text textAlign="center" fontSize={15} color="$uiSecondary">
-                Learn more about your credit limit.
-              </Text>
+              <View gap={ms(20)}>
+                <SpendingLimitButton title="Daily" amount={324.87} limit={500} currency="$" />
+                <SpendingLimitButton title="Weekly" amount={1000} limit={2000} currency="$" />
+                <SpendingLimitButton title="Monthly" amount={4713.64} limit={9000} currency="$" />
+              </View>
+
+              <View borderTopWidth={1} borderTopColor="$borderSoft" paddingTop={ms(20)}>
+                <TouchableOpacity>
+                  <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
+                    <Text color="$uiSecondary">Learn more about spending limits.</Text>
+                    <ArrowRight size={14} color={theme.iconSecondary.get() as string} />
+                  </View>
+                </TouchableOpacity>
+              </View>
             </InfoPreview>
 
             <InfoPreview
