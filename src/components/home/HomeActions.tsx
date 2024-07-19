@@ -9,7 +9,7 @@ import { View } from "tamagui";
 import ActionButton from "../shared/ActionButton.js";
 
 const onAddFunds = () => {
-  router.navigate("add-funds");
+  router.push("add-funds");
 };
 const onSend = () => {
   Alert.alert("Send", "Send funds to another account", [{ text: "OK" }]);
