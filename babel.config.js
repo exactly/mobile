@@ -6,6 +6,14 @@ module.exports = function config(api) {
     plugins: [
       "@babel/plugin-syntax-import-attributes",
       [
+        "module-resolver",
+        {
+          alias: {
+            "@wagmi/core/codegen": "@wagmi/core/dist/esm/exports/codegen",
+          },
+        },
+      ],
+      [
         "@tamagui/babel-plugin",
         {
           config: "tamagui.config.ts",
