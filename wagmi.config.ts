@@ -1,18 +1,26 @@
-import auditor from "@exactly/protocol/deployments/op-sepolia/Auditor.json" with { type: "json" };
-import marketUSDC from "@exactly/protocol/deployments/op-sepolia/MarketUSDC.json" with { type: "json" };
-import marketWETH from "@exactly/protocol/deployments/op-sepolia/MarketWETH.json" with { type: "json" };
-import previewer from "@exactly/protocol/deployments/op-sepolia/Previewer.json" with { type: "json" };
 import { defineConfig } from "@wagmi/cli";
 import { react } from "@wagmi/cli/plugins";
 import { mkdir, writeFile } from "node:fs/promises";
 import type { Abi } from "viem";
+import { optimismSepolia } from "viem/chains";
+
+import { chain } from "@exactly/common/constants.ts";
+
+const network = { [optimismSepolia.id]: "op-sepolia" }[chain.id] ?? chain.name;
+
+const [auditor, marketUSDC, marketWETH, previewer] = await Promise.all([
+  import(`@exactly/protocol/deployments/${network}/Auditor.json`) as Promise<Deployment>,
+  import(`@exactly/protocol/deployments/${network}/MarketUSDC.json`) as Promise<Deployment>,
+  import(`@exactly/protocol/deployments/${network}/MarketWETH.json`) as Promise<Deployment>,
+  import(`@exactly/protocol/deployments/${network}/Previewer.json`) as Promise<Deployment>,
+]);
 
 export default defineConfig({
   out: "src/generated/wagmi.ts",
   contracts: [
-    { name: "Auditor", abi: auditor.abi as Abi },
-    { name: "Market", abi: marketWETH.abi as Abi },
-    { name: "Previewer", abi: previewer.abi as Abi },
+    { name: "Auditor", abi: auditor.abi },
+    { name: "Market", abi: marketWETH.abi },
+    { name: "Previewer", abi: previewer.abi },
   ],
   plugins: [
     react(),
@@ -36,3 +44,5 @@ export default defineConfig({
     },
   ],
 });
+
+type Deployment = { address: `0x${string}`; abi: Abi };

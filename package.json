@@ -28,6 +28,7 @@
     "@alchemy/aa-accounts": "^3.18.2",
     "@alchemy/aa-alchemy": "^3.18.2",
     "@alchemy/aa-core": "^3.18.2",
+    "@exactly/common": "workspace:*",
     "@exactly/plugin": "workspace:*",
     "@exactly/protocol": "exactly/protocol#0872c11",
     "@expo/vector-icons": "^14.0.2",
