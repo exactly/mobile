@@ -4,16 +4,12 @@ import { ms } from "react-native-size-matters";
 import { View, Text, useTheme } from "tamagui";
 
 type ActivityCategory = "food" | "tech" | "travel" | "other";
-
-const hasActivity = true;
-
 const activityCategoryToIcon = {
   food: ForkKnife,
   tech: Laptop,
   travel: AirplaneTilt,
   other: ArrowUpRight,
 };
-
 const activity: {
   title: string;
   date: string;
@@ -76,11 +72,9 @@ const activity: {
   },
 ];
 
-const LatestActivity = () => {
+export default function LatestActivity() {
   const theme = useTheme();
-
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (!hasActivity || !activity || activity.length === 0) {
+  if (activity.length === 0) {
     return (
       <Text textAlign="center" fontSize={ms(15)} color="$uiSecondary">
         There&apos; no activity in your account. Start by adding funds to it.
@@ -136,6 +130,4 @@ const LatestActivity = () => {
       ))}
     </View>
   );
-};
-
-export default LatestActivity;
+}

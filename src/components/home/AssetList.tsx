@@ -51,7 +51,7 @@ const assets: Asset[] = [
   },
 ];
 
-const AssetList = () => {
+export default function AssetList() {
   const theme = useTheme();
   return (
     <View width="100%">
@@ -115,6 +115,4 @@ const AssetList = () => {
       ))}
     </View>
   );
-};
-
-export default AssetList;
+}

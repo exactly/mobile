@@ -69,7 +69,7 @@ const pages: Page[] = [
   },
 ];
 
-const Carousel = () => {
+export default function Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListReference = useRef<Animated.FlatList<Page>>(null);
   const x = useSharedValue(0);
@@ -183,6 +183,4 @@ const Carousel = () => {
       </View>
     </View>
   );
-};
-
-export default Carousel;
+}

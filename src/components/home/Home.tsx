@@ -13,7 +13,7 @@ import InfoPreview from "../shared/InfoPreview.js";
 import ProfileHeader from "../shared/ProfileHeader.js";
 import SafeView from "../shared/SafeView.js";
 
-const Home = () => {
+export default function Home() {
   const theme = useTheme();
   return (
     <SafeView paddingBottom={0}>
@@ -98,6 +98,4 @@ const Home = () => {
       </ScrollView>
     </SafeView>
   );
-};
-
-export default Home;
+}

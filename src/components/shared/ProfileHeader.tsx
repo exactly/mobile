@@ -18,10 +18,9 @@ const OnlineIndicator = styled(View, {
 
 const domainMatcher = /\..*/;
 
-const ProfileHeader = () => {
+export default function ProfileHeader() {
   const theme = useTheme();
   const fullAddress = "0xfrdc.exa.eth";
-
   // TODO move elsewhere and export as util?
   const {
     name,
@@ -33,7 +32,6 @@ const ProfileHeader = () => {
     name: fullAddress.split(".")[0] || "",
     domain: fullAddress.match(domainMatcher)?.[0] || "",
   };
-
   return (
     <View paddingVertical={ms(10)}>
       <View display="flex" flexDirection="row" justifyContent="space-between">
@@ -66,6 +64,4 @@ const ProfileHeader = () => {
       </View>
     </View>
   );
-};
-
-export default ProfileHeader;
+}

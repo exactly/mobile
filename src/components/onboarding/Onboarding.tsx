@@ -4,7 +4,7 @@ import Carousel from "./Carousel.js";
 import BaseLayout from "../shared/BaseLayout.js";
 import SafeView from "../shared/SafeView.js";
 
-const Onboarding = () => {
+export default function Onboarding() {
   return (
     <SafeView>
       <BaseLayout flex={1}>
@@ -12,6 +12,4 @@ const Onboarding = () => {
       </BaseLayout>
     </SafeView>
   );
-};
-
-export default Onboarding;
+}

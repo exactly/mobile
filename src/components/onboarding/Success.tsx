@@ -10,7 +10,7 @@ import BaseLayout from "../shared/BaseLayout.js";
 import DelayedActionButton from "../shared/DelayedActionButton.js";
 import SafeView from "../shared/SafeView.js";
 
-const Success = () => {
+export default function Success() {
   return (
     <SafeView>
       <BaseLayout flex={1}>
@@ -44,6 +44,4 @@ const Success = () => {
       </BaseLayout>
     </SafeView>
   );
-};
-
-export default Success;
+}

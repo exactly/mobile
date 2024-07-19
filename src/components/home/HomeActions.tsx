@@ -16,7 +16,7 @@ const onSend = () => {
 
 const homeActionStyle: ViewStyle = { flex: 1, width: "100%" };
 
-const HomeActions = () => {
+export default function HomeActions() {
   return (
     <View
       flexDirection="row"
@@ -30,6 +30,4 @@ const HomeActions = () => {
       <ActionButton content="Send" onPress={onSend} Icon={ArrowUpRight} secondary style={homeActionStyle} />
     </View>
   );
-};
-
-export default HomeActions;
+}

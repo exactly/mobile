@@ -10,7 +10,7 @@ interface SpendingLimitButtonProperties {
   currency?: string;
 }
 
-const SpendingLimitButton = ({ title, amount, limit, currency }: SpendingLimitButtonProperties) => {
+export default function SpendingLimitButton({ title, amount, limit, currency }: SpendingLimitButtonProperties) {
   const theme = useTheme();
   return (
     <View
@@ -56,6 +56,4 @@ const SpendingLimitButton = ({ title, amount, limit, currency }: SpendingLimitBu
       </View>
     </View>
   );
-};
-
-export default SpendingLimitButton;
+}

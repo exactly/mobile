@@ -10,7 +10,7 @@ import BaseLayout from "../shared/BaseLayout.js";
 import InfoPreview from "../shared/InfoPreview.js";
 import SafeView from "../shared/SafeView.js";
 
-const Card = () => {
+export default function Card() {
   const theme = useTheme();
   return (
     <SafeView paddingBottom={0}>
@@ -137,6 +137,4 @@ const Card = () => {
       </ScrollView>
     </SafeView>
   );
-};
-
-export default Card;
+}

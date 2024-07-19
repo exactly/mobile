@@ -4,7 +4,7 @@ import { TouchableWithoutFeedback } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View, Text, ButtonIcon, useTheme } from "tamagui";
 
-function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const theme = useTheme();
   return (
     <View
@@ -57,5 +57,3 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     </View>
   );
 }
-
-export default TabBar;

@@ -4,7 +4,7 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 import { ms } from "react-native-size-matters";
 import { View, Text, useTheme } from "tamagui";
 
-const AlertBadge = () => {
+export default function AlertBadge() {
   const theme = useTheme();
   return (
     <View
@@ -42,6 +42,4 @@ const AlertBadge = () => {
       </View>
     </View>
   );
-};
-
-export default AlertBadge;
+}

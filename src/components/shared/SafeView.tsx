@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ViewProps } from "tamagui";
 import { View } from "tamagui";
 
-const SafeView = (properties: ViewProps) => {
+export default function SafeView(properties: ViewProps) {
   const insets = useSafeAreaInsets();
   return (
     <View
@@ -15,6 +15,4 @@ const SafeView = (properties: ViewProps) => {
       {...properties}
     />
   );
-};
-
-export default SafeView;
+}

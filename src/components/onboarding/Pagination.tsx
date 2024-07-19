@@ -64,7 +64,7 @@ interface PaginationProperties {
   progress: SharedValue<number>;
 }
 
-const Pagination = ({ length, x, progress }: PaginationProperties) => {
+export default memo(function Pagination({ length, x, progress }: PaginationProperties) {
   const theme = useTheme();
   return (
     <View flexDirection="row" alignItems="center" justifyContent="center">
@@ -81,6 +81,4 @@ const Pagination = ({ length, x, progress }: PaginationProperties) => {
       })}
     </View>
   );
-};
-
-export default memo(Pagination);
+});

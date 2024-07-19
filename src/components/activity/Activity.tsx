@@ -12,7 +12,7 @@ const startOnboarding = () => {
   router.push("onboarding");
 };
 
-const Activity = () => {
+export default function Activity() {
   return (
     <SafeView>
       <BaseLayout flex={1}>
@@ -34,6 +34,4 @@ const Activity = () => {
       </BaseLayout>
     </SafeView>
   );
-};
-
-export default Activity;
+}

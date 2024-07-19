@@ -13,7 +13,7 @@ interface DelayedActionButtonProperties {
   onPress: () => void;
 }
 
-const DelayedActionButton = ({ content, onPress, Icon, isLoading }: DelayedActionButtonProperties) => {
+export default function DelayedActionButton({ content, onPress, Icon, isLoading }: DelayedActionButtonProperties) {
   const theme = useTheme();
   const color = theme.interactiveBaseBrandPressed.get() as string;
   const fillAnim = useSharedValue(0);
@@ -87,6 +87,4 @@ const DelayedActionButton = ({ content, onPress, Icon, isLoading }: DelayedActio
       </View>
     </TouchableWithoutFeedback>
   );
-};
-
-export default DelayedActionButton;
+}

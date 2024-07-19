@@ -13,7 +13,7 @@ interface ListItemProperties {
   x: SharedValue<number>;
 }
 
-const ListItem = ({ item, index, x }: ListItemProperties) => {
+export default memo(function ListItem({ item, index, x }: ListItemProperties) {
   const { width } = useWindowDimensions();
   const itemWidth = width - ms(40);
 
@@ -53,6 +53,4 @@ const ListItem = ({ item, index, x }: ListItemProperties) => {
       </AnimatedView>
     </View>
   );
-};
-
-export default memo(ListItem);
+});

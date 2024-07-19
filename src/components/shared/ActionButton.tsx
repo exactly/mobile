@@ -11,7 +11,7 @@ interface ActionButtonProperties extends PressableProps {
   secondary?: boolean;
 }
 
-const ActionButton = ({ content, Icon, secondary, ...rest }: ActionButtonProperties) => {
+export default function ActionButton({ content, Icon, secondary, ...rest }: ActionButtonProperties) {
   const theme = useTheme();
   const { disabled } = rest;
 
@@ -65,6 +65,4 @@ const ActionButton = ({ content, Icon, secondary, ...rest }: ActionButtonPropert
       }}
     </Pressable>
   );
-};
-
-export default ActionButton;
+}

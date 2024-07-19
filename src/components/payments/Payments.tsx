@@ -4,7 +4,7 @@ import { Text } from "tamagui";
 import BaseLayout from "../shared/BaseLayout.js";
 import SafeView from "../shared/SafeView.js";
 
-const Payments = () => {
+export default function Payments() {
   return (
     <SafeView>
       <BaseLayout flex={1}>
@@ -14,6 +14,4 @@ const Payments = () => {
       </BaseLayout>
     </SafeView>
   );
-};
-
-export default Payments;
+}

@@ -9,7 +9,7 @@ const close = () => {
   router.back();
 };
 
-const PasskeysAbout = () => {
+export default function PasskeysAbout() {
   const theme = useTheme();
   return (
     <View flex={1} flexDirection="column" alignItems="center">
@@ -75,6 +75,4 @@ const PasskeysAbout = () => {
       </View>
     </View>
   );
-};
-
-export default PasskeysAbout;
+}

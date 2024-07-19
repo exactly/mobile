@@ -7,7 +7,7 @@ import { View, Text, ButtonIcon, useTheme } from "tamagui";
 import AssetChange from "./AssetChange.js";
 import AssetList from "./AssetList.js";
 
-const Balance = () => {
+export default function Balance() {
   const theme = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -42,6 +42,4 @@ const Balance = () => {
       {isOpen && <AssetList />}
     </View>
   );
-};
-
-export default Balance;
+}

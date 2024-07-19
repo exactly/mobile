@@ -2,7 +2,7 @@ import { TrendUp } from "phosphor-react-native";
 import React from "react";
 import { View, Text, useTheme } from "tamagui";
 
-const AssetChange = () => {
+export default function AssetChange() {
   const theme = useTheme();
   return (
     <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" gap={5}>
@@ -32,6 +32,4 @@ const AssetChange = () => {
       </Text>
     </View>
   );
-};
-
-export default AssetChange;
+}

@@ -15,7 +15,7 @@ const StyledActionButton = styled(Pressable, {
   justifyContent: "space-between",
 });
 
-const CardActions = () => {
+export default function CardActions() {
   const theme = useTheme();
   return (
     <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
@@ -40,6 +40,4 @@ const CardActions = () => {
       </StyledActionButton>
     </View>
   );
-};
-
-export default CardActions;
+}
