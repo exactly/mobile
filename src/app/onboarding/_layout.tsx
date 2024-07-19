@@ -9,7 +9,7 @@ export default function OnboardingLayout() {
       <Stack.Screen
         name="(passkeys)/passkeys-about"
         options={{
-          presentation: "transparentModal",
+          presentation: "modal",
         }}
       />
     </Stack>
