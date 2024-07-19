@@ -3,8 +3,8 @@ import React from "react";
 
 export default function AddFundsLayout() {
   return (
-    <Stack initialRouteName="start" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="start" />
+    <Stack initialRouteName="method" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="method" />
     </Stack>
   );
 }
