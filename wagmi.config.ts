@@ -1,5 +1,5 @@
 import { defineConfig, type Plugin } from "@wagmi/cli";
-import { foundry, react } from "@wagmi/cli/plugins";
+import { actions, foundry, react } from "@wagmi/cli/plugins";
 import { type Abi, type Address, getAddress, type Hex } from "viem";
 import { optimismSepolia } from "viem/chains";
 
@@ -30,6 +30,7 @@ export default defineConfig([
         marketWETH: marketWETH.address,
         previewer: previewer.address,
       }),
+      actions(),
       react(),
     ],
   },
