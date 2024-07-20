@@ -1,7 +1,6 @@
 import { defineConfig } from "@wagmi/cli";
 import { react } from "@wagmi/cli/plugins";
-import { mkdir, writeFile } from "node:fs/promises";
-import type { Abi } from "viem";
+import { getAddress, type Abi } from "viem";
 import { optimismSepolia } from "viem/chains";
 
 import { chain } from "@exactly/common/constants.ts";
@@ -23,25 +22,22 @@ export default defineConfig({
     { name: "Previewer", abi: previewer.abi },
   ],
   plugins: [
-    react(),
     {
-      name: "addresses",
-      async run() {
-        await mkdir("src/generated", { recursive: true });
-        await writeFile(
-          "src/generated/addresses.ts",
-          `${Object.entries({
+      name: "Addresses",
+      run() {
+        return {
+          content: `${Object.entries({
             auditor: auditor.address,
             marketUSDC: marketUSDC.address,
             marketWETH: marketWETH.address,
             previewer: previewer.address,
           })
-            .map(([key, value]) => `export const ${key} = "${value}" as const;`)
+            .map(([key, value]) => `export const ${key}Address = "${getAddress(value)}" as const;`)
             .join("\n")}\n`,
-        );
-        return { content: "" };
+        };
       },
     },
+    react(),
   ],
 });
 
