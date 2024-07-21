@@ -6,7 +6,7 @@ export const rpId = (process.env.EXPO_PUBLIC_URL ??
     : process.env.VERCEL_BRANCH_URL) ??
   "localhost") as string;
 
-export { optimismSepolia as chain } from "@alchemy/aa-core";
+export { default as chain } from "./chain.js";
 
 if (!process.env.EXPO_PUBLIC_ALCHEMY_API_KEY) throw new Error("missing alchemy api key");
 if (!process.env.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID) throw new Error("missing alchemy gas policy");

@@ -1,18 +1,26 @@
 import { defineConfig, type Plugin } from "@wagmi/cli";
 import { actions, foundry, react } from "@wagmi/cli/plugins";
-import { type Abi, type Address, getAddress, type Hex } from "viem";
+import { type Abi, type Address, getAddress } from "viem";
 import { optimismSepolia } from "viem/chains";
 
-import { chain } from "@exactly/common/constants.ts";
+import chain from "@exactly/common/chain.ts";
 
 const network = { [optimismSepolia.id]: "op-sepolia" }[chain.id] ?? chain.name;
 
-const [auditor, marketUSDC, marketWETH, previewer, broadcast] = await Promise.all([
+const [
+  auditor,
+  marketUSDC,
+  marketWETH,
+  previewer,
+  {
+    transactions: [exaPlugin, factory],
+  },
+] = await Promise.all([
   import(`@exactly/protocol/deployments/${network}/Auditor.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/MarketUSDC.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/MarketWETH.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/Previewer.json`) as Promise<Deployment>,
-  import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(chain.id)}/run-latest.json`) as Promise<Broadcast>,
+  import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(chain.id)}/run-latest.json`) as Promise<DeployBroadcast>,
 ]);
 
 export default defineConfig([
@@ -39,18 +47,25 @@ export default defineConfig([
     plugins: [
       addresses({
         marketUSDC: marketUSDC.address,
-        ...Object.fromEntries(
-          broadcast.transactions
-            .filter(({ contractName, contractAddress }) => contractName && contractAddress)
-            .map(({ contractName, contractAddress }) => [contractName!, contractAddress!]), // eslint-disable-line @typescript-eslint/no-non-null-assertion -- already filtered
-        ),
+        exaPlugin: getAddress(exaPlugin.contractAddress),
       }),
       foundry({ project: "contracts", include: ["IExaAccount.sol/**"] }),
     ],
   },
+  {
+    out: "common/generated/contracts.ts",
+    contracts: [
+      { name: "Auditor", abi: auditor.abi },
+      { name: "Market", abi: marketWETH.abi },
+    ],
+    plugins: [
+      addresses({ exaAccountFactory: getAddress(factory.contractAddress) }),
+      foundry({ project: "contracts", include: ["ExaAccountFactory.sol/**"] }),
+    ],
+  },
 ]);
 
-function addresses(contracts: Record<string, string>): Plugin {
+function addresses(contracts: Record<string, Address>): Plugin {
   return {
     name: "Addresses",
     run: () => ({
@@ -61,5 +76,6 @@ function addresses(contracts: Record<string, string>): Plugin {
   };
 }
 
-type Broadcast = { transactions: { contractName?: string; contractAddress?: Hex }[] };
 type Deployment = { address: Address; abi: Abi };
+type ContractTransaction = { contractName: string; contractAddress: string };
+type DeployBroadcast = { transactions: [ContractTransaction, ContractTransaction] };
