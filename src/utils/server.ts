@@ -3,10 +3,12 @@ import { type create, get } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 import { type InferOutput, check, number, object, parse, pipe, regex, string } from "valibot";
 
+import rpId from "@exactly/common/rpId";
 import type { Base64URL, Passkey } from "@exactly/common/types";
 
 import loadPasskey from "./loadPasskey";
-import { apiURL } from "../constants";
+
+const apiURL = rpId === "localhost" ? "http://localhost:3000/api" : `https://${rpId}/api`;
 
 export function registrationOptions() {
   return server<Parameters<typeof create>[0]>("/auth/registration");

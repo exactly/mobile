@@ -4,7 +4,8 @@ import type OneSignalNative from "react-native-onesignal";
 import type OneSignalWeb from "react-onesignal";
 
 import handleError from "./handleError";
-import { oneSignalAppId as appId } from "../constants";
+
+const appId = process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID;
 
 const { initialization, login, logout } = (
   Platform.OS === "web"
