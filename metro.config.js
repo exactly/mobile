@@ -12,6 +12,11 @@ module.exports = {
     },
     assetExts: config.resolver?.assetExts?.filter((extension) => extension !== "svg"),
     sourceExts: [...(config.resolver?.sourceExts ?? []), "svg"],
+    resolveRequest(context, module, platform) {
+      const isPackage = !module.startsWith(".") && !module.startsWith("/");
+      const isJsOrJsx = !isPackage && (module.endsWith(".js") || module.endsWith(".jsx"));
+      return context.resolveRequest(context, isJsOrJsx ? module.replace(/\.[^./]+$/, "") : module, platform);
+    },
   },
   transformer: {
     ...config.transformer,
