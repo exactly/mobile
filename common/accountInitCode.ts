@@ -1,6 +1,6 @@
 import { concatHex, encodeFunctionData, hexToBigInt, type Hash } from "viem";
 
-import { exaAccountFactoryAbi, exaAccountFactoryAddress } from "./generated/contracts";
+import { exaAccountFactoryAbi, exaAccountFactoryAddress } from "./generated/contracts.js";
 
 export default function accountInitCode({ x, y }: { x: Hash; y: Hash }) {
   return concatHex([

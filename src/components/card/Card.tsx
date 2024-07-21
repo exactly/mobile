@@ -4,11 +4,11 @@ import { TouchableOpacity } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
-import LatestActivity from "./LatestActivity";
-import SpendingLimitButton from "./SpendingLimitButton";
-import BaseLayout from "../shared/BaseLayout";
-import InfoPreview from "../shared/InfoPreview";
-import SafeView from "../shared/SafeView";
+import LatestActivity from "./LatestActivity.js";
+import SpendingLimitButton from "./SpendingLimitButton.js";
+import BaseLayout from "../shared/BaseLayout.js";
+import InfoPreview from "../shared/InfoPreview.js";
+import SafeView from "../shared/SafeView.js";
 
 const Card = () => {
   const theme = useTheme();

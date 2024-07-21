@@ -6,7 +6,7 @@ import { type InferOutput, check, number, object, parse, pipe, regex, string } f
 import rpId from "@exactly/common/rpId";
 import type { Base64URL, Passkey } from "@exactly/common/types";
 
-import loadPasskey from "./loadPasskey";
+import loadPasskey from "./loadPasskey.js";
 
 const apiURL = rpId === "localhost" ? "http://localhost:3000/api" : `https://${rpId}/api`;
 

@@ -4,8 +4,8 @@ import { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reani
 import { ms } from "react-native-size-matters";
 import { View, useWindowDimensions } from "tamagui";
 
-import type { Page } from "./Carousel";
-import AnimatedView from "../shared/AnimatedView";
+import type { Page } from "./Carousel.js";
+import AnimatedView from "../shared/AnimatedView.js";
 
 interface ListItemProperties {
   item: Page;

@@ -8,9 +8,9 @@ import { useConnect, ConnectorAlreadyConnectedError } from "wagmi";
 
 import Blob from "../../assets/images/onboarding-blob-05.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
-import BaseLayout from "../shared/BaseLayout";
-import DelayedActionButton from "../shared/DelayedActionButton";
-import SafeView from "../shared/SafeView";
+import BaseLayout from "../shared/BaseLayout.js";
+import DelayedActionButton from "../shared/DelayedActionButton.js";
+import SafeView from "../shared/SafeView.js";
 
 const close = () => {
   router.back();

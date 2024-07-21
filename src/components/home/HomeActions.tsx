@@ -5,7 +5,7 @@ import { Alert } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 
-import ActionButton from "../shared/ActionButton";
+import ActionButton from "../shared/ActionButton.js";
 
 const onAddFunds = () => {
   Alert.alert("Add funds", "Add funds to your account", [{ text: "OK" }]);

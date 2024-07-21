@@ -1,1 +1,1 @@
-export { default } from "../../components/activity/Activity";
+export { default } from "../../components/activity/Activity.js";

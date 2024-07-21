@@ -13,8 +13,8 @@ import { ms } from "react-native-size-matters";
 import type { SvgProps } from "react-native-svg";
 import { View, Text } from "tamagui";
 
-import ListItem from "./ListItem";
-import Pagination from "./Pagination";
+import ListItem from "./ListItem.js";
+import Pagination from "./Pagination.js";
 import calendar from "../../assets/images/calendar.svg";
 import earnings from "../../assets/images/earnings.svg";
 import exaCard from "../../assets/images/exa-card.svg";
@@ -23,7 +23,7 @@ import blob2 from "../../assets/images/onboarding-blob-02.svg";
 import blob3 from "../../assets/images/onboarding-blob-03.svg";
 import blob4 from "../../assets/images/onboarding-blob-04.svg";
 import qrCode from "../../assets/images/qr-code.svg";
-import DelayedActionButton from "../shared/DelayedActionButton";
+import DelayedActionButton from "../shared/DelayedActionButton.js";
 
 const recoverButton = (
   <TouchableOpacity onPress={() => {}}>

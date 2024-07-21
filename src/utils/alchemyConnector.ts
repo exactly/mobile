@@ -36,9 +36,9 @@ import chain from "@exactly/common/chain";
 import rpId from "@exactly/common/rpId";
 import type { Passkey } from "@exactly/common/types";
 
-import createPasskey from "./createPasskey";
-import handleError from "./handleError";
-import loadPasskey from "./loadPasskey";
+import createPasskey from "./createPasskey.js";
+import handleError from "./handleError.js";
+import loadPasskey from "./loadPasskey.js";
 
 alchemyConnector.type = "alchemy" as const;
 export default function alchemyConnector(publicClient: ClientWithAlchemyMethods) {

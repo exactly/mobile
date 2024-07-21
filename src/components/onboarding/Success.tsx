@@ -6,9 +6,9 @@ import { Text, View } from "tamagui";
 
 import SuccessImage from "../../assets/images/account-created.svg";
 import Blob from "../../assets/images/onboarding-blob-06.svg";
-import BaseLayout from "../shared/BaseLayout";
-import DelayedActionButton from "../shared/DelayedActionButton";
-import SafeView from "../shared/SafeView";
+import BaseLayout from "../shared/BaseLayout.js";
+import DelayedActionButton from "../shared/DelayedActionButton.js";
+import SafeView from "../shared/SafeView.js";
 
 const Success = () => {
   return (

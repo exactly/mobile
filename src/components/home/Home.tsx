@@ -4,14 +4,14 @@ import { TouchableOpacity } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
-import Balance from "./Balance";
-import HomeActions from "./HomeActions";
-import LatestActivity from "./LatestActivity";
-import AlertBadge from "../shared/AlertBadge";
-import BaseLayout from "../shared/BaseLayout";
-import InfoPreview from "../shared/InfoPreview";
-import ProfileHeader from "../shared/ProfileHeader";
-import SafeView from "../shared/SafeView";
+import Balance from "./Balance.js";
+import HomeActions from "./HomeActions.js";
+import LatestActivity from "./LatestActivity.js";
+import AlertBadge from "../shared/AlertBadge.js";
+import BaseLayout from "../shared/BaseLayout.js";
+import InfoPreview from "../shared/InfoPreview.js";
+import ProfileHeader from "../shared/ProfileHeader.js";
+import SafeView from "../shared/SafeView.js";
 
 const Home = () => {
   const theme = useTheme();

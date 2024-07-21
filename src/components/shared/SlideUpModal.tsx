@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal } from "react-native";
 
-import SafeView from "./SafeView";
+import SafeView from "./SafeView.js";
 
 interface SlideUpModalProperties {
   children: React.ReactNode;

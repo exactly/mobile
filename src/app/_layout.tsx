@@ -1,4 +1,4 @@
-import "../utils/polyfill";
+import "../utils/polyfill.js";
 
 import { createAlchemyPublicRpcClient } from "@alchemy/aa-alchemy";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -20,15 +20,15 @@ import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/chain";
 
 import metadata from "../../package.json";
-import tamaguiConfig from "../../tamagui.config";
+import tamaguiConfig from "../../tamagui.config.js";
 import BDOGroteskBold from "../assets/fonts/BDOGrotesk-Bold.otf";
 import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
 import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
-import alchemyConnector from "../utils/alchemyConnector";
-import handleError from "../utils/handleError";
-import useOneSignal from "../utils/useOneSignal";
+import alchemyConnector from "../utils/alchemyConnector.js";
+import handleError from "../utils/handleError.js";
+import useOneSignal from "../utils/useOneSignal.js";
 
 export { ErrorBoundary } from "expo-router";
 

@@ -4,7 +4,7 @@ import { parse } from "valibot";
 
 import { Passkey } from "@exactly/common/types";
 
-import { registrationOptions, verifyRegistration } from "./server";
+import { registrationOptions, verifyRegistration } from "./server.js";
 
 export default async function createPasskey() {
   const options = await registrationOptions();

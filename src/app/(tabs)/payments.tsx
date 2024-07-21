@@ -1,1 +1,1 @@
-export { default } from "../../components/payments/Payments";
+export { default } from "../../components/payments/Payments.js";
