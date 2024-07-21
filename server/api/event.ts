@@ -1,4 +1,5 @@
 import { chain } from "@exactly/common/constants.js";
+import { auditorAbi, marketAbi } from "@exactly/common/generated/contracts.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import createDebug from "debug";
 import { eq } from "drizzle-orm";
@@ -8,6 +9,7 @@ import { getContractError, getEstimateGasError } from "viem/utils";
 
 import exaUSDC from "../../node_modules/@exactly/protocol/deployments/op-sepolia/MarketUSDC.json" with { type: "json" }; // HACK fix ts-node monorepo resolution
 import database, { cards, credentials, transactions } from "../database/index.js";
+import { iExaAccountAbi as exaAccountAbi } from "../generated/contracts.js";
 import accountAddress from "../utils/accountAddress.js";
 import handleError from "../utils/handleError.js";
 import publicClient from "../utils/publicClient.js";
@@ -38,16 +40,13 @@ export default async function handler({ method, body, headers }: VercelRequest, 
     const call = {
       functionName: "borrow",
       args: [getAddress(exaUSDC.address), BigInt(payload.output.data.amount * 1e6)],
-    };
+    } as const;
 
     const transaction = {
       from: signerAddress,
       to: await accountAddress(credential.publicKey), // TODO make sync
-      data: encodeFunctionData({
-        abi: [{ type: "function", name: "borrow", inputs: [{ type: "address" }, { type: "uint256" }], outputs: [] }],
-        ...call,
-      }),
-    };
+      data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
+    } as const;
 
     const [gas, nonce] = await Promise.all([
       publicClient
@@ -55,7 +54,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
         .then(BigInt)
         .catch((error: unknown) => {
           throw getContractError(getEstimateGasError(error as BaseError, {}), {
-            abi: [{ type: "error", name: "InsufficientAccountLiquidity", inputs: [] }],
+            abi: [...exaAccountAbi, ...marketAbi, ...auditorAbi],
             ...call,
           }) as Error;
         }),
