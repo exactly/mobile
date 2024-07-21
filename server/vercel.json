@@ -1,5 +1,5 @@
 {
-  "installCommand": "curl -L https://foundry.paradigm.xyz | bash && source /vercel/.bashrc && foundryup && bun install",
+  "installCommand": "curl -L https://foundry.paradigm.xyz | bash && ${SHELL-bash} -c 'foundryup && bun install'",
   "buildCommand": "if [ -z \"${__VERCEL_DEV_RUNNING+1}\" ]; then bun run build:app; fi",
   "outputDirectory": "/",
   "trailingSlash": false,
