@@ -55,8 +55,8 @@ module.exports = {
     "build/",
     "dist/",
     "expo-env.d.ts",
+    "generated/",
     "public/",
     "server/drizzle/",
-    "/src/generated/",
   ],
 };
