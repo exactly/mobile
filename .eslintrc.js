@@ -16,6 +16,7 @@ module.exports = {
     "plugin:react/recommended",
     "plugin:react-hooks/recommended",
     "plugin:react-native/all",
+    "plugin:require-extensions/recommended",
     "plugin:unicorn/recommended",
   ],
   rules: {
