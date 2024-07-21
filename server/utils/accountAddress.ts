@@ -1,6 +1,6 @@
 import { getEntryPoint } from "@alchemy/aa-core";
 import accountInitCode from "@exactly/common/accountInitCode.js";
-import { chain } from "@exactly/common/constants.js";
+import chain from "@exactly/common/chain.js";
 import { type Address, ContractFunctionExecutionError, ContractFunctionRevertedError } from "viem";
 
 import decodePublicKey from "./decodePublicKey.js";

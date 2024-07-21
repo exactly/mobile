@@ -1,4 +1,4 @@
-import { rpId } from "@exactly/common/constants.js";
+import rpId from "@exactly/common/rpId.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export const ORIGIN = rpId === "localhost" ? "http://localhost:8081" : `https://${rpId}`;

@@ -16,7 +16,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider, createConfig, createStorage, custom } from "wagmi";
 
-import { alchemyAPIKey, chain } from "@exactly/common/constants";
+import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
+import chain from "@exactly/common/chain";
 
 import metadata from "../../package.json";
 import tamaguiConfig from "../../tamagui.config";

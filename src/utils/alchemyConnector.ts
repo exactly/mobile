@@ -31,7 +31,9 @@ import {
 import { ChainNotConfiguredError, createConnector } from "wagmi";
 
 import accountInitCode from "@exactly/common/accountInitCode";
-import { alchemyGasPolicyId, chain, rpId } from "@exactly/common/constants";
+import alchemyGasPolicyId from "@exactly/common/alchemyGasPolicyId";
+import chain from "@exactly/common/chain";
+import rpId from "@exactly/common/rpId";
 import type { Passkey } from "@exactly/common/types";
 
 import createPasskey from "./createPasskey";

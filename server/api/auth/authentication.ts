@@ -1,4 +1,4 @@
-import { rpId } from "@exactly/common/constants.js";
+import rpId from "@exactly/common/rpId.js";
 import { Base64URL } from "@exactly/common/types.js";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticationResponseJSON, AuthenticatorTransportFuture } from "@simplewebauthn/types";

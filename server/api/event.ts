@@ -1,4 +1,4 @@
-import { chain } from "@exactly/common/constants.js";
+import chain from "@exactly/common/chain.js";
 import { auditorAbi, marketAbi } from "@exactly/common/generated/contracts.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import createDebug from "debug";
