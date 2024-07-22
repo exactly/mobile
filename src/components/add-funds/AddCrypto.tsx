@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { ArrowLeft, Files, Info, QrCode, ShareFat } from "phosphor-react-native";
+import { ArrowLeft, Files, Info, QrCode, Export } from "phosphor-react-native";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -132,7 +132,7 @@ export default function AddCrypto() {
                     </StyledPressable>
                   </View>
                   <Files size={ms(24)} color={theme.interactiveBaseBrandDefault.get() as string} />
-                  <ShareFat size={ms(24)} color={theme.interactiveBaseBrandDefault.get() as string} />
+                  <Export size={ms(24)} color={theme.interactiveBaseBrandDefault.get() as string} />
                 </View>
               </View>
             </View>
