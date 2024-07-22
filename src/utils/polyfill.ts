@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
+import "fast-text-encoding";
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, unicorn/prefer-module
 global.crypto ??= new (require("@peculiar/webcrypto").Crypto)();
 
