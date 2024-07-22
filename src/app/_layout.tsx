@@ -1,13 +1,11 @@
 import "../utils/polyfill.js";
 
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { isRunningInExpoGo } from "expo";
 import { Slot, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
-import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { TamaguiProvider } from "tamagui";
@@ -35,7 +33,6 @@ const queryClient = new QueryClient();
 
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
-  const colorScheme = useColorScheme();
   useOneSignal();
 
   useEffect(() => {
@@ -46,17 +43,15 @@ export default wrap(function RootLayout() {
     <>
       <StatusBar translucent={false} />
       <TamaguiProvider config={tamaguiConfig}>
-        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-          <WagmiProvider config={wagmiConfig}>
-            <QueryClientProvider client={queryClient}>
-              <GestureHandlerRootView>
-                <SafeAreaProvider>
-                  <Slot />
-                </SafeAreaProvider>
-              </GestureHandlerRootView>
-            </QueryClientProvider>
-          </WagmiProvider>
-        </ThemeProvider>
+        <WagmiProvider config={wagmiConfig}>
+          <QueryClientProvider client={queryClient}>
+            <GestureHandlerRootView>
+              <SafeAreaProvider>
+                <Slot />
+              </SafeAreaProvider>
+            </GestureHandlerRootView>
+          </QueryClientProvider>
+        </WagmiProvider>
       </TamaguiProvider>
     </>
   );
