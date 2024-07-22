@@ -1,7 +1,7 @@
 import type { IconProps } from "phosphor-react-native";
 import React from "react";
 import type { DimensionValue } from "react-native";
-import { TouchableWithoutFeedback, StyleSheet } from "react-native";
+import { StyleSheet, Pressable } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import { Spinner, Text, View, useTheme } from "tamagui";
@@ -40,7 +40,7 @@ export default function DelayedActionButton({ content, onPress, Icon, isLoading 
   });
 
   return (
-    <TouchableWithoutFeedback onPressIn={handlePressIn} onPressOut={handlePressOut}>
+    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
       <View borderRadius={10} height={ms(56)} overflow="hidden" position="relative">
         <View
           alignItems="center"
@@ -85,6 +85,6 @@ export default function DelayedActionButton({ content, onPress, Icon, isLoading 
           backgroundColor="$interactiveBaseBrandDefault"
         />
       </View>
-    </TouchableWithoutFeedback>
+    </Pressable>
   );
 }

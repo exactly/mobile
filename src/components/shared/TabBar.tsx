@@ -1,6 +1,6 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import React from "react";
-import { TouchableWithoutFeedback } from "react-native";
+import { Pressable } from "react-native";
 import { ms, vs } from "react-native-size-matters";
 import { View, Text, ButtonIcon, useTheme } from "tamagui";
 
@@ -38,7 +38,7 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
         };
 
         return (
-          <TouchableWithoutFeedback key={route.key} role="button" onPress={onPress}>
+          <Pressable key={route.key} role="button" onPress={onPress}>
             <View display="flex" flexDirection="column" gap={ms(2)} alignContent="center" alignItems="center" flex={1}>
               <ButtonIcon>
                 {icon?.({
@@ -49,7 +49,7 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
               </ButtonIcon>
               <Text color={isFocused ? theme.textBrandPrimary : theme.textSecondary}>{label}</Text>
             </View>
-          </TouchableWithoutFeedback>
+          </Pressable>
         );
       })}
     </View>

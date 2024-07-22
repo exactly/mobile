@@ -1,6 +1,6 @@
 import { CaretDown, CaretUp } from "phosphor-react-native";
 import React, { useState } from "react";
-import { TouchableWithoutFeedback } from "react-native";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View, Text, ButtonIcon, useTheme } from "tamagui";
 
@@ -23,7 +23,7 @@ export default function Balance() {
         </Text>
       </View>
       <View display="flex" gap={ms(10)}>
-        <TouchableWithoutFeedback onPress={onPress}>
+        <Pressable onPress={onPress}>
           <View flexDirection="row" justifyContent="center" alignItems="center" gap={ms(10)}>
             <Text fontFamily="$mono" fontSize={ms(40)} fontWeight="bold">
               $15,186.95
@@ -36,7 +36,7 @@ export default function Balance() {
               )}
             </ButtonIcon>
           </View>
-        </TouchableWithoutFeedback>
+        </Pressable>
         <AssetChange />
       </View>
       {isOpen && <AssetList />}
