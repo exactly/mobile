@@ -5,10 +5,10 @@ import { TouchableOpacity } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
-import AddCryptoButton from "./AddCryptoButton";
-import AddFiatButton from "./AddFiatButton";
-import BaseLayout from "../shared/BaseLayout";
-import SafeView from "../shared/SafeView";
+import AddCryptoButton from "./AddCryptoButton.js";
+import AddFiatButton from "./AddFiatButton.js";
+import BaseLayout from "../shared/BaseLayout.js";
+import SafeView from "../shared/SafeView.js";
 
 function back() {
   router.back();

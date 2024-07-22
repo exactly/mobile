@@ -1,1 +1,1 @@
-export { default } from "../../components/add-funds/AddFunds";
+export { default } from "../../components/add-funds/AddFunds.js";

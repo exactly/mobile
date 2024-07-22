@@ -5,8 +5,8 @@ import { TouchableOpacity } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
-import BaseLayout from "../shared/BaseLayout";
-import SafeView from "../shared/SafeView";
+import BaseLayout from "../shared/BaseLayout.js";
+import SafeView from "../shared/SafeView.js";
 
 function back() {
   router.back();

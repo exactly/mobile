@@ -6,19 +6,19 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 import { zeroAddress } from "viem";
 
-import Balance from "./Balance";
-import HomeActions from "./HomeActions";
-import LatestActivity from "./LatestActivity";
-import type { PreviewerData } from "../../stores/usePreviewerStore";
-import usePreviewerStore from "../../stores/usePreviewerStore";
-import handleError from "../../utils/handleError";
-import wagmiConfig from "../../utils/wagmi";
-import AlertBadge from "../shared/AlertBadge";
-import BaseLayout from "../shared/BaseLayout";
-import InfoPreview from "../shared/InfoPreview";
-import ProfileHeader from "../shared/ProfileHeader";
-import SafeView from "../shared/SafeView";
-import { previewerAbi, previewerAddress } from "../../generated/contracts";
+import Balance from "./Balance.js";
+import HomeActions from "./HomeActions.js";
+import LatestActivity from "./LatestActivity.js";
+import { previewerAbi, previewerAddress } from "../../generated/contracts.js";
+import type { PreviewerData } from "../../stores/usePreviewerStore.js";
+import usePreviewerStore from "../../stores/usePreviewerStore.js";
+import handleError from "../../utils/handleError.js";
+import wagmiConfig from "../../utils/wagmi.js";
+import AlertBadge from "../shared/AlertBadge.js";
+import BaseLayout from "../shared/BaseLayout.js";
+import InfoPreview from "../shared/InfoPreview.js";
+import ProfileHeader from "../shared/ProfileHeader.js";
+import SafeView from "../shared/SafeView.js";
 
 export default function Home() {
   const theme = useTheme();
