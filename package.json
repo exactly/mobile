@@ -57,7 +57,7 @@
     "expo-web-browser": "~13.0.3",
     "fast-text-encoding": "^1.0.6",
     "onesignal-expo-plugin": "^2.0.3",
-    "phosphor-react-native": "^2.0.0",
+    "phosphor-react-native": "^1.1.2",
     "process": "^0.11.10",
     "react": "18.2.0",
     "react-dom": "18.2.0",
