@@ -12,19 +12,51 @@ export default function Root({ children }: { children: ReactNode }) {
           content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1.00001,viewport-fit=cover"
         />
         <ScrollViewStyleReset />
-        <style dangerouslySetInnerHTML={{ __html: responsiveBackground }} />
+        <style dangerouslySetInnerHTML={{ __html: fontStyles }} />
+        <link
+          rel="preload"
+          href="src/assets/fonts/BDOGrotesk-Bold.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="src/assets/fonts/BDOGrotesk-Regular.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="src/assets/fonts/IBMPlexMono-Bold.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="src/assets/fonts/IBMPlexMono-Regular.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="src/assets/fonts/IBMPlexMono-SemiBold.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
       </head>
       <body>{children}</body>
     </html>
   );
 }
 
-const responsiveBackground = `
-body {
-  background-color: #fff;
-}
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #000;
-  }
-}`;
+const fontStyles = `
+@font-face { font-family: BDOGrotesk-Bold; src: url(src/assets/fonts/BDOGrotesk-Bold.otf); font-display: auto; }
+@font-face { font-family: BDOGrotesk-Regular; src: url(src/assets/fonts/BDOGrotesk-Regular.otf); font-display: auto; }
+@font-face { font-family: IBMPlexMono-Bold; src: url(src/assets/fonts/IBMPlexMono-Bold.otf); font-display: auto; }
+@font-face { font-family: IBMPlexMono-Regular; src: url(src/assets/fonts/IBMPlexMono-Regular.otf); font-display: auto; }
+@font-face { font-family: IBMPlexMono-SemiBold; src: url(src/assets/fonts/IBMPlexMono-SemiBold.otf); font-display: auto; }`;
