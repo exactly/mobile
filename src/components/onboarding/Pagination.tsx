@@ -8,7 +8,7 @@ import { useTheme, useWindowDimensions, View } from "tamagui";
 
 import AnimatedView from "../shared/AnimatedView.js";
 
-const PaginationComponent = ({
+function PaginationComponent({
   index,
   x,
   progress,
@@ -18,7 +18,7 @@ const PaginationComponent = ({
   x: SharedValue<number>;
   progress: SharedValue<number>;
   activeColor: string;
-}) => {
+}) {
   const { width } = useWindowDimensions();
   const itemWidth = width - ms(40);
 
@@ -56,7 +56,7 @@ const PaginationComponent = ({
       <AnimatedView style={[StyleSheet.absoluteFill, rFillStyle]} />
     </AnimatedView>
   );
-};
+}
 
 interface PaginationProperties {
   length: number;
