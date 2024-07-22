@@ -65,7 +65,7 @@ export default function AssetList() {
           borderBottomWidth={index === assets.length - 1 ? 0 : 1}
           borderColor="$borderNeutralSoft"
         >
-          <View flexDirection="row" paddingVertical={vs(10)}>
+          <View flexDirection="row" paddingVertical={vs(10)} flex={1}>
             <View flexDirection="row" gap={ms(10)} flex={1}>
               <Image src={image} alt={`${ticker} logo`} width={ms(40)} height={ms(40)} />
               <View gap={ms(5)}>
