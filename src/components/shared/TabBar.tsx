@@ -1,8 +1,9 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import React from "react";
-import { Pressable } from "react-native";
 import { ms, vs } from "react-native-size-matters";
 import { View, Text, ButtonIcon, useTheme } from "tamagui";
+
+import StyledPressable from "./StyledPressable.js";
 
 export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const theme = useTheme();
@@ -38,7 +39,7 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
         };
 
         return (
-          <Pressable key={route.key} role="button" onPress={onPress}>
+          <StyledPressable key={route.key} role="button" onPress={onPress} flex={1} padding={ms(10)}>
             <View display="flex" flexDirection="column" gap={ms(2)} alignContent="center" alignItems="center" flex={1}>
               <ButtonIcon>
                 {icon?.({
@@ -49,7 +50,7 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
               </ButtonIcon>
               <Text color={isFocused ? theme.textBrandPrimary : theme.textSecondary}>{label}</Text>
             </View>
-          </Pressable>
+          </StyledPressable>
         );
       })}
     </View>
