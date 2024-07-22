@@ -6,6 +6,12 @@ export default function AddFundsLayout() {
     <Stack initialRouteName="index" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="add-crypto" />
+      <Stack.Screen
+        name="add-crypto-about"
+        options={{
+          presentation: "modal",
+        }}
+      />
       <Stack.Screen name="add-fiat" />
     </Stack>
   );
