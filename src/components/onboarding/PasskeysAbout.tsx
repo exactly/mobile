@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { X } from "phosphor-react-native";
 import React from "react";
-import { TouchableOpacity } from "react-native";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
 
@@ -31,11 +31,11 @@ export default function PasskeysAbout() {
               left="50%"
               transform={[{ translateX: -ms(20) }]}
             />
-            <TouchableOpacity onPress={close}>
+            <Pressable onPress={close}>
               <View borderRadius={100} backgroundColor="$backgroundMild" padding={ms(2)}>
                 <X size={ms(25)} color={theme.uiDarkGrey.val as string} />
               </View>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View flexDirection="column" gap={ms(40)}>

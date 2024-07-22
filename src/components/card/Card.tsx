@@ -1,6 +1,6 @@
 import { ArrowRight, Calculator, CaretRight, Info, Plus } from "phosphor-react-native";
 import React from "react";
-import { TouchableOpacity } from "react-native";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
@@ -21,22 +21,22 @@ export default function Card() {
               <Text color="uiPrimary" fontSize={ms(20)} fontWeight="bold">
                 My Cards
               </Text>
-              <TouchableOpacity>
+              <Pressable>
                 <Info color={theme.uiPrimary.get() as string} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <InfoPreview
               title="Installments"
               renderAction={
-                <TouchableOpacity>
+                <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
                     <Text color="$textBrand" fontSize={ms(14)} lineHeight={18} fontWeight="bold">
                       Simulate payment
                     </Text>
                     <Calculator size={ms(14)} color={theme.textBrand.get() as string} />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               }
             >
               <View gap={ms(20)}>
@@ -78,12 +78,12 @@ export default function Card() {
                 </View>
 
                 <View borderTopWidth={1} borderTopColor="$borderSoft" paddingTop={ms(20)}>
-                  <TouchableOpacity>
+                  <Pressable>
                     <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
                       <Text color="$uiSecondary">Learn more about installments</Text>
                       <ArrowRight size={14} color={theme.iconSecondary.get() as string} />
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             </InfoPreview>
@@ -91,14 +91,14 @@ export default function Card() {
             <InfoPreview
               title="Spending limits"
               renderAction={
-                <TouchableOpacity>
+                <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       Increase limits
                     </Text>
                     <Plus size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               }
             >
               <View gap={ms(20)}>
@@ -108,26 +108,26 @@ export default function Card() {
               </View>
 
               <View borderTopWidth={1} borderTopColor="$borderSoft" paddingTop={ms(20)}>
-                <TouchableOpacity>
+                <Pressable>
                   <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
                     <Text color="$uiSecondary">Learn more about spending limits.</Text>
                     <ArrowRight size={14} color={theme.iconSecondary.get() as string} />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </InfoPreview>
 
             <InfoPreview
               title="Latest activity"
               renderAction={
-                <TouchableOpacity>
+                <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
                     <CaretRight size={14} color={theme.textBrand.get() as string} />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               }
             >
               <LatestActivity />

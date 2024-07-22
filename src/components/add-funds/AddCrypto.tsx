@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { ArrowLeft, Info } from "phosphor-react-native";
 import React from "react";
-import { TouchableOpacity } from "react-native";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
@@ -21,9 +21,9 @@ export default function AddCrypto() {
         <View gap={ms(20)} paddingVertical={ms(20)}>
           <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
-              <TouchableOpacity onPress={back}>
+              <Pressable onPress={back}>
                 <ArrowLeft size={ms(24)} color={theme.uiPrimary.get() as string} />
-              </TouchableOpacity>
+              </Pressable>
             )}
             <View flexDirection="row" alignItems="center">
               <Text color="$uiSecondary" fontSize={ms(15)} fontWeight="bold">
@@ -33,9 +33,9 @@ export default function AddCrypto() {
                 Cryptocurrency
               </Text>
             </View>
-            <TouchableOpacity>
+            <Pressable>
               <Info color={theme.uiPrimary.get() as string} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
         <ScrollView flex={1}>

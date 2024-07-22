@@ -1,7 +1,7 @@
 import { readContract, getAccount } from "@wagmi/core";
 import { CaretRight } from "phosphor-react-native";
-import React from "react";
-import { TouchableOpacity } from "react-native";
+import React, { useEffect } from "react";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 import { zeroAddress } from "viem";
@@ -22,7 +22,7 @@ import SafeView from "../shared/SafeView.js";
 
 export default function Home() {
   const theme = useTheme();
-  const { data, setPreviewerData } = usePreviewerStore();
+  const { setPreviewerData } = usePreviewerStore();
 
   useEffect(() => {
     const fetchPreviewer = async () => {
@@ -57,14 +57,14 @@ export default function Home() {
             <InfoPreview
               title="Credit limit"
               renderAction={
-                <TouchableOpacity>
+                <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
                     <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               }
             >
               <Text textAlign="center" fontSize={15} color="$uiSecondary">
@@ -74,14 +74,14 @@ export default function Home() {
             <InfoPreview
               title="Available to spend"
               renderAction={
-                <TouchableOpacity>
+                <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
                     <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               }
             >
               <Text textAlign="center" fontSize={15} color="$uiSecondary">
@@ -91,14 +91,14 @@ export default function Home() {
             <InfoPreview
               title="Upcoming installments"
               renderAction={
-                <TouchableOpacity>
+                <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
                     <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               }
             >
               <Text textAlign="center" fontSize={15} color="$uiSecondary">
@@ -109,14 +109,14 @@ export default function Home() {
             <InfoPreview
               title="Latest activity"
               renderAction={
-                <TouchableOpacity>
+                <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
                     <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
                     <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               }
             >
               <LatestActivity />

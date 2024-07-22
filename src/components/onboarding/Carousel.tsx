@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { ArrowRight } from "phosphor-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { TouchableOpacity, type ViewToken } from "react-native";
+import { Pressable, type ViewToken } from "react-native";
 import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
@@ -26,11 +26,11 @@ import qrCode from "../../assets/images/qr-code.svg";
 import DelayedActionButton from "../shared/DelayedActionButton.js";
 
 const recoverButton = (
-  <TouchableOpacity onPress={() => {}}>
+  <Pressable onPress={() => {}}>
     <Text fontSize={ms(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
       Recover an existing account
     </Text>
-  </TouchableOpacity>
+  </Pressable>
 );
 
 export interface Page {

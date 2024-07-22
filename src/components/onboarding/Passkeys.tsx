@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { Key, X } from "phosphor-react-native";
 import React, { useCallback, useEffect } from "react";
-import { TouchableOpacity } from "react-native";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
 import { useConnect, ConnectorAlreadyConnectedError } from "wagmi";
@@ -47,9 +47,9 @@ const Passkeys = () => {
       <BaseLayout flex={1}>
         <View flex={1} paddingTop={ms(40)}>
           <View position="absolute" top={ms(20)} right={0} zIndex={1}>
-            <TouchableOpacity onPress={close}>
+            <Pressable onPress={close}>
               <X size={ms(25)} color={theme.uiDarkGrey.val as string} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
@@ -75,9 +75,9 @@ const Passkeys = () => {
             <View flexDirection="column" gap={ms(10)}>
               <View flexDirection="row" alignItems="center" justifyContent="center">
                 <Text>By continuing, I accept the</Text>
-                <TouchableOpacity onPress={() => {}}>
+                <Pressable onPress={() => {}}>
                   <Text color="$interactiveBaseBrandDefault">Terms & Conditions</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
               <DelayedActionButton
                 isLoading={isPending}
@@ -88,11 +88,11 @@ const Passkeys = () => {
                 Icon={Key}
               />
               <View justifyContent="center" alignItems="center">
-                <TouchableOpacity onPress={learnMore}>
+                <Pressable onPress={learnMore}>
                   <Text fontSize={ms(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
                     Learn more about passkeys
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
           </View>
