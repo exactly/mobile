@@ -4,8 +4,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native
 import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { isRunningInExpoGo } from "expo";
-import { type FontSource, useFonts } from "expo-font";
-import { Slot, SplashScreen, useNavigationContainerRef } from "expo-router";
+import { Slot, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { useColorScheme } from "react-native";
@@ -16,18 +15,11 @@ import { WagmiProvider } from "wagmi";
 
 import metadata from "../../package.json";
 import tamaguiConfig from "../../tamagui.config.js";
-import BDOGroteskBold from "../assets/fonts/BDOGrotesk-Bold.otf";
-import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
-import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
-import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
-import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
-import handleError from "../utils/handleError.js";
 import useOneSignal from "../utils/useOneSignal.js";
 import wagmiConfig from "../utils/wagmi.js";
 
 export { ErrorBoundary } from "expo-router";
 export const unstable_settings = { initialRouteName: "(tabs)" };
-SplashScreen.preventAutoHideAsync().catch(handleError);
 const routingInstrumentation = new ReactNavigationInstrumentation();
 init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -44,30 +36,11 @@ const queryClient = new QueryClient();
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
   const colorScheme = useColorScheme();
-  const [loaded, error] = useFonts({
-    "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
-    "BDOGrotesk-Regular": BDOGroteskRegular as FontSource,
-    "IBMPlexMono-Bold": IBMPlexMonoBold as FontSource,
-    "IBMPlexMono-Regular": IBMPlexMonoRegular as FontSource,
-    "IBMPlexMono-SemiBold": IBMPlexMonoSemiBold as FontSource,
-    unset: BDOGroteskRegular as FontSource,
-  });
-
   useOneSignal();
-
-  useEffect(() => {
-    if (loaded) SplashScreen.hideAsync().catch(handleError);
-  }, [loaded]);
 
   useEffect(() => {
     routingInstrumentation.registerNavigationContainer(navigationContainer);
   }, [navigationContainer]);
-
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  if (!loaded) return;
 
   return (
     <>
