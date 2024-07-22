@@ -1,7 +1,7 @@
 import { config } from "@tamagui/config/v3";
 import { createTamagui, createTokens } from "tamagui";
 
-import theme, { BDOGrotesk, IBMPlexMono } from "./src/utils/theme";
+import theme, { BDOGrotesk, IBMPlexMono } from "./src/utils/theme.js";
 
 const customTokens = createTokens({ ...config.tokens, color: { ...theme } });
 
