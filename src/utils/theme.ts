@@ -2,7 +2,7 @@ import { config } from "@tamagui/config/v3";
 import { createFont } from "tamagui";
 
 export const BDOGrotesk = createFont({
-  family: "BDOGrotesk",
+  family: "BDOGrotesk-Regular",
   face: {
     600: { normal: "BDOGrotesk-Bold" },
     700: { normal: "BDOGrotesk-Bold" },
@@ -17,7 +17,7 @@ export const BDOGrotesk = createFont({
 });
 
 export const IBMPlexMono = createFont({
-  family: "IBMPlexMono",
+  family: "IBMPlexMono-Regular",
   face: {
     600: { normal: "IBMPlexMono-SemiBold" },
     700: { normal: "IBMPlexMono-Bold" },
