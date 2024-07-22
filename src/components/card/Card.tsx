@@ -4,6 +4,7 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
+import CardActions from "./CardActions.js";
 import LatestActivity from "./LatestActivity.js";
 import SpendingLimitButton from "./SpendingLimitButton.js";
 import BaseLayout from "../shared/BaseLayout.js";
@@ -25,6 +26,8 @@ export default function Card() {
                 <Info color={theme.uiPrimary.get() as string} />
               </Pressable>
             </View>
+
+            <CardActions />
 
             <InfoPreview
               title="Installments"
