@@ -11,23 +11,25 @@ export default function AlertBadge() {
       borderRadius={20}
       flexDirection="row"
       backgroundColor="$backgroundDanger"
-      height={ms(112)}
+      justifyContent="space-between"
       alignItems="center"
+      gap={ms(10)}
+      flex={1}
     >
       <View
-        flex={1}
-        height="100%"
         padding={ms(25)}
         backgroundColor="$interactiveBaseErrorDefault"
         justifyContent="center"
         alignItems="center"
         borderTopLeftRadius={20}
         borderBottomLeftRadius={20}
+        width="20%"
+        height="100%"
       >
         <Warning size={ms(32)} color={theme.backgroundDanger.get() as string} />
       </View>
 
-      <View flex={12} gap={ms(10)} padding={ms(25)} width="100%">
+      <View gap={ms(10)} padding={ms(25)} flex={1}>
         <Text fontSize={ms(15)} color="$interactiveOnBaseErrorSoft">
           Up to 10% of your total balance is at high risk of being liquidated.
         </Text>
