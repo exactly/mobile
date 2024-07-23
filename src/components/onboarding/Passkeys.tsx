@@ -48,7 +48,7 @@ const Passkeys = () => {
         <View flex={1} paddingTop={ms(40)}>
           <View position="absolute" top={ms(20)} right={0} zIndex={1}>
             <Pressable onPress={close}>
-              <X size={ms(25)} color={theme.uiDarkGrey.val as string} />
+              <X size={ms(25)} color={theme.uiNeutralSecondary.val} />
             </Pressable>
           </View>
 
@@ -76,7 +76,7 @@ const Passkeys = () => {
               <View flexDirection="row" alignItems="center" justifyContent="center">
                 <Text>By continuing, I accept the</Text>
                 <Pressable onPress={() => {}}>
-                  <Text color="$interactiveBaseBrandDefault">Terms & Conditions</Text>
+                  <Text color="$interactiveBaseBrandDefault"> Terms & Conditions</Text>
                 </Pressable>
               </View>
               <DelayedActionButton

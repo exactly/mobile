@@ -23,7 +23,7 @@ export default function Card() {
                 My Cards
               </Text>
               <Pressable>
-                <Info color={theme.uiPrimary.get() as string} />
+                <Info color={theme.uiNeutralPrimary.get()} />
               </Pressable>
             </View>
 
@@ -34,16 +34,16 @@ export default function Card() {
               renderAction={
                 <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
-                    <Text color="$textBrand" fontSize={ms(14)} lineHeight={18} fontWeight="bold">
+                    <Text color="$interactiveBaseBrandDefault" fontSize={ms(14)} lineHeight={18} fontWeight="bold">
                       Simulate payment
                     </Text>
-                    <Calculator size={ms(14)} color={theme.textBrand.get() as string} />
+                    <Calculator size={ms(14)} color={theme.interactiveTextBrandDefault.get()} />
                   </View>
                 </Pressable>
               }
             >
               <View gap={ms(20)}>
-                <Text textAlign="left" fontSize={15} color="$uiSecondary">
+                <Text textAlign="left" fontSize={15} color="$uiNeutralSecondary">
                   Set the default amount of installments before paying in-store with the card.
                 </Text>
 
@@ -55,17 +55,15 @@ export default function Card() {
                   borderWidth={1}
                   borderColor="$borderBrandSoft"
                   padding={ms(10)}
-                  borderRadius={16}
+                  borderRadius="$r5"
                 >
                   {Array.from({ length: 6 }).map((_, index) => (
                     <View
                       key={index}
                       width={ms(55)}
                       height={ms(55)}
-                      borderRadius={12}
-                      backgroundColor={
-                        index === 0 ? (theme.interactiveBaseBrandDefault.get() as string) : "transparent"
-                      }
+                      borderRadius="$r4"
+                      backgroundColor={index === 0 ? theme.interactiveBaseBrandDefault.get() : "transparent"}
                       justifyContent="center"
                       alignItems="center"
                     >
@@ -80,11 +78,11 @@ export default function Card() {
                   ))}
                 </View>
 
-                <View borderTopWidth={1} borderTopColor="$borderSoft" paddingTop={ms(20)}>
+                <View borderTopWidth={1} borderTopColor="$borderNeutralSeparator" paddingTop={ms(20)}>
                   <Pressable>
-                    <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
-                      <Text color="$uiSecondary">Learn more about installments</Text>
-                      <ArrowRight size={14} color={theme.iconSecondary.get() as string} />
+                    <View flexDirection="row" justifyContent="space-between" alignItems="center" gap={ms(10)}>
+                      <Text color="$uiNeutralSecondary">Learn more about installments</Text>
+                      <ArrowRight size={14} color={theme.iconSecondary.get()} />
                     </View>
                   </Pressable>
                 </View>
@@ -96,10 +94,10 @@ export default function Card() {
               renderAction={
                 <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
-                    <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
+                    <Text color="$interactiveBaseBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Increase limits
                     </Text>
-                    <Plus size={14} color={theme.textBrand.get() as string} weight="bold" />
+                    <Plus size={14} color={theme.interactiveBaseBrandDefault.get()} weight="bold" />
                   </View>
                 </Pressable>
               }
@@ -110,11 +108,11 @@ export default function Card() {
                 <SpendingLimitButton title="Monthly" amount={4713.64} limit={9000} currency="$" />
               </View>
 
-              <View borderTopWidth={1} borderTopColor="$borderSoft" paddingTop={ms(20)}>
+              <View borderTopWidth={1} borderTopColor="$borderNeutralSeparator" paddingTop={ms(20)}>
                 <Pressable>
-                  <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
-                    <Text color="$uiSecondary">Learn more about spending limits.</Text>
-                    <ArrowRight size={14} color={theme.iconSecondary.get() as string} />
+                  <View flexDirection="row" justifyContent="space-between" alignItems="center" gap={ms(10)}>
+                    <Text color="$uiNeutralSecondary">Learn more about spending limits.</Text>
+                    <ArrowRight size={14} color={theme.iconSecondary.get()} />
                   </View>
                 </Pressable>
               </View>
@@ -125,10 +123,10 @@ export default function Card() {
               renderAction={
                 <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
-                    <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
+                    <Text color="$interactiveBaseBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} />
+                    <CaretRight size={14} color={theme.interactiveBaseBrandDefault.get()} />
                   </View>
                 </Pressable>
               }

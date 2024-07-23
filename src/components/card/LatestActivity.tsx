@@ -76,7 +76,7 @@ export default function LatestActivity() {
   const theme = useTheme();
   if (activity.length === 0) {
     return (
-      <Text textAlign="center" fontSize={ms(15)} color="$uiSecondary">
+      <Text textAlign="center" fontSize={ms(15)} color="$uiNeutralSecondary">
         There&apos; no activity in your account. Start by adding funds to it.
       </Text>
     );
@@ -84,7 +84,7 @@ export default function LatestActivity() {
 
   const getIcon = (category: ActivityCategory) => {
     const Icon = activityCategoryToIcon[category];
-    return <Icon size={ms(20)} color={theme.textSuccessPrimary.get() as string} weight="bold" />;
+    return <Icon size={ms(20)} color={theme.uiSuccessPrimary.get()} weight="bold" />;
   };
 
   return (
@@ -95,7 +95,7 @@ export default function LatestActivity() {
             width={ms(40)}
             height={ms(40)}
             backgroundColor="$backgroundBrandMild"
-            borderRadius={10}
+            borderRadius="$r3"
             justifyContent="center"
             alignItems="center"
           >
@@ -107,7 +107,7 @@ export default function LatestActivity() {
                 <Text fontSize={ms(15)} color="$uiPrimary">
                   {title}
                 </Text>
-                <Text fontSize={ms(12)} color="$uiSecondary">
+                <Text fontSize={ms(12)} color="$uiNeutralSecondary">
                   {date}
                 </Text>
               </View>
@@ -120,7 +120,7 @@ export default function LatestActivity() {
                     {asset.usdValue}
                   </Text>
                 </View>
-                <Text fontSize={ms(12)} color="$uiSecondary" textAlign="right">
+                <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
                   {asset.amount} {asset.symbol}
                 </Text>
               </View>

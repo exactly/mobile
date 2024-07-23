@@ -20,21 +20,21 @@ export default function CardActions() {
   return (
     <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
       <StyledActionButton>
-        <Eye size={ms(24)} color={theme.backgroundBrand.get() as string} weight="bold" />
+        <Eye size={ms(24)} color={theme.backgroundBrand.get()} weight="bold" />
         <Text color="$uiPrimary" fontSize={ms(15)}>
           Details
         </Text>
-        <Text color="$textBrand" fontSize={ms(15)} fontWeight="bold">
+        <Text color="$interactiveBaseBrandDefault" fontSize={ms(15)} fontWeight="bold">
           Reveal
         </Text>
       </StyledActionButton>
 
       <StyledActionButton>
-        <Snowflake size={ms(24)} color={theme.backgroundBrand.get() as string} weight="bold" />
+        <Snowflake size={ms(24)} color={theme.backgroundBrand.get()} weight="bold" />
         <Text color="$uiPrimary" fontSize={ms(15)}>
           Freeze
         </Text>
-        <Switch size={ms(24)} backgroundColor="$backgroundMild" maxWidth="50%">
+        <Switch size={ms(24)} backgroundColor="$backgroundMild" maxWidth="50%" borderColor={theme.borderNeutralSoft}>
           <Switch.Thumb animation="quicker" backgroundColor="$backgroundSoft" shadowColor="$uiPrimary" />
         </Switch>
       </StyledActionButton>

@@ -21,9 +21,10 @@ export default function Activity() {
             Activity
           </Text>
           <Button
+            borderRadius="$r2"
             variant="outlined"
             backgroundColor="$interactiveBaseBrandDefault"
-            color="$textInteractiveBaseBrandDefault"
+            color="$interactiveOnBaseBrandDefault"
             onPress={startOnboarding}
             fontWeight={600}
             pressStyle={pressStyle}

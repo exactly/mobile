@@ -8,9 +8,9 @@ export default function AlertBadge() {
   const theme = useTheme();
   return (
     <View
-      borderRadius={20}
+      borderRadius="$r6"
       flexDirection="row"
-      backgroundColor="$backgroundDanger"
+      backgroundColor="$interactiveBaseErrorSoftDefault"
       justifyContent="space-between"
       alignItems="center"
       gap={ms(10)}
@@ -21,12 +21,12 @@ export default function AlertBadge() {
         backgroundColor="$interactiveBaseErrorDefault"
         justifyContent="center"
         alignItems="center"
-        borderTopLeftRadius={20}
-        borderBottomLeftRadius={20}
+        borderTopLeftRadius="$r6"
+        borderBottomLeftRadius="$r6"
         width="20%"
         height="100%"
       >
-        <Warning size={ms(32)} color={theme.backgroundDanger.get() as string} />
+        <Warning size={ms(32)} color={theme.interactiveOnBaseErrorDefault.get()} />
       </View>
 
       <View gap={ms(10)} padding={ms(25)} flex={1}>
@@ -38,7 +38,7 @@ export default function AlertBadge() {
             <Text color="$interactiveOnBaseErrorSoft" fontSize={ms(15)} lineHeight={18} fontWeight="bold">
               Manage
             </Text>
-            <CaretRight size={14} color={theme.interactiveOnBaseErrorSoft.get() as string} weight="bold" />
+            <CaretRight size={14} color={theme.interactiveOnBaseErrorSoft.get()} weight="bold" />
           </View>
         </Pressable>
       </View>

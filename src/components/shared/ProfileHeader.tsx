@@ -7,7 +7,7 @@ const OnlineIndicator = styled(View, {
   width: 12,
   height: 12,
   borderRadius: 100,
-  backgroundColor: "$textBrandPrimary",
+  backgroundColor: "$uiBrandPrimary",
   position: "absolute",
   right: -2,
   top: -2,
@@ -43,15 +43,15 @@ export default function ProfileHeader() {
               alt="Profile picture"
               width={32}
               height={32}
-              borderRadius={100}
+              borderRadius="$r_0"
             />
           </View>
 
           <View display="flex" flexDirection="row" alignItems="flex-start">
-            <Text fontSize={17} color={theme.textPrimary} lineHeight={23}>
+            <Text fontSize={17} color={theme.uiNeutralPrimary} lineHeight={23}>
               {name}
             </Text>
-            <Text fontSize={17} color={theme.textSecondary} lineHeight={23}>
+            <Text fontSize={17} color={theme.uiNeutralSecondary} lineHeight={23}>
               {domain}
             </Text>
           </View>

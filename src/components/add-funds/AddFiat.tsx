@@ -22,11 +22,11 @@ export default function AddFiat() {
           <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
               <Pressable onPress={back}>
-                <ArrowLeft size={ms(24)} color={theme.uiPrimary.get() as string} />
+                <ArrowLeft size={ms(24)} color={theme.uiNeutralPrimary.get()} />
               </Pressable>
             )}
             <View flexDirection="row" alignItems="center">
-              <Text color="$uiSecondary" fontSize={ms(15)} fontWeight="bold">
+              <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
                 Add Funds /{" "}
               </Text>
               <Text color="$uiPrimary" fontSize={ms(15)} fontWeight="bold">
@@ -34,7 +34,7 @@ export default function AddFiat() {
               </Text>
             </View>
             <Pressable>
-              <Info color={theme.uiPrimary.get() as string} />
+              <Info color={theme.uiNeutralPrimary.get()} />
             </Pressable>
           </View>
         </View>

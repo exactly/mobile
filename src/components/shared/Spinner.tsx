@@ -20,7 +20,7 @@ export default function Spinner() {
       height={ms(88)}
       justifyContent="center"
       alignItems="center"
-      borderRadius={100}
+      borderRadius="$r_0"
     >
       <AnimatedSpinner style={rStyle} />
     </View>

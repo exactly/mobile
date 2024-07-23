@@ -18,7 +18,7 @@ export default function SpendingLimitButton({ title, amount, limit, currency }: 
       flex={1}
       backgroundColor="$backgroundBrandSoft"
       width="100%"
-      borderRadius={10}
+      borderRadius="$r3"
       height={ms(46)}
       alignItems="center"
     >
@@ -27,9 +27,9 @@ export default function SpendingLimitButton({ title, amount, limit, currency }: 
         width="70%"
         height={ms(46)}
         backgroundColor="$interactiveBaseBrandDefault"
-        borderRadius={10}
-        borderTopRightRadius={0}
-        borderBottomRightRadius={0}
+        borderRadius="$r3"
+        borderTopRightRadius="$r0"
+        borderBottomRightRadius="$r0"
         opacity={0.1}
       />
 
@@ -38,7 +38,7 @@ export default function SpendingLimitButton({ title, amount, limit, currency }: 
           <Text color="$uiprimary" fontSize={ms(15)}>
             {title}
           </Text>
-          <PencilLine size={ms(15)} color={theme.iconPrimary.get() as string} />
+          <PencilLine size={ms(15)} color={theme.iconPrimary.get()} />
         </View>
         <View flexDirection="row" justifyContent="space-around" alignItems="center" gap={ms(5)}>
           <Text color="$uiBrandSecondary" fontSize={ms(15)} fontWeight="bold">

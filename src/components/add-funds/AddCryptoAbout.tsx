@@ -19,8 +19,8 @@ const AddCryptoAbout = () => {
         flex={1}
         backgroundColor="$backgroundSoft"
         padding={ms(20)}
-        borderTopLeftRadius={20}
-        borderTopRightRadius={20}
+        borderTopLeftRadius="$r6"
+        borderTopRightRadius="$r6"
       >
         <View display="flex" gap={ms(20)}>
           <View display="flex" flexDirection="row" justifyContent="flex-end" position="relative">
@@ -28,7 +28,7 @@ const AddCryptoAbout = () => {
               position="absolute"
               height={ms(4)}
               width={ms(40)}
-              borderRadius={100}
+              borderRadius="$r_0"
               backgroundColor="$backgroundMild"
               left="50%"
               transform={[{ translateX: -ms(20) }]}
@@ -41,12 +41,12 @@ const AddCryptoAbout = () => {
                 <Text fontSize={ms(17)} fontWeight={700} color="$uiPrimary" textAlign="left">
                   Adding funds
                 </Text>
-                <Text fontSize={ms(16)} fontWeight={400} color="$uiSecondary" textAlign="left">
+                <Text fontSize={ms(16)} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
                   Your account is a self-custodial smart wallet on the OP Mainnet Network (Optimism). To fund your
                   account, simply send any of the supported assets to your address.
                 </Text>
 
-                <Text fontSize={ms(11)} fontWeight={400} color="$uiSecondary" textAlign="left">
+                <Text fontSize={ms(11)} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
                   Exa App runs on OP Mainnet Network. Sending assets on other networks may result in irreversible loss
                   of funds.{" "}
                 </Text>
@@ -60,12 +60,12 @@ const AddCryptoAbout = () => {
                   justifyContent="space-between"
                   backgroundColor="$interactiveBaseBrandSoftDefault"
                   padding={ms(20)}
-                  borderRadius={8}
+                  borderRadius="$r3"
                 >
-                  <Text fontSize={ms(15)} fontWeight="bold" color={theme.interactiveOnBaseBrandSoft.get() as string}>
+                  <Text fontSize={ms(15)} fontWeight="bold" color={theme.interactiveOnBaseBrandSoft.get()}>
                     Close
                   </Text>
-                  <X size={ms(20)} color={theme.interactiveOnBaseBrandSoft.val as string} weight="bold" />
+                  <X size={ms(20)} color={theme.interactiveOnBaseBrandSoft.val} weight="bold" />
                 </View>
               </StyledPressable>
             </View>

@@ -151,7 +151,7 @@ export default function Carousel() {
                 backgroundColor="$interactiveBaseBrandDefault"
                 paddingHorizontal={ms(4)}
                 paddingVertical={ms(2)}
-                borderRadius={5}
+                borderRadius="$r2"
                 alignSelf="center"
               >
                 <Text

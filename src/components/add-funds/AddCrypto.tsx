@@ -53,11 +53,11 @@ export default function AddCrypto() {
           <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
               <Pressable onPress={back}>
-                <ArrowLeft size={ms(24)} color={theme.uiPrimary.get() as string} />
+                <ArrowLeft size={ms(24)} color={theme.uiNeutralPrimary.get()} />
               </Pressable>
             )}
             <View flexDirection="row" alignItems="center">
-              <Text color="$uiSecondary" fontSize={ms(15)} fontWeight="bold">
+              <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
                 Add Funds /{" "}
               </Text>
               <Text color="$uiPrimary" fontSize={ms(15)} fontWeight="bold">
@@ -65,14 +65,14 @@ export default function AddCrypto() {
               </Text>
             </View>
             <Pressable>
-              <Info color={theme.uiPrimary.get() as string} />
+              <Info color={theme.uiNeutralPrimary.get()} />
             </Pressable>
           </View>
         </View>
         <ScrollView flex={1}>
           <View gap={ms(20)} flex={1}>
             <View
-              borderRadius={8}
+              borderRadius="$r3"
               flexDirection="row"
               backgroundColor="$backgroundSoft"
               height={ms(41)}
@@ -80,7 +80,7 @@ export default function AddCrypto() {
               borderWidth={1}
               borderColor="$borderSuccessSoft"
               shadowOffset={{ width: 0, height: 2 }}
-              shadowRadius={10}
+              shadowRadius="$r3"
               shadowColor="$interactiveOnBaseBrandDefault"
               gap={ms(10)}
             >
@@ -89,10 +89,10 @@ export default function AddCrypto() {
                 backgroundColor="$interactiveBaseSuccessSoftDefault"
                 justifyContent="center"
                 alignItems="center"
-                borderTopLeftRadius={8}
-                borderBottomLeftRadius={8}
+                borderTopLeftRadius="$r3"
+                borderBottomLeftRadius="$r3"
               >
-                <Info size={ms(24)} color={theme.interactiveOnBaseSuccessSoft.get() as string} />
+                <Info size={ms(24)} color={theme.interactiveOnBaseSuccessSoft.get()} />
               </View>
 
               <Text fontSize={ms(15)} color="$uiSuccessPrimary">
@@ -106,7 +106,7 @@ export default function AddCrypto() {
               borderBottomColor="$borderNeutralSoft"
               paddingBottom={ms(20)}
             >
-              <Text fontSize={ms(15)} color="$uiSecondary" fontWeight="bold">
+              <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
                 Your address
               </Text>
               <View flexDirection="row" justifyContent="space-between" alignItems="center">
@@ -114,7 +114,7 @@ export default function AddCrypto() {
                   <Text fontSize={ms(18)} color="$uiPrimary" fontWeight="bold">
                     0xfdrc.exa.eth
                   </Text>
-                  <Text fontSize={ms(14)} color="$uiSecondary" fontWeight="bold">
+                  <Text fontSize={ms(14)} color="$uiNeutralSecondary" fontWeight="bold">
                     0x0d283d19...4d6afabef0
                   </Text>
                 </View>
@@ -123,16 +123,16 @@ export default function AddCrypto() {
                     width={ms(24)}
                     height={ms(24)}
                     backgroundColor="$interactiveBaseBrandDefault"
-                    borderRadius={ms(4)}
+                    borderRadius="$r2"
                     alignContent="center"
                     alignItems="center"
                   >
                     <StyledPressable onPress={finish}>
-                      <QrCode size={ms(24)} color={theme.interactiveOnBrandDefault.get() as string} />
+                      <QrCode size={ms(24)} color={theme.interactiveOnBaseBrandDefault.get()} />
                     </StyledPressable>
                   </View>
-                  <Files size={ms(24)} color={theme.interactiveBaseBrandDefault.get() as string} />
-                  <Export size={ms(24)} color={theme.interactiveBaseBrandDefault.get() as string} />
+                  <Files size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
+                  <Export size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
                 </View>
               </View>
             </View>
@@ -144,10 +144,10 @@ export default function AddCrypto() {
               paddingBottom={ms(20)}
             >
               <View flexDirection="row" justifyContent="space-between">
-                <Text fontSize={ms(15)} color="$uiSecondary" fontWeight="bold">
+                <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
                   Supported Assets
                 </Text>
-                <Text fontSize={ms(15)} color="$uiSecondary" fontWeight="bold">
+                <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
                   APR
                 </Text>
               </View>
@@ -160,12 +160,12 @@ export default function AddCrypto() {
                       <Text fontSize={ms(18)} color="$uiPrimary" fontWeight="bold">
                         {symbol}
                       </Text>
-                      <Text fontSize={ms(13)} color="$uiSecondary">
+                      <Text fontSize={ms(13)} color="$uiNeutralSecondary">
                         {name}
                       </Text>
                     </View>
                     <View>
-                      <Text textAlign="right" fontSize={ms(18)} color="$textBrand" fontWeight="bold">
+                      <Text textAlign="right" fontSize={ms(18)} color="$uiBrandPrimary" fontWeight="bold">
                         {apr}%
                       </Text>
                     </View>
@@ -174,7 +174,7 @@ export default function AddCrypto() {
               })}
             </View>
             <View flex={1} gap={ms(15)}>
-              <Text fontSize={ms(15)} color="$uiSecondary" fontWeight="bold">
+              <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
                 Network
               </Text>
               <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
@@ -183,7 +183,7 @@ export default function AddCrypto() {
                   <Text fontSize={ms(18)} color="$uiPrimary" fontWeight="bold">
                     Optimism
                   </Text>
-                  <Text fontSize={ms(13)} color="$uiSecondary">
+                  <Text fontSize={ms(13)} color="$uiNeutralSecondary">
                     OP Mainnet
                   </Text>
                 </View>
@@ -193,7 +193,7 @@ export default function AddCrypto() {
                   <Text color="$uiNeutralPlaceholder" lineHeight={ms(16)}>
                     Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
                     loss of funds.{" "}
-                    <Text color={theme.uiBrandSecondary.get() as string} fontSize={ms(13)} fontWeight="bold">
+                    <Text color={theme.uiBrandSecondary.get()} fontSize={ms(13)} fontWeight="bold">
                       Learn more about adding funds.
                     </Text>
                   </Text>

@@ -18,7 +18,14 @@ export default function Balance() {
   return (
     <View display="flex" gap={ms(20)}>
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
-        <Text fontSize={15} lineHeight={21} fontWeight="bold" color="$uiSecondary" textAlign="center" width="100%">
+        <Text
+          fontSize={15}
+          lineHeight={21}
+          fontWeight="bold"
+          color="$uiNeutralSecondary"
+          textAlign="center"
+          width="100%"
+        >
           Balance
         </Text>
       </View>
@@ -30,9 +37,9 @@ export default function Balance() {
             </Text>
             <ButtonIcon>
               {isOpen ? (
-                <CaretUp size={ms(32)} color={theme.uiBrandSecondary.val as string} weight="bold" />
+                <CaretUp size={ms(32)} color={theme.uiBrandSecondary.val} weight="bold" />
               ) : (
-                <CaretDown size={ms(32)} color={theme.uiBrandSecondary.val as string} weight="bold" />
+                <CaretDown size={ms(32)} color={theme.uiBrandSecondary.val} weight="bold" />
               )}
             </ButtonIcon>
           </View>

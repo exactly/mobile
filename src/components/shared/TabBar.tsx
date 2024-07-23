@@ -47,11 +47,11 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
                 <ButtonIcon>
                   {icon?.({
                     focused: isFocused,
-                    color: isFocused ? (theme.textBrandPrimary.val as string) : (theme.textSecondary.val as string),
+                    color: isFocused ? theme.uiBrandPrimary.val : theme.uiNeutralSecondary.val,
                     size: vs(24),
                   })}
                 </ButtonIcon>
-                <Text color={isFocused ? theme.textBrandPrimary : theme.textSecondary}>{label}</Text>
+                <Text color={isFocused ? theme.uiBrandPrimary : theme.uiNeutralSecondary}>{label}</Text>
               </View>
             </StyledPressable>
           );

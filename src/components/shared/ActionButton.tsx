@@ -19,7 +19,7 @@ export default function ActionButton({ content, Icon, secondary, ...rest }: Acti
     if (disabled) {
       return {
         backgroundColor: "$interactiveDisabled",
-        textColor: theme.interactiveOnDisabled.get() as string,
+        textColor: theme.interactiveOnDisabled.get(),
       };
     }
 
@@ -52,7 +52,7 @@ export default function ActionButton({ content, Icon, secondary, ...rest }: Acti
             gap={ms(10)}
             height={ms(64)}
             paddingHorizontal={ms(20)}
-            borderRadius={10}
+            borderRadius="$r3"
             minWidth={ms(150)}
             maxHeight={ms(64)}
           >

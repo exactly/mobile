@@ -31,15 +31,15 @@ export default function Home() {
               renderAction={
                 <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
-                    <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
+                    <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
+                    <CaretRight size={14} color={theme.interactiveTextBrandDefault.get()} weight="bold" />
                   </View>
                 </Pressable>
               }
             >
-              <Text textAlign="center" fontSize={15} color="$uiSecondary">
+              <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
                 Learn more about your credit limit.
               </Text>
             </InfoPreview>
@@ -48,15 +48,15 @@ export default function Home() {
               renderAction={
                 <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
-                    <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
+                    <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
+                    <CaretRight size={14} color={theme.interactiveTextBrandDefault.get()} weight="bold" />
                   </View>
                 </Pressable>
               }
             >
-              <Text textAlign="center" fontSize={15} color="$uiSecondary">
+              <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
                 No funds to spend.
               </Text>
             </InfoPreview>
@@ -65,15 +65,15 @@ export default function Home() {
               renderAction={
                 <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
-                    <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
+                    <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
+                    <CaretRight size={14} color={theme.interactiveTextBrandDefault.get()} weight="bold" />
                   </View>
                 </Pressable>
               }
             >
-              <Text textAlign="center" fontSize={15} color="$uiSecondary">
+              <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
                 There are no installments to show yet.
               </Text>
             </InfoPreview>
@@ -83,10 +83,10 @@ export default function Home() {
               renderAction={
                 <Pressable>
                   <View flexDirection="row" gap={2} alignItems="center">
-                    <Text color="$textBrand" fontSize={14} lineHeight={18} fontWeight="bold">
+                    <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <CaretRight size={14} color={theme.textBrand.get() as string} weight="bold" />
+                    <CaretRight size={14} color={theme.interactiveTextBrandDefault.get()} weight="bold" />
                   </View>
                 </Pressable>
               }

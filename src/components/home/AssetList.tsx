@@ -72,7 +72,7 @@ export default function AssetList() {
                 <Text fontSize={ms(15)} color="$uiPrimary" fontWeight="bold">
                   {ticker}
                 </Text>
-                <Text fontSize={ms(12)} color="$uiSecondary">
+                <Text fontSize={ms(12)} color="$uiNeutralSecondary">
                   {apr}% APR
                 </Text>
               </View>
@@ -84,7 +84,7 @@ export default function AssetList() {
                   ${Intl.NumberFormat("en-US").format(usdValue)}
                 </Text>
               </View>
-              <Text fontSize={ms(12)} color="$uiSecondary" textAlign="right">
+              <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
                 {balance} {ticker}
               </Text>
             </View>
@@ -101,9 +101,9 @@ export default function AssetList() {
               </View>
               <View flexDirection="row" justifyContent="flex-end" gap={ms(5)}>
                 {change.percentage < 0 ? (
-                  <TrendDown size={20} color={theme.interactiveOnBaseErrorSoft.val as string} />
+                  <TrendDown size={20} color={theme.interactiveOnBaseErrorSoft.val} />
                 ) : (
-                  <TrendUp size={20} color={theme.uiSuccessSecondary.val as string} />
+                  <TrendUp size={20} color={theme.uiSuccessSecondary.val} />
                 )}
                 <Text fontSize={ms(15)} color={change.percentage < 0 ? "$uiErrorPrimary" : "$uiSuccessSecondary"}>
                   {change.percentage}%

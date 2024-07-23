@@ -9,13 +9,20 @@ import { Spinner, Text, View, useTheme } from "tamagui";
 interface DelayedActionButtonProperties {
   content: string;
   isLoading?: boolean;
+  loadingContent?: string;
   Icon?: React.FC<IconProps>;
   onPress: () => void;
 }
 
-export default function DelayedActionButton({ content, onPress, Icon, isLoading }: DelayedActionButtonProperties) {
+export default function DelayedActionButton({
+  content,
+  onPress,
+  Icon,
+  isLoading,
+  loadingContent,
+}: DelayedActionButtonProperties) {
   const theme = useTheme();
-  const color = theme.interactiveBaseBrandPressed.get() as string;
+  const color = theme.interactiveBaseBrandPressed.get();
   const fillAnim = useSharedValue(0);
 
   const handlePressIn = () => {
@@ -41,7 +48,7 @@ export default function DelayedActionButton({ content, onPress, Icon, isLoading 
 
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
-      <View borderRadius={10} height={ms(56)} overflow="hidden" position="relative">
+      <View borderRadius="$r3" height={ms(56)} overflow="hidden" position="relative">
         <View
           alignItems="center"
           flexDirection="row"
@@ -50,7 +57,7 @@ export default function DelayedActionButton({ content, onPress, Icon, isLoading 
           paddingHorizontal={ms(20)}
           position="relative"
           $platform-android={{
-            backgroundColor: theme.interactiveBaseBrandDefault.val as string,
+            backgroundColor: theme.interactiveBaseBrandDefault.val,
           }}
           $platform-ios={{
             backgroundColor: "$interactiveBaseBrandDefault",
@@ -69,11 +76,11 @@ export default function DelayedActionButton({ content, onPress, Icon, isLoading 
           paddingHorizontal={ms(20)}
           gap={ms(10)}
         >
-          <Text fontSize={ms(14)} fontWeight={600} color="$textInteractiveBaseBrandDefault">
-            {isLoading ? "Creating account..." : content}
+          <Text fontSize={ms(14)} fontWeight={600} color="$interactiveOnBaseBrandDefault">
+            {isLoading ? loadingContent : content}
           </Text>
-          {isLoading && <Spinner color="$textInteractiveBaseBrandDefault" />}
-          {!isLoading && Icon && <Icon color={theme.interactiveBaseBrandSoftDefault.get() as string} weight="bold" />}
+          {isLoading && <Spinner color="$interactiveOnBaseBrandDefault" />}
+          {!isLoading && Icon && <Icon color={theme.interactiveBaseBrandSoftDefault.get()} weight="bold" />}
         </View>
         <View
           alignItems="center"

@@ -52,7 +52,7 @@ function PaginationComponent({
   }, [progress, x]);
 
   return (
-    <AnimatedView borderRadius={5} height={4} marginHorizontal={5} style={rPaginatorStyle}>
+    <AnimatedView borderRadius="$r2" height={4} marginHorizontal={5} style={rPaginatorStyle}>
       <AnimatedView style={[StyleSheet.absoluteFill, rFillStyle]} />
     </AnimatedView>
   );
@@ -75,7 +75,7 @@ export default memo(function Pagination({ length, x, progress }: PaginationPrope
             index={index}
             x={x}
             progress={progress}
-            activeColor={theme.interactiveBaseBrandDefault.val as string}
+            activeColor={theme.interactiveBaseBrandDefault.val}
           />
         );
       })}
