@@ -19,6 +19,8 @@ import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
 import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
+import usePreviewerStore from "../stores/usePreviewerStore";
+import handleError from "../utils/handleError";
 import useOneSignal from "../utils/useOneSignal";
 import wagmiConfig from "../utils/wagmi";
 
@@ -40,6 +42,7 @@ const useServerFonts = typeof window === "undefined" ? useFonts : () => {};
 
 export default wrap(function App() {
   const navigationContainer = useNavigationContainerRef();
+  const fetch = usePreviewerStore((state) => state.fetch);
   useOneSignal();
   useServerFonts({
     "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
@@ -52,6 +55,10 @@ export default wrap(function App() {
   useEffect(() => {
     routingInstrumentation.registerNavigationContainer(navigationContainer);
   }, [navigationContainer]);
+
+  useEffect(() => {
+    fetch().catch(handleError);
+  }, [fetch]);
 
   return (
     <>

@@ -1,19 +1,12 @@
-import { readContract, getAccount } from "@wagmi/core";
 import { CaretRight } from "phosphor-react-native";
-import React, { useEffect } from "react";
+import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
-import { zeroAddress } from "viem";
 
 import Balance from "./Balance";
 import HomeActions from "./HomeActions";
 import LatestActivity from "./LatestActivity";
-import { previewerAbi, previewerAddress } from "../../generated/contracts";
-import type { PreviewerData } from "../../stores/usePreviewerStore";
-import usePreviewerStore from "../../stores/usePreviewerStore";
-import handleError from "../../utils/handleError";
-import wagmiConfig from "../../utils/wagmi";
 import AlertBadge from "../shared/AlertBadge";
 import BaseLayout from "../shared/BaseLayout";
 import InfoPreview from "../shared/InfoPreview";
@@ -22,27 +15,6 @@ import SafeView from "../shared/SafeView";
 
 export default function Home() {
   const theme = useTheme();
-  const { setPreviewerData } = usePreviewerStore();
-
-  useEffect(() => {
-    const fetchPreviewer = async () => {
-      try {
-        const previewerData: PreviewerData = await readContract(wagmiConfig, {
-          address: previewerAddress,
-          abi: previewerAbi,
-          functionName: "exactly",
-          args: [getAccount(wagmiConfig).address || zeroAddress],
-        });
-
-        setPreviewerData(previewerData);
-      } catch (error) {
-        handleError(error);
-      }
-    };
-
-    fetchPreviewer().catch(handleError);
-  }, [setPreviewerData]);
-
   return (
     <SafeView paddingBottom={0}>
       <BaseLayout>
