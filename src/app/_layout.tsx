@@ -63,7 +63,7 @@ export default wrap(function App() {
   return (
     <>
       <StatusBar translucent={false} />
-      <TamaguiProvider config={tamaguiConfig}>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
             <GestureHandlerRootView>
