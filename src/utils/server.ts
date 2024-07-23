@@ -31,6 +31,11 @@ export function createCard(parameters: CreateCardParameters) {
   return auth("/cards", parameters);
 }
 
+export async function getPAN() {
+  const { url } = await auth<{ url: string }>("/pan");
+  return url;
+}
+
 async function accessToken() {
   try {
     return await loadAccessToken();
