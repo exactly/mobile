@@ -32,7 +32,6 @@ const IBMPlexMono = createFont({
 const tamaguiConfig = createTamagui({
   ...config,
   defaultFont: "body",
-  defaultProps: { color: "uiPrimary" },
   tokens,
   themes,
   fonts: { heading: BDOGrotesk, body: BDOGrotesk, mono: IBMPlexMono },
