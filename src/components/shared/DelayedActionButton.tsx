@@ -18,8 +18,8 @@ export default function DelayedActionButton({
   content,
   onPress,
   Icon,
-  isLoading,
-  loadingContent,
+  isLoading = false,
+  loadingContent = "Loading...",
 }: DelayedActionButtonProperties) {
   const theme = useTheme();
   const color = theme.interactiveBaseBrandPressed.get();
