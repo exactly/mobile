@@ -13,7 +13,6 @@ module.exports = {
     "plugin:import/recommended",
     "plugin:import/typescript",
     "plugin:prettier/recommended",
-    "plugin:require-extensions/recommended",
     "plugin:unicorn/recommended",
   ],
   rules: {
@@ -44,6 +43,7 @@ module.exports = {
         "plugin:react-native/all",
       ],
     },
+    { files: ["common/**", "server/**"], extends: ["plugin:require-extensions/recommended"] },
     {
       files: [...nodeFiles, "server/**"],
       extends: ["plugin:node/recommended"],
