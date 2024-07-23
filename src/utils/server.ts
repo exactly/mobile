@@ -1,5 +1,5 @@
 import rpId from "@exactly/common/rpId";
-import type { Base64URL, Passkey } from "@exactly/common/types";
+import type { Base64URL, CreateCardParameters, Passkey } from "@exactly/common/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type create, get } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
@@ -27,8 +27,8 @@ export function getCards() {
   return auth("/cards");
 }
 
-export function createCard(name: string) {
-  return auth("/cards", name);
+export function createCard(parameters: CreateCardParameters) {
+  return auth("/cards", parameters);
 }
 
 async function accessToken() {
