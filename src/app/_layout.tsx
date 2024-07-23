@@ -31,7 +31,7 @@ init({
 });
 const queryClient = new QueryClient();
 
-export default wrap(function RootLayout() {
+export default wrap(function App() {
   const navigationContainer = useNavigationContainerRef();
   useOneSignal();
 
