@@ -17,7 +17,7 @@ import signTransactionSync, { signerAddress } from "../utils/signTransactionSync
 
 const debug = createDebug("exa:server:event");
 
-export default async function handler({ method, body, headers }: VercelRequest, response: VercelResponse) {
+export default async function handler({ method, body }: VercelRequest, response: VercelResponse) {
   if (method !== "POST") return response.status(405).end("method not allowed");
 
   const payload = v.safeParse(Payload, body);
