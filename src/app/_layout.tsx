@@ -3,8 +3,8 @@ import "../utils/polyfill";
 import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { isRunningInExpoGo } from "expo";
-import { Slot, router, useNavigationContainerRef } from "expo-router";
 import { type FontSource, useFonts } from "expo-font";
+import { Slot, router, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -63,8 +63,9 @@ export default wrap(function App() {
 
   useEffect(() => {
     const handleOnboarding = async () => {
-      const pk = await loadPasskey().catch(handleError);
-      if (!pk) {
+      try {
+        await loadPasskey();
+      } catch {
         router.replace("onboarding");
       }
     };

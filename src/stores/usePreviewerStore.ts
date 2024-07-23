@@ -1,10 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getAccount, readContract } from "@wagmi/core";
+import { getAccount } from "@wagmi/core";
 import { zeroAddress, type ReadContractReturnType } from "viem";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-import { previewerAddress, previewerAbi } from "../generated/contracts";
+import type { previewerAbi } from "../generated/contracts";
+import { previewerAddress, readPreviewerExactly } from "../generated/contracts";
 import handleError from "../utils/handleError";
 import wagmiConfig from "../utils/wagmi";
 
@@ -21,13 +22,12 @@ export default create(
       data: undefined,
       fetch: async () => {
         try {
-          const previewerData = await readContract(wagmiConfig, {
-            address: previewerAddress,
-            abi: previewerAbi,
-            functionName: "exactly",
-            args: [getAccount(wagmiConfig).address || zeroAddress],
+          set({
+            data: await readPreviewerExactly(wagmiConfig, {
+              address: previewerAddress,
+              args: [getAccount(wagmiConfig).address || zeroAddress],
+            }),
           });
-          set({ data: previewerData });
         } catch (error) {
           handleError(error);
         }
