@@ -3,8 +3,8 @@ import "../utils/polyfill";
 import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { isRunningInExpoGo } from "expo";
+import { Slot, router, useNavigationContainerRef } from "expo-router";
 import { type FontSource, useFonts } from "expo-font";
-import { Slot, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -21,6 +21,7 @@ import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
 import usePreviewerStore from "../stores/usePreviewerStore";
 import handleError from "../utils/handleError";
+import loadPasskey from "../utils/loadPasskey";
 import useOneSignal from "../utils/useOneSignal";
 import wagmiConfig from "../utils/wagmi";
 
@@ -59,6 +60,16 @@ export default wrap(function App() {
   useEffect(() => {
     fetch().catch(handleError);
   }, [fetch]);
+
+  useEffect(() => {
+    const handleOnboarding = async () => {
+      const pk = await loadPasskey().catch(handleError);
+      if (!pk) {
+        router.replace("onboarding");
+      }
+    };
+    handleOnboarding().catch(handleError);
+  }, []);
 
   return (
     <>
