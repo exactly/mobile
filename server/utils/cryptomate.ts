@@ -5,7 +5,6 @@ if (!process.env.CRYPTOMATE_URL || !process.env.CRYPTOMATE_API_KEY) throw new Er
 const baseURL = process.env.CRYPTOMATE_URL;
 const apiKey = process.env.CRYPTOMATE_API_KEY;
 
-// eslint-disable-next-line import/prefer-default-export
 export function createCard({ cardholder, email, phone, limits }: CreateCardParameters) {
   return request(
     CreateCardResponse,
@@ -21,6 +20,10 @@ export function createCard({ cardholder, email, phone, limits }: CreateCardParam
       monthly_limit: limits.monthly,
     }),
   );
+}
+
+export function getPAN(cardId: string) {
+  return request(PANResponse, `/cards/virtual-cards/${cardId}/pan-html`);
 }
 
 async function request<TInput, TOutput, TIssue extends v.BaseIssue<unknown>>(
@@ -59,3 +62,5 @@ const CreateCardResponse = v.object({
   weekly_limit: v.number(),
   monthly_limit: v.number(),
 });
+
+const PANResponse = v.object({ url: v.pipe(v.string(), v.url()) });
