@@ -35,7 +35,10 @@ export default create(
     }),
     {
       name: "previewer",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => AsyncStorage, {
+        replacer: (_, value) => (typeof value === "bigint" ? `${value.toString()}n` : value),
+        reviver: (_, value) => (typeof value === "string" && /^\d+n$/.test(value) ? BigInt(value.slice(0, -1)) : value),
+      }),
     },
   ),
 );
