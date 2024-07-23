@@ -6,7 +6,7 @@ import { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reani
 import { ms } from "react-native-size-matters";
 import { useTheme, useWindowDimensions, View } from "tamagui";
 
-import AnimatedView from "../shared/AnimatedView.js";
+import AnimatedView from "../shared/AnimatedView";
 
 function PaginationComponent({
   index,

@@ -9,6 +9,11 @@ import {
   resolveProperties,
   toSmartContractAccount,
 } from "@alchemy/aa-core";
+import accountInitCode from "@exactly/common/accountInitCode";
+import alchemyGasPolicyId from "@exactly/common/alchemyGasPolicyId";
+import chain from "@exactly/common/chain";
+import rpId from "@exactly/common/rpId";
+import type { Passkey } from "@exactly/common/types";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import { base64URLStringToBuffer, bufferToBase64URLString } from "@simplewebauthn/browser";
@@ -30,15 +35,9 @@ import {
 } from "viem";
 import { ChainNotConfiguredError, createConnector } from "wagmi";
 
-import accountInitCode from "@exactly/common/accountInitCode";
-import alchemyGasPolicyId from "@exactly/common/alchemyGasPolicyId";
-import chain from "@exactly/common/chain";
-import rpId from "@exactly/common/rpId";
-import type { Passkey } from "@exactly/common/types";
-
-import createPasskey from "./createPasskey.js";
-import handleError from "./handleError.js";
-import loadPasskey from "./loadPasskey.js";
+import createPasskey from "./createPasskey";
+import handleError from "./handleError";
+import loadPasskey from "./loadPasskey";
 
 alchemyConnector.type = "alchemy" as const;
 export default function alchemyConnector(publicClient: ClientWithAlchemyMethods) {

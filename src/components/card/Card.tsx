@@ -4,12 +4,12 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme } from "tamagui";
 
-import CardActions from "./CardActions.js";
-import LatestActivity from "./LatestActivity.js";
-import SpendingLimitButton from "./SpendingLimitButton.js";
-import BaseLayout from "../shared/BaseLayout.js";
-import InfoPreview from "../shared/InfoPreview.js";
-import SafeView from "../shared/SafeView.js";
+import CardActions from "./CardActions";
+import LatestActivity from "./LatestActivity";
+import SpendingLimitButton from "./SpendingLimitButton";
+import BaseLayout from "../shared/BaseLayout";
+import InfoPreview from "../shared/InfoPreview";
+import SafeView from "../shared/SafeView";
 
 export default function Card() {
   const theme = useTheme();

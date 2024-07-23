@@ -6,9 +6,9 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, useTheme, Image } from "tamagui";
 
 import OptimismImage from "../../assets/images/optimism.svg";
-import BaseLayout from "../shared/BaseLayout.js";
-import SafeView from "../shared/SafeView.js";
-import StyledPressable from "../shared/StyledPressable.js";
+import BaseLayout from "../shared/BaseLayout";
+import SafeView from "../shared/SafeView";
+import StyledPressable from "../shared/StyledPressable";
 
 function back() {
   router.back();

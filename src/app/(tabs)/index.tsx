@@ -1,1 +1,1 @@
-export { default } from "../../components/home/Home.js";
+export { default } from "../../components/home/Home";

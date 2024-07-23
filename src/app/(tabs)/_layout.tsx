@@ -2,7 +2,7 @@ import { Tabs } from "expo-router";
 import { CoinVertical, CreditCard, House, Receipt } from "phosphor-react-native";
 import React from "react";
 
-import TabBar from "../../components/shared/TabBar.js";
+import TabBar from "../../components/shared/TabBar";
 
 const tabs = [
   { name: "index", title: "Home", Icon: House },

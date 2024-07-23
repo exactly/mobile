@@ -3,8 +3,8 @@ import React from "react";
 import { ms } from "react-native-size-matters";
 import { Button, Text, View } from "tamagui";
 
-import BaseLayout from "../shared/BaseLayout.js";
-import SafeView from "../shared/SafeView.js";
+import BaseLayout from "../shared/BaseLayout";
+import SafeView from "../shared/SafeView";
 
 const pressStyle = { backgroundColor: "$interactiveBaseBrandDefault", opacity: 0.9 };
 

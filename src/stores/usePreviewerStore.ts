@@ -1,7 +1,7 @@
 import type { ReadContractReturnType } from "viem";
 import { create } from "zustand";
 
-import type { previewerAbi } from "../generated/contracts.js";
+import type { previewerAbi } from "../generated/contracts";
 
 export type PreviewerData = ReadContractReturnType<typeof previewerAbi, "exactly", [`0x${string}`]>;
 

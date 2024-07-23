@@ -1,1 +1,1 @@
-export { default } from "../../components/onboarding/Onboarding.js";
+export { default } from "../../components/onboarding/Onboarding";

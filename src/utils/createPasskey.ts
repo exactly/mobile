@@ -1,10 +1,9 @@
+import { Passkey } from "@exactly/common/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "react-native-passkeys";
 import { parse } from "valibot";
 
-import { Passkey } from "@exactly/common/types";
-
-import { registrationOptions, verifyRegistration } from "./server.js";
+import { registrationOptions, verifyRegistration } from "./server";
 
 export default async function createPasskey() {
   const options = await registrationOptions();

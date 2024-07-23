@@ -6,7 +6,7 @@ import { Alert } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 
-import ActionButton from "../shared/ActionButton.js";
+import ActionButton from "../shared/ActionButton";
 
 const onAddFunds = () => {
   router.push("add-funds");

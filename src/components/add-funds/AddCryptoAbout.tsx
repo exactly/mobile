@@ -4,8 +4,8 @@ import React from "react";
 import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
 
-import SafeView from "../shared/SafeView.js";
-import StyledPressable from "../shared/StyledPressable.js";
+import SafeView from "../shared/SafeView";
+import StyledPressable from "../shared/StyledPressable";
 
 const close = () => {
   router.back();

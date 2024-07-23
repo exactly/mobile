@@ -1,4 +1,4 @@
-import "../utils/polyfill.js";
+import "../utils/polyfill";
 
 import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "@sentry/react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,9 +12,9 @@ import { TamaguiProvider } from "tamagui";
 import { WagmiProvider } from "wagmi";
 
 import metadata from "../../package.json";
-import tamaguiConfig from "../../tamagui.config.js";
-import useOneSignal from "../utils/useOneSignal.js";
-import wagmiConfig from "../utils/wagmi.js";
+import tamaguiConfig from "../../tamagui.config";
+import useOneSignal from "../utils/useOneSignal";
+import wagmiConfig from "../utils/wagmi";
 
 export { ErrorBoundary } from "expo-router";
 export const unstable_settings = { initialRouteName: "(tabs)" };

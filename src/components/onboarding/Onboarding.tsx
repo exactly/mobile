@@ -1,8 +1,8 @@
 import React from "react";
 
-import Carousel from "./Carousel.js";
-import BaseLayout from "../shared/BaseLayout.js";
-import SafeView from "../shared/SafeView.js";
+import Carousel from "./Carousel";
+import BaseLayout from "../shared/BaseLayout";
+import SafeView from "../shared/SafeView";
 
 export default function Onboarding() {
   return (

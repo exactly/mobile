@@ -1,1 +1,1 @@
-export { default } from "../../components/onboarding/Success.js";
+export { default } from "../../components/onboarding/Success";

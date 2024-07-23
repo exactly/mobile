@@ -3,8 +3,8 @@ import React from "react";
 import { ms, vs } from "react-native-size-matters";
 import { View, Text, ButtonIcon, useTheme } from "tamagui";
 
-import SafeView from "./SafeView.js";
-import StyledPressable from "./StyledPressable.js";
+import SafeView from "./SafeView";
+import StyledPressable from "./StyledPressable";
 
 export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const theme = useTheme();

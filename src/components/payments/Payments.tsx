@@ -1,8 +1,8 @@
 import React from "react";
 import { Text } from "tamagui";
 
-import BaseLayout from "../shared/BaseLayout.js";
-import SafeView from "../shared/SafeView.js";
+import BaseLayout from "../shared/BaseLayout";
+import SafeView from "../shared/SafeView";
 
 export default function Payments() {
   return (

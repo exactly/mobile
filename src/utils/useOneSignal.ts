@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import type OneSignalNative from "react-native-onesignal";
 import type OneSignalWeb from "react-onesignal";
 
-import handleError from "./handleError.js";
+import handleError from "./handleError";
 
 const appId = process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID;
 

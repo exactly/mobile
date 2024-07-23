@@ -1,11 +1,10 @@
 import { createAlchemyPublicRpcClient } from "@alchemy/aa-alchemy";
+import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
+import chain from "@exactly/common/chain";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createConfig, createStorage, custom } from "wagmi";
 
-import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
-import chain from "@exactly/common/chain";
-
-import alchemyConnector from "./alchemyConnector.js";
+import alchemyConnector from "./alchemyConnector";
 
 const publicClient = createAlchemyPublicRpcClient({ chain, connectionConfig: { apiKey: alchemyAPIKey } });
 

@@ -4,8 +4,8 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View, Text, ButtonIcon, useTheme } from "tamagui";
 
-import AssetChange from "./AssetChange.js";
-import AssetList from "./AssetList.js";
+import AssetChange from "./AssetChange";
+import AssetList from "./AssetList";
 
 export default function Balance() {
   const theme = useTheme();

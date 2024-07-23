@@ -1,1 +1,1 @@
-export { default } from "../../components/add-funds/AddCrypto.js";
+export { default } from "../../components/add-funds/AddCrypto";
