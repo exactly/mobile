@@ -6,16 +6,13 @@ module.exports = {
   parserOptions: { project: ["tsconfig.json", "tsconfig.node.json", "server/tsconfig.json"] },
   settings: { react: { version: "detect" }, "import/resolver": "typescript" },
   extends: [
-    "universe/native",
+    "universe",
     "eslint:recommended",
     "plugin:@typescript-eslint/strict-type-checked",
     "plugin:eslint-comments/recommended",
     "plugin:import/recommended",
     "plugin:import/typescript",
     "plugin:prettier/recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:react-native/all",
     "plugin:require-extensions/recommended",
     "plugin:unicorn/recommended",
   ],
@@ -38,6 +35,15 @@ module.exports = {
     "unicorn/switch-case-braces": ["error", "avoid"], // consistently avoid braces
   },
   overrides: [
+    {
+      files: ["src/**"],
+      extends: [
+        "universe/native",
+        "plugin:react/recommended",
+        "plugin:react-hooks/recommended",
+        "plugin:react-native/all",
+      ],
+    },
     {
       files: [...nodeFiles, "server/**"],
       extends: ["plugin:node/recommended"],
