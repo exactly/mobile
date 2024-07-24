@@ -2,6 +2,7 @@ import React from "react";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View } from "tamagui";
 
+import ContractUtils from "./ContractUtils";
 import PasskeyUtils from "./PasskeyUtils";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
@@ -16,6 +17,7 @@ export default function Payments() {
               Payments
             </Text>
             <PasskeyUtils />
+            <ContractUtils />
           </View>
         </BaseLayout>
       </ScrollView>
