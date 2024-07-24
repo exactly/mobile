@@ -8,6 +8,9 @@
       },
       "ios": {
         "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_CHAIN_ID": "10"
       }
     },
     "development": {
