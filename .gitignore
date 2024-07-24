@@ -19,6 +19,7 @@ generated/
 
 *.aab
 *.apk
+*.ipa
 
 *.log
 .vscode/
