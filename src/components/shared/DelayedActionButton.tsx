@@ -56,12 +56,7 @@ export default function DelayedActionButton({
           justifyContent="space-between"
           paddingHorizontal={ms(20)}
           position="relative"
-          $platform-android={{
-            backgroundColor: theme.interactiveBaseBrandDefault.val,
-          }}
-          $platform-ios={{
-            backgroundColor: "$interactiveBaseBrandDefault",
-          }}
+          backgroundColor="$interactiveBaseBrandDefault"
         />
         <Animated.View style={[StyleSheet.absoluteFillObject, animatedStyle]} />
 
