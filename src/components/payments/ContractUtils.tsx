@@ -1,9 +1,11 @@
+import * as Clipboard from "expo-clipboard";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
 import { View, Text, Spinner, Button } from "tamagui";
 import { useAccount, useWriteContract } from "wagmi";
 
 import { auditorAddress, marketUSDCAddress, useSimulateAuditorEnterMarket } from "../../generated/contracts";
+import handleError from "../../utils/handleError";
 
 const pressStyle = { backgroundColor: "$interactiveBaseBrandDefault", opacity: 0.9 };
 
@@ -19,6 +21,10 @@ export default function PasskeyUtils() {
     if (!enterUSDCSimulation) throw new Error("no simulation");
     writeContract(enterUSDCSimulation.request);
   }, [enterUSDCSimulation, writeContract]);
+  const copy = () => {
+    if (!txHash) return;
+    Clipboard.setStringAsync(txHash).catch(handleError);
+  };
   return (
     <View gap={ms(10)}>
       <Text fontSize={ms(16)} color="$uiNeutralPrimary" fontWeight="bold">
@@ -51,6 +57,21 @@ export default function PasskeyUtils() {
         >
           Simulate enter USDC market
         </Button>
+        {txHash && (
+          <Button
+            borderRadius="$r2"
+            variant="outlined"
+            backgroundColor="$interactiveBaseBrandDefault"
+            color="$interactiveOnBaseBrandDefault"
+            onPress={copy}
+            fontWeight="bold"
+            pressStyle={pressStyle}
+            padding={ms(10)}
+            flex={1}
+          >
+            Copy tx hash
+          </Button>
+        )}
       </View>
     </View>
   );
