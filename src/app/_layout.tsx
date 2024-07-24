@@ -4,7 +4,7 @@ import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { isRunningInExpoGo } from "expo";
 import { type FontSource, useFonts } from "expo-font";
-import { Slot, router, useNavigationContainerRef } from "expo-router";
+import { Slot, SplashScreen, router, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -25,6 +25,8 @@ import loadPasskey from "../utils/loadPasskey";
 import useOneSignal from "../utils/useOneSignal";
 import wagmiConfig from "../utils/wagmi";
 
+SplashScreen.preventAutoHideAsync().catch(handleError);
+
 export { ErrorBoundary } from "expo-router";
 export const unstable_settings = { initialRouteName: "(tabs)" };
 const routingInstrumentation = new ReactNavigationInstrumentation();
@@ -44,6 +46,14 @@ const useServerFonts = typeof window === "undefined" ? useFonts : () => {};
 export default wrap(function App() {
   const navigationContainer = useNavigationContainerRef();
   const fetch = usePreviewerStore((state) => state.fetch);
+  queryClient
+    .fetchQuery({ queryKey: ["passkey"], queryFn: loadPasskey })
+    .catch(() => {
+      router.replace("onboarding");
+    })
+    .finally(() => {
+      SplashScreen.hideAsync().catch(handleError);
+    });
   useOneSignal();
   useServerFonts({
     "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
@@ -60,17 +70,6 @@ export default wrap(function App() {
   useEffect(() => {
     fetch().catch(handleError);
   }, [fetch]);
-
-  useEffect(() => {
-    const handleOnboarding = async () => {
-      try {
-        await loadPasskey();
-      } catch {
-        router.replace("onboarding");
-      }
-    };
-    handleOnboarding().catch(handleError);
-  }, []);
 
   return (
     <>
