@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { eq } from "drizzle-orm";
 import { parse } from "valibot";
 
-import database, { cards } from "../database/index.js";
+import database, { cards, credentials } from "../database/index.js";
 import auth from "../middleware/auth.js";
 import cors from "../middleware/cors.js";
 import { createCard } from "../utils/cryptomate.js";
@@ -22,6 +22,12 @@ export default cors(
           .end();
       case "POST":
         try {
+          const credential = await database.query.credentials.findFirst({
+            columns: { kyc: true },
+            where: eq(credentials.id, credentialId),
+          });
+          if (!credential) return response.status(404).end("credential not found");
+          if (!credential.kyc) return response.status(403).end("kyc required");
           const card = await createCard(parse(CreateCardParameters, body));
           await database.insert(cards).values([{ id: card.id, lastFour: card.last4, credentialId }]);
           return response.json(card);
