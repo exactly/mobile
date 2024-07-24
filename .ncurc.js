@@ -6,6 +6,7 @@ module.exports = {
     "eslint",
     "expo-application",
     "expo-build-properties",
+    "expo-clipboard",
     "expo-constants",
     "expo-device",
     "expo-font",
