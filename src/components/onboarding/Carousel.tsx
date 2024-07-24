@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { ArrowRight } from "phosphor-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, type ViewToken } from "react-native";
+import { Platform, Pressable, type ViewToken } from "react-native";
 import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
@@ -129,11 +129,12 @@ export default function Carousel() {
         scrollEventThrottle={16}
         data={pages}
         keyExtractor={(_, index) => index.toString()}
-        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 80 }}
+        viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
         renderItem={renderItem}
         onViewableItemsChanged={onViewableItemsChanged}
         horizontal
-        pagingEnabled
+        onScrollToIndexFailed={() => {}}
+        pagingEnabled={Platform.OS !== "web"}
         bounces={false}
         showsHorizontalScrollIndicator={false}
       />
