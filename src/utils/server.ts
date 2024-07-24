@@ -1,6 +1,7 @@
 import rpId from "@exactly/common/rpId";
 import type { Base64URL, CreateCardParameters, Passkey } from "@exactly/common/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import { type create, get } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 import { type InferOutput, check, number, object, parse, pipe, regex, string } from "valibot";
@@ -48,6 +49,7 @@ async function createAccessToken() {
   const { credentialId } = await loadPasskey();
   const query = `?credentialId=${credentialId}`;
   const options = await server<Parameters<typeof get>[0]>(`/auth/authentication${query}`);
+  if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
   const assertion = await get(options);
   if (!assertion) throw new Error("bad assertion");
   const jwt = await server<InferOutput<typeof JWT>>(`/auth/authentication${query}`, { body: assertion });

@@ -17,6 +17,7 @@ import type { Passkey } from "@exactly/common/types";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import { base64URLStringToBuffer, bufferToBase64URLString } from "@simplewebauthn/browser";
+import { Platform } from "react-native";
 import { get } from "react-native-passkeys";
 import {
   type Chain,
@@ -59,7 +60,7 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
           const credential = await get({
             rpId,
             challenge: bufferToBase64URLString(hexToBytes(hashMessage({ raw: uoHash }), { size: 32 })),
-            allowCredentials: [{ id: credentialId, type: "public-key" }],
+            allowCredentials: Platform.OS === "android" ? [] : [{ id: credentialId, type: "public-key" }], // HACK fix android credential filtering
             userVerification: "preferred",
           });
           if (!credential) throw new Error("no credential");
