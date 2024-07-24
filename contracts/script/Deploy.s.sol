@@ -41,7 +41,7 @@ contract DeployScript is BaseScript {
 
     factory.addStake{ value: 0.1 ether }(1 days, 0.1 ether);
 
-    exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), msg.sender);
+    exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), vm.envAddress("KEEPER_ADDRESS"));
 
     vm.stopBroadcast();
   }
