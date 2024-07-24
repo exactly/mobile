@@ -23,6 +23,7 @@ export default cors(
       case "POST":
         try {
           const card = await createCard(parse(CreateCardParameters, body));
+          await database.insert(cards).values([{ id: card.id, lastFour: card.last4, credentialId }]);
           return response.json(card);
         } catch (error) {
           return response.status(500).end(error instanceof Error ? error.message : error);
