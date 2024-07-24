@@ -9,6 +9,7 @@
     "web": "expo start --web",
     "server": "vercel dev",
     "prepare": "bun --bun wagmi generate",
+    "eas-build-pre-install": "export FOUNDRY_DIR=${FOUNDRY_DIR-$HOME/workingdir} && curl -L https://foundry.paradigm.xyz | bash || true && foundryup",
     "test": "concurrently 'npm:test:*' --group -c auto",
     "test:ts:expo": "tsc",
     "test:ts:node": "tsc -p tsconfig.node.json",
