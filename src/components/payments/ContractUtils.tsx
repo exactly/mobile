@@ -55,21 +55,21 @@ export default function PasskeyUtils() {
           padding={ms(10)}
           flex={1}
         >
-          Simulate enter USDC market
+          Enter USDC market
         </Button>
         {txHash && (
           <Button
             borderRadius="$r2"
             variant="outlined"
-            backgroundColor="$interactiveBaseBrandDefault"
-            color="$interactiveOnBaseBrandDefault"
+            backgroundColor="$interactiveBaseBrandSoftDefault"
+            color="$interactiveOnBaseBrandSoft"
             onPress={copy}
             fontWeight="bold"
             pressStyle={pressStyle}
             padding={ms(10)}
             flex={1}
           >
-            Copy tx hash
+            Copy
           </Button>
         )}
       </View>
