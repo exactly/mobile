@@ -20,6 +20,17 @@ module.exports = {
           : module,
         platform,
       ),
+    blockList: [
+      ...((config.resolver?.blockList &&
+        (Array.isArray(config.resolver.blockList) ? config.resolver.blockList : [config.resolver.blockList])) ??
+        []),
+      new RegExp(`${__dirname}/\\.\\w+/`),
+      new RegExp(`${__dirname}/android/`),
+      new RegExp(`${__dirname}/contracts/`),
+      new RegExp(`${__dirname}/dist/`),
+      new RegExp(`${__dirname}/ios/`),
+      new RegExp(`${__dirname}/server/`),
+    ],
   },
   transformer: {
     ...config.transformer,
