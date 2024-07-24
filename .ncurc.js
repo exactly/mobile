@@ -25,6 +25,7 @@ module.exports = {
     "react-native-safe-area-context",
     "react-native-screens",
     "react-native-svg",
+    "react-native-webview",
     "sharp-cli",
     "typescript",
   ],
