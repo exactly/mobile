@@ -11,15 +11,15 @@
   "dependencies": {
     "modular-account": "alchemyplatform/modular-account#c81e712",
     "modular-account-libs": "erc6900/modular-account-libs#v0.7.1",
-    "openzeppelin-contracts": "openzeppelin/openzeppelin-contracts#e30b390",
+    "openzeppelin-contracts": "openzeppelin/openzeppelin-contracts#659f306",
     "solady": "^0.0.227",
-    "webauthn-owner-plugin": "exactly/webauthn-owner-plugin#38db52d",
+    "webauthn-owner-plugin": "exactly/webauthn-owner-plugin#a8df209",
     "webauthn-sol": "base-org/webauthn-sol"
   },
   "devDependencies": {
     "account-abstraction": "eth-infinitism/account-abstraction#v0.6.0",
     "forge-std": "foundry-rs/forge-std#v1.9.1",
-    "fresh-crypto-lib": "rdubois-crypto/FreshCryptoLib",
+    "fresh-crypto-lib": "rdubois-crypto/FreshCryptoLib#fd2a0e6",
     "concurrently": "^8.2.2",
     "solhint": "^5.0.1"
   }
