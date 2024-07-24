@@ -1,11 +1,11 @@
 import { defineConfig, type Plugin } from "@wagmi/cli";
 import { actions, foundry, react } from "@wagmi/cli/plugins";
 import { type Abi, type Address, getAddress } from "viem";
-import { optimismSepolia } from "viem/chains";
+import { optimism, optimismSepolia } from "viem/chains";
 
 import chain from "@exactly/common/chain.ts";
 
-const network = { [optimismSepolia.id]: "op-sepolia" }[chain.id] ?? chain.name;
+const network = { [optimism.id]: "optimism", [optimismSepolia.id]: "op-sepolia" }[chain.id] ?? chain.name;
 
 const [
   auditor,
