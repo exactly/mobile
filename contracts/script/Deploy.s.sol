@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 import { LibString } from "solady/utils/LibString.sol";
 
-import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Deploy.s.sol";
+import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factory.s.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin, IAuditor } from "../src/ExaPlugin.sol";
 
-import { BaseScript, Vm, stdJson } from "./Base.s.sol";
+import { BaseScript, stdJson } from "./Base.s.sol";
 
 contract DeployScript is BaseScript {
   using LibString for uint256;
@@ -21,11 +21,12 @@ contract DeployScript is BaseScript {
   IAuditor public auditor;
 
   function setUp() external {
-    Vm.DirEntry[] memory broadcasts = vm.readDir(
-      string.concat("../node_modules/webauthn-owner-plugin/broadcast/Deploy.s.sol/", block.chainid.toString())
-    );
     ownerPlugin = WebauthnOwnerPlugin(
-      payable(vm.readFile(broadcasts[broadcasts.length - 1].path).readAddress(".transactions[0].contractAddress"))
+      vm.readFile(
+        string.concat(
+          "../node_modules/webauthn-owner-plugin/broadcast/Plugin.s.sol/", block.chainid.toString(), "/run-latest.json"
+        )
+      ).readAddress(".transactions[0].contractAddress")
     );
     auditor = IAuditor(protocol("Auditor"));
   }
