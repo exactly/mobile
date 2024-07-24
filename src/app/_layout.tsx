@@ -46,14 +46,16 @@ const useServerFonts = typeof window === "undefined" ? useFonts : () => {};
 export default wrap(function App() {
   const navigationContainer = useNavigationContainerRef();
   const fetch = usePreviewerStore((state) => state.fetch);
-  queryClient
-    .fetchQuery({ queryKey: ["passkey"], queryFn: loadPasskey })
-    .catch(() => {
-      router.replace("onboarding");
-    })
-    .finally(() => {
-      SplashScreen.hideAsync().catch(handleError);
-    });
+  if (typeof window !== "undefined") {
+    queryClient
+      .fetchQuery({ queryKey: ["passkey"], queryFn: loadPasskey })
+      .catch(() => {
+        router.replace("onboarding");
+      })
+      .finally(() => {
+        SplashScreen.hideAsync().catch(handleError);
+      });
+  }
   useOneSignal();
   useServerFonts({
     "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
