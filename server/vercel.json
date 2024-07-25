@@ -4,7 +4,10 @@
   "outputDirectory": "/",
   "trailingSlash": false,
   "cleanUrls": true,
-  "rewrites": [{ "source": "/:path((?!api/).*)", "destination": "/app/:path*" }],
+  "rewrites": [
+    { "source": "/.well-known/assetlinks.json", "destination": "/api/links/assetlinks" },
+    { "source": "/:path((?!api/).*)", "destination": "/app/:path*" }
+  ],
   "headers": [{ "source": "/.well-known/(.*)", "headers": [{ "key": "Content-Type", "value": "application/json" }] }],
   "$schema": "https://openapi.vercel.sh/vercel.json"
 }
