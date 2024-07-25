@@ -38,7 +38,7 @@ import { ChainNotConfiguredError, createConnector } from "wagmi";
 
 import createPasskey from "./createPasskey";
 import handleError from "./handleError";
-import loadPasskey from "./loadPasskey";
+import queryClient from "./queryClient";
 
 alchemyConnector.type = "alchemy" as const;
 export default function alchemyConnector(publicClient: ClientWithAlchemyMethods) {
@@ -105,7 +105,9 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
     type: alchemyConnector.type,
     async getAccounts() {
       try {
-        accountClient ??= await createAccountClient(await loadPasskey());
+        accountClient ??= await createAccountClient(
+          await queryClient.ensureQueryData<Passkey>({ queryKey: ["passkey"] }),
+        );
         return [accountClient.account.address];
       } catch {
         return [];
@@ -119,7 +121,7 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
       if (chainId && chainId !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());
       try {
         accountClient ??= await createAccountClient(
-          await loadPasskey().catch((error: unknown) => {
+          await queryClient.ensureQueryData<Passkey>({ queryKey: ["passkey"] }).catch((error: unknown) => {
             if (isReconnecting) throw error;
             return createPasskey();
           }),
