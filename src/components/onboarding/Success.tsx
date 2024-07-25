@@ -29,7 +29,7 @@ export default function Success() {
               Account created successfully!
             </Text>
 
-            <View flexDirection="column" gap={ms(10)}>
+            <View flexDirection="column" gap={ms(10)} paddingBottom={ms(30)}>
               <DelayedActionButton
                 content="Start account setup"
                 onPress={() => {
