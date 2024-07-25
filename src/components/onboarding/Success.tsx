@@ -34,7 +34,7 @@ export default function Success() {
                 content="Start account setup"
                 onPress={() => {
                   // TODO Implement account setup
-                  router.push("(tabs)");
+                  router.push("(app)");
                 }}
                 Icon={ArrowRight}
               />

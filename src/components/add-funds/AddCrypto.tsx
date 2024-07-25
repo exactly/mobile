@@ -19,7 +19,7 @@ function about() {
 }
 
 function finish() {
-  router.replace("(tabs)");
+  router.replace("(app)");
 }
 
 const supportedAssets = [

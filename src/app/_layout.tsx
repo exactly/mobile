@@ -1,10 +1,11 @@
 import "../utils/polyfill";
 
+import type { Passkey } from "@exactly/common/types";
 import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "@sentry/react-native";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { isRunningInExpoGo } from "expo";
 import { type FontSource, useFonts } from "expo-font";
-import { Slot, SplashScreen, router, useNavigationContainerRef } from "expo-router";
+import { Slot, SplashScreen, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -21,7 +22,6 @@ import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
 import usePreviewerStore from "../stores/usePreviewerStore";
 import handleError from "../utils/handleError";
-import loadPasskey from "../utils/loadPasskey";
 import queryClient from "../utils/queryClient";
 import useOneSignal from "../utils/useOneSignal";
 import wagmiConfig from "../utils/wagmi";
@@ -29,7 +29,6 @@ import wagmiConfig from "../utils/wagmi";
 SplashScreen.preventAutoHideAsync().catch(handleError);
 
 export { ErrorBoundary } from "expo-router";
-export const unstable_settings = { initialRouteName: "(tabs)" };
 const routingInstrumentation = new ReactNavigationInstrumentation();
 init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
@@ -42,9 +41,10 @@ init({
   integrations: [new ReactNativeTracing({ routingInstrumentation, enableNativeFramesTracking: !isRunningInExpoGo() })],
 });
 const useServerFonts = typeof window === "undefined" ? useFonts : () => {};
-queryClient.prefetchQuery({ queryKey: ["passkey"], queryFn: loadPasskey }).catch(handleError);
 
-export default wrap(function App() {
+queryClient.prefetchQuery<Passkey>({ queryKey: ["passkey"] }).catch(handleError);
+
+export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
   const fetch = usePreviewerStore((state) => state.fetch);
   useOneSignal();
@@ -55,15 +55,6 @@ export default wrap(function App() {
     "IBMPlexMono-Regular": IBMPlexMonoRegular as FontSource,
     "IBMPlexMono-SemiBold": IBMPlexMonoSemiBold as FontSource,
   });
-
-  queryClient
-    .fetchQuery({ queryKey: ["passkey"], queryFn: loadPasskey })
-    .catch(() => {
-      router.replace("onboarding");
-    })
-    .finally(() => {
-      SplashScreen.hideAsync().catch(handleError);
-    });
 
   useEffect(() => {
     routingInstrumentation.registerNavigationContainer(navigationContainer);
