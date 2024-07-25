@@ -7,7 +7,10 @@ export default defineConfig({
   schema: "database/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: parse(readFileSync(path.resolve(__dirname, "../.vercel/.env.development.local"))).POSTGRES_URL ?? "",
+    url:
+      process.env.POSTGRES_URL ||
+      parse(readFileSync(path.resolve(__dirname, "../.vercel/.env.development.local"))).POSTGRES_URL ||
+      "",
   },
   verbose: true,
   strict: true,
