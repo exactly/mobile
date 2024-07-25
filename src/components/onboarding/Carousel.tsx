@@ -122,7 +122,7 @@ export default function Carousel() {
   }, [activeIndex, progress, scrollToNextPage]);
 
   return (
-    <View flex={1}>
+    <View flex={1} paddingVertical={ms(10)}>
       <Animated.FlatList
         ref={flatListReference}
         onScroll={handleScroll}
@@ -138,7 +138,7 @@ export default function Carousel() {
         bounces={false}
         showsHorizontalScrollIndicator={false}
       />
-      <View flexDirection="column" paddingVertical={ms(10)} paddingHorizontal={ms(20)} gap={ms(20)}>
+      <View flexDirection="column" paddingHorizontal={ms(20)} gap={ms(20)}>
         <View gap={10}>
           <View>
             <Pagination length={pages.length} x={x} progress={progress} />
