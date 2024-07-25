@@ -29,6 +29,21 @@
     }
   },
   "submit": {
-    "production": {}
+    "base": {
+      "ios": {
+        "appleTeamId": "665NDX7LBZ",
+        "ascAppId": "6572315454",
+        "sku": "exa"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "android": {
+        "track": "internal"
+      }
+    },
+    "production": {
+      "extends": "base"
+    }
   }
 }
