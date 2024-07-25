@@ -1,46 +1,49 @@
+import type { Passkey } from "@exactly/common/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Key, X } from "phosphor-react-native";
-import React, { useCallback, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
-import { useConnect, ConnectorAlreadyConnectedError } from "wagmi";
 
 import Blob from "../../assets/images/onboarding-blob-05.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
+import createPasskey from "../../utils/createPasskey";
 import BaseLayout from "../shared/BaseLayout";
 import DelayedActionButton from "../shared/DelayedActionButton";
 import SafeView from "../shared/SafeView";
 
-const close = () => {
+function close() {
   router.back();
-};
+}
 
-const learnMore = () => {
+function learnMore() {
   router.push("onboarding/(passkeys)/about");
-};
+}
 
 const Passkeys = () => {
+  const theme = useTheme();
+  const queryClient = useQueryClient();
+
   const {
-    connect,
-    connectors: [connector],
+    mutate: create,
     isSuccess,
     isPending,
-    isError,
-    error,
-  } = useConnect();
-  const theme = useTheme();
+  } = useMutation<Passkey>({
+    mutationFn: createPasskey,
+    onSuccess(passkey) {
+      queryClient.setQueryData<Passkey>(["passkey"], passkey);
+    },
+  });
 
-  const connectAccount = useCallback(() => {
-    if (!connector) throw new Error("no connector");
-    connect({ connector });
-  }, [connect, connector]);
+  const { data } = useQuery<Passkey>({ queryKey: ["passkey"] });
 
   useEffect(() => {
-    if (isSuccess || (isError && error.name === ConnectorAlreadyConnectedError.name)) {
+    if (isSuccess && data?.credentialId) {
       router.push("onboarding/success");
     }
-  }, [isError, isSuccess, error]);
+  }, [data, isSuccess]);
 
   return (
     <SafeView>
@@ -83,9 +86,7 @@ const Passkeys = () => {
                 isLoading={isPending}
                 loadingContent="Creating account..."
                 content="Create account"
-                onPress={() => {
-                  connectAccount();
-                }}
+                onPress={create}
                 Icon={Key}
               />
               <View justifyContent="center" alignItems="center">
