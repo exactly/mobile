@@ -10,6 +10,7 @@ import { Text, View, useTheme } from "tamagui";
 import Blob from "../../assets/images/onboarding-blob-05.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
 import createPasskey from "../../utils/createPasskey";
+import handleError from "../../utils/handleError";
 import BaseLayout from "../shared/BaseLayout";
 import DelayedActionButton from "../shared/DelayedActionButton";
 import SafeView from "../shared/SafeView";
@@ -32,6 +33,7 @@ const Passkeys = () => {
     isPending,
   } = useMutation<Passkey>({
     mutationFn: createPasskey,
+    onError: handleError,
     onSuccess(passkey) {
       queryClient.setQueryData<Passkey>(["passkey"], passkey);
     },
