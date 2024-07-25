@@ -1,3 +1,4 @@
+import type { Passkey } from "@exactly/common/types";
 import { useQuery } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import React from "react";
@@ -5,7 +6,6 @@ import { ms } from "react-native-size-matters";
 import { View, Text, Spinner, Button } from "tamagui";
 
 import handleError from "../../utils/handleError";
-import loadPasskey from "../../utils/loadPasskey";
 const pressStyle = { backgroundColor: "$interactiveBaseBrandDefault", opacity: 0.9 };
 
 export default function PasskeyUtils() {
@@ -14,16 +14,16 @@ export default function PasskeyUtils() {
     isLoading,
     error,
     refetch,
-  } = useQuery({ queryKey: ["passkey"], queryFn: loadPasskey, enabled: false, staleTime: 1 });
+  } = useQuery<Passkey>({ queryKey: ["passkey"], enabled: false, staleTime: 1 });
 
   function getPasskey() {
     refetch().catch(handleError);
   }
 
-  const copy = () => {
+  function copy() {
     if (!passkey?.credentialId) return;
     Clipboard.setStringAsync(passkey.credentialId).catch(handleError);
-  };
+  }
   return (
     <View gap={ms(10)}>
       <Text fontSize={ms(16)} color="$uiNeutralPrimary" fontWeight="bold">
