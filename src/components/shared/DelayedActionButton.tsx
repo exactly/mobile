@@ -1,5 +1,5 @@
 import type { IconProps } from "phosphor-react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import type { DimensionValue } from "react-native";
 import { StyleSheet, Pressable } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from "react-native-reanimated";
@@ -34,6 +34,7 @@ export default function DelayedActionButton({
   };
 
   const handlePressOut = () => {
+    if (isLoading) return;
     fillAnim.value = withTiming(0, { duration: 300 });
   };
 
@@ -45,6 +46,11 @@ export default function DelayedActionButton({
       opacity: 1,
     };
   });
+
+  useEffect(() => {
+    if (isLoading) return;
+    fillAnim.value = withTiming(0, { duration: 300 });
+  }, [fillAnim, isLoading]);
 
   return (
     <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
