@@ -19,7 +19,6 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
         backgroundColor="$backgroundSoft"
         borderColor="$borderNeutralSoft"
         borderTopWidth={0.5}
-        gap={ms(10)}
       >
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key] || { options: undefined };
@@ -43,7 +42,14 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
 
           return (
             <StyledPressable key={route.key} role="button" onPress={onPress} flex={1} padding={ms(10)}>
-              <View display="flex" flexDirection="column" gap={ms(2)} alignContent="center" alignItems="center">
+              <View
+                flex={1}
+                gap={ms(2)}
+                display="flex"
+                flexDirection="column"
+                alignContent="center"
+                alignItems="center"
+              >
                 <ButtonIcon>
                   {icon?.({
                     focused: isFocused,
@@ -51,7 +57,9 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
                     size: vs(24),
                   })}
                 </ButtonIcon>
-                <Text color={isFocused ? theme.uiBrandPrimary : theme.uiNeutralSecondary}>{label}</Text>
+                <Text textAlign="center" color={isFocused ? theme.uiBrandPrimary : theme.uiNeutralSecondary}>
+                  {label}
+                </Text>
               </View>
             </StyledPressable>
           );
