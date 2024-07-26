@@ -1,12 +1,12 @@
 import type { IconProps } from "phosphor-react-native";
-import React, { useEffect } from "react";
-import type { DimensionValue } from "react-native";
-import { StyleSheet, Pressable } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from "react-native-reanimated";
+import React from "react";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Spinner, Text, View, useTheme } from "tamagui";
 
-interface DelayedActionButtonProperties {
+import { radius } from "../../utils/theme";
+
+interface MainActionButtonProperties {
   content: string;
   isLoading?: boolean;
   loadingContent?: string;
@@ -14,46 +14,23 @@ interface DelayedActionButtonProperties {
   onPress: () => void;
 }
 
-export default function DelayedActionButton({
+export default function MainActionButton({
   content,
   onPress,
   Icon,
   isLoading = false,
   loadingContent = "Loading...",
-}: DelayedActionButtonProperties) {
+}: MainActionButtonProperties) {
   const theme = useTheme();
-  const color = theme.interactiveBaseBrandPressed.get();
-  const fillAnim = useSharedValue(0);
-
-  const handlePressIn = () => {
-    fillAnim.value = withTiming(1, { duration: 1000 }, (finished) => {
-      if (finished) {
-        runOnJS(onPress)();
-      }
-    });
-  };
-
-  const handlePressOut = () => {
-    if (isLoading) return;
-    fillAnim.value = withTiming(0, { duration: 300 });
-  };
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      width: (String(fillAnim.value * 100) + "%") as DimensionValue,
-      backgroundColor: color,
-      borderRadius: 10,
-      opacity: 1,
-    };
-  });
-
-  useEffect(() => {
-    if (isLoading) return;
-    fillAnim.value = withTiming(0, { duration: 300 });
-  }, [fillAnim, isLoading]);
 
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        borderRadius: radius.r3,
+        backgroundColor: pressed ? theme.interactiveBaseBrandPressed.get() : theme.interactiveBaseBrandDefault.get(),
+      })}
+    >
       <View borderRadius="$r3" height={ms(56)} overflow="hidden" position="relative">
         <View
           alignItems="center"
@@ -62,10 +39,7 @@ export default function DelayedActionButton({
           justifyContent="space-between"
           paddingHorizontal={ms(20)}
           position="relative"
-          backgroundColor="$interactiveBaseBrandDefault"
         />
-        <Animated.View style={[StyleSheet.absoluteFillObject, animatedStyle]} />
-
         <View
           position="absolute"
           backgroundColor="transparent"

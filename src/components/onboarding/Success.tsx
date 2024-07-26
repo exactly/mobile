@@ -7,7 +7,7 @@ import { Text, View } from "tamagui";
 import SuccessImage from "../../assets/images/account-created.svg";
 import Blob from "../../assets/images/onboarding-blob-06.svg";
 import BaseLayout from "../shared/BaseLayout";
-import DelayedActionButton from "../shared/DelayedActionButton";
+import MainActionButton from "../shared/DelayedActionButton";
 import SafeView from "../shared/SafeView";
 
 export default function Success() {
@@ -30,7 +30,7 @@ export default function Success() {
             </Text>
 
             <View flexDirection="column" gap={ms(10)} paddingBottom={ms(30)}>
-              <DelayedActionButton
+              <MainActionButton
                 content="Start account setup"
                 onPress={() => {
                   // TODO Implement account setup

@@ -23,7 +23,7 @@ import blob2 from "../../assets/images/onboarding-blob-02.svg";
 import blob3 from "../../assets/images/onboarding-blob-03.svg";
 import blob4 from "../../assets/images/onboarding-blob-04.svg";
 import qrCode from "../../assets/images/qr-code.svg";
-import DelayedActionButton from "../shared/DelayedActionButton";
+import MainActionButton from "../shared/DelayedActionButton";
 
 const recoverButton = (
   <Pressable onPress={() => {}}>
@@ -170,7 +170,7 @@ export default function Carousel() {
           </View>
         </View>
         <View flexDirection="column" gap={10}>
-          <DelayedActionButton
+          <MainActionButton
             content="Get started"
             onPress={() => {
               router.push("onboarding/(passkeys)/passkeys");
