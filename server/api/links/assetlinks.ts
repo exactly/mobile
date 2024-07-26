@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
+import fingerprint from "../../utils/android/fingerprint.js";
+
 export default function assetlinks({ method }: VercelRequest, response: VercelResponse) {
   if (method !== "GET") return response.status(405).end("method not allowed");
   return response.json([
@@ -8,10 +10,7 @@ export default function assetlinks({ method }: VercelRequest, response: VercelRe
       target: {
         namespace: "android_app",
         package_name: "app.exactly",
-        sha256_cert_fingerprints: [
-          process.env.ANDROID_CERT_FINGERPRINT ||
-            "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C",
-        ],
+        sha256_cert_fingerprints: [fingerprint],
       },
     },
   ]);

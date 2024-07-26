@@ -1,8 +1,11 @@
-import { ORIGIN } from "../middleware/cors.js";
+import { isoBase64URL } from "@simplewebauthn/server/helpers";
+
+import androidFingerprint from "./android/fingerprint.js";
+import { origin } from "../middleware/cors.js";
+
+const androidOrigin = `android:apk-key-hash:${isoBase64URL.fromBuffer(Buffer.from(androidFingerprint.replaceAll(":", ""), "hex"))}`;
 
 export default function expectedOrigin(userAgent?: string) {
-  if (userAgent?.match(/okhttp\/\d+\.\d+\.\d+/)) {
-    return process.env.ANDROID_ORIGIN || "android:apk-key-hash:-sYXRdwJA3hvue3mKpYrOZ9zSPC7b4mbgzJmdZEDO5w";
-  }
-  return ORIGIN;
+  if (userAgent?.match(/okhttp\/\d+\.\d+\.\d+/)) return androidOrigin;
+  return origin;
 }
