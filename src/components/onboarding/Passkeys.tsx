@@ -12,7 +12,7 @@ import PasskeysImage from "../../assets/images/passkeys.svg";
 import createPasskey from "../../utils/createPasskey";
 import handleError from "../../utils/handleError";
 import BaseLayout from "../shared/BaseLayout";
-import MainActionButton from "../shared/DelayedActionButton";
+import MainActionButton from "../shared/MainActionButton";
 import SafeView from "../shared/SafeView";
 
 function close() {

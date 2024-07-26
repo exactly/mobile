@@ -23,7 +23,7 @@ import blob2 from "../../assets/images/onboarding-blob-02.svg";
 import blob3 from "../../assets/images/onboarding-blob-03.svg";
 import blob4 from "../../assets/images/onboarding-blob-04.svg";
 import qrCode from "../../assets/images/qr-code.svg";
-import MainActionButton from "../shared/DelayedActionButton";
+import MainActionButton from "../shared/MainActionButton";
 
 const recoverButton = (
   <Pressable onPress={() => {}}>
