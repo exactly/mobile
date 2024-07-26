@@ -79,10 +79,13 @@ const Passkeys = () => {
 
             <View flexDirection="column" gap={ms(10)}>
               <View flexDirection="row" alignItems="center" justifyContent="center">
-                <Text>By continuing, I accept the</Text>
-                <Pressable onPress={() => {}}>
-                  <Text color="$interactiveBaseBrandDefault"> Terms & Conditions</Text>
-                </Pressable>
+                <Text fontSize={ms(11)} color="$uiNeutralPlaceholder">
+                  By continuing, I accept the
+                </Text>
+                <Text fontSize={ms(11)} color="$interactiveBaseBrandDefault">
+                  {" "}
+                  Terms & Conditions
+                </Text>
               </View>
               <DelayedActionButton
                 isLoading={isPending}
