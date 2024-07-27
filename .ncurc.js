@@ -17,7 +17,6 @@ module.exports = {
     "expo-status-bar",
     "expo-system-ui",
     "expo-web-browser",
-    "phosphor-react-native",
     "react",
     "react-dom",
     "react-native",
