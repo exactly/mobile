@@ -1,5 +1,5 @@
+import { ArrowRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
-import { ArrowRight } from "phosphor-react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Pressable, type ViewToken } from "react-native";
 import Animated, {

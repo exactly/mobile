@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLineDown, ArrowUpRight } from "phosphor-react-native";
+import { ArrowDown, ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { View, Text, useTheme } from "tamagui";
@@ -8,7 +8,7 @@ type Activity = "in" | "out" | "deposit";
 const assetChangeToIcon = {
   in: ArrowDown,
   out: ArrowUpRight,
-  deposit: ArrowLineDown,
+  deposit: ArrowDownToLine,
 };
 const activity: {
   title: string;
@@ -65,7 +65,7 @@ export default function LatestActivity() {
 
   const getIcon = (change: "in" | "out" | "deposit") => {
     const Icon = assetChangeToIcon[change];
-    return <Icon size={ms(20)} color={theme.uiSuccessPrimary.get()} weight="bold" />;
+    return <Icon size={ms(20)} color={theme.uiSuccessPrimary.get()} fontWeight="bold" />;
   };
 
   return (

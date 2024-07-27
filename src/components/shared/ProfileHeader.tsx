@@ -1,4 +1,4 @@
-import { BellRinging, EyeClosed, Gear } from "phosphor-react-native";
+import { BellRing, EyeOff, Settings } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { View, Text, Image, useTheme, styled } from "tamagui";
@@ -57,9 +57,9 @@ export default function ProfileHeader() {
           </View>
         </View>
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
-          <EyeClosed />
-          <BellRinging />
-          <Gear />
+          <EyeOff />
+          <BellRing />
+          <Settings />
         </View>
       </View>
     </View>

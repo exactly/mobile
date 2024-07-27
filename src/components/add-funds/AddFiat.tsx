@@ -1,5 +1,5 @@
+import { ArrowLeft, Info } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
-import { ArrowLeft, Info } from "phosphor-react-native";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";

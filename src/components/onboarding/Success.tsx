@@ -1,5 +1,5 @@
+import { ArrowRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
-import { ArrowRight } from "phosphor-react-native";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { Text, View } from "tamagui";

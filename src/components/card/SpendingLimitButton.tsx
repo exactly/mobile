@@ -1,4 +1,4 @@
-import { PencilLine } from "phosphor-react-native";
+import { PencilLine } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { View, Text, useTheme } from "tamagui";

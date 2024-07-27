@@ -1,5 +1,5 @@
+import { X } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
-import { X } from "phosphor-react-native";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { Text, View, useTheme } from "tamagui";
@@ -65,7 +65,7 @@ const AddCryptoAbout = () => {
                   <Text fontSize={ms(15)} fontWeight="bold" color={theme.interactiveOnBaseBrandSoft.get()}>
                     Close
                   </Text>
-                  <X size={ms(20)} color={theme.interactiveOnBaseBrandSoft.val} weight="bold" />
+                  <X size={ms(20)} color={theme.interactiveOnBaseBrandSoft.val} fontWeight="bold" />
                 </View>
               </StyledPressable>
             </View>

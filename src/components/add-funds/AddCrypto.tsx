@@ -1,5 +1,5 @@
+import { ArrowLeft, Files, Info, QrCode, Share } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
-import { ArrowLeft, Files, Info, QrCode, Export } from "phosphor-react-native";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -132,7 +132,7 @@ export default function AddCrypto() {
                     </StyledPressable>
                   </View>
                   <Files size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
-                  <Export size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
+                  <Share size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
                 </View>
               </View>
             </View>

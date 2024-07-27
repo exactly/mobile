@@ -1,5 +1,5 @@
+import { ArrowRight, Calculator, ChevronRight, Eye, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Calculator, CaretRight, Eye, Info, Plus, Snowflake } from "phosphor-react-native";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -84,7 +84,7 @@ export default function Card() {
               <StyledAction>
                 <Pressable onPress={getCard}>
                   <View gap={ms(10)}>
-                    <Eye size={ms(24)} color={theme.backgroundBrand.get()} weight="bold" />
+                    <Eye size={ms(24)} color={theme.backgroundBrand.get()} fontWeight="bold" />
                     <Text color="$uiPrimary" fontSize={ms(15)}>
                       Details
                     </Text>
@@ -98,7 +98,7 @@ export default function Card() {
               <StyledAction>
                 <Pressable>
                   <View gap={ms(10)}>
-                    <Snowflake size={ms(24)} color={theme.backgroundBrand.get()} weight="bold" />
+                    <Snowflake size={ms(24)} color={theme.backgroundBrand.get()} fontWeight="bold" />
                     <Text color="$uiPrimary" fontSize={ms(15)}>
                       Freeze
                     </Text>
@@ -183,7 +183,7 @@ export default function Card() {
                     <Text color="$interactiveBaseBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Increase limits
                     </Text>
-                    <Plus size={14} color={theme.interactiveBaseBrandDefault.get()} weight="bold" />
+                    <Plus size={14} color={theme.interactiveBaseBrandDefault.get()} fontWeight="bold" />
                   </View>
                 </Pressable>
               }
@@ -212,7 +212,7 @@ export default function Card() {
                     <Text color="$interactiveBaseBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <CaretRight size={14} color={theme.interactiveBaseBrandDefault.get()} />
+                    <ChevronRight size={14} color={theme.interactiveBaseBrandDefault.get()} />
                   </View>
                 </Pressable>
               }

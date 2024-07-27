@@ -1,4 +1,4 @@
-import type { IconProps } from "phosphor-react-native";
+import type { IconProps } from "@tamagui/helpers-icon";
 import React from "react";
 import type { PressableProps } from "react-native";
 import { Pressable } from "react-native";
@@ -59,7 +59,7 @@ export default function ActionButton({ content, Icon, secondary, ...rest }: Acti
             <Text color={textColor} fontSize={ms(14)} fontWeight="bold">
               {content}
             </Text>
-            {Icon && <Icon color={textColor} weight="bold" />}
+            {Icon && <Icon color={textColor} fontWeight="bold" />}
           </View>
         );
       }}

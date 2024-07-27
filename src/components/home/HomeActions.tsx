@@ -1,5 +1,5 @@
+import { ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
-import { ArrowLineDown, ArrowUpRight } from "phosphor-react-native";
 import React from "react";
 import type { ViewStyle } from "react-native";
 import { Alert } from "react-native";
@@ -27,7 +27,7 @@ export default function HomeActions() {
       alignItems="center"
       paddingVertical={ms(10)}
     >
-      <ActionButton content="Add funds" onPress={onAddFunds} Icon={ArrowLineDown} style={homeActionStyle} />
+      <ActionButton content="Add funds" onPress={onAddFunds} Icon={ArrowDownToLine} style={homeActionStyle} />
       <ActionButton content="Send" onPress={onSend} Icon={ArrowUpRight} secondary style={homeActionStyle} />
     </View>
   );

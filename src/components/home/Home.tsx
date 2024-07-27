@@ -1,4 +1,4 @@
-import { CaretRight } from "phosphor-react-native";
+import { ChevronRight } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -34,7 +34,7 @@ export default function Home() {
                     <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
-                    <CaretRight size={14} color={theme.interactiveTextBrandDefault.get()} weight="bold" />
+                    <ChevronRight size={14} color={theme.interactiveTextBrandDefault.get()} fontWeight="bold" />
                   </View>
                 </Pressable>
               }
@@ -51,7 +51,7 @@ export default function Home() {
                     <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
-                    <CaretRight size={14} color={theme.interactiveTextBrandDefault.get()} weight="bold" />
+                    <ChevronRight size={14} color={theme.interactiveTextBrandDefault.get()} fontWeight="bold" />
                   </View>
                 </Pressable>
               }
@@ -68,7 +68,7 @@ export default function Home() {
                     <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <CaretRight size={14} color={theme.interactiveTextBrandDefault.get()} weight="bold" />
+                    <ChevronRight size={14} color={theme.interactiveTextBrandDefault.get()} fontWeight="bold" />
                   </View>
                 </Pressable>
               }
@@ -86,7 +86,7 @@ export default function Home() {
                     <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <CaretRight size={14} color={theme.interactiveTextBrandDefault.get()} weight="bold" />
+                    <ChevronRight size={14} color={theme.interactiveTextBrandDefault.get()} fontWeight="bold" />
                   </View>
                 </Pressable>
               }

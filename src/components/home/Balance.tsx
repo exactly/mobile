@@ -1,4 +1,4 @@
-import { CaretDown, CaretUp } from "phosphor-react-native";
+import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -37,9 +37,9 @@ export default function Balance() {
             </Text>
             <ButtonIcon>
               {isOpen ? (
-                <CaretUp size={ms(32)} color={theme.uiBrandSecondary.val} weight="bold" />
+                <ChevronUp size={ms(32)} color={theme.uiBrandSecondary.val} fontWeight="bold" />
               ) : (
-                <CaretDown size={ms(32)} color={theme.uiBrandSecondary.val} weight="bold" />
+                <ChevronDown size={ms(32)} color={theme.uiBrandSecondary.val} fontWeight="bold" />
               )}
             </ButtonIcon>
           </View>

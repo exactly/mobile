@@ -1,4 +1,4 @@
-import type { IconProps } from "phosphor-react-native";
+import type { IconProps } from "@tamagui/helpers-icon";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -55,7 +55,7 @@ export default function MainActionButton({
             {isLoading ? loadingContent : content}
           </Text>
           {isLoading && <Spinner color="$interactiveOnBaseBrandDefault" />}
-          {!isLoading && Icon && <Icon color={theme.interactiveBaseBrandSoftDefault.get()} weight="bold" />}
+          {!isLoading && Icon && <Icon color={theme.interactiveBaseBrandSoftDefault.get()} fontWeight="bold" />}
         </View>
         <View
           alignItems="center"

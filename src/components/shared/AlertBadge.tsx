@@ -1,4 +1,4 @@
-import { CaretRight, Warning } from "phosphor-react-native";
+import { ChevronRight, AlertTriangle } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -26,7 +26,7 @@ export default function AlertBadge() {
         width="20%"
         height="100%"
       >
-        <Warning size={ms(32)} color={theme.interactiveOnBaseErrorDefault.get()} />
+        <AlertTriangle size={ms(32)} color={theme.interactiveOnBaseErrorDefault.get()} />
       </View>
 
       <View gap={ms(10)} padding={ms(25)} flex={1}>
@@ -38,7 +38,7 @@ export default function AlertBadge() {
             <Text color="$interactiveOnBaseErrorSoft" fontSize={ms(15)} lineHeight={18} fontWeight="bold">
               Manage
             </Text>
-            <CaretRight size={14} color={theme.interactiveOnBaseErrorSoft.get()} weight="bold" />
+            <ChevronRight size={14} color={theme.interactiveOnBaseErrorSoft.get()} fontWeight="bold" />
           </View>
         </Pressable>
       </View>

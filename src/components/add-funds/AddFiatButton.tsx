@@ -1,5 +1,5 @@
+import { PiggyBank, CreditCard, DollarSign, Euro, PoundSterling, Banknote } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
-import { Bank, CreditCard, CurrencyDollar, CurrencyEur, CurrencyGbp, Money } from "phosphor-react-native";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -23,7 +23,7 @@ export default function AddFiatButton() {
             justifyContent="center"
             alignItems="center"
           >
-            <Money size={ms(24)} color={theme.iconBrandDefault.get()} />
+            <Banknote size={ms(24)} color={theme.iconBrandDefault.get()} />
           </View>
           <View gap={ms(5)}>
             <Text fontSize={ms(17)} color="$textPrimary" fontWeight="bold">
@@ -40,8 +40,8 @@ export default function AddFiatButton() {
               Method
             </Text>
             <View flexDirection="row" gap={ms(2)}>
-              <Bank size={ms(24)} color={theme.iconSecondary.get()} weight="bold" />
-              <CreditCard size={ms(24)} color={theme.iconSecondary.get()} weight="bold" />
+              <PiggyBank size={ms(24)} color={theme.iconSecondary.get()} fontWeight="bold" />
+              <CreditCard size={ms(24)} color={theme.iconSecondary.get()} fontWeight="bold" />
             </View>
           </View>
           <View borderRadius="$r3" gap={ms(5)}>
@@ -49,9 +49,9 @@ export default function AddFiatButton() {
               Currencies
             </Text>
             <View flexDirection="row" gap={ms(2)}>
-              <CurrencyDollar size={ms(16)} color={theme.iconSecondary.get()} weight="bold" />
-              <CurrencyEur size={ms(16)} color={theme.iconSecondary.get()} weight="bold" />
-              <CurrencyGbp size={ms(16)} color={theme.iconSecondary.get()} weight="bold" />
+              <DollarSign size={ms(16)} color={theme.iconSecondary.get()} fontWeight="bold" />
+              <Euro size={ms(16)} color={theme.iconSecondary.get()} fontWeight="bold" />
+              <PoundSterling size={ms(16)} color={theme.iconSecondary.get()} fontWeight="bold" />
             </View>
           </View>
           <View borderRadius="$r3" gap={ms(5)}>

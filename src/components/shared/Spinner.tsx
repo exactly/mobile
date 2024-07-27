@@ -1,10 +1,10 @@
-import { SpinnerGap } from "phosphor-react-native";
+import { Loader } from "@tamagui/lucide-icons";
 import React from "react";
 import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 
-const AnimatedSpinner = Animated.createAnimatedComponent(SpinnerGap);
+const AnimatedSpinner = Animated.createAnimatedComponent(Loader);
 
 export default function Spinner() {
   const rotation = useSharedValue(0);

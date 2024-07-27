@@ -1,7 +1,7 @@
 import type { Passkey } from "@exactly/common/types";
+import { Key, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Key, X } from "phosphor-react-native";
 import React, { useEffect } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";

@@ -1,4 +1,4 @@
-import { TrendDown, TrendUp } from "phosphor-react-native";
+import { TrendingDown, TrendingUp } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
 import { Image, Text, View, useTheme } from "tamagui";
@@ -101,9 +101,9 @@ export default function AssetList() {
               </View>
               <View flexDirection="row" justifyContent="flex-end" gap={ms(5)}>
                 {change.percentage < 0 ? (
-                  <TrendDown size={20} color={theme.interactiveOnBaseErrorSoft.val} />
+                  <TrendingDown size={20} color={theme.interactiveOnBaseErrorSoft.val} />
                 ) : (
-                  <TrendUp size={20} color={theme.uiSuccessSecondary.val} />
+                  <TrendingUp size={20} color={theme.uiSuccessSecondary.val} />
                 )}
                 <Text fontSize={ms(15)} color={change.percentage < 0 ? "$uiErrorPrimary" : "$uiSuccessSecondary"}>
                   {change.percentage}%

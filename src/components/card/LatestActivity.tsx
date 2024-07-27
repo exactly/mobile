@@ -1,13 +1,13 @@
-import { AirplaneTilt, ArrowUpRight, ForkKnife, Laptop } from "phosphor-react-native";
+import { Plane, ArrowUpRight, Utensils, Laptop } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { View, Text, useTheme } from "tamagui";
 
 type ActivityCategory = "food" | "tech" | "travel" | "other";
 const activityCategoryToIcon = {
-  food: ForkKnife,
+  food: Utensils,
   tech: Laptop,
-  travel: AirplaneTilt,
+  travel: Plane,
   other: ArrowUpRight,
 };
 const activity: {
@@ -84,7 +84,7 @@ export default function LatestActivity() {
 
   const getIcon = (category: ActivityCategory) => {
     const Icon = activityCategoryToIcon[category];
-    return <Icon size={ms(20)} color={theme.uiSuccessPrimary.get()} weight="bold" />;
+    return <Icon size={ms(20)} color={theme.uiSuccessPrimary.get()} fontWeight="bold" />;
   };
 
   return (
