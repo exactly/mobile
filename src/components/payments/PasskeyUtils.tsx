@@ -3,10 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text, Spinner, Button } from "tamagui";
+import { View, Text, Spinner } from "tamagui";
 
 import handleError from "../../utils/handleError";
-const pressStyle = { backgroundColor: "$interactiveBaseBrandDefault", opacity: 0.9 };
+import Button from "../shared/Button";
 
 export default function PasskeyUtils() {
   const {
@@ -44,32 +44,12 @@ export default function PasskeyUtils() {
       )}
 
       <View flexDirection="row" gap={ms(10)}>
-        <Button
-          borderRadius="$r2"
-          variant="outlined"
-          backgroundColor="$interactiveBaseBrandDefault"
-          color="$interactiveOnBaseBrandDefault"
-          onPress={getPasskey}
-          fontWeight="bold"
-          pressStyle={pressStyle}
-          padding={ms(10)}
-          flex={1}
-        >
+        <Button contained onPress={getPasskey} padding={ms(10)}>
           Refresh
         </Button>
 
         {passkey?.credentialId && (
-          <Button
-            borderRadius="$r2"
-            variant="outlined"
-            backgroundColor="$interactiveBaseBrandSoftDefault"
-            color="$interactiveOnBaseBrandSoft"
-            onPress={copy}
-            fontWeight="bold"
-            pressStyle={pressStyle}
-            padding={ms(10)}
-            flex={1}
-          >
+          <Button outlined onPress={copy} padding={ms(10)}>
             Copy
           </Button>
         )}

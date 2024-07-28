@@ -1,13 +1,12 @@
 import * as Clipboard from "expo-clipboard";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text, Spinner, Button } from "tamagui";
+import { View, Text, Spinner } from "tamagui";
 import { useAccount, useWriteContract } from "wagmi";
 
 import { auditorAddress, marketUSDCAddress, useSimulateAuditorEnterMarket } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
-
-const pressStyle = { backgroundColor: "$interactiveBaseBrandDefault", opacity: 0.9 };
+import Button from "../shared/Button";
 
 export default function PasskeyUtils() {
   const { address } = useAccount();
@@ -44,31 +43,11 @@ export default function PasskeyUtils() {
         </View>
       )}
       <View flexDirection="row" gap={ms(10)}>
-        <Button
-          borderRadius="$r2"
-          variant="outlined"
-          backgroundColor="$interactiveBaseBrandDefault"
-          color="$interactiveOnBaseBrandDefault"
-          onPress={enterUSDC}
-          fontWeight="bold"
-          pressStyle={pressStyle}
-          padding={ms(10)}
-          flex={1}
-        >
+        <Button contained onPress={enterUSDC} padding={ms(10)}>
           Enter USDC market
         </Button>
         {txHash && (
-          <Button
-            borderRadius="$r2"
-            variant="outlined"
-            backgroundColor="$interactiveBaseBrandSoftDefault"
-            color="$interactiveOnBaseBrandSoft"
-            onPress={copy}
-            fontWeight="bold"
-            pressStyle={pressStyle}
-            padding={ms(10)}
-            flex={1}
-          >
+          <Button outlined borderRadius="$r2" onPress={copy} padding={ms(10)}>
             Copy
           </Button>
         )}

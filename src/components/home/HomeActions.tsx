@@ -1,12 +1,11 @@
 import { ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
-import type { ViewStyle } from "react-native";
 import { Alert } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 
-import ActionButton from "../shared/ActionButton";
+import Button from "../shared/Button";
 
 const onAddFunds = () => {
   router.push("add-funds");
@@ -14,8 +13,6 @@ const onAddFunds = () => {
 const onSend = () => {
   Alert.alert("Send", "Send funds to another account", [{ text: "OK" }]);
 };
-
-const homeActionStyle: ViewStyle = { flex: 1, width: "100%" };
 
 export default function HomeActions() {
   return (
@@ -27,8 +24,28 @@ export default function HomeActions() {
       alignItems="center"
       paddingVertical={ms(10)}
     >
-      <ActionButton content="Add funds" onPress={onAddFunds} Icon={ArrowDownToLine} style={homeActionStyle} />
-      <ActionButton content="Send" onPress={onSend} Icon={ArrowUpRight} secondary style={homeActionStyle} />
+      <Button
+        contained
+        onPress={onAddFunds}
+        iconAfter={ArrowDownToLine}
+        spaceFlex
+        height={ms(64)}
+        padding="$s4_5"
+        scaleIcon={1.5}
+      >
+        Add funds
+      </Button>
+      <Button
+        outlined
+        onPress={onSend}
+        iconAfter={ArrowUpRight}
+        spaceFlex
+        height={ms(64)}
+        padding="$s4_5"
+        scaleIcon={1.5}
+      >
+        Send
+      </Button>
     </View>
   );
 }

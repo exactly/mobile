@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { Button, ScrollView, Switch, Text, View, styled, useTheme, Spinner } from "tamagui";
+import { ScrollView, Switch, Text, View, styled, useTheme, Spinner } from "tamagui";
 
 import CardDetails from "./CardDetails";
 import LatestActivity from "./LatestActivity";
@@ -11,6 +11,7 @@ import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
 import { createCard, getPAN } from "../../utils/server";
 import BaseLayout from "../shared/BaseLayout";
+import Button from "../shared/Button";
 import InfoPreview from "../shared/InfoPreview";
 import SafeView from "../shared/SafeView";
 
@@ -69,14 +70,7 @@ export default function Card() {
               </Text>
             )}
 
-            <Button
-              borderRadius="$r2"
-              variant="outlined"
-              backgroundColor="$interactiveBaseBrandDefault"
-              color="$interactiveOnBaseBrandDefault"
-              onPress={handleCreateCard}
-              fontWeight={600}
-            >
+            <Button contained onPress={handleCreateCard}>
               Create Card
             </Button>
 
