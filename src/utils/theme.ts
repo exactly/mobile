@@ -21,7 +21,7 @@ export const space = {
 
 export const radius = {
   r0: 0,
-  true: 0,
+  true: 4,
   r1: 2,
   r2: 4,
   r3: 8,
