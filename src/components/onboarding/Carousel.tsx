@@ -23,7 +23,7 @@ import blob2 from "../../assets/images/onboarding-blob-02.svg";
 import blob3 from "../../assets/images/onboarding-blob-03.svg";
 import blob4 from "../../assets/images/onboarding-blob-04.svg";
 import qrCode from "../../assets/images/qr-code.svg";
-import MainActionButton from "../shared/MainActionButton";
+import ActionButton from "../shared/ActionButton";
 
 const recoverButton = (
   <Pressable onPress={() => {}}>
@@ -140,9 +140,7 @@ export default function Carousel() {
       />
       <View flexDirection="column" paddingHorizontal={ms(20)} gap={ms(20)}>
         <View gap={10}>
-          <View>
-            <Pagination length={pages.length} x={x} progress={progress} />
-          </View>
+          <Pagination length={pages.length} x={x} progress={progress} />
           <View gap={10}>
             <Text fontSize={ms(20)} fontWeight="bold" color="$interactiveBaseBrandDefault" textAlign="center">
               {title}
@@ -170,13 +168,14 @@ export default function Carousel() {
           </View>
         </View>
         <View flexDirection="column" gap={10}>
-          <MainActionButton
-            content="Get started"
+          <ActionButton
             onPress={() => {
               router.push("onboarding/(passkeys)/passkeys");
             }}
-            Icon={ArrowRight}
-          />
+            iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
+          >
+            Get started
+          </ActionButton>
           <View justifyContent="center" alignItems="center">
             {button}
           </View>

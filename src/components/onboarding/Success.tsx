@@ -6,8 +6,8 @@ import { Text, View } from "tamagui";
 
 import SuccessImage from "../../assets/images/account-created.svg";
 import Blob from "../../assets/images/onboarding-blob-06.svg";
+import ActionButton from "../shared/ActionButton";
 import BaseLayout from "../shared/BaseLayout";
-import MainActionButton from "../shared/MainActionButton";
 import SafeView from "../shared/SafeView";
 
 export default function Success() {
@@ -30,14 +30,15 @@ export default function Success() {
             </Text>
 
             <View flexDirection="column" gap={ms(10)} paddingBottom={ms(30)}>
-              <MainActionButton
-                content="Start account setup"
+              <ActionButton
                 onPress={() => {
                   // TODO Implement account setup
                   router.push("(app)");
                 }}
-                Icon={ArrowRight}
-              />
+                iconAfter={ArrowRight}
+              >
+                Start account setup
+              </ActionButton>
             </View>
           </View>
         </View>

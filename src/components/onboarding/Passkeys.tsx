@@ -11,8 +11,8 @@ import Blob from "../../assets/images/onboarding-blob-05.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
 import createPasskey from "../../utils/createPasskey";
 import handleError from "../../utils/handleError";
+import ActionButton from "../shared/ActionButton";
 import BaseLayout from "../shared/BaseLayout";
-import MainActionButton from "../shared/MainActionButton";
 import SafeView from "../shared/SafeView";
 
 function close() {
@@ -28,7 +28,7 @@ const Passkeys = () => {
   const queryClient = useQueryClient();
 
   const {
-    mutate: create,
+    mutate: createAccount,
     isSuccess,
     isPending,
   } = useMutation<Passkey>({
@@ -87,13 +87,16 @@ const Passkeys = () => {
                   Terms & Conditions
                 </Text>
               </View>
-              <MainActionButton
+              <ActionButton
                 isLoading={isPending}
                 loadingContent="Creating account..."
-                content="Create account"
-                onPress={create}
-                Icon={Key}
-              />
+                iconAfter={<Key size={ms(20)} color={theme.interactiveOnBaseBrandDefault.val} fontWeight="bold" />}
+                onPress={() => {
+                  createAccount();
+                }}
+              >
+                Create account
+              </ActionButton>
               <View justifyContent="center" alignItems="center">
                 <Pressable onPress={learnMore}>
                   <Text fontSize={ms(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
