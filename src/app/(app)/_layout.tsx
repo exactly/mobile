@@ -33,9 +33,7 @@ export default function AppLayout() {
           name={name}
           options={{
             title,
-            tabBarIcon: ({ color, focused }) => (
-              <Icon fontWeight={focused ? "fill" : "regular"} size={24} color={color} />
-            ),
+            tabBarIcon: ({ color }) => <Icon size={24} color={color} />,
           }}
         />
       ))}
