@@ -24,30 +24,10 @@ export default function HomeActions() {
       alignItems="center"
       paddingVertical={ms(10)}
     >
-      <Button
-        contained
-        onPress={onAddFunds}
-        iconAfter={ArrowDownToLine}
-        spaceFlex
-        height={ms(64)}
-        padding="$s4_5"
-        borderRadius="$r4"
-        scaleIcon={1.5}
-        flexBasis="50%"
-      >
+      <Button contained main spaced onPress={onAddFunds} iconAfter={ArrowDownToLine}>
         Add funds
       </Button>
-      <Button
-        outlined
-        onPress={onSend}
-        iconAfter={ArrowUpRight}
-        spaceFlex
-        height={ms(64)}
-        padding="$s4_5"
-        borderRadius="$r4"
-        scaleIcon={1.5}
-        flexBasis="50%"
-      >
+      <Button outlined main spaced onPress={onSend} iconAfter={ArrowUpRight}>
         Send
       </Button>
     </View>
