@@ -31,7 +31,9 @@ export default function HomeActions() {
         spaceFlex
         height={ms(64)}
         padding="$s4_5"
+        borderRadius="$r4"
         scaleIcon={1.5}
+        flexBasis="50%"
       >
         Add funds
       </Button>
@@ -42,7 +44,9 @@ export default function HomeActions() {
         spaceFlex
         height={ms(64)}
         padding="$s4_5"
+        borderRadius="$r4"
         scaleIcon={1.5}
+        flexBasis="50%"
       >
         Send
       </Button>
