@@ -1,3 +1,4 @@
+import { ms } from "react-native-size-matters";
 import { Button, styled } from "tamagui";
 
 export default styled(Button, {
@@ -31,6 +32,21 @@ export default styled(Button, {
         backgroundColor: "$interactiveDisabled",
         color: "$interactiveOnDisabled",
         borderColor: "transparent",
+      },
+    },
+    main: {
+      true: {
+        height: ms(64),
+        padding: "$s4_5",
+        borderRadius: "$r4",
+        scaleIcon: 1.5,
+        flex: 1,
+        flexBasis: "50%",
+      },
+    },
+    spaced: {
+      true: {
+        spaceFlex: true,
       },
     },
   } as const,
