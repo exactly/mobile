@@ -44,12 +44,12 @@ export default function PasskeyUtils() {
       )}
 
       <View flexDirection="row" gap={ms(10)}>
-        <Button contained onPress={getPasskey} padding={ms(10)}>
+        <Button contained onPress={getPasskey} padding={ms(10)} flex={1}>
           Refresh
         </Button>
 
         {passkey?.credentialId && (
-          <Button outlined onPress={copy} padding={ms(10)}>
+          <Button outlined onPress={copy} padding={ms(10)} flex={1}>
             Copy
           </Button>
         )}

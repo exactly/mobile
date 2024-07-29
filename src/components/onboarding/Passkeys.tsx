@@ -99,7 +99,7 @@ const Passkeys = () => {
               </ActionButton>
               <View justifyContent="center" alignItems="center">
                 <Pressable onPress={learnMore}>
-                  <Text fontSize={ms(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
+                  <Text fontSize={ms(13)} fontWeight="bold" color="$interactiveBaseBrandDefault">
                     Learn more about passkeys
                   </Text>
                 </Pressable>

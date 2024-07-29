@@ -43,11 +43,11 @@ export default function PasskeyUtils() {
         </View>
       )}
       <View flexDirection="row" gap={ms(10)}>
-        <Button contained onPress={enterUSDC} padding={ms(10)}>
+        <Button contained onPress={enterUSDC} padding={ms(10)} flex={1}>
           Enter USDC market
         </Button>
         {txHash && (
-          <Button outlined borderRadius="$r2" onPress={copy} padding={ms(10)}>
+          <Button outlined borderRadius="$r2" onPress={copy} padding={ms(10)} flex={1}>
             Copy
           </Button>
         )}
