@@ -1,7 +1,6 @@
 import { Button, styled } from "tamagui";
 
 export default styled(Button, {
-  flex: 1,
   fontWeight: "bold",
   defaultVariants: { contained: true, outlined: false },
   fontSize: 15,
