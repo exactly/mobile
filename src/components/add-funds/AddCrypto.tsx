@@ -8,7 +8,6 @@ import { ScrollView, Text, View, useTheme, Image } from "tamagui";
 import OptimismImage from "../../assets/images/optimism.svg";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
-import StyledPressable from "../shared/StyledPressable";
 
 function back() {
   router.back();
@@ -126,10 +125,9 @@ export default function AddCrypto() {
                     borderRadius="$r2"
                     alignContent="center"
                     alignItems="center"
+                    onPress={finish}
                   >
-                    <StyledPressable onPress={finish}>
-                      <QrCode size={ms(24)} color={theme.interactiveOnBaseBrandDefault.get()} />
-                    </StyledPressable>
+                    <QrCode size={ms(24)} color={theme.interactiveOnBaseBrandDefault.get()} />
                   </View>
                   <Files size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
                   <Share size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
@@ -189,15 +187,13 @@ export default function AddCrypto() {
                 </View>
               </View>
               <View flex={1}>
-                <StyledPressable onPress={about}>
-                  <Text color="$uiNeutralPlaceholder" lineHeight={ms(16)}>
-                    Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
-                    loss of funds.{" "}
-                    <Text color={theme.uiBrandSecondary.get()} fontSize={ms(13)} fontWeight="bold">
-                      Learn more about adding funds.
-                    </Text>
+                <Text color="$uiNeutralPlaceholder" lineHeight={ms(16)}>
+                  Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
+                  loss of funds.{" "}
+                  <Text color={theme.uiBrandSecondary.get()} fontSize={ms(13)} fontWeight="bold" onPress={about}>
+                    Learn more about adding funds.
                   </Text>
-                </StyledPressable>
+                </Text>
               </View>
             </View>
           </View>

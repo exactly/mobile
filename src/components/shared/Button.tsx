@@ -47,6 +47,12 @@ export default styled(Button, {
     spaced: {
       true: {
         spaceFlex: true,
+        alignItems: "center",
+      },
+    },
+    noFlex: {
+      true: {
+        flex: 0,
       },
     },
   } as const,
