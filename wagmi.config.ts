@@ -1,6 +1,6 @@
 import { defineConfig, type Plugin } from "@wagmi/cli";
 import { actions, foundry, react } from "@wagmi/cli/plugins";
-import { type Abi, type Address, getAddress } from "viem";
+import { type Abi, getAddress } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
 import chain from "@exactly/common/chain.ts";
@@ -12,6 +12,7 @@ const [
   marketUSDC,
   marketWETH,
   previewer,
+  usdc,
   {
     transactions: [exaPlugin, factory],
   },
@@ -20,6 +21,7 @@ const [
   import(`@exactly/protocol/deployments/${network}/MarketUSDC.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/MarketWETH.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/Previewer.json`) as Promise<Deployment>,
+  import(`@exactly/protocol/deployments/${network}/USDC.json`) as Promise<Deployment>,
   import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(chain.id)}/run-latest.json`) as Promise<DeployBroadcast>,
 ]);
 
@@ -37,6 +39,7 @@ export default defineConfig([
         marketUSDC: marketUSDC.address,
         marketWETH: marketWETH.address,
         previewer: previewer.address,
+        usdc: usdc.address,
       }),
       actions(),
       react(),
@@ -45,10 +48,7 @@ export default defineConfig([
   {
     out: "server/generated/contracts.ts",
     plugins: [
-      addresses({
-        marketUSDC: marketUSDC.address,
-        exaPlugin: getAddress(exaPlugin.contractAddress),
-      }),
+      addresses({ exaPlugin: exaPlugin.contractAddress, marketUSDC: marketUSDC.address }),
       foundry({ project: "contracts", include: ["IExaAccount.sol/**"] }),
     ],
   },
@@ -59,13 +59,13 @@ export default defineConfig([
       { name: "Market", abi: marketWETH.abi },
     ],
     plugins: [
-      addresses({ exaAccountFactory: getAddress(factory.contractAddress) }),
+      addresses({ exaAccountFactory: factory.contractAddress }),
       foundry({ project: "contracts", include: ["ExaAccountFactory.sol/**"] }),
     ],
   },
 ]);
 
-function addresses(contracts: Record<string, Address>): Plugin {
+function addresses(contracts: Record<string, string>): Plugin {
   return {
     name: "Addresses",
     run: () => ({
@@ -76,6 +76,6 @@ function addresses(contracts: Record<string, Address>): Plugin {
   };
 }
 
-type Deployment = { address: Address; abi: Abi };
+type Deployment = { address: string; abi: Abi };
 type ContractTransaction = { contractName: string; contractAddress: string };
 type DeployBroadcast = { transactions: [ContractTransaction, ContractTransaction] };
