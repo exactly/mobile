@@ -35,7 +35,7 @@ export default function Success() {
                   // TODO Implement account setup
                   router.replace("/(app)");
                 }}
-                iconAfter={ArrowRight}
+                iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" />}
               >
                 Start account setup
               </ActionButton>

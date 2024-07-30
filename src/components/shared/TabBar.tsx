@@ -2,12 +2,11 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import type { NavigationRoute } from "@sentry/react-native/dist/js/tracing/reactnavigation";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
-import { useTheme, ToggleGroup, ButtonIcon, Text } from "tamagui";
+import { ToggleGroup, ButtonIcon, Text } from "tamagui";
 
 import SafeView from "./SafeView";
 
 export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const theme = useTheme();
   const onPress = useCallback(
     (route: NavigationRoute, focused: boolean) => {
       const event = navigation.emit({
@@ -52,11 +51,11 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
               <ButtonIcon>
                 {icon?.({
                   focused,
-                  color: focused ? theme.uiBrandPrimary.val : theme.uiNeutralSecondary.val,
+                  color: focused ? "$uiBrandPrimary" : "$uiNeutralSecondary",
                   size: 24,
                 })}
               </ButtonIcon>
-              <Text textAlign="center" color={focused ? theme.uiBrandPrimary : theme.uiNeutralSecondary}>
+              <Text textAlign="center" color={focused ? "$uiBrandPrimary" : "$uiNeutralSecondary"}>
                 {label}
               </Text>
             </ToggleGroup.Item>

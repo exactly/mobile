@@ -1,12 +1,11 @@
 import { TrendingUp } from "@tamagui/lucide-icons";
 import React from "react";
-import { View, Text, useTheme } from "tamagui";
+import { View, Text } from "tamagui";
 
 export default function AssetChange() {
-  const theme = useTheme();
   return (
     <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" gap={5}>
-      <TrendingUp size={20} color={theme.uiSuccessSecondary.val} fontWeight="bold" />
+      <TrendingUp size={20} color="$uiSuccessSecondary" fontWeight="bold" />
       <Text
         fontSize={15}
         fontFamily="$mono"

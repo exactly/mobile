@@ -24,10 +24,16 @@ export default function HomeActions() {
       alignItems="center"
       paddingVertical={ms(10)}
     >
-      <Button contained main spaced onPress={onAddFunds} iconAfter={ArrowDownToLine}>
+      <Button
+        contained
+        main
+        spaced
+        onPress={onAddFunds}
+        iconAfter={<ArrowDownToLine color="$interactiveOnBaseBrandDefault" />}
+      >
         Add funds
       </Button>
-      <Button outlined main spaced onPress={onSend} iconAfter={ArrowUpRight}>
+      <Button outlined main spaced onPress={onSend} iconAfter={<ArrowUpRight color="$interactiveOnBaseBrandSoft" />}>
         Send
       </Button>
     </View>

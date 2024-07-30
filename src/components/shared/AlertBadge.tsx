@@ -2,10 +2,9 @@ import { ChevronRight, AlertTriangle } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Text, useTheme } from "tamagui";
+import { View, Text } from "tamagui";
 
 export default function AlertBadge() {
-  const theme = useTheme();
   return (
     <View
       borderRadius="$r6"
@@ -26,7 +25,7 @@ export default function AlertBadge() {
         width="20%"
         height="100%"
       >
-        <AlertTriangle size={ms(32)} color={theme.interactiveOnBaseErrorDefault.get()} />
+        <AlertTriangle size={ms(32)} color="$interactiveOnBaseErrorDefault" />
       </View>
 
       <View gap={ms(10)} padding={ms(25)} flex={1}>
@@ -38,7 +37,7 @@ export default function AlertBadge() {
             <Text color="$interactiveOnBaseErrorSoft" fontSize={ms(15)} lineHeight={18} fontWeight="bold">
               Manage
             </Text>
-            <ChevronRight size={14} color={theme.interactiveOnBaseErrorSoft.get()} fontWeight="bold" />
+            <ChevronRight size={14} color="$interactiveOnBaseErrorSoft" fontWeight="bold" />
           </View>
         </Pressable>
       </View>

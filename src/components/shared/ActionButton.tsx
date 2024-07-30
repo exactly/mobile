@@ -19,12 +19,12 @@ export default function ActionButton({
       borderRadius="$r3"
       contained
       height={ms(64)}
-      iconAfter={isLoading ? <Spinner /> : rest.iconAfter}
       minHeight={ms(64)}
       padding="$s4_5"
       scaleIcon={1.5}
       spaceFlex
       {...rest}
+      iconAfter={isLoading ? <Spinner color="$interactiveOnBaseBrandDefault" /> : rest.iconAfter}
     >
       {isLoading ? loadingContent : (rest.children ?? rest.content)}
     </Button>

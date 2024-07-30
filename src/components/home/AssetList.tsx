@@ -1,7 +1,7 @@
 import { TrendingDown, TrendingUp } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
-import { Image, Text, View, useTheme } from "tamagui";
+import { Image, Text, View } from "tamagui";
 
 interface Asset {
   image: string;
@@ -52,7 +52,6 @@ const assets: Asset[] = [
 ];
 
 export default function AssetList() {
-  const theme = useTheme();
   return (
     <View width="100%">
       {assets.map(({ ticker, usdValue, change, balance, apr, image }, index) => (
@@ -101,9 +100,9 @@ export default function AssetList() {
               </View>
               <View flexDirection="row" justifyContent="flex-end" gap={ms(5)}>
                 {change.percentage < 0 ? (
-                  <TrendingDown size={20} color={theme.interactiveOnBaseErrorSoft.val} />
+                  <TrendingDown size={20} color="$interactiveOnBaseErrorSoft" />
                 ) : (
-                  <TrendingUp size={20} color={theme.uiSuccessSecondary.val} />
+                  <TrendingUp size={20} color="$uiSuccessSecondary" />
                 )}
                 <Text fontSize={ms(15)} color={change.percentage < 0 ? "$uiErrorPrimary" : "$uiSuccessSecondary"}>
                   {change.percentage}%

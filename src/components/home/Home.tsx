@@ -2,7 +2,7 @@ import { ChevronRight } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Text, View, useTheme } from "tamagui";
+import { ScrollView, Text, View } from "tamagui";
 
 import Balance from "./Balance";
 import HomeActions from "./HomeActions";
@@ -14,7 +14,6 @@ import ProfileHeader from "../shared/ProfileHeader";
 import SafeView from "../shared/SafeView";
 
 export default function Home() {
-  const theme = useTheme();
   return (
     <SafeView paddingBottom={0}>
       <BaseLayout>
@@ -34,7 +33,7 @@ export default function Home() {
                     <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
-                    <ChevronRight size={14} color={theme.interactiveTextBrandDefault.get()} fontWeight="bold" />
+                    <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
                   </View>
                 </Pressable>
               }
@@ -51,7 +50,7 @@ export default function Home() {
                     <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Manage
                     </Text>
-                    <ChevronRight size={14} color={theme.interactiveTextBrandDefault.get()} fontWeight="bold" />
+                    <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
                   </View>
                 </Pressable>
               }
@@ -68,7 +67,7 @@ export default function Home() {
                     <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <ChevronRight size={14} color={theme.interactiveTextBrandDefault.get()} fontWeight="bold" />
+                    <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
                   </View>
                 </Pressable>
               }
@@ -86,7 +85,7 @@ export default function Home() {
                     <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <ChevronRight size={14} color={theme.interactiveTextBrandDefault.get()} fontWeight="bold" />
+                    <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
                   </View>
                 </Pressable>
               }

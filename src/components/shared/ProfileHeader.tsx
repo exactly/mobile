@@ -1,7 +1,7 @@
 import { BellRing, EyeOff, Settings } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text, Image, useTheme, styled } from "tamagui";
+import { View, Text, Image, styled } from "tamagui";
 
 const OnlineIndicator = styled(View, {
   width: 12,
@@ -19,7 +19,6 @@ const OnlineIndicator = styled(View, {
 const domainMatcher = /\..*/;
 
 export default function ProfileHeader() {
-  const theme = useTheme();
   const fullAddress = "0xfrdc.exa.eth";
   // TODO move elsewhere and export as util?
   const {
@@ -48,10 +47,10 @@ export default function ProfileHeader() {
           </View>
 
           <View display="flex" flexDirection="row" alignItems="flex-start">
-            <Text fontSize={17} color={theme.uiNeutralPrimary} lineHeight={23}>
+            <Text fontSize={17} color="$uiNeutralPrimary" lineHeight={23}>
               {name}
             </Text>
-            <Text fontSize={17} color={theme.uiNeutralSecondary} lineHeight={23}>
+            <Text fontSize={17} color="$uiNeutralSecondary" lineHeight={23}>
               {domain}
             </Text>
           </View>

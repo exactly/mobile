@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Text, View, useTheme } from "tamagui";
+import { ScrollView, Text, View } from "tamagui";
 
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
@@ -13,7 +13,6 @@ function back() {
 }
 
 export default function AddFiat() {
-  const theme = useTheme();
   const { canGoBack } = router;
   return (
     <SafeView>
@@ -22,7 +21,7 @@ export default function AddFiat() {
           <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
               <Pressable onPress={back}>
-                <ArrowLeft size={ms(24)} color={theme.uiNeutralPrimary.get()} />
+                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
               </Pressable>
             )}
             <View flexDirection="row" alignItems="center">
@@ -34,7 +33,7 @@ export default function AddFiat() {
               </Text>
             </View>
             <Pressable>
-              <Info color={theme.uiNeutralPrimary.get()} />
+              <Info color="$uiNeutralPrimary" />
             </Pressable>
           </View>
         </View>

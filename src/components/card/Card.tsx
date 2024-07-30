@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Switch, Text, View, styled, useTheme, Spinner } from "tamagui";
+import { ScrollView, Switch, Text, View, styled, Spinner } from "tamagui";
 
 import CardDetails from "./CardDetails";
 import LatestActivity from "./LatestActivity";
@@ -38,7 +38,6 @@ const handleCreateCard = () => {
 };
 
 export default function Card() {
-  const theme = useTheme();
   const {
     data: uri,
     isLoading,
@@ -58,7 +57,7 @@ export default function Card() {
                 My Cards
               </Text>
               <Pressable>
-                <Info color={theme.uiNeutralPrimary.get()} />
+                <Info color="$uiNeutralPrimary" />
               </Pressable>
             </View>
 
@@ -78,7 +77,7 @@ export default function Card() {
               <StyledAction>
                 <Pressable onPress={getCard}>
                   <View gap={ms(10)}>
-                    <Eye size={ms(24)} color={theme.backgroundBrand.get()} fontWeight="bold" />
+                    <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                     <Text color="$uiPrimary" fontSize={ms(15)}>
                       Details
                     </Text>
@@ -92,7 +91,7 @@ export default function Card() {
               <StyledAction>
                 <Pressable>
                   <View gap={ms(10)}>
-                    <Snowflake size={ms(24)} color={theme.backgroundBrand.get()} fontWeight="bold" />
+                    <Snowflake size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                     <Text color="$uiPrimary" fontSize={ms(15)}>
                       Freeze
                     </Text>
@@ -100,7 +99,7 @@ export default function Card() {
                       size={ms(24)}
                       backgroundColor="$backgroundMild"
                       maxWidth="50%"
-                      borderColor={theme.borderNeutralSoft}
+                      borderColor="$borderNeutralSoft"
                     >
                       <Switch.Thumb animation="quicker" backgroundColor="$backgroundSoft" shadowColor="$uiPrimary" />
                     </Switch>
@@ -117,7 +116,7 @@ export default function Card() {
                     <Text color="$interactiveBaseBrandDefault" fontSize={ms(14)} lineHeight={18} fontWeight="bold">
                       Simulate payment
                     </Text>
-                    <Calculator size={ms(14)} color={theme.interactiveTextBrandDefault.get()} />
+                    <Calculator size={ms(14)} color="$interactiveTextBrandDefault" />
                   </View>
                 </Pressable>
               }
@@ -143,7 +142,7 @@ export default function Card() {
                       width={ms(55)}
                       height={ms(55)}
                       borderRadius="$r4"
-                      backgroundColor={index === 0 ? theme.interactiveBaseBrandDefault.get() : "transparent"}
+                      backgroundColor={index === 0 ? "$interactiveBaseBrandDefault" : "transparent"}
                       justifyContent="center"
                       alignItems="center"
                     >
@@ -162,7 +161,7 @@ export default function Card() {
                   <Pressable>
                     <View flexDirection="row" justifyContent="space-between" alignItems="center" gap={ms(10)}>
                       <Text color="$uiNeutralSecondary">Learn more about installments</Text>
-                      <ArrowRight size={14} color={theme.iconSecondary.get()} />
+                      <ArrowRight size={14} color="$iconSecondary" />
                     </View>
                   </Pressable>
                 </View>
@@ -177,7 +176,7 @@ export default function Card() {
                     <Text color="$interactiveBaseBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       Increase limits
                     </Text>
-                    <Plus size={14} color={theme.interactiveBaseBrandDefault.get()} fontWeight="bold" />
+                    <Plus size={14} color="$interactiveBaseBrandDefault" fontWeight="bold" />
                   </View>
                 </Pressable>
               }
@@ -192,7 +191,7 @@ export default function Card() {
                 <Pressable>
                   <View flexDirection="row" justifyContent="space-between" alignItems="center" gap={ms(10)}>
                     <Text color="$uiNeutralSecondary">Learn more about spending limits.</Text>
-                    <ArrowRight size={14} color={theme.iconSecondary.get()} />
+                    <ArrowRight size={14} color="$iconSecondary" />
                   </View>
                 </Pressable>
               </View>
@@ -206,7 +205,7 @@ export default function Card() {
                     <Text color="$interactiveBaseBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
                       View all
                     </Text>
-                    <ChevronRight size={14} color={theme.interactiveBaseBrandDefault.get()} />
+                    <ChevronRight size={14} color="$interactiveBaseBrandDefault" />
                   </View>
                 </Pressable>
               }

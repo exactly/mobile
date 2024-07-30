@@ -1,7 +1,7 @@
 import { Plane, ArrowUpRight, Utensils, Laptop } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text, useTheme } from "tamagui";
+import { View, Text } from "tamagui";
 
 type ActivityCategory = "food" | "tech" | "travel" | "other";
 const activityCategoryToIcon = {
@@ -73,7 +73,6 @@ const activity: {
 ];
 
 export default function LatestActivity() {
-  const theme = useTheme();
   if (activity.length === 0) {
     return (
       <Text textAlign="center" fontSize={ms(15)} color="$uiNeutralSecondary">
@@ -84,7 +83,7 @@ export default function LatestActivity() {
 
   const getIcon = (category: ActivityCategory) => {
     const Icon = activityCategoryToIcon[category];
-    return <Icon size={ms(20)} color={theme.uiSuccessPrimary.get()} fontWeight="bold" />;
+    return <Icon size={ms(20)} color="$uiSuccessPrimary" fontWeight="bold" />;
   };
 
   return (

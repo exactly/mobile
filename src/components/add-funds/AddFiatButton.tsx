@@ -3,14 +3,13 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Text, useTheme } from "tamagui";
+import { View, Text } from "tamagui";
 
 function navigate() {
   router.push("/add-fiat");
 }
 
 export default function AddFiatButton() {
-  const theme = useTheme();
   return (
     <Pressable onPress={navigate}>
       <View borderWidth={1} borderRadius="$r5" borderColor="$borderNeutralSoft" padding={ms(16)} gap={ms(20)}>
@@ -23,7 +22,7 @@ export default function AddFiatButton() {
             justifyContent="center"
             alignItems="center"
           >
-            <Banknote size={ms(24)} color={theme.iconBrandDefault.get()} />
+            <Banknote size={ms(24)} color="$iconBrandDefault" />
           </View>
           <View gap={ms(5)}>
             <Text fontSize={ms(17)} color="$textPrimary" fontWeight="bold">
@@ -40,8 +39,8 @@ export default function AddFiatButton() {
               Method
             </Text>
             <View flexDirection="row" gap={ms(2)}>
-              <PiggyBank size={ms(24)} color={theme.iconSecondary.get()} fontWeight="bold" />
-              <CreditCard size={ms(24)} color={theme.iconSecondary.get()} fontWeight="bold" />
+              <PiggyBank size={ms(24)} color="$iconSecondary" fontWeight="bold" />
+              <CreditCard size={ms(24)} color="$iconSecondary" fontWeight="bold" />
             </View>
           </View>
           <View borderRadius="$r3" gap={ms(5)}>
@@ -49,9 +48,9 @@ export default function AddFiatButton() {
               Currencies
             </Text>
             <View flexDirection="row" gap={ms(2)}>
-              <DollarSign size={ms(16)} color={theme.iconSecondary.get()} fontWeight="bold" />
-              <Euro size={ms(16)} color={theme.iconSecondary.get()} fontWeight="bold" />
-              <PoundSterling size={ms(16)} color={theme.iconSecondary.get()} fontWeight="bold" />
+              <DollarSign size={ms(16)} color="$iconSecondary" fontWeight="bold" />
+              <Euro size={ms(16)} color="$iconSecondary" fontWeight="bold" />
+              <PoundSterling size={ms(16)} color="$iconSecondary" fontWeight="bold" />
             </View>
           </View>
           <View borderRadius="$r3" gap={ms(5)}>

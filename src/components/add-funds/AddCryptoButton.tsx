@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Text, useTheme } from "tamagui";
+import { View, Text } from "tamagui";
 
 import CubeWithCircles from "../../assets/images/cube-with-circles.svg";
 import Optimism from "../../assets/images/optimism.svg";
@@ -12,7 +12,6 @@ function navigate() {
 }
 
 export default function AddCryptoButton() {
-  const theme = useTheme();
   return (
     <Pressable onPress={navigate}>
       <View borderWidth={1} borderRadius="$r5" borderColor="$borderNeutralSoft" padding={ms(16)} gap={ms(20)}>
@@ -25,7 +24,7 @@ export default function AddCryptoButton() {
             justifyContent="center"
             alignItems="center"
           >
-            <CubeWithCircles width={ms(24)} height={ms(24)} color={theme.iconBrandDefault.get()} />
+            <CubeWithCircles width={ms(24)} height={ms(24)} color="$iconBrandDefault" />
           </View>
           <View gap={ms(5)}>
             <Text fontSize={ms(17)} color="$textPrimary" fontWeight="bold">
@@ -42,7 +41,7 @@ export default function AddCryptoButton() {
               Network
             </Text>
             <View>
-              <Optimism width={ms(24)} height={ms(24)} color={theme.iconBrandDefault.get()} />
+              <Optimism width={ms(24)} height={ms(24)} color="$iconBrandDefault" />
             </View>
           </View>
           <View borderRadius="$r3" gap={ms(5)}>
@@ -50,7 +49,7 @@ export default function AddCryptoButton() {
               Assets
             </Text>
             <View>
-              <Optimism width={ms(24)} height={ms(24)} color={theme.iconBrandDefault.get()} />
+              <Optimism width={ms(24)} height={ms(24)} color="$iconBrandDefault" />
             </View>
           </View>
           <View borderRadius="$r3" gap={ms(5)}>

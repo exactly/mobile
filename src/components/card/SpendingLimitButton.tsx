@@ -1,7 +1,7 @@
 import { PencilLine } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text, useTheme } from "tamagui";
+import { View, Text } from "tamagui";
 
 interface SpendingLimitButtonProperties {
   title: string;
@@ -11,7 +11,6 @@ interface SpendingLimitButtonProperties {
 }
 
 export default function SpendingLimitButton({ title, amount, limit, currency }: SpendingLimitButtonProperties) {
-  const theme = useTheme();
   return (
     <View
       flexDirection="row"
@@ -38,7 +37,7 @@ export default function SpendingLimitButton({ title, amount, limit, currency }: 
           <Text color="$uiprimary" fontSize={ms(15)}>
             {title}
           </Text>
-          <PencilLine size={ms(15)} color={theme.iconPrimary.get()} />
+          <PencilLine size={ms(15)} color="$iconPrimary" />
         </View>
         <View flexDirection="row" justifyContent="space-around" alignItems="center" gap={ms(5)}>
           <Text color="$uiBrandSecondary" fontSize={ms(15)} fontWeight="bold">

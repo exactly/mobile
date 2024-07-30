@@ -2,7 +2,7 @@ import { X } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { Text, View, useTheme } from "tamagui";
+import { Text, View } from "tamagui";
 
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -12,7 +12,6 @@ const close = () => {
 };
 
 const AddCryptoAbout = () => {
-  const theme = useTheme();
   return (
     <SafeView flex={1} flexDirection="column" alignItems="center" paddingTop={0}>
       <View
@@ -54,7 +53,7 @@ const AddCryptoAbout = () => {
               noFlex
               outlined
               spaced
-              iconAfter={<X size={ms(20)} color={theme.interactiveOnBaseBrandSoft.val} fontWeight="bold" />}
+              iconAfter={<X size={ms(20)} color="$interactiveOnBaseBrandSoft" fontWeight="bold" />}
               onPress={close}
             >
               Close

@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { Text, View, useTheme } from "tamagui";
+import { Text, View } from "tamagui";
 
 import Blob from "../../assets/images/onboarding-blob-05.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
@@ -24,7 +24,6 @@ function learnMore() {
 }
 
 const Passkeys = () => {
-  const theme = useTheme();
   const queryClient = useQueryClient();
 
   const {
@@ -43,7 +42,7 @@ const Passkeys = () => {
 
   useEffect(() => {
     if (isSuccess && data?.credentialId) {
-      router.push("onboarding/success");
+      router.replace("../success");
     }
   }, [data, isSuccess]);
 
@@ -53,7 +52,7 @@ const Passkeys = () => {
         <View flex={1} paddingTop={ms(40)}>
           <View position="absolute" top={ms(20)} right={0} zIndex={1}>
             <Pressable onPress={close}>
-              <X size={ms(25)} color={theme.uiNeutralSecondary.val} />
+              <X size={ms(25)} color="$uiNeutralSecondary" />
             </Pressable>
           </View>
 
@@ -90,7 +89,7 @@ const Passkeys = () => {
               <ActionButton
                 isLoading={isPending}
                 loadingContent="Creating account..."
-                iconAfter={<Key size={ms(20)} color={theme.interactiveOnBaseBrandDefault.val} fontWeight="bold" />}
+                iconAfter={<Key size={ms(20)} color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
                 onPress={() => {
                   createAccount();
                 }}

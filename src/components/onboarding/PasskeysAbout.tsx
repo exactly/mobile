@@ -3,14 +3,13 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { Text, View, useTheme } from "tamagui";
+import { Text, View } from "tamagui";
 
 const close = () => {
   router.back();
 };
 
 export default function PasskeysAbout() {
-  const theme = useTheme();
   return (
     <View flex={1} flexDirection="column" alignItems="center">
       <View
@@ -33,7 +32,7 @@ export default function PasskeysAbout() {
             />
             <Pressable onPress={close}>
               <View borderRadius="$r_0" backgroundColor="$backgroundMild" padding={ms(2)}>
-                <X size={ms(25)} color={theme.uiNeutralSecondary.val} />
+                <X size={ms(25)} color="$uiNeutralSecondary" />
               </View>
             </Pressable>
           </View>

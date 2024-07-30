@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Text, View, useTheme, Image } from "tamagui";
+import { ScrollView, Text, View, Image } from "tamagui";
 
 import OptimismImage from "../../assets/images/optimism.svg";
 import BaseLayout from "../shared/BaseLayout";
@@ -43,7 +43,6 @@ const supportedAssets = [
 ];
 
 export default function AddCrypto() {
-  const theme = useTheme();
   const { canGoBack } = router;
   return (
     <SafeView>
@@ -52,7 +51,7 @@ export default function AddCrypto() {
           <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
               <Pressable onPress={back}>
-                <ArrowLeft size={ms(24)} color={theme.uiNeutralPrimary.get()} />
+                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
               </Pressable>
             )}
             <View flexDirection="row" alignItems="center">
@@ -64,7 +63,7 @@ export default function AddCrypto() {
               </Text>
             </View>
             <Pressable>
-              <Info color={theme.uiNeutralPrimary.get()} />
+              <Info color="$uiNeutralPrimary" />
             </Pressable>
           </View>
         </View>
@@ -91,7 +90,7 @@ export default function AddCrypto() {
                 borderTopLeftRadius="$r3"
                 borderBottomLeftRadius="$r3"
               >
-                <Info size={ms(24)} color={theme.interactiveOnBaseSuccessSoft.get()} />
+                <Info size={ms(24)} color="$interactiveOnBaseSuccessSoft" />
               </View>
 
               <Text fontSize={ms(15)} color="$uiSuccessPrimary">
@@ -127,10 +126,10 @@ export default function AddCrypto() {
                     alignItems="center"
                     onPress={finish}
                   >
-                    <QrCode size={ms(24)} color={theme.interactiveOnBaseBrandDefault.get()} />
+                    <QrCode size={ms(24)} color="$interactiveOnBaseBrandDefault" />
                   </View>
-                  <Files size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
-                  <Share size={ms(24)} color={theme.interactiveBaseBrandDefault.get()} />
+                  <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
+                  <Share size={ms(24)} color="$interactiveBaseBrandDefault" />
                 </View>
               </View>
             </View>
@@ -190,7 +189,7 @@ export default function AddCrypto() {
                 <Text color="$uiNeutralPlaceholder" lineHeight={ms(16)}>
                   Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
                   loss of funds.{" "}
-                  <Text color={theme.uiBrandSecondary.get()} fontSize={ms(13)} fontWeight="bold" onPress={about}>
+                  <Text color="$uiBrandSecondary" fontSize={ms(13)} fontWeight="bold" onPress={about}>
                     Learn more about adding funds.
                   </Text>
                 </Text>

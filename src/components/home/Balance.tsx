@@ -2,13 +2,12 @@ import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Text, ButtonIcon, useTheme } from "tamagui";
+import { View, Text, ButtonIcon } from "tamagui";
 
 import AssetChange from "./AssetChange";
 import AssetList from "./AssetList";
 
 export default function Balance() {
-  const theme = useTheme();
   const [isOpen, setIsOpen] = useState(false);
 
   const onPress = () => {
@@ -37,9 +36,9 @@ export default function Balance() {
             </Text>
             <ButtonIcon>
               {isOpen ? (
-                <ChevronUp size={ms(32)} color={theme.uiBrandSecondary.val} fontWeight="bold" />
+                <ChevronUp size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
               ) : (
-                <ChevronDown size={ms(32)} color={theme.uiBrandSecondary.val} fontWeight="bold" />
+                <ChevronDown size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
               )}
             </ButtonIcon>
           </View>
