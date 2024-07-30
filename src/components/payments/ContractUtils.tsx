@@ -2,8 +2,8 @@ import * as Clipboard from "expo-clipboard";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
 import { View, Text, Spinner } from "tamagui";
-import { zeroAddress } from "viem";
-import { useAccount, useBalance, useWriteContract } from "wagmi";
+import { erc20Abi, zeroAddress } from "viem";
+import { useAccount, useBalance, useSimulateContract, useWriteContract } from "wagmi";
 
 import {
   auditorAddress,
@@ -17,7 +17,7 @@ import Button from "../shared/Button";
 
 export default function PasskeyUtils() {
   const { address } = useAccount();
-  const { data: balance } = useBalance({ address: usdcAddress });
+  const { data: balance } = useBalance({ token: usdcAddress, address });
 
   const {
     writeContract: enterMarket,
@@ -31,6 +31,7 @@ export default function PasskeyUtils() {
     isPending: isDepositing,
     error: depositError,
   } = useWriteContract();
+  const { writeContract: approve, data: approveHash, isPending: isApproving, error: approveError } = useWriteContract();
 
   const { data: enterUSDCSimulation } = useSimulateAuditorEnterMarket({
     address: auditorAddress,
@@ -40,7 +41,14 @@ export default function PasskeyUtils() {
   const { data: depositUSDCSimulation } = useSimulateMarketDeposit({
     address: marketUSDCAddress,
     args: [balance?.value ?? 0n, address ?? zeroAddress],
-    query: { enabled: !!address },
+    query: { enabled: !!address && !!balance },
+  });
+  const { data: approveUSDCSimulation } = useSimulateContract({
+    abi: erc20Abi,
+    functionName: "approve",
+    address: usdcAddress,
+    args: [marketUSDCAddress, balance?.value ?? 0n],
+    query: { enabled: !!address && !!balance },
   });
 
   const enterUSDC = useCallback(() => {
@@ -48,10 +56,15 @@ export default function PasskeyUtils() {
     enterMarket(enterUSDCSimulation.request);
   }, [enterUSDCSimulation, enterMarket]);
 
-  const deposit = useCallback(() => {
+  const depositUSDC = useCallback(() => {
     if (!depositUSDCSimulation) throw new Error("no deposit simulation");
     depositMarket(depositUSDCSimulation.request);
   }, [depositMarket, depositUSDCSimulation]);
+
+  const approveUSDC = useCallback(() => {
+    if (!approveUSDCSimulation) throw new Error("no approve simulation");
+    approve(approveUSDCSimulation.request);
+  }, [approve, approveUSDCSimulation]);
 
   const copyEnterMarketHash = () => {
     if (!enterMarketHash) return;
@@ -63,17 +76,31 @@ export default function PasskeyUtils() {
     Clipboard.setStringAsync(depositHash).catch(handleError);
   };
 
+  const copyApproveHash = () => {
+    if (!approveHash) return;
+    Clipboard.setStringAsync(approveHash).catch(handleError);
+  };
+
   return (
     <View gap={ms(10)}>
       <Text fontSize={ms(16)} color="$uiNeutralPrimary" fontWeight="bold">
         Exactly
       </Text>
-      {(isSending || isDepositing) && <Spinner color="$interactiveBaseBrandDefault" />}
-      {(enterMarketError || depositError) && (
+
+      {(isSending || isDepositing || isApproving) && <Spinner color="$interactiveBaseBrandDefault" />}
+
+      {(enterMarketError || depositError || approveError) && (
         <Text color="$uiErrorPrimary" fontWeight="bold">
-          {enterMarketError ? enterMarketError.message : depositError ? depositError.message : "Error"}
+          {enterMarketError
+            ? enterMarketError.message
+            : depositError
+              ? depositError.message
+              : approveError
+                ? approveError.message
+                : "Error"}
         </Text>
       )}
+
       {enterMarketHash && (
         <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
           <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
@@ -81,6 +108,7 @@ export default function PasskeyUtils() {
           </Text>
         </View>
       )}
+
       <View flexDirection="row" gap={ms(10)}>
         <Button contained onPress={enterUSDC} padding={ms(10)} flex={1}>
           Enter USDC market
@@ -91,8 +119,36 @@ export default function PasskeyUtils() {
           </Button>
         )}
       </View>
+
+      {approveHash && (
+        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+            {approveHash}
+          </Text>
+        </View>
+      )}
+
       <View flexDirection="row" gap={ms(10)}>
-        <Button contained onPress={deposit} padding={ms(10)} flex={1}>
+        <Button contained onPress={approveUSDC} padding={ms(10)} flex={1}>
+          Approve USDC
+        </Button>
+        {approveHash && (
+          <Button outlined borderRadius="$r2" onPress={copyApproveHash} padding={ms(10)} flex={1}>
+            Copy
+          </Button>
+        )}
+      </View>
+
+      {depositHash && (
+        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+            {depositHash}
+          </Text>
+        </View>
+      )}
+
+      <View flexDirection="row" gap={ms(10)}>
+        <Button contained onPress={depositUSDC} padding={ms(10)} flex={1}>
           Deposit
         </Button>
         {depositHash && (
