@@ -170,7 +170,7 @@ export default function Carousel() {
         <View flexDirection="column" gap={10}>
           <ActionButton
             onPress={() => {
-              router.push("onboarding/(passkeys)/passkeys");
+              router.push("../onboarding/(passkeys)/passkeys");
             }}
             iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
           >

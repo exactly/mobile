@@ -8,7 +8,7 @@ import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 
 const startOnboarding = () => {
-  router.push("onboarding");
+  router.push("/onboarding");
 };
 
 export default function Activity() {

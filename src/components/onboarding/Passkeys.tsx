@@ -20,7 +20,7 @@ function close() {
 }
 
 function learnMore() {
-  router.push("onboarding/(passkeys)/about");
+  router.push("../(passkeys)/about");
 }
 
 const Passkeys = () => {

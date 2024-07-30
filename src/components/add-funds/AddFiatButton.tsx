@@ -6,7 +6,7 @@ import { ms } from "react-native-size-matters";
 import { View, Text, useTheme } from "tamagui";
 
 function navigate() {
-  router.push("add-funds/add-fiat");
+  router.push("/add-fiat");
 }
 
 export default function AddFiatButton() {

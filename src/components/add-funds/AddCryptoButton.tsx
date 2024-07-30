@@ -8,7 +8,7 @@ import CubeWithCircles from "../../assets/images/cube-with-circles.svg";
 import Optimism from "../../assets/images/optimism.svg";
 
 function navigate() {
-  router.push("add-funds/add-crypto");
+  router.push("../add-funds/add-crypto");
 }
 
 export default function AddCryptoButton() {

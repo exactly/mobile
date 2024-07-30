@@ -14,11 +14,11 @@ function back() {
 }
 
 function about() {
-  router.push("./add-crypto-about");
+  router.push("../onboarding/add-funds/add-crypto-about");
 }
 
 function finish() {
-  router.replace("(app)");
+  router.replace("/(app)");
 }
 
 const supportedAssets = [

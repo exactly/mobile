@@ -33,7 +33,7 @@ export default function Success() {
               <ActionButton
                 onPress={() => {
                   // TODO Implement account setup
-                  router.push("(app)");
+                  router.replace("/(app)");
                 }}
                 iconAfter={ArrowRight}
               >
