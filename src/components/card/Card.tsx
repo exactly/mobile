@@ -1,5 +1,7 @@
 import { ArrowRight, Calculator, ChevronRight, Eye, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
+import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
+import { valibotValidator } from "@tanstack/valibot-form-adapter";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -13,6 +15,7 @@ import { createCard, getPAN } from "../../utils/server";
 import BaseLayout from "../shared/BaseLayout";
 import Button from "../shared/Button";
 import InfoPreview from "../shared/InfoPreview";
+import Input from "../shared/Input";
 import SafeView from "../shared/SafeView";
 
 const StyledAction = styled(View, {
@@ -26,16 +29,16 @@ const StyledAction = styled(View, {
   justifyContent: "space-between",
 });
 
-const handleCreateCard = () => {
+function handleCreateCard(fullName: string, email: string) {
   createCard({
-    cardholder: "Vitalik Buterin",
-    email: "vb@gmail.com",
+    cardholder: fullName,
+    email,
     phone: { countryCode: "55", number: "988887777" },
     limits: { daily: 1000, weekly: 3000, monthly: 5000 },
   })
     .then()
     .catch(handleError);
-};
+}
 
 export default function Card() {
   const {
@@ -44,9 +47,28 @@ export default function Card() {
     error,
     refetch,
   } = useQuery({ queryKey: ["pan"], queryFn: getPAN, enabled: false, staleTime: 1000 * 60 });
+
+  const form = useForm({
+    defaultValues: {
+      first: "",
+      middle: "",
+      last: "",
+      email: "",
+    },
+    onSubmit: ({ value }) => {
+      handleCreateCard(`${value.first} ${value.middle} ${value.last}`, value.email);
+    },
+    validatorAdapter: valibotValidator(), // TODO implement validations
+  });
+
   const getCard = () => {
     refetch().catch(handleError);
   };
+
+  const submit = () => {
+    form.handleSubmit().catch(handleError);
+  };
+
   return (
     <SafeView paddingBottom={0}>
       <ScrollView>
@@ -69,9 +91,107 @@ export default function Card() {
               </Text>
             )}
 
-            <Button contained onPress={handleCreateCard}>
-              Create Card
-            </Button>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                form.handleSubmit().catch(handleError);
+              }}
+            >
+              <View gap={ms(10)}>
+                <Text color="uiPrimary" fontSize={ms(16)} fontWeight="bold">
+                  Create a new card
+                </Text>
+
+                <form.Field name="first">
+                  {(field) => (
+                    <View gap={ms(2)}>
+                      <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                        First name
+                      </Text>
+                      <Input
+                        value={field.state.value}
+                        placeholder="Vitalik Buterin"
+                        onChangeText={(text) => {
+                          form.setFieldValue("first", text);
+                        }}
+                      />
+                      {field.state.meta.errors.length > 0 ? (
+                        <Text>{field.state.meta.errors.join(", ")}</Text>
+                      ) : undefined}
+                    </View>
+                  )}
+                </form.Field>
+
+                <form.Field name="middle">
+                  {(field) => (
+                    <View gap={ms(2)}>
+                      <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                        Middle name
+                      </Text>
+                      <Input
+                        value={field.state.value}
+                        placeholder="Sergey"
+                        onChangeText={(text) => {
+                          form.setFieldValue("middle", text);
+                        }}
+                      />
+                      {field.state.meta.errors.length > 0 ? (
+                        <Text>{field.state.meta.errors.join(", ")}</Text>
+                      ) : undefined}
+                    </View>
+                  )}
+                </form.Field>
+
+                <form.Field name="last">
+                  {(field) => (
+                    <View gap={ms(2)}>
+                      <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                        Last name
+                      </Text>
+                      <Input
+                        value={field.state.value}
+                        placeholder="Buterin"
+                        onChangeText={(text) => {
+                          form.setFieldValue("last", text);
+                        }}
+                      />
+                      {field.state.meta.errors.length > 0 ? (
+                        <Text>{field.state.meta.errors.join(", ")}</Text>
+                      ) : undefined}
+                    </View>
+                  )}
+                </form.Field>
+
+                <form.Field name="email">
+                  {(field) => (
+                    <View gap={ms(2)}>
+                      <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                        Email
+                      </Text>
+                      <Input
+                        value={field.state.value}
+                        placeholder="vb@gmail.com"
+                        onChangeText={(text) => {
+                          form.setFieldValue("email", text);
+                        }}
+                      />
+                      {field.state.meta.errors.length > 0 ? (
+                        <Text>{field.state.meta.errors.join(", ")}</Text>
+                      ) : undefined}
+                    </View>
+                  )}
+                </form.Field>
+
+                <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                  {([canSubmit, isSubmitting]) => (
+                    <Button contained disabled={!canSubmit} onPress={submit}>
+                      {isSubmitting ? "Creating card..." : "Create card"}
+                    </Button>
+                  )}
+                </form.Subscribe>
+              </View>
+            </form>
 
             <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
               <StyledAction>
