@@ -6,6 +6,7 @@ import React, { useEffect } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Text, View } from "tamagui";
+import { useConnect } from "wagmi";
 
 import Blob from "../../assets/images/onboarding-blob-05.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
@@ -38,13 +39,20 @@ const Passkeys = () => {
     },
   });
 
+  const {
+    connect,
+    isPending: isConnecting,
+    connectors: [connector],
+  } = useConnect();
+
   const { data } = useQuery<Passkey>({ queryKey: ["passkey"] });
 
   useEffect(() => {
-    if (isSuccess && data?.credentialId) {
+    if (isSuccess && data?.credentialId && connector) {
+      connect({ connector });
       router.replace("../success");
     }
-  }, [data, isSuccess]);
+  }, [connect, connector, data, isSuccess]);
 
   return (
     <SafeView>
@@ -87,7 +95,7 @@ const Passkeys = () => {
                 </Text>
               </View>
               <ActionButton
-                isLoading={isPending}
+                isLoading={isPending || isConnecting}
                 loadingContent="Creating account..."
                 iconAfter={<Key size={ms(20)} color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
                 onPress={() => {
