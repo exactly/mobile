@@ -3,12 +3,16 @@ import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View, Text, ButtonIcon } from "tamagui";
+import { useAccount, useBalance } from "wagmi";
 
 import AssetChange from "./AssetChange";
 import AssetList from "./AssetList";
+import { usdcAddress } from "../../generated/contracts";
 
 export default function Balance() {
   const [isOpen, setIsOpen] = useState(false);
+  const { address } = useAccount();
+  const { data: balance } = useBalance({ token: usdcAddress, address });
 
   const onPress = () => {
     setIsOpen(!isOpen);
@@ -32,7 +36,7 @@ export default function Balance() {
         <Pressable onPress={onPress}>
           <View flexDirection="row" justifyContent="center" alignItems="center" gap={ms(10)}>
             <Text fontFamily="$mono" fontSize={ms(40)} fontWeight="bold">
-              $15,186.95
+              {balance ? balance.formatted : "0.00"} {balance?.symbol}
             </Text>
             <ButtonIcon>
               {isOpen ? (
