@@ -5,7 +5,7 @@ import { parse } from "valibot";
 import { keccak256, serializeTransaction, toHex, type TransactionSerializable } from "viem";
 import { publicKeyToAddress } from "viem/accounts";
 
-const privateKey = parse(Hash, process.env.PRIVATE_KEY, { message: "invalid private key" }).slice(2);
+const privateKey = parse(Hash, process.env.KEEPER_PRIVATE_KEY, { message: "invalid private key" }).slice(2);
 
 export default function signTransactionSync(transaction: TransactionSerializable) {
   const serializer = chain.serializers?.transaction ?? serializeTransaction;
