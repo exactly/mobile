@@ -125,4 +125,3 @@ const Payload = v.variant("event_type", [
     }),
   }),
 ]);
-type Payload = v.InferOutput<typeof Payload>; // eslint-disable-line @typescript-eslint/no-redeclare
