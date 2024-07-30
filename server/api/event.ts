@@ -18,8 +18,10 @@ import signTransactionSync, { signerAddress } from "../utils/signTransactionSync
 const debug = createDebug("exa:server:event");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
-export default async function handler({ method, body }: VercelRequest, response: VercelResponse) {
+export default async function handler({ method, body, headers }: VercelRequest, response: VercelResponse) {
   if (method !== "POST") return response.status(405).end("method not allowed");
+
+  if (headers["x-webhook-key"] !== process.env.CRYPTOMATE_WEBHOOK_KEY) return response.status(401).end("unauthorized");
 
   const payload = v.safeParse(Payload, body);
   if (!payload.success) {
