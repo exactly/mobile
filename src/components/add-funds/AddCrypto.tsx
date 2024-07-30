@@ -1,11 +1,15 @@
 import { ArrowLeft, Files, Info, QrCode, Share } from "@tamagui/lucide-icons";
+import * as Clipboard from "expo-clipboard";
 import { router } from "expo-router";
 import React from "react";
-import { Pressable } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Text, View, Image } from "tamagui";
+import { useAccount } from "wagmi";
 
 import OptimismImage from "../../assets/images/optimism.svg";
+import handleError from "../../utils/handleError";
+import shortenAddress from "../../utils/shortenAddress";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
 
@@ -15,10 +19,6 @@ function back() {
 
 function about() {
   router.push("../onboarding/add-funds/add-crypto-about");
-}
-
-function finish() {
-  router.replace("/(app)");
 }
 
 const supportedAssets = [
@@ -44,6 +44,12 @@ const supportedAssets = [
 
 export default function AddCrypto() {
   const { canGoBack } = router;
+  const { address } = useAccount();
+  function copy() {
+    if (!address) return;
+    Clipboard.setStringAsync(address).catch(handleError);
+    Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
+  }
   return (
     <SafeView>
       <BaseLayout width="100%" height="100%">
@@ -109,12 +115,11 @@ export default function AddCrypto() {
               </Text>
               <View flexDirection="row" justifyContent="space-between" alignItems="center">
                 <View>
-                  <Text fontSize={ms(18)} color="$uiPrimary" fontWeight="bold">
-                    0xfdrc.exa.eth
-                  </Text>
-                  <Text fontSize={ms(14)} color="$uiNeutralSecondary" fontWeight="bold">
-                    0x0d283d19...4d6afabef0
-                  </Text>
+                  {address && (
+                    <Text fontSize={ms(14)} color="$uiNeutralSecondary" fontWeight="bold">
+                      {shortenAddress(address)}
+                    </Text>
+                  )}
                 </View>
                 <View gap={ms(10)} flexDirection="row">
                   <View
@@ -124,11 +129,12 @@ export default function AddCrypto() {
                     borderRadius="$r2"
                     alignContent="center"
                     alignItems="center"
-                    onPress={finish}
                   >
                     <QrCode size={ms(24)} color="$interactiveOnBaseBrandDefault" />
                   </View>
-                  <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
+                  <Pressable onPress={copy}>
+                    <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
+                  </Pressable>
                   <Share size={ms(24)} color="$interactiveBaseBrandDefault" />
                 </View>
               </View>
