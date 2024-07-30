@@ -48,7 +48,7 @@ export default defineConfig([
   {
     out: "server/generated/contracts.ts",
     plugins: [
-      addresses({ exaPlugin: exaPlugin.contractAddress, marketUSDC: marketUSDC.address }),
+      addresses({ exaPlugin: exaPlugin.contractAddress, marketUSDC: marketUSDC.address, usdc: usdc.address }),
       foundry({ project: "contracts", include: ["IExaAccount.sol/**"] }),
     ],
   },
