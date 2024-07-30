@@ -116,7 +116,7 @@ const Payload = v.variant("event_type", [
         id: v.string(),
         name: v.string(),
         city: v.string(),
-        post_code: v.string(),
+        post_code: v.nullable(v.string()),
         state: v.nullable(v.string()),
         country: v.string(),
         mcc_category: v.string(),
