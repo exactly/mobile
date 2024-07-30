@@ -1,22 +1,34 @@
 import chain from "@exactly/common/chain.js";
-import { auditorAbi, marketAbi } from "@exactly/common/generated/contracts.js";
+import { Hex } from "@exactly/common/types.js";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import createDebug from "debug";
 import { eq } from "drizzle-orm";
 import * as v from "valibot";
-import { BaseError, ContractFunctionRevertedError, encodeFunctionData, getAddress } from "viem";
-import { getContractError, getEstimateGasError } from "viem/utils";
+import {
+  BaseError,
+  ContractFunctionRevertedError,
+  decodeEventLog,
+  encodeEventTopics,
+  encodeFunctionData,
+  erc20Abi,
+  type Hash,
+  padHex,
+} from "viem";
 
-import exaUSDC from "../../node_modules/@exactly/protocol/deployments/op-sepolia/MarketUSDC.json" with { type: "json" }; // HACK fix ts-node monorepo resolution
 import database, { cards, credentials, transactions } from "../database/index.js";
-import { iExaAccountAbi as exaAccountAbi } from "../generated/contracts.js";
+import { iExaAccountAbi as exaAccountAbi, marketUSDCAddress, usdcAddress } from "../generated/contracts.js";
 import accountAddress from "../utils/accountAddress.js";
 import handleError from "../utils/handleError.js";
-import publicClient from "../utils/publicClient.js";
+import publicClient, { type CallFrame } from "../utils/publicClient.js";
 import signTransactionSync, { signerAddress } from "../utils/signTransactionSync.js";
 
 const debug = createDebug("exa:server:event");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
+
+if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
+const collectorTopic = padHex(v.parse(Hex, process.env.COLLECTOR_ADDRESS.toLowerCase()));
+const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
+const usdcLowercase = usdcAddress.toLowerCase() as Hex;
 
 export default async function handler({ method, body, headers }: VercelRequest, response: VercelResponse) {
   if (method !== "POST") return response.status(405).end("method not allowed");
@@ -42,39 +54,41 @@ export default async function handler({ method, body, headers }: VercelRequest, 
   try {
     const call = {
       functionName: "borrow",
-      args: [getAddress(exaUSDC.address), BigInt(payload.output.data.amount * 1e6)],
+      args: [marketUSDCAddress, BigInt(payload.output.data.amount * 1e6)],
     } as const;
-
     const transaction = {
       from: signerAddress,
       to: await accountAddress(credential.publicKey), // TODO make sync
       data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
     } as const;
 
-    const [gas, nonce] = await Promise.all([
-      publicClient
-        .request({ method: "eth_estimateGas", params: [transaction] })
-        .then(BigInt)
-        .catch((error: unknown) => {
-          throw getContractError(getEstimateGasError(error as BaseError, {}), {
-            abi: [...exaAccountAbi, ...marketAbi, ...auditorAbi],
-            ...call,
-          }) as Error;
-        }),
+    const [trace, nonce] = await Promise.all([
+      publicClient.traceCall(transaction),
       publicClient.getTransactionCount({ address: signerAddress, blockTag: "pending" }),
     ]);
 
-    if (gas < 30_000n) return response.json({ response_code: "51" }).end(); // account not deployed // HACK needs success check
+    const getTransfers = ({ calls, logs }: CallFrame): TransferLog[] => [
+      ...(logs?.filter(
+        (log): log is TransferLog =>
+          log.address === usdcLowercase && log.topics?.[0] === transferTopic && log.topics[2] === collectorTopic,
+      ) ?? []),
+      ...(calls?.flatMap(getTransfers) ?? []),
+    ];
+    const transfers = getTransfers(trace);
+    if (transfers.length !== 1) return response.json({ response_code: "51" }).end();
+    const [{ topics, data }] = transfers as [TransferLog];
+    const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
+    if (args.value !== call.args[1]) return response.json({ response_code: "51" }).end();
 
     const hash = await publicClient.sendRawTransaction({
       serializedTransaction: signTransactionSync({
         ...transaction,
-        gas,
         nonce,
         type: "eip1559",
         chainId: chain.id,
         maxFeePerGas: 1_000_000n,
         maxPriorityFeePerGas: 1_000_000n,
+        gas: (BigInt(trace.gasUsed) * 12n) / 10n,
       }),
     });
     debug("hash", hash);
@@ -125,3 +139,5 @@ const Payload = v.variant("event_type", [
     }),
   }),
 ]);
+
+type TransferLog = { address: Hex; topics: [Hash, Hash, Hash]; data: Hex; position: Hex };
