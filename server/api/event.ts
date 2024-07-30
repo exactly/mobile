@@ -16,6 +16,7 @@ import publicClient from "../utils/publicClient.js";
 import signTransactionSync, { signerAddress } from "../utils/signTransactionSync.js";
 
 const debug = createDebug("exa:server:event");
+Object.assign(debug, { inspectOpts: { depth: undefined } });
 
 export default async function handler({ method, body }: VercelRequest, response: VercelResponse) {
   if (method !== "POST") return response.status(405).end("method not allowed");
