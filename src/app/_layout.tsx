@@ -27,6 +27,8 @@ import wagmiConfig from "../utils/wagmi";
 
 SplashScreen.preventAutoHideAsync().catch(handleError);
 
+export const unstable_settings = { initialRouteName: "index" };
+
 export { ErrorBoundary } from "expo-router";
 const routingInstrumentation = new ReactNavigationInstrumentation();
 init({
