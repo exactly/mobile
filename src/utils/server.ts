@@ -37,6 +37,14 @@ export async function getPAN() {
   return url;
 }
 
+export async function getOTL() {
+  return await auth<string>("/kyc/oneTimeLink");
+}
+
+export async function getKYCStatus() {
+  return auth<boolean>("/kyc/status");
+}
+
 async function accessToken() {
   try {
     return await loadAccessToken();
