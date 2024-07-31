@@ -91,107 +91,91 @@ export default function Card() {
               </Text>
             )}
 
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                form.handleSubmit().catch(handleError);
-              }}
-            >
-              <View gap={ms(10)}>
-                <Text color="uiPrimary" fontSize={ms(16)} fontWeight="bold">
-                  Create a new card
-                </Text>
+            <View gap={ms(10)}>
+              <Text color="uiPrimary" fontSize={ms(16)} fontWeight="bold">
+                Create a new card
+              </Text>
 
-                <form.Field name="first">
-                  {(field) => (
-                    <View gap={ms(2)}>
-                      <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
-                        First name
-                      </Text>
-                      <Input
-                        value={field.state.value}
-                        placeholder="Vitalik Buterin"
-                        onChangeText={(text) => {
-                          form.setFieldValue("first", text);
-                        }}
-                      />
-                      {field.state.meta.errors.length > 0 ? (
-                        <Text>{field.state.meta.errors.join(", ")}</Text>
-                      ) : undefined}
-                    </View>
-                  )}
-                </form.Field>
+              <form.Field name="first">
+                {(field) => (
+                  <View gap={ms(2)}>
+                    <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                      First name
+                    </Text>
+                    <Input
+                      value={field.state.value}
+                      placeholder="Vitalik Buterin"
+                      onChangeText={(text) => {
+                        form.setFieldValue("first", text);
+                      }}
+                    />
+                    {field.state.meta.errors.length > 0 ? <Text>{field.state.meta.errors.join(", ")}</Text> : undefined}
+                  </View>
+                )}
+              </form.Field>
 
-                <form.Field name="middle">
-                  {(field) => (
-                    <View gap={ms(2)}>
-                      <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
-                        Middle name
-                      </Text>
-                      <Input
-                        value={field.state.value}
-                        placeholder="Sergey"
-                        onChangeText={(text) => {
-                          form.setFieldValue("middle", text);
-                        }}
-                      />
-                      {field.state.meta.errors.length > 0 ? (
-                        <Text>{field.state.meta.errors.join(", ")}</Text>
-                      ) : undefined}
-                    </View>
-                  )}
-                </form.Field>
+              <form.Field name="middle">
+                {(field) => (
+                  <View gap={ms(2)}>
+                    <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                      Middle name
+                    </Text>
+                    <Input
+                      value={field.state.value}
+                      placeholder="Sergey"
+                      onChangeText={(text) => {
+                        form.setFieldValue("middle", text);
+                      }}
+                    />
+                    {field.state.meta.errors.length > 0 ? <Text>{field.state.meta.errors.join(", ")}</Text> : undefined}
+                  </View>
+                )}
+              </form.Field>
 
-                <form.Field name="last">
-                  {(field) => (
-                    <View gap={ms(2)}>
-                      <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
-                        Last name
-                      </Text>
-                      <Input
-                        value={field.state.value}
-                        placeholder="Buterin"
-                        onChangeText={(text) => {
-                          form.setFieldValue("last", text);
-                        }}
-                      />
-                      {field.state.meta.errors.length > 0 ? (
-                        <Text>{field.state.meta.errors.join(", ")}</Text>
-                      ) : undefined}
-                    </View>
-                  )}
-                </form.Field>
+              <form.Field name="last">
+                {(field) => (
+                  <View gap={ms(2)}>
+                    <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                      Last name
+                    </Text>
+                    <Input
+                      value={field.state.value}
+                      placeholder="Buterin"
+                      onChangeText={(text) => {
+                        form.setFieldValue("last", text);
+                      }}
+                    />
+                    {field.state.meta.errors.length > 0 ? <Text>{field.state.meta.errors.join(", ")}</Text> : undefined}
+                  </View>
+                )}
+              </form.Field>
 
-                <form.Field name="email">
-                  {(field) => (
-                    <View gap={ms(2)}>
-                      <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
-                        Email
-                      </Text>
-                      <Input
-                        value={field.state.value}
-                        placeholder="vb@gmail.com"
-                        onChangeText={(text) => {
-                          form.setFieldValue("email", text);
-                        }}
-                      />
-                      {field.state.meta.errors.length > 0 ? (
-                        <Text>{field.state.meta.errors.join(", ")}</Text>
-                      ) : undefined}
-                    </View>
-                  )}
-                </form.Field>
+              <form.Field name="email">
+                {(field) => (
+                  <View gap={ms(2)}>
+                    <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                      Email
+                    </Text>
+                    <Input
+                      value={field.state.value}
+                      placeholder="vb@gmail.com"
+                      onChangeText={(text) => {
+                        form.setFieldValue("email", text);
+                      }}
+                    />
+                    {field.state.meta.errors.length > 0 ? <Text>{field.state.meta.errors.join(", ")}</Text> : undefined}
+                  </View>
+                )}
+              </form.Field>
 
-                <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-                  {([canSubmit, isSubmitting]) => (
-                    <Button contained disabled={!canSubmit} onPress={submit}>
-                      {isSubmitting ? "Creating card..." : "Create card"}
-                    </Button>
-                  )}
-                </form.Subscribe>
-              </View>
-            </form>
+              <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                {([canSubmit, isSubmitting]) => (
+                  <Button contained disabled={!canSubmit} onPress={submit}>
+                    {isSubmitting ? "Creating card..." : "Create card"}
+                  </Button>
+                )}
+              </form.Subscribe>
+            </View>
 
             <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
               <StyledAction>
