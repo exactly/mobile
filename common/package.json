@@ -10,7 +10,7 @@
   "dependencies": {
     "@alchemy/aa-core": "^3.18.2",
     "@exactly/plugin": "workspace:*",
-    "valibot": "^0.36.0",
-    "viem": "^2.18.5"
+    "valibot": "^0.37.0",
+    "viem": "^2.18.6"
   }
 }
