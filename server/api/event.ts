@@ -25,11 +25,6 @@ import signTransactionSync, { signerAddress } from "../utils/signTransactionSync
 const debug = createDebug("exa:server:event");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
-if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
-const collectorTopic = padHex(v.parse(Hex, process.env.COLLECTOR_ADDRESS.toLowerCase()));
-const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
-const usdcLowercase = usdcAddress.toLowerCase() as Hex;
-
 export default async function handler({ method, body, headers }: VercelRequest, response: VercelResponse) {
   if (method !== "POST") return response.status(405).end("method not allowed");
 
@@ -67,14 +62,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
       publicClient.getTransactionCount({ address: signerAddress, blockTag: "pending" }),
     ]);
 
-    const getTransfers = ({ calls, logs }: CallFrame): TransferLog[] => [
-      ...(logs?.filter(
-        (log): log is TransferLog =>
-          log.address === usdcLowercase && log.topics?.[0] === transferTopic && log.topics[2] === collectorTopic,
-      ) ?? []),
-      ...(calls?.flatMap(getTransfers) ?? []),
-    ];
-    const transfers = getTransfers(trace);
+    const transfers = usdcTransfersToCollector(trace);
     if (transfers.length !== 1) return response.json({ response_code: "51" }).end();
     const [{ topics, data }] = transfers as [TransferLog];
     const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
@@ -109,6 +97,20 @@ export default async function handler({ method, body, headers }: VercelRequest, 
     handleError(error);
     return response.json({ response_code: "05" }).end();
   }
+}
+
+if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
+const collectorTopic = padHex(v.parse(Hex, process.env.COLLECTOR_ADDRESS.toLowerCase()));
+const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
+const usdcLowercase = usdcAddress.toLowerCase() as Hex;
+function usdcTransfersToCollector({ calls, logs }: CallFrame): TransferLog[] {
+  return [
+    ...(logs?.filter(
+      (log): log is TransferLog =>
+        log.address === usdcLowercase && log.topics?.[0] === transferTopic && log.topics[2] === collectorTopic,
+    ) ?? []),
+    ...(calls?.flatMap(usdcTransfersToCollector) ?? []),
+  ];
 }
 
 const Payload = v.variant("event_type", [
