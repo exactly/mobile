@@ -4,6 +4,7 @@ import { ScrollView, Text, View } from "tamagui";
 
 import ContractUtils from "./ContractUtils";
 import PasskeyUtils from "./PasskeyUtils";
+import WalletUtils from "./WalletUtils";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
 
@@ -16,6 +17,7 @@ export default function Payments() {
             <Text fontSize={40} fontFamily="$mono" fontWeight="bold">
               Payments
             </Text>
+            <WalletUtils />
             <PasskeyUtils />
             <ContractUtils />
           </View>
