@@ -36,7 +36,7 @@ contract DeployScript is BaseScript {
 
     vm.startBroadcast(msg.sender);
 
-    exaPlugin = new ExaPlugin(auditor, msg.sender);
+    exaPlugin = new ExaPlugin(auditor, vm.envAddress("COLLECTOR_ADDRESS"));
     factory = new ExaAccountFactory(msg.sender, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 
     factory.addStake{ value: 0.1 ether }(1 days, 0.1 ether);
