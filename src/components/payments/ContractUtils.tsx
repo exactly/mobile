@@ -41,14 +41,14 @@ export default function PasskeyUtils() {
   const { data: depositUSDCSimulation } = useSimulateMarketDeposit({
     address: marketUSDCAddress,
     args: [balance?.value ?? 0n, address ?? zeroAddress],
-    query: { enabled: !!address && !!balance },
+    query: { enabled: !!address && !!balance && balance.value > 0n },
   });
   const { data: approveUSDCSimulation } = useSimulateContract({
     abi: erc20Abi,
     functionName: "approve",
     address: usdcAddress,
     args: [marketUSDCAddress, balance?.value ?? 0n],
-    query: { enabled: !!address && !!balance },
+    query: { enabled: !!address && !!balance && balance.value > 0n },
   });
 
   const enterUSDC = useCallback(() => {
