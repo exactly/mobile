@@ -32,7 +32,10 @@ export default {
     [
       "expo-build-properties",
       {
-        android: { packagingOptions: { pickFirst: ["**/libcrypto.so"] } },
+        android: {
+          packagingOptions: { pickFirst: ["**/libcrypto.so"] },
+          extraMavenRepos: ["https://sdk.withpersona.com/android/releases"],
+        },
         ios: { deploymentTarget: "15.0" },
       } as BuildPropertiesConfig,
     ],
