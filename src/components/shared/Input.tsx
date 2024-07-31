@@ -8,6 +8,10 @@ export default styled(Input, {
   borderRadius: "$r3",
   placeholderTextColor: "$uiNeutralSecondary",
   focusStyle: {
-    borderColor: "$interactiveBaseBrandDefault",
+    borderColor: "$borderBrandStrong",
+  },
+  focusVisibleStyle: {
+    borderColor: "$borderBrandStrong",
+    outlineColor: "$borderBrandStrong",
   },
 });
