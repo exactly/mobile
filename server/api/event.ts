@@ -76,7 +76,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
         chainId: chain.id,
         maxFeePerGas: 1_000_000n,
         maxPriorityFeePerGas: 1_000_000n,
-        gas: (BigInt(trace.gasUsed) * 12n) / 10n,
+        gas: 2_000_000n,
       }),
     });
     debug("hash", hash);
