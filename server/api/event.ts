@@ -18,7 +18,6 @@ import {
 import database, { cards, credentials, transactions } from "../database/index.js";
 import { iExaAccountAbi as exaAccountAbi, marketUSDCAddress, usdcAddress } from "../generated/contracts.js";
 import accountAddress from "../utils/accountAddress.js";
-import handleError from "../utils/handleError.js";
 import publicClient, { type CallFrame } from "../utils/publicClient.js";
 import signTransactionSync, { signerAddress } from "../utils/signTransactionSync.js";
 
@@ -35,7 +34,7 @@ export default async function handler({ method, body, headers }: VercelRequest, 
     debug(payload);
     return response.status(400).end("bad request");
   }
-  debug(body);
+  if (debug.enabled) debug(JSON.stringify(body));
 
   const cardId = payload.output.data.card_id;
   const [credential] = await database
@@ -90,11 +89,11 @@ export default async function handler({ method, body, headers }: VercelRequest, 
         case "InsufficientAccountLiquidity":
           return response.json({ response_code: "51" }).end();
         default:
-          handleError(error);
+          debug(error.message); // TODO send to sentry
           return response.json({ response_code: "05" }).end();
       }
     }
-    handleError(error);
+    debug(error instanceof Error ? error.message : error); // TODO send to sentry
     return response.json({ response_code: "05" }).end();
   }
 }
