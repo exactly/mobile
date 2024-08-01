@@ -36,12 +36,16 @@ export default styled(Button, {
     },
     main: {
       true: {
+        borderColor: "transparent",
+        fontSize: ms(15),
+        fontWeight: 700,
         height: ms(64),
         padding: "$s4_5",
         borderRadius: "$r4",
         scaleIcon: 1.5,
         flex: 1,
         flexBasis: "50%",
+        maxHeight: ms(64),
       },
     },
     spaced: {
@@ -53,6 +57,7 @@ export default styled(Button, {
     noFlex: {
       true: {
         flex: 0,
+        flexBasis: "auto",
       },
     },
   } as const,
