@@ -15,7 +15,7 @@
     "@exactly/common": "workspace:*",
     "@noble/curves": "*",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
-    "@sentry/node": "^8.20.0",
+    "@sentry/node": "^8.22.0",
     "@simplewebauthn/server": "^10.0.1",
     "@simplewebauthn/types": "^10.0.0",
     "@vercel/kv": "^2.0.0",
@@ -26,12 +26,12 @@
     "jose": "^5.6.3",
     "picocolors": "^1.0.1",
     "valibot": "^0.37.0",
-    "viem": "^2.18.6",
+    "viem": "^2.18.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/debug": "^4.1.12",
-    "@types/node": "^22.0.0",
+    "@types/node": "^22.0.2",
     "dotenv": "^16.4.5",
     "drizzle-kit": "^0.23.1",
     "typescript": "^5.4.5",
