@@ -5,9 +5,9 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Text, View } from "tamagui";
 
-const close = () => {
+function close() {
   router.back();
-};
+}
 
 export default function PasskeysAbout() {
   return (

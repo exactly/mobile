@@ -7,9 +7,9 @@ import { Text, View } from "tamagui";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 
-const close = () => {
+function close() {
   router.back();
-};
+}
 
 const AddCryptoAbout = () => {
   return (
