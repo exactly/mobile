@@ -4,8 +4,8 @@ import React from "react";
 import { ms } from "react-native-size-matters";
 import { Text, View } from "tamagui";
 
-import SuccessImage from "../../assets/images/account-created.svg";
-import Blob from "../../assets/images/onboarding-blob-06.svg";
+import AccountCreatedBlob from "../../assets/images/account-created-blob.svg";
+import AccountCreatedImage from "../../assets/images/account-created.svg";
 import ActionButton from "../shared/ActionButton";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
@@ -17,10 +17,10 @@ export default function Success() {
         <View flex={1}>
           <View alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
             <View position="absolute">
-              <Blob />
+              <AccountCreatedBlob />
             </View>
             <View position="absolute">
-              <SuccessImage />
+              <AccountCreatedImage />
             </View>
           </View>
 

@@ -15,13 +15,13 @@ import { View, Text } from "tamagui";
 
 import ListItem from "./ListItem";
 import Pagination from "./Pagination";
+import calendarBlob from "../../assets/images/calendar-blob.svg";
 import calendar from "../../assets/images/calendar.svg";
+import earningsBlob from "../../assets/images/earnings-blob.svg";
 import earnings from "../../assets/images/earnings.svg";
+import exaCardBlob from "../../assets/images/exa-card-blob.svg";
 import exaCard from "../../assets/images/exa-card.svg";
-import blob1 from "../../assets/images/onboarding-blob-01.svg";
-import blob2 from "../../assets/images/onboarding-blob-02.svg";
-import blob3 from "../../assets/images/onboarding-blob-03.svg";
-import blob4 from "../../assets/images/onboarding-blob-04.svg";
+import qrCodeBlob from "../../assets/images/qr-code-blob.svg";
 import qrCode from "../../assets/images/qr-code.svg";
 import ActionButton from "../shared/ActionButton";
 
@@ -43,29 +43,29 @@ export interface Page {
 
 const pages: Page[] = [
   {
-    title: "The first onchain debit & credit card",
+    backgroundImage: exaCardBlob,
+    button: recoverButton,
     image: exaCard,
-    backgroundImage: blob1,
-    button: recoverButton,
+    title: "The first onchain debit & credit card",
   },
   {
-    title: "Buy now, pay later, and hold your crypto",
+    backgroundImage: calendarBlob,
+    button: recoverButton,
     image: calendar,
-    backgroundImage: blob2,
-    button: recoverButton,
+    title: "Buy now, pay later, and hold your crypto",
   },
   {
-    title: "Maximize earnings, effortlessly.",
+    backgroundImage: earningsBlob,
+    button: recoverButton,
     image: earnings,
-    backgroundImage: blob3,
-    button: recoverButton,
+    title: "Maximize earnings, effortlessly.",
   },
   {
-    title: "In-store QR payments, with crypto",
-    image: qrCode,
-    backgroundImage: blob4,
+    backgroundImage: qrCodeBlob,
     button: recoverButton,
     disabled: true,
+    image: qrCode,
+    title: "In-store QR payments, with crypto",
   },
 ];
 
