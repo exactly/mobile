@@ -285,6 +285,9 @@ importers:
       sharp-cli:
         specifier: ^2.1.1
         version: 2.1.1
+      svgo:
+        specifier: ^3.3.2
+        version: 3.3.2
       typescript:
         specifier: ^5.5.4
         version: 5.5.4

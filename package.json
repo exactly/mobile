@@ -109,6 +109,7 @@
     "react-devtools": "^5.3.1",
     "react-native-svg-transformer": "^1.5.0",
     "sharp-cli": "^2.1.1",
+    "svgo": "^3.3.2",
     "typescript": "^5.5.4"
   },
   "pnpm": {
