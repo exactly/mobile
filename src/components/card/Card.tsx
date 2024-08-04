@@ -46,7 +46,7 @@ export default function Card() {
     isLoading,
     error,
     refetch,
-  } = useQuery({ queryKey: ["pan"], queryFn: getPAN, enabled: false, staleTime: 1000 * 60 });
+  } = useQuery({ queryKey: ["pan"], queryFn: getPAN, enabled: false, staleTime: 60_000 });
 
   const form = useForm({
     defaultValues: {
