@@ -30,5 +30,16 @@ export default styled(Text, {
         color: "$uiNeutralSecondary",
       },
     },
+    pill: {
+      true: {
+        backgroundColor: "$interactiveBaseBrandDefault",
+        color: "$interactiveBaseBrandSoftDefault",
+        fontWeight: "bold",
+        paddingHorizontal: ms(4),
+        paddingVertical: ms(2),
+        borderRadius: "$r2",
+        alignSelf: "center",
+      },
+    },
   } as const,
 });
