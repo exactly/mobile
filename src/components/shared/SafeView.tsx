@@ -7,11 +7,13 @@ export default function SafeView(properties: ViewProps) {
   const insets = useSafeAreaInsets();
   return (
     <View
-      flex={1}
+      width="100%"
+      height="100%"
       paddingTop={insets.top}
       paddingLeft={insets.left}
       paddingRight={insets.right}
       paddingBottom={insets.bottom}
+      backgroundColor="$backgroundMild"
       {...properties}
     />
   );
