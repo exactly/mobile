@@ -2,6 +2,7 @@ import { ms } from "react-native-size-matters";
 import { Button, styled } from "tamagui";
 
 export default styled(Button, {
+  minHeight: "auto",
   fontWeight: "bold",
   defaultVariants: { contained: true, outlined: false },
   fontSize: 15,
@@ -58,6 +59,11 @@ export default styled(Button, {
       true: {
         flex: 0,
         flexBasis: "auto",
+      },
+    },
+    fullwidth: {
+      true: {
+        width: "100%",
       },
     },
   } as const,
