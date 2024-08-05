@@ -1,7 +1,7 @@
 import React, { memo } from "react";
+import { StyleSheet } from "react-native";
 import type { SharedValue } from "react-native-reanimated";
 import { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
-import { ms } from "react-native-size-matters";
 import { View, useWindowDimensions } from "tamagui";
 
 import type { Page } from "./Carousel";
@@ -14,9 +14,10 @@ interface ListItemProperties {
 }
 
 export default memo(function ListItem({ item, index, x }: ListItemProperties) {
-  const { width } = useWindowDimensions();
-  const itemWidth = width - ms(40);
-
+  const { width: itemWidth } = useWindowDimensions();
+  const originalWidth = 1200;
+  const originalHeight = 1200;
+  const aspectRatio = originalWidth / originalHeight;
   const rBackgroundStyle = useAnimatedStyle(() => {
     const animatedScale = interpolate(
       x.value,
@@ -32,7 +33,6 @@ export default memo(function ListItem({ item, index, x }: ListItemProperties) {
     );
     return { transform: [{ scale: animatedScale }], opacity: interpolatedOpacity };
   }, [index, x]);
-
   const rImageStyle = useAnimatedStyle(() => {
     const animatedScale = interpolate(
       x.value,
@@ -42,14 +42,13 @@ export default memo(function ListItem({ item, index, x }: ListItemProperties) {
     );
     return { transform: [{ scale: animatedScale }] };
   }, [index, x]);
-
   return (
-    <View width={itemWidth} height="100%" justifyContent="center" alignItems="center">
-      <AnimatedView position="absolute" style={rBackgroundStyle}>
-        <item.backgroundImage />
+    <View width={itemWidth} aspectRatio={aspectRatio} justifyContent="center" alignItems="center">
+      <AnimatedView width="100%" height="100%" style={rBackgroundStyle}>
+        <item.backgroundImage width="100%" height="100%" />
       </AnimatedView>
-      <AnimatedView position="absolute" style={rImageStyle}>
-        <item.image />
+      <AnimatedView width="100%" height="100%" style={[StyleSheet.absoluteFillObject, rImageStyle]}>
+        <item.image width="100%" height="100%" />
       </AnimatedView>
     </View>
   );

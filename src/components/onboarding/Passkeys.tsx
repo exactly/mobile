@@ -3,7 +3,7 @@ import { Key, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
-import { Pressable } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 import { useConnect } from "wagmi";
@@ -47,6 +47,10 @@ export default function Passkeys() {
 
   const { data } = useQuery<Passkey>({ queryKey: ["passkey"] });
 
+  const originalWidth = 1200;
+  const originalHeight = 1200;
+  const aspectRatio = originalWidth / originalHeight;
+
   useEffect(() => {
     if (isSuccess && data?.credentialId && connector) {
       connect({ connector });
@@ -55,64 +59,72 @@ export default function Passkeys() {
   }, [connect, connector, data, isSuccess]);
 
   return (
-    <SafeView backgroundColor="$backgroundSoft">
-      <View flex={1} padding="$s5">
-        <View position="absolute" top="$s5" right="$s5" zIndex={1}>
-          <Pressable onPress={close}>
-            <X size={ms(25)} color="$uiNeutralSecondary" />
+    <SafeView
+      backgroundColor="$backgroundSoft"
+      padding="$s5"
+      justifyContent="space-between"
+      alignItems="stretch"
+      gap="$s5"
+    >
+      <View position="absolute" top="$s5" right="$s5" zIndex={1}>
+        <Pressable onPress={close}>
+          <X size={ms(25)} color="$uiNeutralSecondary" />
+        </Pressable>
+      </View>
+      <View justifyContent="center" alignItems="center" flexGrow={1} flexShrink={1}>
+        <View width="100%" aspectRatio={aspectRatio} justifyContent="center" alignItems="center" flexShrink={1}>
+          <View width="100%" height="100%" aspectRatio={aspectRatio}>
+            <PasskeysBlob width="100%" height="100%" />
+          </View>
+          <View width="100%" height="100%" aspectRatio={aspectRatio} style={StyleSheet.absoluteFill}>
+            <PasskeysImage width="100%" height="100%" />
+          </View>
+        </View>
+
+        <View gap="$s5" justifyContent="center">
+          <Text emphasized title brand centered>
+            A secure and easy way to access your account
+          </Text>
+          <Text secondary fontSize={ms(13)} color="$uiBaseSecondary" textAlign="center">
+            To keep your account secure, Exa App uses passkeys, a passwordless authentication method protected by your
+            device biometric verification.
+          </Text>
+        </View>
+      </View>
+
+      <View alignItems="stretch" alignSelf="stretch">
+        <View flexDirection="row" alignSelf="stretch" justifyContent="center">
+          <Text fontSize={ms(11)} color="$uiNeutralPlaceholder">
+            By continuing, I accept the
+          </Text>
+          <Text fontSize={ms(11)} color="$interactiveBaseBrandDefault">
+            {" "}
+            Terms & Conditions
+          </Text>
+        </View>
+
+        <View flexDirection="row" alignSelf="stretch">
+          <ActionButton
+            flex={1}
+            marginTop="$s4"
+            marginBottom="$s5"
+            isLoading={isPending || isConnecting}
+            loadingContent="Creating account..."
+            iconAfter={<Key size={ms(20)} color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
+            onPress={() => {
+              createAccount();
+            }}
+          >
+            Create account
+          </ActionButton>
+        </View>
+
+        <View flexDirection="row" justifyContent="center">
+          <Pressable onPress={learnMore}>
+            <Text textAlign="center" fontSize={ms(13)} fontWeight="bold" color="$interactiveBaseBrandDefault">
+              Learn more about passkeys
+            </Text>
           </Pressable>
-        </View>
-
-        <View alignItems="center" alignContent="center" justifyContent="center" height="100%" flex={1}>
-          <View position="absolute">
-            <PasskeysBlob />
-          </View>
-          <View position="absolute">
-            <PasskeysImage />
-          </View>
-        </View>
-
-        <View flexDirection="column" gap={ms(40)}>
-          <View gap={ms(10)}>
-            <Text emphasized title brand centered>
-              A secure and easy way to access your account
-            </Text>
-            <Text secondary fontSize={13} fontWeight={400} color="$uiBaseSecondary" textAlign="center">
-              To keep your account secure, Exa App uses passkeys, a passwordless authentication method protected by your
-              device biometric verification.
-            </Text>
-          </View>
-
-          <View flexDirection="column" gap="$s5">
-            <View gap="$s4">
-              <View flexDirection="row" alignItems="center" justifyContent="center">
-                <Text fontSize={ms(11)} color="$uiNeutralPlaceholder">
-                  By continuing, I accept the
-                </Text>
-                <Text fontSize={ms(11)} color="$interactiveBaseBrandDefault">
-                  {" "}
-                  Terms & Conditions
-                </Text>
-              </View>
-              <ActionButton
-                isLoading={isPending || isConnecting}
-                loadingContent="Creating account..."
-                iconAfter={<Key size={ms(20)} color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
-                onPress={() => {
-                  createAccount();
-                }}
-              >
-                Create account
-              </ActionButton>
-            </View>
-            <View justifyContent="center" alignItems="center">
-              <Pressable onPress={learnMore}>
-                <Text fontSize={ms(13)} fontWeight="bold" color="$interactiveBaseBrandDefault">
-                  Learn more about passkeys
-                </Text>
-              </Pressable>
-            </View>
-          </View>
         </View>
       </View>
     </SafeView>

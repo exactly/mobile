@@ -1,7 +1,8 @@
 import { ArrowRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, Pressable, type ViewToken } from "react-native";
+import type { StyleProp, ViewStyle, ViewToken } from "react-native";
+import { Platform, Pressable } from "react-native";
 import Animated, {
   runOnJS,
   useAnimatedScrollHandler,
@@ -11,7 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import type { SvgProps } from "react-native-svg";
-import { View, Text } from "tamagui";
+import { View } from "tamagui";
 
 import ListItem from "./ListItem";
 import Pagination from "./Pagination";
@@ -24,45 +25,36 @@ import exaCard from "../../assets/images/exa-card.svg";
 import qrCodeBlob from "../../assets/images/qr-code-blob.svg";
 import qrCode from "../../assets/images/qr-code.svg";
 import ActionButton from "../shared/ActionButton";
-
-const recoverButton = (
-  <Pressable onPress={() => {}}>
-    <Text fontSize={ms(13)} fontWeight={600} color="$interactiveBaseBrandDefault">
-      Recover an existing account
-    </Text>
-  </Pressable>
-);
+import SafeView from "../shared/SafeView";
+import Text from "../shared/Text";
 
 export interface Page {
   title: string;
   image: React.FC<SvgProps>;
   backgroundImage: React.FC<SvgProps>;
   disabled?: boolean;
-  button?: React.ReactNode;
 }
+
+const containerStyle: StyleProp<ViewStyle> = { justifyContent: "center", alignItems: "center" };
 
 const pages: Page[] = [
   {
     backgroundImage: exaCardBlob,
-    button: recoverButton,
     image: exaCard,
     title: "The first onchain debit & credit card",
   },
   {
     backgroundImage: calendarBlob,
-    button: recoverButton,
     image: calendar,
     title: "Buy now, pay later, and hold your crypto",
   },
   {
     backgroundImage: earningsBlob,
-    button: recoverButton,
     image: earnings,
     title: "Maximize earnings, effortlessly.",
   },
   {
     backgroundImage: qrCodeBlob,
-    button: recoverButton,
     disabled: true,
     image: qrCode,
     title: "In-store QR payments, with crypto",
@@ -71,11 +63,13 @@ const pages: Page[] = [
 
 export default function Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
+
   const flatListReference = useRef<Animated.FlatList<Page>>(null);
   const x = useSharedValue(0);
   const progress = useSharedValue(0);
+
   const currentItem = pages[activeIndex] || (pages[0] as Page);
-  const { title, button, disabled } = currentItem;
+  const { title, disabled } = currentItem;
 
   const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -122,65 +116,74 @@ export default function Carousel() {
   }, [activeIndex, progress, scrollToNextPage]);
 
   return (
-    <View flex={1} paddingVertical={ms(10)}>
-      <Animated.FlatList
-        ref={flatListReference}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        data={pages}
-        keyExtractor={(_, index) => index.toString()}
-        viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
-        renderItem={renderItem}
-        onViewableItemsChanged={onViewableItemsChanged}
-        horizontal
-        onScrollToIndexFailed={() => {}}
-        pagingEnabled={Platform.OS !== "web"}
-        bounces={false}
-        showsHorizontalScrollIndicator={false}
-      />
-      <View flexDirection="column" paddingHorizontal={ms(20)} gap={ms(20)}>
-        <View gap={10}>
-          <Pagination length={pages.length} x={x} progress={progress} />
-          <View gap={10}>
-            <Text fontSize={ms(20)} fontWeight="bold" color="$interactiveBaseBrandDefault" textAlign="center">
+    <SafeView backgroundColor="$backgroundSoft" justifyContent="space-between" alignItems="stretch" gap="$s5">
+      <View flexGrow={1} justifyContent="center" flexShrink={1}>
+        <Animated.FlatList
+          ref={flatListReference}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          data={pages}
+          keyExtractor={(_, index) => index.toString()}
+          viewabilityConfig={{ itemVisiblePercentThreshold: 80 }}
+          renderItem={renderItem}
+          onViewableItemsChanged={onViewableItemsChanged}
+          horizontal
+          onScrollToIndexFailed={() => {}}
+          pagingEnabled={Platform.OS !== "web"}
+          bounces={false}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={containerStyle}
+        />
+      </View>
+
+      <View
+        flexDirection="column"
+        alignSelf="stretch"
+        alignItems="center"
+        justifyContent="flex-end"
+        padding="$s5"
+        flexGrow={1}
+      >
+        <View flexDirection="column" alignSelf="stretch" gap="$s5">
+          <View flexDirection="row" justifyContent="center">
+            <Pagination length={pages.length} x={x} progress={progress} />
+          </View>
+
+          <View flexDirection="column" gap="$s5">
+            <Text emphasized title brand centered>
               {title}
             </Text>
-            {disabled && (
-              <View
-                backgroundColor="$interactiveBaseBrandDefault"
-                paddingHorizontal={ms(4)}
-                paddingVertical={ms(2)}
-                borderRadius="$r2"
-                alignSelf="center"
-              >
-                <Text
-                  textAlign="center"
-                  paddingHorizontal={ms(4)}
-                  paddingVertical={ms(2)}
-                  color="$interactiveBaseBrandSoftDefault"
-                  fontSize={ms(11)}
-                  fontWeight="bold"
-                >
+            <View height={ms(20)}>
+              {disabled && (
+                <Text pill fontSize={ms(11)}>
                   COMING SOON
                 </Text>
-              </View>
-            )}
+              )}
+            </View>
           </View>
-        </View>
-        <View flexDirection="column" gap={10}>
-          <ActionButton
-            onPress={() => {
-              router.push("../onboarding/(passkeys)/passkeys");
-            }}
-            iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
-          >
-            Get started
-          </ActionButton>
-          <View justifyContent="center" alignItems="center">
-            {button}
+
+          <View alignItems="stretch" alignSelf="stretch" gap="$s5">
+            <View flexDirection="row" alignSelf="stretch">
+              <ActionButton
+                onPress={() => {
+                  router.push("../onboarding/(passkeys)/passkeys");
+                }}
+                iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
+              >
+                Get started
+              </ActionButton>
+            </View>
+
+            <View flexDirection="row" justifyContent="center">
+              <Pressable>
+                <Text fontSize={ms(13)} textAlign="center" fontWeight="bold" color="$interactiveBaseBrandDefault">
+                  Recover an existing account
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>
-    </View>
+    </SafeView>
   );
 }
