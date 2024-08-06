@@ -22,6 +22,7 @@ generated/
 *.ipa
 
 *.log
+*.dump
 .vscode/
 .env
 .env*.local
