@@ -13,7 +13,9 @@ import BaseLayout from "../shared/BaseLayout";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 
-const templateId = process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID as string;
+if (!process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID) throw new Error("missing persona template id");
+
+const templateId = process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID;
 const environment = __DEV__ ? Environment.SANDBOX : Environment.PRODUCTION;
 
 function startOnboarding() {
