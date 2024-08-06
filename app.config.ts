@@ -1,3 +1,4 @@
+import "dotenv/config";
 import type { ExpoConfig } from "expo/config";
 import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-properties/build/pluginConfig";
 import type { FontProps } from "expo-font/plugin/build/withFonts";
