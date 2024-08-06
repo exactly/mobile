@@ -5,9 +5,7 @@ import type { OneSignalPluginProps } from "onesignal-expo-plugin/types/types";
 
 import metadata from "./package.json";
 
-const vercelURL =
-  process.env.VERCEL_ENV === "production" ? process.env.VERCEL_PROJECT_PRODUCTION_URL : process.env.VERCEL_BRANCH_URL;
-if (vercelURL) process.env.EXPO_PUBLIC_URL ??= vercelURL;
+process.env.EXPO_PUBLIC_DOMAIN ||= process.env.APP_DOMAIN;
 
 export default {
   name: "exactly",
@@ -23,7 +21,7 @@ export default {
   android: { package: "app.exactly", adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" } },
   ios: {
     bundleIdentifier: "app.exactly",
-    associatedDomains: [`webcredentials:${vercelURL || "web.exactly.app"}?mode=developer`], // TODO remove developer mode
+    associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN || "web.exactly.app"}`],
     supportsTablet: true,
   },
   web: { output: "static", favicon: "src/assets/favicon.png" },
