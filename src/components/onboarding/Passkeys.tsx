@@ -62,7 +62,7 @@ export default function Passkeys() {
       alignItems="stretch"
       gap="$s5"
     >
-      <View position="absolute" top="$s5" right="$s5" zIndex={1}>
+      <View position="absolute" top="$s7" right="$s5" zIndex={1}>
         <Pressable onPress={close}>
           <X size={ms(25)} color="$uiNeutralSecondary" />
         </Pressable>
