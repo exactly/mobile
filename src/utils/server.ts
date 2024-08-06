@@ -67,9 +67,9 @@ async function server<T = unknown>(url: `/${string}`, init?: Omit<RequestInit, "
   const response = await fetch(
     `${domain === "localhost" ? "http://localhost:3000/api" : `https://${domain}/api`}${url}`,
     {
-      method: init?.body ? "POST" : "GET",
       credentials: "include",
       ...init,
+      method: init?.method ?? (init?.body ? "POST" : "GET"),
       headers: { "Content-Type": "application/json", ...init?.headers },
       body: init?.body ? JSON.stringify(init.body) : undefined,
     },
