@@ -1,87 +1,97 @@
-import rpId from "@exactly/common/rpId.js";
-import { Base64URL } from "@exactly/common/types.js";
+import domain from "@exactly/common/domain";
+import { Base64URL } from "@exactly/common/types";
+import { vValidator } from "@hono/valibot-validator";
+import { captureException } from "@sentry/node";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
-import type { AuthenticationResponseJSON, AuthenticatorTransportFuture } from "@simplewebauthn/types";
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { kv } from "@vercel/kv";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { eq } from "drizzle-orm";
-import { SignJWT } from "jose";
-import { safeParse } from "valibot";
+import { Hono } from "hono";
+import { setSignedCookie } from "hono/cookie";
+import { any, literal, looseObject, object } from "valibot";
 
-import database, { credentials } from "../../database/index.js";
-import cors from "../../middleware/cors.js";
-import expectedOrigin from "../../utils/expectedOrigin.js";
-import handleError from "../../utils/handleError.js";
-import jwtSecret from "../../utils/jwtSecret.js";
+import database, { credentials } from "../../database";
+import authSecret from "../../utils/authSecret";
+import expectedOrigin from "../../utils/expectedOrigin";
 
-export default cors(async function handler({ method, headers, query, body }: VercelRequest, response: VercelResponse) {
-  switch (method) {
-    case "GET": {
-      const { success, output: credentialId } = safeParse(Base64URL, query.credentialId);
-      if (!success) return response.status(400).end("bad credential");
-      const options = await generateAuthenticationOptions({
-        rpID: rpId,
-        allowCredentials: [{ id: credentialId }],
-        timeout: 5 * 60_000,
-      });
-      await kv.set(
-        credentialId,
-        options.challenge,
-        options.timeout === undefined ? undefined : { px: options.timeout },
-      );
-      return response.send(options);
-    }
-    case "POST": {
-      const { success, output: credentialId } = safeParse(Base64URL, query.credentialId);
-      if (!success) return response.status(400).end("bad credential");
+const app = new Hono();
 
-      const [credential, challenge] = await Promise.all([
-        database.query.credentials.findFirst({ where: eq(credentials.id, credentialId) }),
-        kv.get<string>(credentialId),
-      ]);
-      if (!credential) return response.status(400).end("unknown credential");
-      if (!challenge) return response.status(400).end("no authentication");
-
-      const assertion = body as AuthenticationResponseJSON;
-      let verification: Awaited<ReturnType<typeof verifyAuthenticationResponse>>;
-      try {
-        verification = await verifyAuthenticationResponse({
-          response: assertion,
-          expectedRPID: rpId,
-          expectedOrigin: expectedOrigin(headers["user-agent"]),
-          expectedChallenge: challenge,
-          authenticator: {
-            credentialID: credentialId,
-            credentialPublicKey: credential.publicKey,
-            transports: credential.transports ? (credential.transports as AuthenticatorTransportFuture[]) : undefined,
-            counter: credential.counter,
-          },
-        });
-      } catch (error) {
-        handleError(error);
-        return response.status(400).end(error instanceof Error ? error.message : error);
-      }
-      const {
-        verified,
-        authenticationInfo: { credentialID, newCounter },
-      } = verification;
-      if (!verified) return response.status(400).end("bad authentication");
-
-      const now = Date.now();
-      const expiresAt = now + 24 * 60 * 60_000;
-      const [token] = await Promise.all([
-        new SignJWT({ credentialId })
-          .setProtectedHeader({ alg: "HS256" })
-          .setIssuedAt(now)
-          .setExpirationTime(expiresAt)
-          .sign(jwtSecret),
-        database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID)),
-        kv.del(credentialId),
-      ]);
-
-      return response.send({ token, expiresAt });
-    }
-    default:
-      return response.status(405).end("method not allowed");
-  }
+const queryValidator = vValidator("query", object({ credentialId: Base64URL }), ({ success }, c) => {
+  if (!success) return c.text("bad credential", 400);
 });
+
+app.get("/", queryValidator, async (c) => {
+  const { credentialId } = c.req.valid("query");
+  const options = await generateAuthenticationOptions({
+    rpID: domain,
+    allowCredentials: [{ id: credentialId }],
+    timeout: 5 * 60_000,
+  });
+  await kv.set(credentialId, options.challenge, options.timeout === undefined ? undefined : { px: options.timeout });
+  return c.json(options);
+});
+
+app.post(
+  "/",
+  queryValidator,
+  vValidator(
+    "json",
+    looseObject({
+      id: Base64URL,
+      rawId: Base64URL,
+      response: looseObject({ clientDataJSON: Base64URL, authenticatorData: Base64URL, signature: Base64URL }),
+      clientExtensionResults: any(),
+      type: literal("public-key"),
+    }),
+    (result, c) => {
+      if (!result.success) {
+        captureException(result);
+        return c.text("bad authentication", 400);
+      }
+    },
+  ),
+  async (c) => {
+    const { credentialId } = c.req.valid("query");
+    const [credential, challenge] = await Promise.all([
+      database.query.credentials.findFirst({ where: eq(credentials.id, credentialId) }),
+      kv.get<string>(credentialId),
+    ]);
+    if (!credential) return c.text("unknown credential", 400);
+    if (!challenge) return c.text("no authentication", 400);
+
+    let verification: Awaited<ReturnType<typeof verifyAuthenticationResponse>>;
+    try {
+      verification = await verifyAuthenticationResponse({
+        response: c.req.valid("json"),
+        expectedRPID: domain,
+        expectedOrigin: expectedOrigin(c.req.header("user-agent")),
+        expectedChallenge: challenge,
+        authenticator: {
+          credentialID: credentialId,
+          credentialPublicKey: credential.publicKey,
+          transports: credential.transports ? (credential.transports as AuthenticatorTransportFuture[]) : undefined,
+          counter: credential.counter,
+        },
+      });
+    } catch (error) {
+      captureException(error);
+      return c.text(error instanceof Error ? error.message : String(error), 400);
+    }
+    const {
+      verified,
+      authenticationInfo: { credentialID, newCounter },
+    } = verification;
+    if (!verified) return c.text("bad authentication", 400);
+
+    const expires = new Date(Date.now() + 24 * 60 * 60_000);
+    await Promise.all([
+      setSignedCookie(c, "credential_id", credentialId, authSecret, { domain, expires, httpOnly: true }),
+      database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID)),
+      kv.del(credentialId),
+    ]);
+
+    return c.json({ expires: expires.getTime() });
+  },
+);
+
+export default app;

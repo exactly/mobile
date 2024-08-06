@@ -12,7 +12,7 @@ import {
 import accountInitCode from "@exactly/common/accountInitCode";
 import alchemyGasPolicyId from "@exactly/common/alchemyGasPolicyId";
 import chain from "@exactly/common/chain";
-import rpId from "@exactly/common/rpId";
+import domain from "@exactly/common/domain";
 import type { Passkey } from "@exactly/common/types";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
@@ -58,7 +58,7 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
         getDummySignature: () => "0x",
         async signUserOperationHash(uoHash) {
           const credential = await get({
-            rpId,
+            rpId: domain,
             challenge: bufferToBase64URLString(hexToBytes(hashMessage({ raw: uoHash }), { size: 32 })),
             allowCredentials: Platform.OS === "android" ? [] : [{ id: credentialId, type: "public-key" }], // HACK fix android credential filtering
             userVerification: "preferred",

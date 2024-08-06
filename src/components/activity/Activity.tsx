@@ -8,7 +8,7 @@ import { ms } from "react-native-size-matters";
 import { Spinner, Text, View } from "tamagui";
 
 import handleError from "../../utils/handleError";
-import { getKYCStatus, getOTL } from "../../utils/server";
+import { kycOTL, kycStatus } from "../../utils/server";
 import BaseLayout from "../shared/BaseLayout";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -26,7 +26,7 @@ export default function Activity() {
     data: oneTimeLink,
     refetch: fetchOTL,
     isFetching: isFetchingOTL,
-  } = useQuery({ queryKey: ["personaOTL"], enabled: false, queryFn: getOTL });
+  } = useQuery({ queryKey: ["personaOTL"], enabled: false, queryFn: kycOTL });
   const {
     data: passed,
     isFetching: isFetchingStatus,
@@ -34,7 +34,7 @@ export default function Activity() {
   } = useQuery({
     queryKey: ["kycStatus"],
     enabled: !!oneTimeLink,
-    queryFn: getKYCStatus,
+    queryFn: kycStatus,
   });
 
   function handleKYC() {

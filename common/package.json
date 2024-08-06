@@ -1,6 +1,5 @@
 {
   "name": "@exactly/common",
-  "type": "module",
   "scripts": {
     "test": "tsc"
   },

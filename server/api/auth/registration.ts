@@ -1,85 +1,107 @@
-import rpId from "@exactly/common/rpId.js";
-import { Base64URL } from "@exactly/common/types.js";
+import domain from "@exactly/common/domain";
+import { Base64URL } from "@exactly/common/types";
+import { vValidator } from "@hono/valibot-validator";
+import { captureException } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { cose } from "@simplewebauthn/server/helpers";
-import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { kv } from "@vercel/kv";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { safeParse } from "valibot";
+import { Hono } from "hono";
+import { setSignedCookie } from "hono/cookie";
+import { any, array, literal, looseObject, object, optional, picklist } from "valibot";
 import type { Hash } from "viem";
 
-import database, { credentials } from "../../database/index.js";
-import cors from "../../middleware/cors.js";
-import decodePublicKey from "../../utils/decodePublicKey.js";
-import expectedOrigin from "../../utils/expectedOrigin.js";
-import handleError from "../../utils/handleError.js";
+import database, { credentials } from "../../database";
+import authSecret from "../../utils/authSecret";
+import decodePublicKey from "../../utils/decodePublicKey";
+import expectedOrigin from "../../utils/expectedOrigin";
 
-export default cors(async function handler({ method, headers, query, body }: VercelRequest, response: VercelResponse) {
-  switch (method) {
-    case "GET": {
-      const options = await generateRegistrationOptions({
-        rpID: rpId,
-        rpName: "exactly",
-        userName: "user", // TODO change username
-        userDisplayName: "user", // TODO change display name
-        supportedAlgorithmIDs: [cose.COSEALG.ES256],
-        authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
-        // TODO excludeCredentials?
-        timeout: 5 * 60_000,
-      });
-      await kv.set(
-        options.user.id,
-        options.challenge,
-        options.timeout === undefined ? undefined : { px: options.timeout },
-      );
-      return response.send(options);
-    }
-    case "POST": {
-      const { success, output: userId } = safeParse(Base64URL, query.userId);
-      if (!success) return response.status(400).end("bad user");
+const app = new Hono();
 
-      const challenge = await kv.get<string>(userId);
-      if (!challenge) return response.status(400).end("no registration");
-
-      const attestation = body as RegistrationResponseJSON;
-      let verification: Awaited<ReturnType<typeof verifyRegistrationResponse>>;
-      try {
-        verification = await verifyRegistrationResponse({
-          response: attestation,
-          expectedRPID: rpId,
-          expectedOrigin: expectedOrigin(headers["user-agent"]),
-          expectedChallenge: challenge,
-          supportedAlgorithmIDs: [cose.COSEALG.ES256],
-        });
-      } catch (error) {
-        handleError(error);
-        return response.status(400).end(error instanceof Error ? error.message : error);
-      }
-      const { verified, registrationInfo } = verification;
-      if (!verified || !registrationInfo) return response.status(400).end("bad registration");
-
-      const { credentialID, credentialPublicKey, credentialDeviceType, counter } = registrationInfo;
-      if (credentialDeviceType !== "multiDevice") return response.status(400).end("backup eligibility required"); // TODO improve ux
-
-      let x: Hash, y: Hash;
-      try {
-        ({ x, y } = decodePublicKey(credentialPublicKey));
-      } catch (error) {
-        return response.status(400).end(error instanceof Error ? error.message : error);
-      }
-
-      await Promise.all([
-        database
-          .insert(credentials)
-          .values([
-            { id: credentialID, publicKey: credentialPublicKey, transports: attestation.response.transports, counter },
-          ]),
-        kv.del(userId),
-      ]);
-
-      return response.send({ credentialId: credentialID, x, y });
-    }
-    default:
-      return response.status(405).end("method not allowed");
-  }
+app.get("/", async (c) => {
+  const options = await generateRegistrationOptions({
+    rpID: domain,
+    rpName: "exactly",
+    userName: "user", // TODO change username
+    userDisplayName: "user", // TODO change display name
+    supportedAlgorithmIDs: [cose.COSEALG.ES256],
+    authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
+    // TODO excludeCredentials?
+    timeout: 5 * 60_000,
+  });
+  await kv.set(options.user.id, options.challenge, options.timeout === undefined ? undefined : { px: options.timeout });
+  return c.json(options);
 });
+
+app.post(
+  "/",
+  vValidator("query", object({ userId: Base64URL }), ({ success }, c) => {
+    if (!success) return c.text("bad user", 400);
+  }),
+  vValidator(
+    "json",
+    looseObject({
+      id: Base64URL,
+      rawId: Base64URL,
+      response: looseObject({
+        clientDataJSON: Base64URL,
+        attestationObject: Base64URL,
+        transports: optional(array(picklist(["ble", "cable", "hybrid", "internal", "nfc", "smart-card", "usb"]))),
+      }),
+      clientExtensionResults: any(),
+      type: literal("public-key"),
+    }),
+    (result, c) => {
+      if (!result.success) {
+        captureException(result);
+        return c.text("bad registration", 400);
+      }
+    },
+  ),
+  async (c) => {
+    const { userId } = c.req.valid("query");
+    const challenge = await kv.get<string>(userId);
+    if (!challenge) return c.text("no registration", 400);
+
+    const attestation = c.req.valid("json");
+    let verification: Awaited<ReturnType<typeof verifyRegistrationResponse>>;
+    try {
+      verification = await verifyRegistrationResponse({
+        response: attestation,
+        expectedRPID: domain,
+        expectedOrigin: expectedOrigin(c.req.header("user-agent")),
+        expectedChallenge: challenge,
+        supportedAlgorithmIDs: [cose.COSEALG.ES256],
+      });
+    } catch (error) {
+      captureException(error);
+      return c.text(error instanceof Error ? error.message : String(error), 400);
+    }
+    const { verified, registrationInfo } = verification;
+    if (!verified || !registrationInfo) return c.text("bad registration", 400);
+
+    const { credentialID, credentialPublicKey, credentialDeviceType, counter } = registrationInfo;
+    if (credentialDeviceType !== "multiDevice") return c.text("backup eligibility required", 400); // TODO improve ux
+
+    let x: Hash, y: Hash;
+    try {
+      ({ x, y } = decodePublicKey(credentialPublicKey));
+    } catch (error) {
+      return c.text(error instanceof Error ? error.message : String(error), 400);
+    }
+
+    const expires = new Date(Date.now() + 24 * 60 * 60_000);
+    await Promise.all([
+      setSignedCookie(c, "credential_id", credentialID, authSecret, { domain, expires, httpOnly: true }),
+      database
+        .insert(credentials)
+        .values([
+          { id: credentialID, publicKey: credentialPublicKey, transports: attestation.response.transports, counter },
+        ]),
+      kv.del(userId),
+    ]);
+
+    return c.json({ credentialId: credentialID, x, y, auth: expires.getTime() });
+  },
+);
+
+export default app;

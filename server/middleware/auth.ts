@@ -1,30 +1,11 @@
-import type { Base64URL } from "@exactly/common/types.js";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { jwtVerify } from "jose";
+import { getSignedCookie } from "hono/cookie";
+import { createMiddleware } from "hono/factory";
 
-import handleError from "../utils/handleError.js";
-import jwtSecret from "../utils/jwtSecret.js";
+import authSecret from "../utils/authSecret";
 
-export default function auth(
-  handler: (
-    request: VercelRequest,
-    response: VercelResponse,
-    credentialId: Base64URL,
-  ) => VercelResponse | Promise<VercelResponse>,
-) {
-  return async function middleware(request: VercelRequest, response: VercelResponse) {
-    const { authorization } = request.headers;
-    if (!authorization) return response.status(401).end("no authorization");
-    const match = authorization.match(/^bearer (?<token>\S+)\s*$/i);
-    if (!match) return response.status(401).end("bad authorization");
-    const token = match.groups?.token;
-    if (!token) return response.status(401).end("no token");
-    try {
-      const { payload } = await jwtVerify<{ credentialId: Base64URL }>(token, jwtSecret);
-      return handler(request, response, payload.credentialId);
-    } catch (error) {
-      handleError(error);
-      return response.status(401).end(error instanceof Error ? error.message : error);
-    }
-  };
-}
+export default createMiddleware(async (c, next) => {
+  const credentialId = await getSignedCookie(c, authSecret, "credential_id");
+  if (!credentialId) return c.text("unauthorized", 401);
+  c.set("credentialId", credentialId);
+  await next();
+});

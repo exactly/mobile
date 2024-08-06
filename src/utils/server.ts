@@ -1,104 +1,84 @@
-import rpId from "@exactly/common/rpId";
+import domain from "@exactly/common/domain";
 import type { Base64URL, CreateCardParameters, Passkey } from "@exactly/common/types";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { persistQueryClientSave } from "@tanstack/query-persist-client-core";
 import { Platform } from "react-native";
 import { type create, get } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
-import { type InferOutput, check, number, object, parse, pipe, regex, string } from "valibot";
+import { check, number, parse, pipe } from "valibot";
 
 import loadPasskey from "./loadPasskey";
-
-const apiURL = rpId === "localhost" ? "http://localhost:3000/api" : `https://${rpId}/api`;
+import queryClient, { persister } from "./queryClient";
 
 export function registrationOptions() {
   return server<Parameters<typeof create>[0]>("/auth/registration");
 }
 
-export function verifyRegistration({
+export async function verifyRegistration({
   userId,
   attestation,
 }: {
   userId: Base64URL;
   attestation: RegistrationResponseJSON;
 }) {
-  return server<Passkey>(`/auth/registration?userId=${userId}`, { body: attestation });
-}
-
-export function getCards() {
-  return auth("/cards");
+  const { auth: expires, ...passkey } = await server<Passkey & { auth: number }>(
+    `/auth/registration?userId=${userId}`,
+    { body: attestation },
+  );
+  await queryClient.setQueryData(["auth"], parse(Auth, expires));
+  await persistQueryClientSave({ queryClient, persister });
+  return passkey;
 }
 
 export function createCard(parameters: CreateCardParameters) {
-  return auth("/cards", parameters);
+  return auth("/card", parameters);
 }
 
-export async function getPAN() {
-  const { url } = await auth<{ url: string }>("/pan");
-  return url;
+export function getPAN() {
+  return auth<{ url: string }>("/card");
 }
 
-export async function getOTL() {
-  return await auth<string>("/kyc/oneTimeLink");
+export function kycOTL() {
+  return auth<string>("/kyc", undefined, "POST");
 }
 
-export async function getKYCStatus() {
-  return auth<boolean>("/kyc/status");
-}
-
-async function accessToken() {
-  try {
-    return await loadAccessToken();
-  } catch {
-    return createAccessToken();
-  }
-}
-
-async function createAccessToken() {
-  const { credentialId } = await loadPasskey();
-  const query = `?credentialId=${credentialId}`;
-  const options = await server<Parameters<typeof get>[0]>(`/auth/authentication${query}`);
-  if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
-  const assertion = await get(options);
-  if (!assertion) throw new Error("bad assertion");
-  const jwt = await server<InferOutput<typeof JWT>>(`/auth/authentication${query}`, { body: assertion });
-  await AsyncStorage.setItem("exactly.jwt", JSON.stringify(parse(JWT, jwt)));
-  return jwt.token;
-}
-
-async function loadAccessToken() {
-  const store = await AsyncStorage.getItem("exactly.jwt");
-  if (!store) throw new Error("no token");
-  return parse(JWT, JSON.parse(store)).token;
+export function kycStatus() {
+  return auth<boolean>("/kyc");
 }
 
 async function auth<T = unknown>(url: `/${string}`, body?: unknown, method?: "GET" | "POST") {
-  return server<T>(url, { body, method, token: await accessToken() });
+  try {
+    parse(Auth, queryClient.getQueryData(["auth"]));
+  } catch {
+    const { credentialId } = await loadPasskey();
+    const query = `?credentialId=${credentialId}`;
+    const options = await server<Parameters<typeof get>[0]>(`/auth/authentication${query}`);
+    if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
+    const assertion = await get(options);
+    if (!assertion) throw new Error("bad assertion");
+    const { expires } = await server<{ expires: number }>(`/auth/authentication${query}`, { body: assertion });
+    await queryClient.setQueryData(["auth"], parse(Auth, expires));
+    await persistQueryClientSave({ queryClient, persister });
+  }
+
+  return server<T>(url, { method, body, credentials: "include" });
 }
 
-async function server<T = unknown>(
-  url: `/${string}`,
-  {
-    body,
-    token,
-    method = body === undefined ? "GET" : "POST",
-  }: { body?: unknown; token?: string; method?: "GET" | "POST" } = {},
-) {
-  const response = await fetch(`${apiURL}${url}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+async function server<T = unknown>(url: `/${string}`, init?: Omit<RequestInit, "body"> & { body?: unknown }) {
+  const response = await fetch(
+    `${domain === "localhost" ? "http://localhost:3000/api" : `https://${domain}/api`}${url}`,
+    {
+      method: init?.body ? "POST" : "GET",
+      credentials: "include",
+      ...init,
+      headers: { "Content-Type": "application/json", ...init?.headers },
+      body: init?.body ? JSON.stringify(init.body) : undefined,
     },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  );
   if (!response.ok) throw new Error(`${String(response.status)} ${await response.text()}`);
   return response.json() as Promise<T>;
 }
 
-const JWT = object({
-  token: pipe(string(), regex(/^([\w=]+)\.([\w=]+)\.([\w+/=-]*)/)),
-  expiresAt: pipe(
-    number(),
-    check((expiresAt) => expiresAt > Date.now() + 5 * 60_000),
-  ),
-});
+const Auth = pipe(
+  number(),
+  check((expires) => Date.now() < expires),
+);

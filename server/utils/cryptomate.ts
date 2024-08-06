@@ -22,8 +22,9 @@ export function createCard({ cardholder, email, phone, limits }: CreateCardParam
   );
 }
 
-export function getPAN(cardId: string) {
-  return request(PANResponse, `/cards/virtual-cards/${cardId}/pan-html`);
+export async function getPAN(cardId: string) {
+  const { url } = await request(PANResponse, `/cards/virtual-cards/${cardId}/pan-html`);
+  return url;
 }
 
 async function request<TInput, TOutput, TIssue extends v.BaseIssue<unknown>>(
