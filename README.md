@@ -4,27 +4,21 @@
 
 ### requirements
 
-- [bun](https://bun.sh/docs/installation)
+- [node.js](https://github.com/asdf-vm/asdf-nodejs)
+- [pnpm](https://pnpm.io/installation)
 - react-native [dependencies per platform](https://reactnative.dev/docs/environment-setup?guide=native)
-
-### bun lockfile setup
-
-```shell
-git config --global diff.lockb.textconv bun
-git config --global diff.lockb.binary true
-```
 
 ### install
 
 ```shell
-bun install
+pnpm install
 ```
 
 ### run
 
 ```shell
-bun web # for web
+pnpm web # for web
 
-bun android # for native android app
-bun ios # for native ios app
+pnpm android # for native android app
+pnpm ios # for native ios app
 ```

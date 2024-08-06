@@ -9,16 +9,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ">=9.6.0"
+          run_install: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - uses: oven-sh/setup-bun@v1
+          node-version: ">=22.5.1"
+          cache: pnpm
       - uses: foundry-rs/foundry-toolchain@v1
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
           cache: pip
           cache-dependency-path: contracts/requirements.txt
       - run: pip install -r contracts/requirements.txt
-      - run: bun install
-      - run: bun run test
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test

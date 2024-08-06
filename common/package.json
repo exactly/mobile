@@ -8,9 +8,9 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@alchemy/aa-core": "^3.18.2",
+    "@alchemy/aa-core": "^3.19.0",
     "@exactly/plugin": "workspace:*",
     "valibot": "^0.37.0",
-    "viem": "^2.18.7"
+    "viem": "^2.18.8"
   }
 }

@@ -11,30 +11,33 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@alchemy/aa-core": "^3.18.2",
-    "@exactly/common": "workspace:*",
+    "@alchemy/aa-core": "^3.19.0",
+    "@hono/node-server": "^1.12.0",
+    "@hono/sentry": "^1.2.0",
+    "@hono/valibot-validator": "^0.3.0",
     "@noble/curves": "*",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
-    "@sentry/node": "^8.22.0",
+    "@sentry/node": "^8.24.0",
+    "@sentry/profiling-node": "^8.24.0",
     "@simplewebauthn/server": "^10.0.1",
     "@simplewebauthn/types": "^10.0.0",
-    "@vercel/kv": "^2.0.0",
-    "@vercel/node": "^3.2.7",
-    "@vercel/postgres": "^0.9.0",
+    "@types/debug": "^4.1.12",
     "debug": "^4.3.6",
-    "drizzle-orm": "^0.32.1",
-    "jose": "^5.6.3",
-    "picocolors": "^1.0.1",
+    "drizzle-orm": "^0.32.2",
+    "hono": "^4.5.4",
+    "ioredis": "^5.4.1",
+    "pg": "^8.12.0",
     "valibot": "^0.37.0",
-    "viem": "^2.18.7",
-    "zod": "^3.23.8"
+    "viem": "^2.18.8"
   },
   "devDependencies": {
-    "@types/debug": "^4.1.12",
-    "@types/node": "^22.0.2",
-    "dotenv": "^16.4.5",
-    "drizzle-kit": "^0.23.1",
-    "typescript": "^5.4.5",
-    "vercel": "^35.2.2"
+    "@exactly/common": "workspace:*",
+    "@sentry/cli": "^2.33.1",
+    "@types/node": "^22.1.0",
+    "@types/pg": "^8.11.6",
+    "drizzle-kit": "^0.23.2",
+    "pkgroll": "^2.4.2",
+    "tsx": "^4.16.5",
+    "typescript": "^5.5.4"
   }
 }
