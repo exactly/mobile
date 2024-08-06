@@ -1,0 +1,20 @@
+name: exactly
+region: sfo
+services:
+  - name: server
+    dockerfile_path: Dockerfile
+    github:
+      repo: exactly/mobile
+      branch: do
+      deploy_on_push: true
+    http_port: 3000
+ingress:
+  rules:
+    - component:
+        name: server
+      match:
+        path:
+          prefix: /
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
