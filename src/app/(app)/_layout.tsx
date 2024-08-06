@@ -23,7 +23,7 @@ export default function AppLayout() {
     SplashScreen.hideAsync().catch(handleError);
   }, [isFetched, isLoading]);
 
-  if (noPasskey) return <Redirect href="onboarding" />;
+  if (noPasskey) return <Redirect href="/onboarding" />;
   if (isLoading || !isFetched) return;
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(properties) => <TabBar {...properties} />}>
