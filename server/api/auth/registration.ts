@@ -4,7 +4,6 @@ import { vValidator } from "@hono/valibot-validator";
 import { captureException } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { cose } from "@simplewebauthn/server/helpers";
-import { kv } from "@vercel/kv";
 import { Hono } from "hono";
 import { setSignedCookie } from "hono/cookie";
 import { any, array, literal, looseObject, object, optional, picklist } from "valibot";
@@ -14,10 +13,12 @@ import database, { credentials } from "../../database";
 import authSecret from "../../utils/authSecret";
 import decodePublicKey from "../../utils/decodePublicKey";
 import expectedOrigin from "../../utils/expectedOrigin";
+import redis from "../../utils/redis";
 
 const app = new Hono();
 
 app.get("/", async (c) => {
+  const timeout = 5 * 60_000;
   const options = await generateRegistrationOptions({
     rpID: domain,
     rpName: "exactly",
@@ -26,9 +27,9 @@ app.get("/", async (c) => {
     supportedAlgorithmIDs: [cose.COSEALG.ES256],
     authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
     // TODO excludeCredentials?
-    timeout: 5 * 60_000,
+    timeout,
   });
-  await kv.set(options.user.id, options.challenge, options.timeout === undefined ? undefined : { px: options.timeout });
+  await redis.set(options.user.id, options.challenge, "PX", timeout);
   return c.json(options);
 });
 
@@ -59,7 +60,7 @@ app.post(
   ),
   async (c) => {
     const { userId } = c.req.valid("query");
-    const challenge = await kv.get<string>(userId);
+    const challenge = await redis.get(userId);
     if (!challenge) return c.text("no registration", 400);
 
     const attestation = c.req.valid("json");
@@ -97,7 +98,7 @@ app.post(
         .values([
           { id: credentialID, publicKey: credentialPublicKey, transports: attestation.response.transports, counter },
         ]),
-      kv.del(userId),
+      redis.del(userId),
     ]);
 
     return c.json({ credentialId: credentialID, x, y, auth: expires.getTime() });

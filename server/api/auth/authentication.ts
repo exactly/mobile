@@ -4,7 +4,6 @@ import { vValidator } from "@hono/valibot-validator";
 import { captureException } from "@sentry/node";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
-import { kv } from "@vercel/kv";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { setSignedCookie } from "hono/cookie";
@@ -13,6 +12,7 @@ import { any, literal, looseObject, object } from "valibot";
 import database, { credentials } from "../../database";
 import authSecret from "../../utils/authSecret";
 import expectedOrigin from "../../utils/expectedOrigin";
+import redis from "../../utils/redis";
 
 const app = new Hono();
 
@@ -21,13 +21,14 @@ const queryValidator = vValidator("query", object({ credentialId: Base64URL }), 
 });
 
 app.get("/", queryValidator, async (c) => {
+  const timeout = 5 * 60_000;
   const { credentialId } = c.req.valid("query");
   const options = await generateAuthenticationOptions({
     rpID: domain,
     allowCredentials: [{ id: credentialId }],
-    timeout: 5 * 60_000,
+    timeout,
   });
-  await kv.set(credentialId, options.challenge, options.timeout === undefined ? undefined : { px: options.timeout });
+  await redis.set(credentialId, options.challenge, "PX", timeout);
   return c.json(options);
 });
 
@@ -54,7 +55,7 @@ app.post(
     const { credentialId } = c.req.valid("query");
     const [credential, challenge] = await Promise.all([
       database.query.credentials.findFirst({ where: eq(credentials.id, credentialId) }),
-      kv.get<string>(credentialId),
+      redis.get(credentialId),
     ]);
     if (!credential) return c.text("unknown credential", 400);
     if (!challenge) return c.text("no authentication", 400);
@@ -87,7 +88,7 @@ app.post(
     await Promise.all([
       setSignedCookie(c, "credential_id", credentialId, authSecret, { domain, expires, httpOnly: true }),
       database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID)),
-      kv.del(credentialId),
+      redis.del(credentialId),
     ]);
 
     return c.json({ expires: expires.getTime() });
