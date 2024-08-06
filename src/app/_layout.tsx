@@ -1,8 +1,7 @@
 import "../utils/polyfill";
 
-import type { Passkey } from "@exactly/common/types";
 import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "@sentry/react-native";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { isRunningInExpoGo } from "expo";
 import { type FontSource, useFonts } from "expo-font";
 import { Slot, SplashScreen, useNavigationContainerRef } from "expo-router";
@@ -20,7 +19,7 @@ import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
 import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
 import handleError from "../utils/handleError";
-import queryClient from "../utils/queryClient";
+import queryClient, { persister } from "../utils/queryClient";
 import useOneSignal from "../utils/useOneSignal";
 import wagmiConfig from "../utils/wagmi";
 
@@ -42,8 +41,6 @@ init({
 });
 const useServerFonts = typeof window === "undefined" ? useFonts : () => {};
 
-queryClient.prefetchQuery<Passkey>({ queryKey: ["passkey"] }).catch(handleError);
-
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
   useOneSignal();
@@ -62,11 +59,11 @@ export default wrap(function RootLayout() {
       <StatusBar translucent={false} />
       <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
         <WagmiProvider config={wagmiConfig}>
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
             <SafeAreaProvider>
               <Slot />
             </SafeAreaProvider>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </WagmiProvider>
       </TamaguiProvider>
     </>
