@@ -18,6 +18,7 @@ import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
 import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
+import ThemeProvider from "../components/context/ThemeProvider";
 import handleError from "../utils/handleError";
 import queryClient, { persister } from "../utils/queryClient";
 import useOneSignal from "../utils/useOneSignal";
@@ -58,13 +59,15 @@ export default wrap(function RootLayout() {
     <>
       <StatusBar translucent={false} />
       <TamaguiProvider config={tamagui} defaultTheme="dark">
-        <WagmiProvider config={wagmiConfig}>
-          <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-            <SafeAreaProvider>
-              <Slot />
-            </SafeAreaProvider>
-          </PersistQueryClientProvider>
-        </WagmiProvider>
+        <ThemeProvider>
+          <WagmiProvider config={wagmiConfig}>
+            <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+              <SafeAreaProvider>
+                <Slot />
+              </SafeAreaProvider>
+            </PersistQueryClientProvider>
+          </WagmiProvider>
+        </ThemeProvider>
       </TamaguiProvider>
     </>
   );

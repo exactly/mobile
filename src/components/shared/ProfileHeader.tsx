@@ -1,8 +1,10 @@
 import { BellRing, EyeOff, Settings } from "@tamagui/lucide-icons";
 import React from "react";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View, Image, styled } from "tamagui";
 
+import { useTheme } from "../context/ThemeProvider";
 import Text from "../shared/Text";
 
 const OnlineIndicator = styled(View, {
@@ -21,6 +23,7 @@ const OnlineIndicator = styled(View, {
 const domainMatcher = /\..*/;
 
 export default function ProfileHeader() {
+  const { toggle } = useTheme();
   const fullAddress = "0xfrdc.exa.eth";
   // TODO move elsewhere and export as util?
   const {
@@ -60,7 +63,9 @@ export default function ProfileHeader() {
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
           <EyeOff color="$uiNeutralPrimary" />
           <BellRing color="$uiNeutralPrimary" />
-          <Settings color="$uiNeutralPrimary" />
+          <Pressable onPress={toggle}>
+            <Settings color="$uiNeutralPrimary" />
+          </Pressable>
         </View>
       </View>
     </View>
