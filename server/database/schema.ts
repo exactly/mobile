@@ -10,6 +10,8 @@ export const credentials = pgTable("credentials", {
   counter: integer("counter").notNull(),
   kyc: boolean("kyc").default(false),
   kycId: text("kyc_id"),
+  kycName: text("kyc_name"),
+  kycEmail: text("kyc_email"),
 });
 
 export const cards = pgTable("cards", {

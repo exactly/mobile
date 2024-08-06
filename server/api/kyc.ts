@@ -77,6 +77,10 @@ app.post(
         .update(credentials)
         .set({
           kycId: data.id,
+          kycEmail: data.attributes["email-address"],
+          kycName: [data.attributes["name-first"], data.attributes["name-middle"], data.attributes["name-last"]]
+            .filter(Boolean)
+            .join(" "),
         })
         .where(eq(credentials.id, credentialId));
       inquiryId = data.id;
