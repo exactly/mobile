@@ -1,0 +1,15 @@
+.git
+**/.gitignore
+**/build
+**/cache
+**/dist
+**/drizzle
+**/generated
+**/node_modules
+**/out
+**/.DS_Store
+**/.env
+
+/.*
+!.npmrc
+*.md
