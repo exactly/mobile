@@ -8,7 +8,6 @@ import { type FontSource, useFonts } from "expo-font";
 import { Slot, SplashScreen, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider } from "wagmi";
@@ -64,11 +63,9 @@ export default wrap(function RootLayout() {
       <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
-            <GestureHandlerRootView>
-              <SafeAreaProvider>
-                <Slot />
-              </SafeAreaProvider>
-            </GestureHandlerRootView>
+            <SafeAreaProvider>
+              <Slot />
+            </SafeAreaProvider>
           </QueryClientProvider>
         </WagmiProvider>
       </TamaguiProvider>
