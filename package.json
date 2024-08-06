@@ -18,7 +18,7 @@
     "test:eslint": "eslint --max-warnings 0 ."
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.5.1"
   },
   "dependencies": {
     "@alchemy/aa-accounts": "^3.19.0",

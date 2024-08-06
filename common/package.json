@@ -5,7 +5,7 @@
     "test": "tsc"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.5.1"
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.19.0",
