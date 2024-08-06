@@ -6,7 +6,7 @@
     "test:sizes": "forge build --sizes --skip test",
     "test:forge": "forge test",
     "test:solhint": "solhint --max-warnings 0 '{src,script,test}/**/*.sol'",
-    "slither": "slither ."
+    "test:slither": "slither ."
   },
   "dependencies": {
     "modular-account": "alchemyplatform/modular-account#c81e712",
