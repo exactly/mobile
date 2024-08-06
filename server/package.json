@@ -3,7 +3,6 @@
   "scripts": {
     "test": "tsc",
     "db:push": "drizzle-kit push",
-    "build:app": "cd .. && expo export --platform web --source-maps --output-dir server/app",
     "dev": "tsx --watch --env-file=.env index.ts"
   },
   "bin": "./dist/index.cjs",
