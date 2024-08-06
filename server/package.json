@@ -1,11 +1,17 @@
 {
   "name": "@exactly/server",
   "scripts": {
-    "test": "tsc",
+    "build": "pkgroll --sourcemap --src .",
     "db:push": "drizzle-kit push",
+    "test": "tsc",
     "dev": "tsx --watch --env-file=.env --require=./instrument.cjs index.ts"
   },
   "bin": "./dist/index.cjs",
+  "files": [
+    ".well-known",
+    "dist",
+    "instrument.cjs"
+  ],
   "engines": {
     "node": ">=22.5.1"
   },
