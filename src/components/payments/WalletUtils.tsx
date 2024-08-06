@@ -1,9 +1,10 @@
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text } from "tamagui";
+import { View } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
 
 import Button from "../shared/Button";
+import Text from "../shared/Text";
 
 export default function WalletUtils() {
   const {
@@ -14,7 +15,7 @@ export default function WalletUtils() {
   if (isConnected) return;
   return (
     <View gap={ms(10)}>
-      <Text fontSize={ms(16)} color="$uiNeutralPrimary" fontWeight="bold">
+      <Text fontSize={ms(16)} fontWeight="bold">
         Connector
       </Text>
 

@@ -1,7 +1,7 @@
 import * as Clipboard from "expo-clipboard";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text, Spinner } from "tamagui";
+import { View, Spinner } from "tamagui";
 import { erc20Abi, zeroAddress } from "viem";
 import { useAccount, useBalance, useSimulateContract, useWriteContract } from "wagmi";
 
@@ -14,6 +14,7 @@ import {
 } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import Button from "../shared/Button";
+import Text from "../shared/Text";
 
 export default function PasskeyUtils() {
   const { address } = useAccount();
@@ -83,7 +84,7 @@ export default function PasskeyUtils() {
 
   return (
     <View gap={ms(10)}>
-      <Text fontSize={ms(16)} color="$uiNeutralPrimary" fontWeight="bold">
+      <Text fontSize={ms(16)} fontWeight="bold">
         Exactly
       </Text>
 

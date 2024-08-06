@@ -25,6 +25,7 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
       borderTopColor="$borderNeutralSoft"
       borderTopWidth={1}
       type="single"
+      unstyled
     >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key] || { options: undefined };

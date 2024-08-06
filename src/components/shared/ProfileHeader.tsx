@@ -1,7 +1,9 @@
 import { BellRing, EyeOff, Settings } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text, Image, styled } from "tamagui";
+import { View, Image, styled } from "tamagui";
+
+import Text from "../shared/Text";
 
 const OnlineIndicator = styled(View, {
   width: 12,
@@ -47,7 +49,7 @@ export default function ProfileHeader() {
           </View>
 
           <View display="flex" flexDirection="row" alignItems="flex-start">
-            <Text fontSize={17} color="$uiNeutralPrimary" lineHeight={23}>
+            <Text fontSize={17} lineHeight={23}>
               {name}
             </Text>
             <Text fontSize={17} color="$uiNeutralSecondary" lineHeight={23}>
@@ -56,9 +58,9 @@ export default function ProfileHeader() {
           </View>
         </View>
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
-          <EyeOff />
-          <BellRing />
-          <Settings />
+          <EyeOff color="$uiNeutralPrimary" />
+          <BellRing color="$uiNeutralPrimary" />
+          <Settings color="$uiNeutralPrimary" />
         </View>
       </View>
     </View>

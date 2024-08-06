@@ -3,7 +3,9 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Text } from "tamagui";
+import { View } from "tamagui";
+
+import Text from "../shared/Text";
 
 function navigate() {
   router.push("../add-funds/add-fiat");
@@ -25,10 +27,10 @@ export default function AddFiatButton() {
             <Banknote size={ms(24)} color="$iconBrandDefault" />
           </View>
           <View gap={ms(5)}>
-            <Text fontSize={ms(17)} color="$textPrimary" fontWeight="bold">
+            <Text fontSize={ms(17)} fontWeight="bold">
               Fiat On-Ramp
             </Text>
-            <Text fontSize={ms(13)} color="$textSecondary">
+            <Text fontSize={ms(13)} color="$uiNeutralSecondary">
               International cards and banks.
             </Text>
           </View>
@@ -57,7 +59,7 @@ export default function AddFiatButton() {
             <Text fontSize={ms(13)} color="$uiNeutralSecondary" fontWeight="bold">
               Fees
             </Text>
-            <Text fontSize={ms(13)} color="$uiPrimary" fontWeight="bold">
+            <Text fontSize={ms(13)} fontWeight="bold">
               2% - 5%
             </Text>
           </View>

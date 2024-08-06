@@ -5,7 +5,7 @@ import { valibotValidator } from "@tanstack/valibot-form-adapter";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Switch, Text, View, styled, Spinner } from "tamagui";
+import { ScrollView, Switch, View, styled, Spinner } from "tamagui";
 
 import CardDetails from "./CardDetails";
 import LatestActivity from "./LatestActivity";
@@ -17,6 +17,7 @@ import Button from "../shared/Button";
 import InfoPreview from "../shared/InfoPreview";
 import Input from "../shared/Input";
 import SafeView from "../shared/SafeView";
+import Text from "../shared/Text";
 
 const StyledAction = styled(View, {
   flex: 1,
@@ -75,7 +76,7 @@ export default function Card() {
         <BaseLayout width="100%" height="100%">
           <View gap={ms(20)} flex={1} paddingVertical={ms(20)}>
             <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-              <Text color="uiPrimary" fontSize={ms(20)} fontWeight="bold">
+              <Text fontSize={ms(20)} fontWeight="bold">
                 My Cards
               </Text>
               <Pressable>
@@ -92,14 +93,14 @@ export default function Card() {
             )}
 
             <View gap={ms(10)}>
-              <Text color="uiPrimary" fontSize={ms(16)} fontWeight="bold">
+              <Text fontSize={ms(16)} fontWeight="bold">
                 Create a new card
               </Text>
 
               <form.Field name="first">
                 {(field) => (
                   <View gap={ms(2)}>
-                    <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
                       First name
                     </Text>
                     <Input
@@ -117,7 +118,7 @@ export default function Card() {
               <form.Field name="middle">
                 {(field) => (
                   <View gap={ms(2)}>
-                    <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
                       Middle name
                     </Text>
                     <Input
@@ -135,7 +136,7 @@ export default function Card() {
               <form.Field name="last">
                 {(field) => (
                   <View gap={ms(2)}>
-                    <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
                       Last name
                     </Text>
                     <Input
@@ -153,7 +154,7 @@ export default function Card() {
               <form.Field name="email">
                 {(field) => (
                   <View gap={ms(2)}>
-                    <Text color="uiSecondary" fontSize={ms(14)} fontWeight="bold">
+                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
                       Email
                     </Text>
                     <Input
@@ -182,9 +183,7 @@ export default function Card() {
                 <Pressable onPress={getCard}>
                   <View gap={ms(10)}>
                     <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
-                    <Text color="$uiPrimary" fontSize={ms(15)}>
-                      Details
-                    </Text>
+                    <Text fontSize={ms(15)}>Details</Text>
                     <Text color="$interactiveBaseBrandDefault" fontSize={ms(15)} fontWeight="bold">
                       Reveal
                     </Text>
@@ -196,16 +195,18 @@ export default function Card() {
                 <Pressable>
                   <View gap={ms(10)}>
                     <Snowflake size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
-                    <Text color="$uiPrimary" fontSize={ms(15)}>
-                      Freeze
-                    </Text>
+                    <Text fontSize={ms(15)}>Freeze</Text>
                     <Switch
                       size={ms(24)}
                       backgroundColor="$backgroundMild"
                       maxWidth="50%"
                       borderColor="$borderNeutralSoft"
                     >
-                      <Switch.Thumb animation="quicker" backgroundColor="$backgroundSoft" shadowColor="$uiPrimary" />
+                      <Switch.Thumb
+                        animation="quicker"
+                        backgroundColor="$backgroundSoft"
+                        shadowColor="$uiNeutralPrimary"
+                      />
                     </Switch>
                   </View>
                 </Pressable>

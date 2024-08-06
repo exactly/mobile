@@ -15,9 +15,7 @@ interface ListItemProperties {
 
 export default memo(function ListItem({ item, index, x }: ListItemProperties) {
   const { width: itemWidth } = useWindowDimensions();
-  const originalWidth = 1200;
-  const originalHeight = 1200;
-  const aspectRatio = originalWidth / originalHeight;
+
   const rBackgroundStyle = useAnimatedStyle(() => {
     const animatedScale = interpolate(
       x.value,
@@ -43,7 +41,7 @@ export default memo(function ListItem({ item, index, x }: ListItemProperties) {
     return { transform: [{ scale: animatedScale }] };
   }, [index, x]);
   return (
-    <View width={itemWidth} aspectRatio={aspectRatio} justifyContent="center" alignItems="center">
+    <View width={itemWidth} aspectRatio={1} justifyContent="center" alignItems="center">
       <AnimatedView width="100%" height="100%" style={rBackgroundStyle}>
         <item.backgroundImage width="100%" height="100%" />
       </AnimatedView>

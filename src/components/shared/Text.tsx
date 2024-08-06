@@ -2,6 +2,7 @@ import { ms } from "react-native-size-matters";
 import { Text, styled } from "tamagui";
 
 export default styled(Text, {
+  color: "$uiNeutralPrimary",
   variants: {
     emphasized: {
       true: {

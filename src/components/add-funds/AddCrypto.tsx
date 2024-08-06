@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Text, View, Image } from "tamagui";
+import { ScrollView, View, Image } from "tamagui";
 import { useAccount } from "wagmi";
 
 import OptimismImage from "../../assets/images/optimism.svg";
@@ -12,6 +12,7 @@ import handleError from "../../utils/handleError";
 import shortenAddress from "../../utils/shortenAddress";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
+import Text from "../shared/Text";
 
 function back() {
   router.back();
@@ -64,7 +65,7 @@ export default function AddCrypto() {
               <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
                 Add Funds /{" "}
               </Text>
-              <Text color="$uiPrimary" fontSize={ms(15)} fontWeight="bold">
+              <Text fontSize={ms(15)} fontWeight="bold">
                 Cryptocurrency
               </Text>
             </View>
@@ -117,7 +118,7 @@ export default function AddCrypto() {
                 <View>
                   {address && (
                     <Text fontSize={ms(14)} color="$uiNeutralSecondary" fontWeight="bold">
-                      {shortenAddress(address)}
+                      {shortenAddress(address, 10, 10)}
                     </Text>
                   )}
                 </View>
@@ -160,7 +161,7 @@ export default function AddCrypto() {
                   <View key={index} flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
                     <View flexDirection="row" alignItems="center" gap={ms(10)}>
                       <Image src={image} alt={`${symbol} logo`} width={ms(32)} height={ms(32)} />
-                      <Text fontSize={ms(18)} color="$uiPrimary" fontWeight="bold">
+                      <Text fontSize={ms(18)} fontWeight="bold">
                         {symbol}
                       </Text>
                       <Text fontSize={ms(13)} color="$uiNeutralSecondary">

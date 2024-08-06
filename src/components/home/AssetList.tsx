@@ -1,7 +1,9 @@
 import { TrendingDown, TrendingUp } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
-import { Image, Text, View } from "tamagui";
+import { Image, View } from "tamagui";
+
+import Text from "../shared/Text";
 
 interface Asset {
   image: string;
@@ -68,7 +70,7 @@ export default function AssetList() {
             <View flexDirection="row" gap={ms(10)} flex={1}>
               <Image src={image} alt={`${ticker} logo`} width={ms(40)} height={ms(40)} />
               <View gap={ms(5)}>
-                <Text fontSize={ms(15)} color="$uiPrimary" fontWeight="bold">
+                <Text fontSize={ms(15)} fontWeight="bold">
                   {ticker}
                 </Text>
                 <Text fontSize={ms(12)} color="$uiNeutralSecondary">
@@ -79,7 +81,7 @@ export default function AssetList() {
 
             <View gap={ms(5)} flex={1}>
               <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                <Text fontSize={ms(15)} color="$uiPrimary" fontWeight="bold" textAlign="right">
+                <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
                   ${Intl.NumberFormat("en-US").format(usdValue)}
                 </Text>
               </View>

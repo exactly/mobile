@@ -3,12 +3,13 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Text, View } from "tamagui";
+import { ScrollView, View } from "tamagui";
 
 import AddCryptoButton from "./AddCryptoButton";
 import AddFiatButton from "./AddFiatButton";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
+import Text from "../shared/Text";
 
 function back() {
   router.back();
@@ -26,7 +27,7 @@ export default function AddFunds() {
                 <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
               </Pressable>
             )}
-            <Text color="uiPrimary" fontSize={ms(15)} fontWeight="bold">
+            <Text fontSize={ms(15)} fontWeight="bold">
               Add Funds
             </Text>
             <Pressable>

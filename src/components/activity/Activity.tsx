@@ -5,13 +5,14 @@ import React, { useEffect } from "react";
 import { Platform } from "react-native";
 import { Environment, Inquiry } from "react-native-persona";
 import { ms } from "react-native-size-matters";
-import { Spinner, Text, View } from "tamagui";
+import { Spinner, View } from "tamagui";
 
 import handleError from "../../utils/handleError";
 import { kycOTL, kycStatus } from "../../utils/server";
 import BaseLayout from "../shared/BaseLayout";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
+import Text from "../shared/Text";
 
 if (!process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID) throw new Error("missing persona template id");
 

@@ -2,10 +2,11 @@ import { X } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { Text, View } from "tamagui";
+import { View } from "tamagui";
 
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
+import Text from "../shared/Text";
 
 function close() {
   router.back();
@@ -34,7 +35,7 @@ const AddCryptoAbout = () => {
 
           <View gap={ms(10)} justifyContent="space-between" flex={1}>
             <View gap={ms(10)}>
-              <Text fontSize={ms(17)} fontWeight={700} color="$uiPrimary" textAlign="left">
+              <Text fontSize={ms(17)} fontWeight={700} textAlign="left">
                 Adding funds
               </Text>
               <Text fontSize={ms(16)} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">

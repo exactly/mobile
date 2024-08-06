@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text, Spinner } from "tamagui";
+import { View, Spinner } from "tamagui";
 
 import handleError from "../../utils/handleError";
 import Button from "../shared/Button";
+import Text from "../shared/Text";
 
 export default function PasskeyUtils() {
   const {
@@ -26,7 +27,7 @@ export default function PasskeyUtils() {
   }
   return (
     <View gap={ms(10)}>
-      <Text fontSize={ms(16)} color="$uiNeutralPrimary" fontWeight="bold">
+      <Text fontSize={ms(16)} fontWeight="bold">
         Passkey
       </Text>
       {isLoading && <Spinner backgroundColor="$interactiveBaseBrandDefault" />}
@@ -42,12 +43,10 @@ export default function PasskeyUtils() {
           </Text>
         </View>
       )}
-
       <View flexDirection="row" gap={ms(10)}>
         <Button contained onPress={getPasskey} padding={ms(10)} flex={1}>
           Refresh
         </Button>
-
         {passkey?.credentialId && (
           <Button outlined onPress={copy} padding={ms(10)} flex={1}>
             Copy

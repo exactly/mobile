@@ -1,3 +1,3 @@
-export default function shortenAddress(address: string) {
-  return address && `${address.slice(0, 6)}…${address.slice(-4)}`;
+export default function shortenAddress(address: string, start: number, end: number) {
+  return address && `${address.slice(0, start)}…${address.slice(-end)}`;
 }

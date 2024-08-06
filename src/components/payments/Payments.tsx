@@ -1,12 +1,13 @@
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Text, View } from "tamagui";
+import { ScrollView, View } from "tamagui";
 
 import ContractUtils from "./ContractUtils";
 import PasskeyUtils from "./PasskeyUtils";
 import WalletUtils from "./WalletUtils";
 import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
+import Text from "../shared/Text";
 
 export default function Payments() {
   return (

@@ -1,7 +1,9 @@
 import { ArrowDown, ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text } from "tamagui";
+import { View } from "tamagui";
+
+import Text from "../shared/Text";
 
 type Activity = "in" | "out" | "deposit";
 
@@ -83,9 +85,7 @@ export default function LatestActivity() {
           <View flex={1} gap={ms(5)}>
             <View flexDirection="row" justifyContent="space-between" alignItems="center">
               <View gap={ms(5)}>
-                <Text fontSize={ms(15)} color="$uiPrimary">
-                  {title}
-                </Text>
+                <Text fontSize={ms(15)}>{title}</Text>
                 <Text fontSize={ms(12)} color="$uiNeutralSecondary">
                   {date}
                 </Text>
@@ -99,7 +99,7 @@ export default function LatestActivity() {
                   >
                     {asset.change === "out" ? "-" : "+"}
                   </Text>
-                  <Text fontSize={ms(15)} color="$uiPrimary" fontWeight="bold" textAlign="right">
+                  <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
                     {asset.usdValue}
                   </Text>
                 </View>

@@ -2,12 +2,13 @@ import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Text, ButtonIcon } from "tamagui";
+import { View, ButtonIcon } from "tamagui";
 import { useAccount, useBalance } from "wagmi";
 
 import AssetChange from "./AssetChange";
 import AssetList from "./AssetList";
 import { usdcAddress } from "../../generated/contracts";
+import Text from "../shared/Text";
 
 export default function Balance() {
   const [isOpen, setIsOpen] = useState(false);

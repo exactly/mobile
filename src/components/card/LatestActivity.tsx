@@ -1,7 +1,9 @@
 import { Plane, ArrowUpRight, Utensils, Laptop } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text } from "tamagui";
+import { View } from "tamagui";
+
+import Text from "../shared/Text";
 
 type ActivityCategory = "food" | "tech" | "travel" | "other";
 const activityCategoryToIcon = {
@@ -103,9 +105,7 @@ export default function LatestActivity() {
           <View flex={1} gap={ms(5)}>
             <View flexDirection="row" justifyContent="space-between" alignItems="center">
               <View gap={ms(5)}>
-                <Text fontSize={ms(15)} color="$uiPrimary">
-                  {title}
-                </Text>
+                <Text fontSize={ms(15)}>{title}</Text>
                 <Text fontSize={ms(12)} color="$uiNeutralSecondary">
                   {date}
                 </Text>
@@ -115,7 +115,7 @@ export default function LatestActivity() {
                   <Text fontSize={ms(15)} color="$uiErrorPrimary" fontWeight="bold">
                     -
                   </Text>
-                  <Text fontSize={ms(15)} color="$uiPrimary" fontWeight="bold" textAlign="right">
+                  <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
                     {asset.usdValue}
                   </Text>
                 </View>

@@ -1,6 +1,8 @@
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { Text, View } from "tamagui";
+import { View } from "tamagui";
+
+import Text from "../shared/Text";
 
 interface InfoPreviewProperties {
   title: string;
@@ -12,7 +14,7 @@ export default function InfoPreview({ children, title, renderAction }: InfoPrevi
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding={ms(20)} gap={ms(20)}>
       <View flexDirection="row" gap={ms(10)} alignItems="center" justifyContent="space-between">
-        <Text color="$textPrimary" fontSize={17} fontWeight="bold" flex={1}>
+        <Text fontSize={17} fontWeight="bold" flex={1}>
           {title}
         </Text>
         {renderAction}

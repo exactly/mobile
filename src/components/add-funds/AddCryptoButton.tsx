@@ -2,10 +2,11 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Text } from "tamagui";
+import { View } from "tamagui";
 
 import CubeWithCircles from "../../assets/images/cube-with-circles.svg";
 import Optimism from "../../assets/images/optimism.svg";
+import Text from "../shared/Text";
 
 function navigate() {
   router.push("../add-funds/add-crypto");
@@ -27,10 +28,10 @@ export default function AddCryptoButton() {
             <CubeWithCircles width={ms(24)} height={ms(24)} color="$iconBrandDefault" />
           </View>
           <View gap={ms(5)}>
-            <Text fontSize={ms(17)} color="$textPrimary" fontWeight="bold">
+            <Text fontSize={ms(17)} fontWeight="bold">
               Cryptocurrency
             </Text>
-            <Text fontSize={ms(13)} color="$textSecondary">
+            <Text fontSize={ms(13)} color="$uiNeutralSecondary">
               Multiple assets on OP Mainnet.
             </Text>
           </View>
@@ -56,7 +57,7 @@ export default function AddCryptoButton() {
             <Text fontSize={ms(13)} color="$uiNeutralSecondary" fontWeight="bold">
               Fees
             </Text>
-            <Text fontSize={ms(13)} color="$uiPrimary" fontWeight="bold">
+            <Text fontSize={ms(13)} fontWeight="bold">
               $0.010 - $0.035
             </Text>
           </View>

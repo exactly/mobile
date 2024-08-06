@@ -47,10 +47,6 @@ export default function Passkeys() {
 
   const { data } = useQuery<Passkey>({ queryKey: ["passkey"] });
 
-  const originalWidth = 1200;
-  const originalHeight = 1200;
-  const aspectRatio = originalWidth / originalHeight;
-
   useEffect(() => {
     if (isSuccess && data?.credentialId && connector) {
       connect({ connector });
@@ -72,11 +68,11 @@ export default function Passkeys() {
         </Pressable>
       </View>
       <View justifyContent="center" alignItems="center" flexGrow={1} flexShrink={1}>
-        <View width="100%" aspectRatio={aspectRatio} justifyContent="center" alignItems="center" flexShrink={1}>
-          <View width="100%" height="100%" aspectRatio={aspectRatio}>
+        <View width="100%" aspectRatio={1} justifyContent="center" alignItems="center" flexShrink={1}>
+          <View width="100%" height="100%" aspectRatio={1}>
             <PasskeysBlob width="100%" height="100%" />
           </View>
-          <View width="100%" height="100%" aspectRatio={aspectRatio} style={StyleSheet.absoluteFill}>
+          <View width="100%" height="100%" aspectRatio={1} style={StyleSheet.absoluteFill}>
             <PasskeysImage width="100%" height="100%" />
           </View>
         </View>

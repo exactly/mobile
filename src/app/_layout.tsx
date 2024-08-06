@@ -12,7 +12,7 @@ import { TamaguiProvider } from "tamagui";
 import { WagmiProvider } from "wagmi";
 
 import metadata from "../../package.json";
-import tamaguiConfig from "../../tamagui.config";
+import tamagui from "../../tamagui.config";
 import BDOGroteskBold from "../assets/fonts/BDOGrotesk-Bold.otf";
 import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
@@ -57,7 +57,7 @@ export default wrap(function RootLayout() {
   return (
     <>
       <StatusBar translucent={false} />
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+      <TamaguiProvider config={tamagui} defaultTheme="dark">
         <WagmiProvider config={wagmiConfig}>
           <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
             <SafeAreaProvider>
