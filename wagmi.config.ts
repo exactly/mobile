@@ -3,7 +3,7 @@ import { actions, foundry, react } from "@wagmi/cli/plugins";
 import { type Abi, getAddress } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
-import chain from "@exactly/common/chain.ts";
+import chain from "@exactly/common/chain";
 
 const network = { [optimism.id]: "optimism", [optimismSepolia.id]: "op-sepolia" }[chain.id] ?? chain.name;
 

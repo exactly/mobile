@@ -1,5 +1,5 @@
-import chain from "@exactly/common/chain.js";
-import { Hash } from "@exactly/common/types.js";
+import chain from "@exactly/common/chain";
+import { Hash } from "@exactly/common/types";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { parse } from "valibot";
 import { keccak256, serializeTransaction, toHex, type TransactionSerializable } from "viem";

@@ -1,10 +1,10 @@
 import { getEntryPoint } from "@alchemy/aa-core";
-import accountInitCode from "@exactly/common/accountInitCode.js";
-import chain from "@exactly/common/chain.js";
+import accountInitCode from "@exactly/common/accountInitCode";
+import chain from "@exactly/common/chain";
 import { type Address, ContractFunctionExecutionError, ContractFunctionRevertedError } from "viem";
 
-import decodePublicKey from "./decodePublicKey.js";
-import publicClient from "./publicClient.js";
+import decodePublicKey from "./decodePublicKey";
+import publicClient from "./publicClient";
 
 export default async function accountAddress(publicKey: Uint8Array) {
   const { x, y } = decodePublicKey(publicKey);

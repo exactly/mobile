@@ -1,4 +1,4 @@
-import type { CreateCardParameters } from "@exactly/common/types.js";
+import type { CreateCardParameters } from "@exactly/common/types";
 import * as v from "valibot";
 
 if (!process.env.CRYPTOMATE_URL || !process.env.CRYPTOMATE_API_KEY) throw new Error("missing cryptomate vars");
