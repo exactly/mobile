@@ -14,6 +14,7 @@ import {
   encodeFunctionData,
   erc20Abi,
   type Hash,
+  nonceManager,
   padHex,
 } from "viem";
 
@@ -42,7 +43,7 @@ app.post(
     "json",
     v.variant("event_type", [
       v.looseObject({
-        event_type: v.literal("AUTHORIZATION"),
+        event_type: v.picklist(["AUTHORIZATION", "CLEARING"]),
         status: v.literal("PENDING"),
         product: v.literal("CARDS"),
         operation_id: v.string(),
@@ -51,7 +52,7 @@ app.post(
           amount: v.number(),
           currency_number: v.literal(840),
           currency_code: v.literal("USD"),
-          exchange_rate: v.number(),
+          exchange_rate: v.nullable(v.number()),
           channel: v.picklist(["ECOMMERCE", "POS", "ATM", "Visa Direct"]),
           created_at: v.pipe(v.string(), v.isoTimestamp()),
           fees: v.looseObject({ atm_fees: v.number(), fx_fees: v.number() }),
@@ -86,58 +87,56 @@ app.post(
       .limit(1);
     if (!credential?.publicKey) return c.text("unknown card", 404);
 
-    try {
-      const call = {
-        functionName: "borrow",
-        args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
-      } as const;
-      const transaction = {
-        from: signerAddress,
-        to: await accountAddress(credential.publicKey), // TODO make sync
-        data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
-      } as const;
+    const call = {
+      functionName: "borrow",
+      args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
+    } as const;
+    const transaction = {
+      from: signerAddress,
+      to: await accountAddress(credential.publicKey), // TODO make sync
+      data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
+    } as const;
 
-      const [trace, nonce] = await Promise.all([
-        publicClient.traceCall(transaction),
-        publicClient.getTransactionCount({ address: signerAddress, blockTag: "pending" }),
-      ]);
-
-      const transfers = usdcTransfersToCollector(trace);
-      if (transfers.length !== 1) return c.json({ response_code: "51" });
-      const [{ topics, data }] = transfers as [TransferLog];
-      const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
-      if (args.value !== call.args[1]) return c.json({ response_code: "51" });
-
-      const hash = await publicClient.sendRawTransaction({
-        serializedTransaction: signTransactionSync({
-          ...transaction,
-          nonce,
-          type: "eip1559",
-          chainId: chain.id,
-          maxFeePerGas: 1_000_000n,
-          maxPriorityFeePerGas: 1_000_000n,
-          gas: 2_000_000n,
-        }),
-      });
-      debug("hash", hash);
-
-      await database
-        .insert(transactions)
-        .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload }]);
-
-      return c.json({ response_code: "00" });
-    } catch (error: unknown) {
-      if (error instanceof BaseError && error.cause instanceof ContractFunctionRevertedError) {
-        switch (error.cause.data?.errorName) {
-          case "InsufficientAccountLiquidity":
-            return c.json({ response_code: "51" });
-          default:
-            captureException(error);
-            return c.json({ response_code: "05" });
+    switch (payload.event_type) {
+      case "AUTHORIZATION":
+        try {
+          const transfers = usdcTransfersToCollector(await publicClient.traceCall(transaction));
+          if (transfers.length !== 1) return c.json({ response_code: "51" });
+          const [{ topics, data }] = transfers as [TransferLog];
+          const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
+          if (args.value !== call.args[1]) return c.json({ response_code: "51" });
+          return c.json({ response_code: "00" });
+        } catch (error: unknown) {
+          if (error instanceof BaseError && error.cause instanceof ContractFunctionRevertedError) {
+            switch (error.cause.data?.errorName) {
+              case "InsufficientAccountLiquidity":
+                return c.json({ response_code: "51" });
+              default:
+                captureException(error);
+                return c.json({ response_code: "05" });
+            }
+          }
+          captureException(error);
+          return c.json({ response_code: "05" });
         }
+      case "CLEARING": {
+        const hash = await publicClient.sendRawTransaction({
+          serializedTransaction: signTransactionSync({
+            ...transaction,
+            nonce: await nonceManager.consume({ address: signerAddress, chainId: chain.id, client: publicClient }),
+            type: "eip1559",
+            chainId: chain.id,
+            maxFeePerGas: 1_000_000n,
+            maxPriorityFeePerGas: 1_000_000n,
+            gas: 2_000_000n,
+          }),
+        });
+        debug("hash", hash);
+        await database
+          .insert(transactions)
+          .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload }]);
+        return c.json({ response_code: "00" });
       }
-      captureException(error);
-      return c.json({ response_code: "05" });
     }
   },
 );
