@@ -4,6 +4,7 @@ export default styled(Input, {
   fontSize: 15,
   padding: "$s3",
   borderColor: "$borderBrandStrong",
+  color: "$uiNeutralPrimary",
   borderRadius: "$r3",
   placeholderTextColor: "$uiNeutralSecondary",
   focusStyle: {
