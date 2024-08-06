@@ -58,7 +58,7 @@ export default wrap(function RootLayout() {
   return (
     <>
       <StatusBar translucent={false} />
-      <TamaguiProvider config={tamagui} defaultTheme="dark">
+      <TamaguiProvider config={tamagui}>
         <ThemeProvider>
           <WagmiProvider config={wagmiConfig}>
             <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
