@@ -77,7 +77,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@babel/plugin-syntax-import-attributes": "^7.24.7",
     "@babel/preset-env": "^7.25.3",
     "@exactly/protocol": "github:exactly/protocol#5afd7b1",
     "@simplewebauthn/types": "^10.0.0",

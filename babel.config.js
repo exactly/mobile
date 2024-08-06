@@ -4,7 +4,6 @@ module.exports = function config(api) {
   return {
     presets: ["babel-preset-expo"],
     plugins: [
-      "@babel/plugin-syntax-import-attributes",
       [
         "module-resolver",
         {
