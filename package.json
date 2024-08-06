@@ -90,6 +90,7 @@
     "@wagmi/cli": "^2.1.15",
     "babel-plugin-module-resolver": "^5.0.2",
     "concurrently": "^8.2.2",
+    "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-universe": "^13.0.0",
