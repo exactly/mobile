@@ -43,7 +43,6 @@ module.exports = {
         "plugin:react-native/all",
       ],
     },
-    { files: ["common/**", "server/**"], extends: ["plugin:require-extensions/recommended"] },
     {
       files: [...nodeFiles, "server/**"],
       extends: ["plugin:node/recommended"],
