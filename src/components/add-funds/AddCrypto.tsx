@@ -180,10 +180,16 @@ export default function AddCrypto() {
               <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
                 Network
               </Text>
-              <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-                <View flexDirection="row" alignItems="center" gap={ms(10)}>
-                  <OptimismImage />
-                  <Text fontSize={ms(18)} color="$uiPrimary" fontWeight="bold">
+              <View
+                flexDirection="row"
+                gap={ms(10)}
+                justifyContent="space-between"
+                alignItems="center"
+                alignSelf="stretch"
+              >
+                <View flexDirection="row" alignItems="center" gap={ms(10)} flexGrow={1} maxHeight={ms(32)}>
+                  <OptimismImage height={ms(32)} />
+                  <Text fontSize={ms(18)} fontWeight="bold">
                     Optimism
                   </Text>
                   <Text fontSize={ms(13)} color="$uiNeutralSecondary">
