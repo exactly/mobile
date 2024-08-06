@@ -18,7 +18,7 @@ function back() {
 }
 
 function about() {
-  router.push("../onboarding/add-funds/add-crypto-about");
+  router.push("../add-funds/add-crypto-about");
 }
 
 const supportedAssets = [
