@@ -15,6 +15,24 @@ services:
       branch: do
       deploy_on_push: true
     http_port: 3000
+    envs:
+      - key: POSTGRES_URL
+        scope: RUN_TIME
+        value: ${postgres.DATABASE_URL}
+      - key: REDIS_URL
+        scope: RUN_TIME
+        value: ${redis.DATABASE_URL}
+databases:
+  - cluster_name: redis
+    name: postgres
+    production: true
+    engine: PG
+    version: "16"
+  - cluster_name: redis
+    name: redis
+    production: true
+    engine: REDIS
+    version: "7"
 ingress:
   rules:
     - component:
