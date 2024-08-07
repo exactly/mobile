@@ -136,7 +136,7 @@ app.post(
             gas: 2_000_000n,
           }),
         });
-        debug("hash", hash);
+        setContext("tx", { hash });
         await database
           .insert(transactions)
           .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload }]);
