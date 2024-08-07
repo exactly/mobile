@@ -2,15 +2,11 @@ import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/chain";
 import { type CallParameters, createPublicClient, formatTransactionRequest, type Hash, type Hex, http } from "viem";
 
-import debugTransportConfig from "./debug/transportConfig";
-
 if (!chain.rpcUrls.alchemy?.http[0]) throw new Error("missing alchemy rpc url");
-
-const transportConfig = process.env.DEBUG ? debugTransportConfig : undefined;
 
 export default createPublicClient({
   chain,
-  transport: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`, transportConfig),
+  transport: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`),
 }).extend((client) => ({
   traceCall: async ({ blockNumber, blockTag = "latest", ...call }: CallParameters): Promise<CallFrame> =>
     client.request({
