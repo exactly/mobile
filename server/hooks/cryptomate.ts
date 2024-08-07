@@ -81,6 +81,7 @@ app.post(
   async (c) => {
     const payload = c.req.valid("json");
     setTag("cryptomate.event", payload.event_type);
+    setContext("cryptomate", payload);
     const [credential] = await database
       .select({ id: credentials.id, publicKey: credentials.publicKey })
       .from(cards)
