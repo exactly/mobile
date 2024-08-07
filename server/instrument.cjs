@@ -8,5 +8,6 @@ init({
   profilesSampleRate: 1,
   attachStacktrace: true,
   autoSessionTracking: true,
-  integrations: [nodeProfilingIntegration(), extraErrorDataIntegration(), sessionTimingIntegration()],
+  normalizeDepth: 10,
+  integrations: [nodeProfilingIntegration(), extraErrorDataIntegration({ depth: 10 }), sessionTimingIntegration()],
 });
