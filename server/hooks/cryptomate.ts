@@ -20,7 +20,7 @@ import {
 
 import database, { cards, credentials, transactions } from "../database/index";
 import { iExaAccountAbi as exaAccountAbi, marketUSDCAddress, usdcAddress } from "../generated/contracts";
-import accountAddress from "../utils/accountAddress";
+import deriveAddress from "../utils/deriveAddress";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 import signTransactionSync, { signerAddress } from "../utils/signTransactionSync";
 
@@ -87,13 +87,14 @@ app.post(
       .limit(1);
     if (!credential?.publicKey) return c.text("unknown card", 404);
 
+    const accountAddress = deriveAddress(credential.publicKey);
     const call = {
       functionName: "borrow",
       args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
     } as const;
     const transaction = {
       from: signerAddress,
-      to: await accountAddress(credential.publicKey), // TODO make sync
+      to: accountAddress,
       data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
     } as const;
 
