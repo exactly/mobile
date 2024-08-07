@@ -8,6 +8,7 @@ import {
   setContext,
   setTag,
   setUser,
+  startSpan,
   withScope,
 } from "@sentry/node";
 import createDebug from "debug";
@@ -114,7 +115,9 @@ app.post(
     switch (payload.event_type) {
       case "AUTHORIZATION":
         try {
-          const transfers = usdcTransfersToCollector(await publicClient.traceCall(transaction));
+          const transfers = usdcTransfersToCollector(
+            await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () => publicClient.traceCall(transaction)),
+          );
           if (transfers.length !== 1) return c.json({ response_code: "51" });
           const [{ topics, data }] = transfers as [TransferLog];
           const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
@@ -134,20 +137,26 @@ app.post(
           return c.json({ response_code: "05" });
         }
       case "CLEARING": {
-        const hash = await publicClient.sendRawTransaction({
-          serializedTransaction: signTransactionSync({
-            ...transaction,
-            nonce: await nonceManager.consume({ address: signerAddress, chainId: chain.id, client: publicClient }),
-            type: "eip1559",
-            chainId: chain.id,
-            maxFeePerGas: 1_000_000n,
-            maxPriorityFeePerGas: 1_000_000n,
-            gas: 2_000_000n,
+        const nonce = await startSpan({ name: "tx.nonce", op: "tx.nonce" }, () =>
+          nonceManager.consume({ address: signerAddress, chainId: chain.id, client: publicClient }),
+        );
+        setContext("tx", { nonce });
+        const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+          publicClient.sendRawTransaction({
+            serializedTransaction: signTransactionSync({
+              ...transaction,
+              nonce,
+              type: "eip1559",
+              chainId: chain.id,
+              maxFeePerGas: 1_000_000n,
+              maxPriorityFeePerGas: 1_000_000n,
+              gas: 2_000_000n,
+            }),
           }),
-        });
+        );
         setContext("tx", { hash });
         const [receipt] = await Promise.all([
-          publicClient.waitForTransactionReceipt({ hash }),
+          startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash })),
           database
             .insert(transactions)
             .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload }]),
