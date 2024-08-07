@@ -7,7 +7,6 @@ import { ScrollView, View } from "tamagui";
 import Balance from "./Balance";
 import HomeActions from "./HomeActions";
 import LatestActivity from "./LatestActivity";
-import AlertBadge from "../shared/AlertBadge";
 import BaseLayout from "../shared/BaseLayout";
 import InfoPreview from "../shared/InfoPreview";
 import ProfileHeader from "../shared/ProfileHeader";
@@ -23,7 +22,6 @@ export default function Home() {
       <ScrollView>
         <BaseLayout width="100%" height="100%">
           <View gap={ms(20)} flex={1} paddingVertical={ms(20)}>
-            <AlertBadge />
             <Balance />
             <HomeActions />
             <InfoPreview
