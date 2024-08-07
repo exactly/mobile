@@ -1,4 +1,4 @@
-FROM node:22.5.1-slim AS base
+FROM node:22.6.0-slim AS base
 
 FROM base AS build
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
