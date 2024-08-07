@@ -1,7 +1,7 @@
 import chain from "@exactly/common/chain";
 import { Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setContext } from "@sentry/node";
+import { captureException, setContext, setTag, setUser } from "@sentry/node";
 import createDebug from "debug";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -80,15 +80,17 @@ app.post(
   ),
   async (c) => {
     const payload = c.req.valid("json");
+    setTag("cryptomate.event", payload.event_type);
     const [credential] = await database
-      .select({ publicKey: credentials.publicKey })
+      .select({ id: credentials.id, publicKey: credentials.publicKey })
       .from(cards)
       .leftJoin(credentials, eq(cards.credentialId, credentials.id))
       .where(eq(cards.id, payload.data.card_id))
       .limit(1);
-    if (!credential?.publicKey) return c.text("unknown card", 404);
+    if (!credential?.id || !credential.publicKey) return c.text("unknown card", 404);
 
     const accountAddress = deriveAddress(credential.publicKey);
+    setUser({ id: credential.id, username: accountAddress });
     const call = {
       functionName: "borrow",
       args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
