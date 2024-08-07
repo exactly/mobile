@@ -1,7 +1,7 @@
 import chain from "@exactly/common/chain";
 import { Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setContext, setTag, setUser } from "@sentry/node";
+import { captureException, setContext, setTag, setUser, withScope } from "@sentry/node";
 import createDebug from "debug";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -137,9 +137,19 @@ app.post(
           }),
         });
         setContext("tx", { hash });
-        await database
-          .insert(transactions)
-          .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload }]);
+        const [receipt] = await Promise.all([
+          publicClient.waitForTransactionReceipt({ hash }),
+          database
+            .insert(transactions)
+            .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload }]),
+        ]);
+        setContext("tx", receipt);
+        if (receipt.status !== "success") {
+          withScope((scope) => {
+            scope.setLevel("fatal");
+            captureException(new Error("tx reverted"));
+          });
+        }
         return c.json({ response_code: "00" });
       }
     }
