@@ -34,7 +34,7 @@ export function createCard(parameters: CreateCardParameters) {
 }
 
 export function getPAN() {
-  return auth<{ url: string }>("/card");
+  return auth<string>("/card");
 }
 
 export function kycOTL() {
