@@ -1,5 +1,12 @@
 name: exactly
 region: sfo
+domains:
+  - domain: web.exactly.app
+    type: PRIMARY
+envs:
+  - key: APP_DOMAIN
+    scope: RUN_AND_BUILD_TIME
+    value: ${APP_DOMAIN}
 services:
   - name: server
     dockerfile_path: Dockerfile
