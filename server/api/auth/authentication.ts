@@ -1,7 +1,7 @@
 import domain from "@exactly/common/domain";
 import { Base64URL } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException } from "@sentry/node";
+import { captureException, setContext } from "@sentry/node";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { eq } from "drizzle-orm";
@@ -46,7 +46,8 @@ app.post(
     }),
     (result, c) => {
       if (!result.success) {
-        captureException(result);
+        setContext("validation", result);
+        captureException(new Error("bad authentication"));
         return c.text("bad authentication", 400);
       }
     },

@@ -1,7 +1,7 @@
 import domain from "@exactly/common/domain";
 import { Base64URL } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException } from "@sentry/node";
+import { captureException, setContext } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { cose } from "@simplewebauthn/server/helpers";
 import { Hono } from "hono";
@@ -56,7 +56,8 @@ app.post(
     }),
     (result, c) => {
       if (!result.success) {
-        captureException(result);
+        setContext("validation", result);
+        captureException(new Error("bad registration"));
         return c.text("bad registration", 400);
       }
     },

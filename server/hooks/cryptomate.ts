@@ -1,7 +1,7 @@
 import chain from "@exactly/common/chain";
 import { Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException } from "@sentry/node";
+import { captureException, setContext } from "@sentry/node";
 import createDebug from "debug";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -71,7 +71,8 @@ app.post(
     ]),
     (result, c) => {
       if (!result.success) {
-        debug(result);
+        setContext("validation", result);
+        captureException(new Error("bad cryptomate"));
         return c.text("bad request", 400);
       }
       if (debug.enabled) debug(JSON.stringify(result.output));
