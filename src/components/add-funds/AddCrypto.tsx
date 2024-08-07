@@ -77,34 +77,6 @@ export default function AddCrypto() {
         <ScrollView flex={1}>
           <View gap={ms(20)} flex={1}>
             <View
-              borderRadius="$r3"
-              flexDirection="row"
-              backgroundColor="$backgroundSoft"
-              height={ms(41)}
-              alignItems="center"
-              borderWidth={1}
-              borderColor="$borderSuccessSoft"
-              shadowOffset={{ width: 0, height: 2 }}
-              shadowRadius="$r3"
-              shadowColor="$interactiveOnBaseBrandDefault"
-              gap={ms(10)}
-            >
-              <View
-                padding={ms(8)}
-                backgroundColor="$interactiveBaseSuccessSoftDefault"
-                justifyContent="center"
-                alignItems="center"
-                borderTopLeftRadius="$r3"
-                borderBottomLeftRadius="$r3"
-              >
-                <Info size={ms(24)} color="$interactiveOnBaseSuccessSoft" />
-              </View>
-
-              <Text fontSize={ms(15)} color="$uiSuccessPrimary">
-                Wallet address copied!
-              </Text>
-            </View>
-            <View
               flex={1}
               gap={ms(10)}
               borderBottomWidth={1}
@@ -123,16 +95,7 @@ export default function AddCrypto() {
                   )}
                 </View>
                 <View gap={ms(10)} flexDirection="row">
-                  <View
-                    width={ms(24)}
-                    height={ms(24)}
-                    backgroundColor="$interactiveBaseBrandDefault"
-                    borderRadius="$r2"
-                    alignContent="center"
-                    alignItems="center"
-                  >
-                    <QrCode size={ms(24)} color="$interactiveOnBaseBrandDefault" />
-                  </View>
+                  <QrCode size={ms(24)} color="$interactiveBaseBrandDefault" />
                   <Pressable onPress={copy}>
                     <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
                   </Pressable>
