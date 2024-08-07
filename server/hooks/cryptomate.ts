@@ -1,7 +1,15 @@
 import chain from "@exactly/common/chain";
 import { Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setContext, setTag, setUser, withScope } from "@sentry/node";
+import {
+  captureException,
+  getActiveSpan,
+  SEMANTIC_ATTRIBUTE_SENTRY_OP,
+  setContext,
+  setTag,
+  setUser,
+  withScope,
+} from "@sentry/node";
 import createDebug from "debug";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -82,6 +90,7 @@ app.post(
     const payload = c.req.valid("json");
     setTag("cryptomate.event", payload.event_type);
     setContext("cryptomate", payload);
+    getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `cryptomate.${payload.event_type.toLowerCase()}`);
     const [credential] = await database
       .select({ id: credentials.id, publicKey: credentials.publicKey })
       .from(cards)
