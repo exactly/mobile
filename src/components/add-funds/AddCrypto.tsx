@@ -162,10 +162,16 @@ export default function AddCrypto() {
                 </View>
               </View>
               <View flex={1}>
-                <Text color="$uiNeutralPlaceholder" lineHeight={ms(16)}>
+                <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)}>
                   Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
                   loss of funds.{" "}
-                  <Text color="$uiBrandSecondary" fontSize={ms(13)} fontWeight="bold" onPress={about}>
+                  <Text
+                    color="$uiBrandSecondary"
+                    fontSize={ms(13)}
+                    lineHeight={ms(16)}
+                    fontWeight="bold"
+                    onPress={about}
+                  >
                     Learn more about adding funds.
                   </Text>
                 </Text>
