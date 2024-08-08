@@ -50,10 +50,15 @@ app.post(
   ),
   vValidator(
     "json",
-    v.variant("event_type", [
+    v.intersect([
+      v.variant("event_type", [
+        v.object({ event_type: v.literal("AUTHORIZATION"), status: v.literal("PENDING") }),
+        v.object({ event_type: v.literal("CLEARING"), status: v.picklist(["PENDING", "SUCCESS", "FAILED"]) }),
+        v.object({ event_type: v.literal("DECLINED"), status: v.literal("FAILED") }),
+        v.object({ event_type: v.literal("REFUND"), status: v.literal("SUCCESS") }),
+        v.object({ event_type: v.literal("REVERSAL"), status: v.literal("SUCCESS") }),
+      ]),
       v.looseObject({
-        event_type: v.picklist(["AUTHORIZATION", "CLEARING"]),
-        status: v.literal("PENDING"),
         product: v.literal("CARDS"),
         operation_id: v.string(),
         data: v.looseObject({
@@ -90,8 +95,8 @@ app.post(
   async (c) => {
     const payload = c.req.valid("json");
     setTag("cryptomate.event", payload.event_type);
+    setTag("cryptomate.status", payload.status);
     setContext("cryptomate", payload);
-    getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `cryptomate.${payload.event_type.toLowerCase()}`);
     const [credential] = await database
       .select({ id: credentials.id, publicKey: credentials.publicKey })
       .from(cards)
@@ -114,6 +119,7 @@ app.post(
 
     switch (payload.event_type) {
       case "AUTHORIZATION":
+        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
         try {
           const transfers = usdcTransfersToCollector(
             await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () => publicClient.traceCall(transaction)),
@@ -137,6 +143,8 @@ app.post(
           return c.json({ response_code: "05" });
         }
       case "CLEARING": {
+        if (payload.status !== "SUCCESS") return c.json({});
+        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
         const nonce = await startSpan({ name: "tx.nonce", op: "tx.nonce" }, () =>
           nonceManager.consume({ address: signerAddress, chainId: chain.id, client: publicClient }),
         );
@@ -168,8 +176,10 @@ app.post(
             captureException(new Error("tx reverted"));
           });
         }
-        return c.json({ response_code: "00" });
+        return c.json({});
       }
+      default:
+        return c.json({});
     }
   },
 );
