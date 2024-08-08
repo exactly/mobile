@@ -62,13 +62,13 @@ export default function Card() {
     validatorAdapter: valibotValidator(), // TODO implement validations
   });
 
-  const getCard = () => {
+  function getCard() {
     refetch().catch(handleError);
-  };
+  }
 
-  const submit = () => {
+  function submit() {
     form.handleSubmit().catch(handleError);
-  };
+  }
 
   return (
     <SafeView fullScreen tab>

@@ -12,7 +12,7 @@ function close() {
   router.back();
 }
 
-const AddCryptoAbout = () => {
+export default function AddCryptoAbout() {
   return (
     <SafeView fullScreen paddingTop={0} backgroundColor="$backgroundSoft">
       <View fullScreen padded>
@@ -58,6 +58,4 @@ const AddCryptoAbout = () => {
       </View>
     </SafeView>
   );
-};
-
-export default AddCryptoAbout;
+}
