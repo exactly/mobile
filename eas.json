@@ -1,8 +1,9 @@
 {
   "build": {
     "base": {
-      "node": ">=22.5.1",
-      "pnpm": ">=9.6.0",
+      "resourceClass": "large",
+      "node": "22.5.1",
+      "pnpm": "9.6.0",
       "android": {
         "image": "latest"
       },
