@@ -29,7 +29,7 @@ export default function Activity() {
     data: oneTimeLink,
     refetch: fetchOTL,
     isFetching: isFetchingOTL,
-  } = useQuery({ queryKey: ["personaOTL"], enabled: false, queryFn: kycOTL });
+  } = useQuery({ queryKey: ["personaOTL"], enabled: false, queryFn: kycOTL, retry: false });
   const {
     data: passed,
     isFetching: isFetchingStatus,
@@ -38,6 +38,7 @@ export default function Activity() {
     queryKey: ["kycStatus"],
     enabled: !!oneTimeLink,
     queryFn: kycStatus,
+    retry: false,
   });
 
   function handleKYC() {
