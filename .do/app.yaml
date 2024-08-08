@@ -7,6 +7,17 @@ envs:
   - key: APP_DOMAIN
     scope: RUN_AND_BUILD_TIME
     value: ${APP_DOMAIN}
+  - key: EXPO_PUBLIC_CHAIN_ID
+    scope: RUN_AND_BUILD_TIME
+    value: "10"
+  - key: EXPO_PUBLIC_ALCHEMY_API_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: EXPO_PUBLIC_SENTRY_DSN
+    scope: RUN_AND_BUILD_TIME
 services:
   - name: server
     dockerfile_path: Dockerfile
@@ -27,6 +38,31 @@ services:
       - key: NODE_ENV
         scope: RUN_TIME
         value: production
+      - key: ANDROID_CERT_FINGERPRINT
+        scope: RUN_TIME
+      - key: AUTH_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: COLLECTOR_ADDRESS
+        scope: RUN_TIME
+      - key: CRYPTOMATE_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: CRYPTOMATE_URL
+        scope: RUN_TIME
+      - key: CRYPTOMATE_WEBHOOK_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: KEEPER_PRIVATE_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: PERSONA_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: PERSONA_TEMPLATE_ID
+        scope: RUN_TIME
+      - key: PERSONA_URL
+        scope: RUN_TIME
 databases:
   - name: postgres
     cluster_name: exactly-postgres
