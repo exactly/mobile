@@ -29,7 +29,7 @@
     "@simplewebauthn/types": "^10.0.0",
     "@types/debug": "^4.1.12",
     "debug": "^4.3.6",
-    "drizzle-orm": "^0.32.2",
+    "drizzle-orm": "^0.33.0",
     "hono": "^4.5.4",
     "ioredis": "^5.4.1",
     "pg": "^8.12.0",
@@ -41,7 +41,7 @@
     "@sentry/cli": "^2.33.1",
     "@types/node": "^22.1.0",
     "@types/pg": "^8.11.6",
-    "drizzle-kit": "^0.23.2",
+    "drizzle-kit": "^0.24.0",
     "pkgroll": "^2.4.2",
     "tsx": "^4.17.0",
     "typescript": "^5.5.4"
