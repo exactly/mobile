@@ -10,6 +10,6 @@
     "@alchemy/aa-core": "^3.19.0",
     "@exactly/plugin": "workspace:*",
     "valibot": "^0.37.0",
-    "viem": "^2.18.8"
+    "viem": "^2.19.2"
   }
 }
