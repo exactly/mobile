@@ -1,4 +1,4 @@
-import * as Clipboard from "expo-clipboard";
+import { setStringAsync } from "expo-clipboard";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
 import { View, Spinner } from "tamagui";
@@ -69,17 +69,17 @@ export default function PasskeyUtils() {
 
   const copyEnterMarketHash = () => {
     if (!enterMarketHash) return;
-    Clipboard.setStringAsync(enterMarketHash).catch(handleError);
+    setStringAsync(enterMarketHash).catch(handleError);
   };
 
   const copyDepositHash = () => {
     if (!depositHash) return;
-    Clipboard.setStringAsync(depositHash).catch(handleError);
+    setStringAsync(depositHash).catch(handleError);
   };
 
   const copyApproveHash = () => {
     if (!approveHash) return;
-    Clipboard.setStringAsync(approveHash).catch(handleError);
+    setStringAsync(approveHash).catch(handleError);
   };
 
   return (

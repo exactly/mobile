@@ -1,6 +1,6 @@
 import type { Passkey } from "@exactly/common/types";
 import { useQuery } from "@tanstack/react-query";
-import * as Clipboard from "expo-clipboard";
+import { setStringAsync } from "expo-clipboard";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { View, Spinner } from "tamagui";
@@ -23,7 +23,7 @@ export default function PasskeyUtils() {
 
   function copy() {
     if (!passkey?.credentialId) return;
-    Clipboard.setStringAsync(passkey.credentialId).catch(handleError);
+    setStringAsync(passkey.credentialId).catch(handleError);
   }
   return (
     <View gap={ms(10)}>

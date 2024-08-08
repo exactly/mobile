@@ -1,5 +1,5 @@
 import { ArrowLeft, Files, Info, QrCode, Share } from "@tamagui/lucide-icons";
-import * as Clipboard from "expo-clipboard";
+import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React from "react";
 import { Alert, Pressable } from "react-native";
@@ -48,7 +48,7 @@ export default function AddCrypto() {
   const { address } = useAccount();
   function copy() {
     if (!address) return;
-    Clipboard.setStringAsync(address).catch(handleError);
+    setStringAsync(address).catch(handleError);
     Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
   }
   return (
