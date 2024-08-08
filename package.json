@@ -90,6 +90,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "@wagmi/cli": "^2.1.15",
     "babel-plugin-module-resolver": "^5.0.2",
+    "babel-preset-expo": "^11.0.13",
     "concurrently": "^8.2.2",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",

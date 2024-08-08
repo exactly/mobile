@@ -228,6 +228,9 @@ importers:
       babel-plugin-module-resolver:
         specifier: ^5.0.2
         version: 5.0.2
+      babel-preset-expo:
+        specifier: ^11.0.13
+        version: 11.0.13(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))
       concurrently:
         specifier: ^8.2.2
         version: 8.2.2
