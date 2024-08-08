@@ -279,6 +279,9 @@ importers:
       expo-dev-client:
         specifier: ~4.0.21
         version: 4.0.21(expo@51.0.25(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+      expo-modules-autolinking:
+        specifier: ^1.11.1
+        version: 1.11.1
       metro-config:
         specifier: '*'
         version: 0.80.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)
