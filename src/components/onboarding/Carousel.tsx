@@ -12,7 +12,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import type { SvgProps } from "react-native-svg";
-import { View } from "tamagui";
 
 import ListItem from "./ListItem";
 import Pagination from "./Pagination";
@@ -25,8 +24,8 @@ import exaCard from "../../assets/images/exa-card.svg";
 import qrCodeBlob from "../../assets/images/qr-code-blob.svg";
 import qrCode from "../../assets/images/qr-code.svg";
 import ActionButton from "../shared/ActionButton";
-import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 export interface Page {
   title: string;
@@ -116,7 +115,7 @@ export default function Carousel() {
   }, [activeIndex, progress, scrollToNextPage]);
 
   return (
-    <SafeView backgroundColor="$backgroundSoft" justifyContent="space-between" alignItems="stretch" gap="$s5">
+    <View fullScreen>
       <View flexGrow={1} justifyContent="center" flexShrink={1}>
         <Animated.FlatList
           ref={flatListReference}
@@ -137,12 +136,12 @@ export default function Carousel() {
       </View>
 
       <View
+        padded
+        flexGrow={1}
         flexDirection="column"
         alignSelf="stretch"
         alignItems="center"
         justifyContent="flex-end"
-        padding="$s5"
-        flexGrow={1}
       >
         <View flexDirection="column" alignSelf="stretch" gap="$s5">
           <View flexDirection="row" justifyContent="center">
@@ -184,6 +183,6 @@ export default function Carousel() {
           </View>
         </View>
       </View>
-    </SafeView>
+    </View>
   );
 }

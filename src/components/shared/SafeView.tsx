@@ -1,20 +1,25 @@
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { ViewProps } from "tamagui";
-import { View } from "tamagui";
 
-export default function SafeView(properties: ViewProps) {
-  const insets = useSafeAreaInsets();
+import type { ViewProperties } from "./View";
+import View from "./View";
+
+interface SafeViewProperties extends ViewProperties {
+  children: React.ReactNode;
+}
+
+export default function SafeView({ children, ...rest }: SafeViewProperties) {
+  const { top, bottom, left, right } = useSafeAreaInsets();
   return (
     <View
-      width="100%"
-      height="100%"
-      paddingTop={insets.top}
-      paddingLeft={insets.left}
-      paddingRight={insets.right}
-      paddingBottom={insets.bottom}
+      paddingTop={top}
+      paddingBottom={bottom}
+      paddingLeft={left}
+      paddingRight={right}
       backgroundColor="$backgroundMild"
-      {...properties}
-    />
+      {...rest}
+    >
+      {children}
+    </View>
   );
 }

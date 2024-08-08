@@ -2,12 +2,13 @@ import { BellRing, EyeOff, Settings } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Image, styled } from "tamagui";
+import { Image, styled } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
 
 import shortenAddress from "../../utils/shortenAddress";
 import { useTheme } from "../context/ThemeProvider";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 const OnlineIndicator = styled(View, {
   width: 12,
@@ -31,7 +32,7 @@ export default function ProfileHeader() {
   } = useConnect();
   const { isConnected } = useAccount();
   return (
-    <View paddingVertical={ms(10)}>
+    <View padded>
       <View display="flex" flexDirection="row" justifyContent="space-between">
         <View display="flex" flexDirection="row" alignItems="center" gap={8}>
           <View

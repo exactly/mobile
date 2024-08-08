@@ -2,18 +2,18 @@ import { ArrowRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { StyleSheet } from "react-native";
-import { View } from "tamagui";
 
 import AccountCreatedBlob from "../../assets/images/account-created-blob.svg";
 import AccountCreatedImage from "../../assets/images/account-created.svg";
 import ActionButton from "../shared/ActionButton";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 export default function Success() {
   return (
-    <SafeView backgroundColor="$backgroundSoft" justifyContent="space-between" alignItems="stretch" gap="$s5">
-      <View flex={1} padding="$s5">
+    <SafeView fullScreen backgroundColor="$backgroundSoft">
+      <View fullScreen padded>
         <View justifyContent="center" alignItems="center" flexGrow={1} flexShrink={1}>
           <View width="100%" aspectRatio={1} justifyContent="center" alignItems="center" flexShrink={1}>
             <View width="100%" height="100%" aspectRatio={1}>

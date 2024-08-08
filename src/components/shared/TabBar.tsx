@@ -4,6 +4,8 @@ import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
 import { ToggleGroup, ButtonIcon, Text } from "tamagui";
 
+import SafeView from "./SafeView";
+
 export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const onPress = useCallback(
     (route: NavigationRoute, focused: boolean) => {
@@ -19,46 +21,48 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
     [navigation],
   );
   return (
-    <ToggleGroup
-      backgroundColor="$backgroundSoft"
-      borderRadius={0}
-      borderTopColor="$borderNeutralSoft"
-      borderTopWidth={1}
-      type="single"
-      unstyled
-    >
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key] || { options: undefined };
-        if (!options) throw new Error("no navigation button options found");
-        const label = options.title;
-        const icon = options.tabBarIcon;
-        const focused = state.index === index;
-        return (
-          <ToggleGroup.Item
-            key={route.key}
-            backgroundColor="transparent"
-            borderWidth={0}
-            flex={1}
-            onPress={() => {
-              onPress(route, focused);
-            }}
-            padding={ms(10)}
-            role="button"
-            value="center"
-          >
-            <ButtonIcon>
-              {icon?.({
-                focused,
-                color: focused ? "$uiBrandPrimary" : "$uiNeutralSecondary",
-                size: 24,
-              })}
-            </ButtonIcon>
-            <Text textAlign="center" color={focused ? "$uiBrandPrimary" : "$uiNeutralSecondary"}>
-              {label}
-            </Text>
-          </ToggleGroup.Item>
-        );
-      })}
-    </ToggleGroup>
+    <SafeView paddingTop={0} backgroundColor="$backgroundSoft">
+      <ToggleGroup
+        borderRadius={0}
+        borderTopColor="$borderNeutralSoft"
+        borderTopWidth={1}
+        type="single"
+        unstyled
+        justifyContent="center"
+      >
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key] || { options: undefined };
+          if (!options) throw new Error("no navigation button options found");
+          const label = options.title;
+          const icon = options.tabBarIcon;
+          const focused = state.index === index;
+          return (
+            <ToggleGroup.Item
+              key={route.key}
+              backgroundColor="transparent"
+              borderWidth={0}
+              onPress={() => {
+                onPress(route, focused);
+              }}
+              padding={ms(10)}
+              role="button"
+              value="center"
+              flex={1}
+            >
+              <ButtonIcon>
+                {icon?.({
+                  focused,
+                  color: focused ? "$uiBrandPrimary" : "$uiNeutralSecondary",
+                  size: 24,
+                })}
+              </ButtonIcon>
+              <Text textAlign="center" color={focused ? "$uiBrandPrimary" : "$uiNeutralSecondary"}>
+                {label}
+              </Text>
+            </ToggleGroup.Item>
+          );
+        })}
+      </ToggleGroup>
+    </SafeView>
   );
 }

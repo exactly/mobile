@@ -45,7 +45,6 @@ export default styled(Button, {
         borderRadius: "$r4",
         scaleIcon: 1.5,
         flex: 1,
-        flexBasis: "50%",
         maxHeight: ms(64),
       },
     },

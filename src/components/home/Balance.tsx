@@ -33,7 +33,7 @@ export default function Balance() {
     setIsOpen(!isOpen);
   }
   return (
-    <View display="flex" gap="$s4_5">
+    <View display="flex" gap="$s4_5" justifyContent="center">
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
         <Text
           fontSize={ms(15)}
@@ -46,10 +46,10 @@ export default function Balance() {
           Balance
         </Text>
       </View>
-      <View display="flex" gap="$s3_5">
+      <View gap="$s3_5">
         <Pressable onPress={onPress}>
           <View flexDirection="row" justifyContent="center" alignItems="center" gap="$s3_5">
-            <View flexDirection="row" flex={1} justifyContent="flex-end" maxWidth="100%">
+            <View flexDirection="row" maxWidth="100%">
               <Text textAlign="center" fontFamily="$mono" fontSize={ms(40)} fontWeight="bold" overflow="hidden">
                 {Number(usdBalance / BigInt(10 ** 18)).toLocaleString("en-US", {
                   style: "currency",
@@ -59,7 +59,7 @@ export default function Balance() {
                 })}
               </Text>
             </View>
-            <View flexDirection="row" flex={1} justifyContent="flex-start">
+            <View>
               {isOpen ? (
                 <ChevronUp size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
               ) : (

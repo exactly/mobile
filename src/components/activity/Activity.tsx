@@ -5,13 +5,14 @@ import React, { useEffect } from "react";
 import { Platform } from "react-native";
 import { Environment, Inquiry } from "react-native-persona";
 import { ms } from "react-native-size-matters";
-import { Spinner, View } from "tamagui";
+import { ScrollView, Spinner } from "tamagui";
 
 import handleError from "../../utils/handleError";
 import { kycOTL, kycStatus } from "../../utils/server";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 if (!process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID) throw new Error("missing persona template id");
 
@@ -60,30 +61,34 @@ export default function Activity() {
     fetchStatus().catch(handleError);
   }, [fetchStatus, passed]);
   return (
-    <SafeView padding="$s5">
-      <View gap={ms(40)} flex={1}>
-        <View gap={ms(10)}>
-          <Button contained onPress={startOnboarding}>
-            Start Onboarding
-          </Button>
+    <SafeView fullScreen tab>
+      <ScrollView>
+        <View fullScreen padded>
+          <View gap={ms(40)} flex={1}>
+            <View gap={ms(10)}>
+              <Button contained onPress={startOnboarding}>
+                Start Onboarding
+              </Button>
 
-          {(isFetchingOTL || isFetchingStatus) && <Spinner color="$interactiveBaseBrandDefault" />}
+              {(isFetchingOTL || isFetchingStatus) && <Spinner color="$interactiveBaseBrandDefault" />}
 
-          {!isFetchingOTL && oneTimeLink && (
-            <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
-              <A href={oneTimeLink}>
-                <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
-                  {oneTimeLink}
-                </Text>
-              </A>
+              {!isFetchingOTL && oneTimeLink && (
+                <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+                  <A href={oneTimeLink}>
+                    <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+                      {oneTimeLink}
+                    </Text>
+                  </A>
+                </View>
+              )}
+
+              <Button contained disabled={passed || isFetchingStatus} onPress={handleKYC}>
+                {passed ? "KYC Complete" : "Start KYC"}
+              </Button>
             </View>
-          )}
-
-          <Button contained disabled={passed || isFetchingStatus} onPress={handleKYC}>
-            {passed ? "KYC Complete" : "Start KYC"}
-          </Button>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeView>
   );
 }

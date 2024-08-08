@@ -20,7 +20,7 @@ export default function HomeActions() {
       flexDirection="row"
       display="flex"
       gap={ms(10)}
-      justifyContent="space-between"
+      justifyContent="center"
       alignItems="center"
       paddingVertical={ms(10)}
     >

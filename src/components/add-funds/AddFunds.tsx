@@ -3,13 +3,13 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, View } from "tamagui";
+import { ScrollView } from "tamagui";
 
 import AddCryptoButton from "./AddCryptoButton";
 import AddFiatButton from "./AddFiatButton";
-import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 function back() {
   router.back();
@@ -18,9 +18,9 @@ function back() {
 export default function AddFunds() {
   const { canGoBack } = router;
   return (
-    <SafeView paddingBottom={0}>
-      <BaseLayout width="100%" height="100%">
-        <View gap={ms(20)} paddingVertical={ms(20)}>
+    <SafeView fullScreen>
+      <View gap={ms(20)} fullScreen padded>
+        <View gap={ms(20)}>
           <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
               <Pressable onPress={back}>
@@ -50,7 +50,7 @@ export default function AddFunds() {
             </View>
           </View>
         </ScrollView>
-      </BaseLayout>
+      </View>
     </SafeView>
   );
 }

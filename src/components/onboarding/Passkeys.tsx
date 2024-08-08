@@ -5,7 +5,6 @@ import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View } from "tamagui";
 import { useConnect } from "wagmi";
 
 import PasskeysBlob from "../../assets/images/passkeys-blob.svg";
@@ -15,6 +14,7 @@ import handleError from "../../utils/handleError";
 import ActionButton from "../shared/ActionButton";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 function close() {
   router.back();
@@ -55,8 +55,8 @@ export default function Passkeys() {
   }, [connect, connector, data, isSuccess]);
 
   return (
-    <SafeView backgroundColor="$backgroundSoft" justifyContent="space-between" alignItems="stretch" gap="$s5">
-      <View flex={1} padding="$s5">
+    <SafeView fullScreen backgroundColor="$backgroundSoft">
+      <View fullScreen padded>
         <View position="absolute" right="$s5" zIndex={1}>
           <Pressable onPress={close}>
             <X size={ms(25)} color="$uiNeutralSecondary" />

@@ -1,20 +1,23 @@
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { ScrollView, View } from "tamagui";
+import { ScrollView } from "tamagui";
 
 import ContractUtils from "./ContractUtils";
 import PasskeyUtils from "./PasskeyUtils";
 import WalletUtils from "./WalletUtils";
 import SafeView from "../shared/SafeView";
+import View from "../shared/View";
 
 export default function Payments() {
   return (
-    <SafeView padding="$s5">
+    <SafeView fullScreen tab>
       <ScrollView>
-        <View gap={ms(20)} flex={1}>
-          <WalletUtils />
-          <PasskeyUtils />
-          <ContractUtils />
+        <View fullScreen padded>
+          <View gap={ms(20)} flex={1}>
+            <WalletUtils />
+            <PasskeyUtils />
+            <ContractUtils />
+          </View>
         </View>
       </ScrollView>
     </SafeView>

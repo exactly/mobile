@@ -5,19 +5,19 @@ import { valibotValidator } from "@tanstack/valibot-form-adapter";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Switch, View, styled, Spinner } from "tamagui";
+import { ScrollView, Switch, styled, Spinner } from "tamagui";
 
 import CardDetails from "./CardDetails";
 import LatestActivity from "./LatestActivity";
 import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
 import { createCard, getPAN } from "../../utils/server";
-import BaseLayout from "../shared/BaseLayout";
 import Button from "../shared/Button";
 import InfoPreview from "../shared/InfoPreview";
 import Input from "../shared/Input";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 const StyledAction = styled(View, {
   flex: 1,
@@ -71,10 +71,10 @@ export default function Card() {
   };
 
   return (
-    <SafeView paddingBottom={0}>
+    <SafeView fullScreen tab>
       <ScrollView>
-        <BaseLayout width="100%" height="100%">
-          <View gap={ms(20)} flex={1} paddingVertical={ms(20)}>
+        <View fullScreen padded>
+          <View gap={ms(20)} flex={1}>
             <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
               <Text fontSize={ms(20)} fontWeight="bold">
                 My Cards
@@ -318,7 +318,7 @@ export default function Card() {
               <LatestActivity />
             </InfoPreview>
           </View>
-        </BaseLayout>
+        </View>
       </ScrollView>
     </SafeView>
   );

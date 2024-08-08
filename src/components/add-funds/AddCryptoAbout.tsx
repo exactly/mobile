@@ -2,11 +2,11 @@ import { X } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View } from "tamagui";
 
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 function close() {
   router.back();
@@ -14,14 +14,8 @@ function close() {
 
 const AddCryptoAbout = () => {
   return (
-    <SafeView flex={1} flexDirection="column" alignItems="center" paddingTop={0}>
-      <View
-        flex={1}
-        backgroundColor="$backgroundSoft"
-        padding={ms(20)}
-        borderTopLeftRadius="$r6"
-        borderTopRightRadius="$r6"
-      >
+    <SafeView fullScreen paddingTop={0} backgroundColor="$backgroundSoft">
+      <View fullScreen padded>
         <View display="flex" gap={ms(20)} flex={1} position="relative">
           <View
             backgroundColor="$backgroundMild"

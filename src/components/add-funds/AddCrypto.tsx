@@ -4,15 +4,15 @@ import { router } from "expo-router";
 import React from "react";
 import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, View, Image } from "tamagui";
+import { ScrollView, Image } from "tamagui";
 import { useAccount } from "wagmi";
 
 import OptimismImage from "../../assets/images/optimism.svg";
 import handleError from "../../utils/handleError";
 import shortenAddress from "../../utils/shortenAddress";
-import BaseLayout from "../shared/BaseLayout";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
 function back() {
   router.back();
@@ -52,9 +52,9 @@ export default function AddCrypto() {
     Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
   }
   return (
-    <SafeView>
-      <BaseLayout width="100%" height="100%">
-        <View gap={ms(20)} paddingVertical={ms(20)}>
+    <SafeView fullScreen>
+      <View gap={ms(20)} fullScreen padded>
+        <View gap={ms(20)}>
           <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
               <Pressable onPress={back}>
@@ -152,7 +152,7 @@ export default function AddCrypto() {
                 alignSelf="stretch"
               >
                 <View flexDirection="row" alignItems="center" gap={ms(10)} flexGrow={1} maxHeight={ms(32)}>
-                  <OptimismImage height={ms(32)} />
+                  <OptimismImage height={ms(32)} width={ms(32)} />
                   <Text fontSize={ms(18)} fontWeight="bold">
                     Optimism
                   </Text>
@@ -179,7 +179,7 @@ export default function AddCrypto() {
             </View>
           </View>
         </ScrollView>
-      </BaseLayout>
+      </View>
     </SafeView>
   );
 }
