@@ -328,8 +328,8 @@ importers:
         specifier: erc6900/modular-account-libs#v0.7.1
         version: https://codeload.github.com/erc6900/modular-account-libs/tar.gz/5d9d0e403332251045eee2954c2a8b7ea0bae953
       openzeppelin-contracts:
-        specifier: cruzdanilo/openzeppelin-contracts#c679856
-        version: openzeppelin-solidity@https://codeload.github.com/cruzdanilo/openzeppelin-contracts/tar.gz/c679856
+        specifier: cruzdanilo/openzeppelin-contracts#562e8e2
+        version: openzeppelin-solidity@https://codeload.github.com/cruzdanilo/openzeppelin-contracts/tar.gz/562e8e2
       solady:
         specifier: ^0.0.232
         version: 0.0.232
@@ -7397,8 +7397,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.6.0
 
-  openzeppelin-solidity@https://codeload.github.com/cruzdanilo/openzeppelin-contracts/tar.gz/c679856:
-    resolution: {tarball: https://codeload.github.com/cruzdanilo/openzeppelin-contracts/tar.gz/c679856}
+  openzeppelin-solidity@https://codeload.github.com/cruzdanilo/openzeppelin-contracts/tar.gz/562e8e2:
+    resolution: {tarball: https://codeload.github.com/cruzdanilo/openzeppelin-contracts/tar.gz/562e8e2}
     version: 5.0.2
 
   optionator@0.8.3:
@@ -18506,7 +18506,7 @@ snapshots:
       - supports-color
     optional: true
 
-  openzeppelin-solidity@https://codeload.github.com/cruzdanilo/openzeppelin-contracts/tar.gz/c679856: {}
+  openzeppelin-solidity@https://codeload.github.com/cruzdanilo/openzeppelin-contracts/tar.gz/562e8e2: {}
 
   optionator@0.8.3:
     dependencies:
