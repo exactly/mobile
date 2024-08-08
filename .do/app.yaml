@@ -12,7 +12,7 @@ services:
     dockerfile_path: Dockerfile
     github:
       repo: exactly/mobile
-      branch: do
+      branch: main
       deploy_on_push: true
     http_port: 3000
     envs:
