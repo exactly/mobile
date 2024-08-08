@@ -25,5 +25,4 @@ WORKDIR /prod/server
 COPY --from=build --chown=server:server /prod/server .
 USER server
 EXPOSE 3000/tcp
-ENV NODE_ENV=production
 ENTRYPOINT ["dumb-init", "node", "--require=./instrument.cjs", "dist/index.cjs"]

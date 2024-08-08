@@ -22,6 +22,9 @@ services:
       - key: REDIS_URL
         scope: RUN_TIME
         value: ${redis.DATABASE_URL}
+      - key: NODE_ENV
+        scope: RUN_TIME
+        value: production
 databases:
   - name: postgres
     cluster_name: exactly-postgres
