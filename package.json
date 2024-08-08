@@ -80,6 +80,7 @@
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
     "@exactly/protocol": "github:exactly/protocol#5afd7b1",
+    "@sentry/cli": "^2.33.1",
     "@simplewebauthn/types": "^10.0.0",
     "@tamagui/babel-plugin": "^1.108.2",
     "@types/babel__core": "^7.20.5",
