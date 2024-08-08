@@ -105,7 +105,7 @@ export default function Card() {
                     </Text>
                     <Input
                       value={field.state.value}
-                      placeholder="Vitalik Buterin"
+                      placeholder="Vitalik"
                       onChangeText={(text) => {
                         form.setFieldValue("first", text);
                       }}

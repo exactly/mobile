@@ -9,7 +9,6 @@ import { Spinner, View } from "tamagui";
 
 import handleError from "../../utils/handleError";
 import { kycOTL, kycStatus } from "../../utils/server";
-import BaseLayout from "../shared/BaseLayout";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -61,36 +60,30 @@ export default function Activity() {
     fetchStatus().catch(handleError);
   }, [fetchStatus, passed]);
   return (
-    <SafeView>
-      <BaseLayout flex={1}>
-        <View gap={ms(40)}>
-          <Text fontSize={ms(40)} fontFamily="$mono" fontWeight={700}>
-            Activity
-          </Text>
+    <SafeView padding="$s5">
+      <View gap={ms(40)} flex={1}>
+        <View gap={ms(10)}>
+          <Button contained onPress={startOnboarding}>
+            Start Onboarding
+          </Button>
 
-          <View gap={ms(10)}>
-            <Button contained onPress={startOnboarding}>
-              Start Onboarding
-            </Button>
+          {(isFetchingOTL || isFetchingStatus) && <Spinner color="$interactiveBaseBrandDefault" />}
 
-            {(isFetchingOTL || isFetchingStatus) && <Spinner color="$interactiveBaseBrandDefault" />}
+          {!isFetchingOTL && oneTimeLink && (
+            <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+              <A href={oneTimeLink}>
+                <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+                  {oneTimeLink}
+                </Text>
+              </A>
+            </View>
+          )}
 
-            {!isFetchingOTL && oneTimeLink && (
-              <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
-                <A href={oneTimeLink}>
-                  <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
-                    {oneTimeLink}
-                  </Text>
-                </A>
-              </View>
-            )}
-
-            <Button contained disabled={passed || isFetchingStatus} onPress={handleKYC}>
-              {passed ? "KYC Complete" : "Start KYC"}
-            </Button>
-          </View>
+          <Button contained disabled={passed || isFetchingStatus} onPress={handleKYC}>
+            {passed ? "KYC Complete" : "Start KYC"}
+          </Button>
         </View>
-      </BaseLayout>
+      </View>
     </SafeView>
   );
 }

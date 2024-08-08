@@ -102,25 +102,6 @@ export default function PasskeyUtils() {
         </Text>
       )}
 
-      {enterMarketHash && (
-        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
-          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
-            {enterMarketHash}
-          </Text>
-        </View>
-      )}
-
-      <View flexDirection="row" gap={ms(10)}>
-        <Button contained onPress={enterUSDC} padding={ms(10)} flex={1}>
-          Enter USDC market
-        </Button>
-        {enterMarketHash && (
-          <Button outlined borderRadius="$r2" onPress={copyEnterMarketHash} padding={ms(10)} flex={1}>
-            Copy
-          </Button>
-        )}
-      </View>
-
       {approveHash && (
         <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
           <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
@@ -135,6 +116,25 @@ export default function PasskeyUtils() {
         </Button>
         {approveHash && (
           <Button outlined borderRadius="$r2" onPress={copyApproveHash} padding={ms(10)} flex={1}>
+            Copy
+          </Button>
+        )}
+      </View>
+
+      {enterMarketHash && (
+        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+            {enterMarketHash}
+          </Text>
+        </View>
+      )}
+
+      <View flexDirection="row" gap={ms(10)}>
+        <Button contained onPress={enterUSDC} padding={ms(10)} flex={1}>
+          Enter USDC market
+        </Button>
+        {enterMarketHash && (
+          <Button outlined borderRadius="$r2" onPress={copyEnterMarketHash} padding={ms(10)} flex={1}>
             Copy
           </Button>
         )}
