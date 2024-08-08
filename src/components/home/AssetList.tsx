@@ -1,113 +1,93 @@
-import { TrendingDown, TrendingUp } from "@tamagui/lucide-icons";
+import { Minus } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
 import { Image, View } from "tamagui";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
+import { previewerAddress, useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 
-interface Asset {
-  image: string;
-  apr: number;
-  balance: number;
-  ticker: string;
-  usdValue: number;
-  change: {
-    usdValue: number;
-    percentage: number;
-  };
-}
-
-const assets: Asset[] = [
-  {
-    image: "https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=024",
-    apr: 0.5,
-    balance: 0.75,
-    ticker: "BTC",
-    usdValue: 45_546.3,
-    change: {
-      usdValue: 1000,
-      percentage: 3.45,
-    },
-  },
-  {
-    image: "https://cryptologos.cc/logos/ethereum-eth-logo.png?v=024",
-    apr: 2,
-    balance: 2,
-    ticker: "ETH",
-    usdValue: 6854.34,
-    change: {
-      usdValue: 50,
-      percentage: 2.56,
-    },
-  },
-  {
-    image: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png?v=024",
-    apr: 4.3,
-    balance: 250,
-    ticker: "USDC",
-    usdValue: 250,
-    change: {
-      usdValue: -0.01,
-      percentage: -0.01,
-    },
-  },
-];
+const symbolToIcon: Record<string, string> = {
+  ETH: "https://assets.smold.app/api/token/1/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/logo.svg",
+  OP: "https://assets.smold.app/api/token/10/0x4200000000000000000000000000000000000042/logo.svg",
+  DAI: "https://assets.smold.app/api/token/10/0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1/logo.svg",
+  WBTC: "https://assets.smold.app/api/token/10/0x68f180fcCe6836688e9084f035309E29Bf0A2095/logo.svg",
+  wstETH: "https://assets.smold.app/api/token/10/0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb/logo.svg",
+  USDC: "https://assets.smold.app/api/token/10/0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85/logo.svg",
+  "USDC.e": "https://assets.smold.app/api/token/10/0x7F5c764cBc14f9669B88837ca1490cCa17c31607/logo.svg",
+};
 
 export default function AssetList() {
+  const { address } = useAccount();
+  const { data: markets } = useReadPreviewerExactly({
+    address: previewerAddress,
+    account: address,
+    args: [address ?? zeroAddress],
+  });
+  const positions = markets
+    ?.map((market) => ({
+      ...market,
+      symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
+      usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
+    }))
+    .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0);
   return (
     <View width="100%">
-      {assets.map(({ ticker, usdValue, change, balance, apr, image }, index) => (
+      {positions?.map(({ symbol, floatingDepositAssets, decimals, usdValue }, index) => (
         <View
           key={index}
           flexDirection="row"
           gap={ms(16)}
           alignItems="center"
           justifyContent="space-between"
-          borderBottomWidth={index === assets.length - 1 ? 0 : 1}
+          borderBottomWidth={index === positions.length - 1 ? 0 : 1}
           borderColor="$borderNeutralSoft"
         >
-          <View flexDirection="row" paddingVertical={vs(10)} flex={1}>
-            <View flexDirection="row" gap={ms(10)} flex={1}>
-              <Image src={image} alt={`${ticker} logo`} width={ms(40)} height={ms(40)} />
+          <View flexDirection="row" alignItems="center" paddingVertical={vs(10)} flex={1}>
+            <View flexDirection="row" gap={ms(10)} flex={1} alignItems="center">
+              <Image
+                source={{
+                  uri: symbolToIcon[symbol],
+                }}
+                width={ms(32)}
+                height={ms(32)}
+                borderRadius="$r_0"
+              />
               <View gap={ms(5)}>
                 <Text fontSize={ms(15)} fontWeight="bold">
-                  {ticker}
+                  {symbol}
                 </Text>
                 <Text fontSize={ms(12)} color="$uiNeutralSecondary">
-                  {apr}% APR
+                  0% APR
                 </Text>
               </View>
             </View>
-
             <View gap={ms(5)} flex={1}>
               <View flexDirection="row" alignItems="center" justifyContent="flex-end">
                 <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
-                  ${Intl.NumberFormat("en-US").format(usdValue)}
+                  {Number(usdValue / BigInt(10 ** 18)).toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                    currencySign: "standard",
+                    currencyDisplay: "symbol",
+                  })}
                 </Text>
               </View>
               <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                {balance} {ticker}
+                {Number(floatingDepositAssets / BigInt(10 ** decimals)).toLocaleString("en-US")} {symbol}
               </Text>
             </View>
-
             <View gap={ms(5)} flex={1} justifyContent="flex-end">
               <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                <Text
-                  fontSize={ms(15)}
-                  color={change.usdValue < 0 ? "$uiErrorPrimary" : "$uiSuccessSecondary"}
-                  fontWeight="bold"
-                >
-                  ${Intl.NumberFormat("en-US").format(change.usdValue)}
+                <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
+                  $0
                 </Text>
               </View>
-              <View flexDirection="row" justifyContent="flex-end" gap={ms(5)}>
-                {change.percentage < 0 ? (
-                  <TrendingDown size={20} color="$interactiveOnBaseErrorSoft" />
-                ) : (
-                  <TrendingUp size={20} color="$uiSuccessSecondary" />
-                )}
-                <Text fontSize={ms(15)} color={change.percentage < 0 ? "$uiErrorPrimary" : "$uiSuccessSecondary"}>
-                  {change.percentage}%
+              <View flexDirection="row" justifyContent="flex-end" alignItems="center" gap={ms(5)}>
+                <Minus size={ms(16)} color="$uiNeutralSecondary" />
+                <Text fontSize={ms(15)} color="$uiNeutralSecondary">
+                  0%
                 </Text>
               </View>
             </View>
