@@ -11,8 +11,7 @@
       },
       "env": {
         "EXPO_PUBLIC_CHAIN_ID": "10",
-        "VERCEL_PROJECT_PRODUCTION_URL": "web.exactly.app",
-        "VERCEL_BRANCH_URL": "web.exactly.app"
+        "APP_DOMAIN": "web.exactly.app"
       }
     },
     "development": {
