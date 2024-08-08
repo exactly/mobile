@@ -104,6 +104,9 @@ importers:
       expo:
         specifier: ~51.0.25
         version: 51.0.25(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      expo-asset:
+        specifier: ^10.0.10
+        version: 10.0.10(expo@51.0.25(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
       expo-clipboard:
         specifier: ~6.0.3
         version: 6.0.3(expo@51.0.25(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
@@ -1803,7 +1806,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.18.27':
     resolution: {integrity: sha512-YPHp0B7tF2cMb/pEJr1d23g2w+CXND1p8sApeIyNaR37/WhCKWM6FpAiQrxubD1i4d74f6U9wfJbayiI/wKlmQ==}
