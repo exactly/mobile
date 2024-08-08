@@ -23,13 +23,15 @@ services:
         scope: RUN_TIME
         value: ${redis.DATABASE_URL}
 databases:
-  - cluster_name: redis
-    name: postgres
+  - name: postgres
+    cluster_name: exactly-postgres
     production: true
     engine: PG
     version: "16"
-  - cluster_name: redis
-    name: redis
+    db_name: defaultdb
+    db_user: doadmin
+  - name: redis
+    cluster_name: exactly-redis
     production: true
     engine: REDIS
     version: "7"
