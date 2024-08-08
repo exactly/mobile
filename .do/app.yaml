@@ -42,6 +42,8 @@ ingress:
       match:
         path:
           prefix: /
+features:
+  - buildpack-stack=ubuntu-22
 alerts:
   - rule: DEPLOYMENT_FAILED
   - rule: DOMAIN_FAILED
