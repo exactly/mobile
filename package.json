@@ -72,7 +72,7 @@
     "react-onesignal": "^3.0.1",
     "tamagui": "^1.108.2",
     "valibot": "^0.37.0",
-    "viem": "^2.19.2",
+    "viem": "^2.19.3",
     "wagmi": "^2.12.4",
     "zustand": "^4.5.4"
   },
