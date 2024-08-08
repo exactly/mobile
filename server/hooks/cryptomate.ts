@@ -98,7 +98,7 @@ app.post(
       .leftJoin(credentials, eq(cards.credentialId, credentials.id))
       .where(eq(cards.id, payload.data.card_id))
       .limit(1);
-    if (!credential?.id || !credential.publicKey) return c.text("unknown card", 404);
+    if (!credential?.id || !credential.publicKey) return c.json({ response_code: "05" }, 404);
 
     const accountAddress = deriveAddress(credential.publicKey);
     setUser({ id: credential.id, username: accountAddress });
