@@ -5,7 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@babel/runtime': ^7.25.0
   '@tanstack/react-form': ^0.28.0
   '@tanstack/zod-form-adapter': npm:@favware/skip-dependency@1.2.2
   '@turnkey/http': npm:@favware/skip-dependency@1.2.2
@@ -35,9 +34,6 @@ importers:
       '@alchemy/aa-core':
         specifier: ^3.19.0
         version: 3.19.0(typescript@5.5.4)(viem@2.19.3(bufferutil@4.0.8)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.23.8))
-      '@babel/runtime':
-        specifier: ^7.25.0
-        version: 7.25.0
       '@exactly/common':
         specifier: workspace:*
         version: link:common
@@ -62,9 +58,6 @@ importers:
       '@react-native-async-storage/async-storage':
         specifier: ~1.23.1
         version: 1.23.1(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10))
-      '@react-native/assets-registry':
-        specifier: ^0.74.87
-        version: 0.74.87
       '@sentry/react-native':
         specifier: ^5.27.0
         version: 5.27.0(expo@51.0.26(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10))(react@18.2.0)
@@ -104,9 +97,6 @@ importers:
       expo:
         specifier: ~51.0.26
         version: 51.0.26(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      expo-asset:
-        specifier: ^10.0.10
-        version: 10.0.10(expo@51.0.26(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
       expo-clipboard:
         specifier: ~6.0.3
         version: 6.0.3(expo@51.0.26(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
@@ -164,9 +154,6 @@ importers:
       react-native-svg:
         specifier: ~15.2.0
         version: 15.2.0(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10))(react@18.2.0)
-      react-native-web:
-        specifier: ^0.19.12
-        version: 0.19.12(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react-native-webview:
         specifier: 13.8.6
         version: 13.8.6(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10))(react@18.2.0)
@@ -198,9 +185,6 @@ importers:
       '@exactly/protocol':
         specifier: github:exactly/protocol#5afd7b1
         version: https://codeload.github.com/exactly/protocol/tar.gz/5afd7b1
-      '@sentry/cli':
-        specifier: ^2.33.1
-        version: 2.33.1
       '@simplewebauthn/types':
         specifier: ^10.0.0
         version: 10.0.0
@@ -282,9 +266,6 @@ importers:
       expo-dev-client:
         specifier: ~4.0.22
         version: 4.0.22(expo@51.0.26(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
-      expo-modules-autolinking:
-        specifier: ^1.11.1
-        version: 1.11.1
       metro-config:
         specifier: '*'
         version: 0.80.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)
@@ -1815,7 +1796,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.18.28':
     resolution: {integrity: sha512-fvbVPId6s6etindzP6Nzos/CS1NurMVy4JKozjebArHr63tBid5i/UY5Pp+4wTCAM20gB2SjRdwcwoL6HFC4Iw==}
