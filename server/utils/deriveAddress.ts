@@ -3,7 +3,7 @@ import { checksumAddress, encodeAbiParameters, encodePacked, keccak256, slice } 
 
 import decodePublicKey from "./decodePublicKey";
 
-const accountImplementation = "0x0046000000000151008789797b54fdb500E2a61e" as const;
+const accountImplementation = "0x0046000000000151008789797b54fdb500E2a61e";
 const initCodeHashERC1967 = keccak256(
   encodePacked(
     ["bytes", "address", "bytes"],
