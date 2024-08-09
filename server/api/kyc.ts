@@ -1,8 +1,7 @@
-import { vValidator } from "@hono/valibot-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import type { StatusCode } from "hono/utils/http-status";
-import { email, literal, object, parse, pipe, string } from "valibot";
+import { literal, object, parse, string } from "valibot";
 
 import database, { credentials } from "../database/index";
 import auth from "../middleware/auth";
@@ -38,74 +37,54 @@ app.get("/", async (c) => {
   return c.json(true);
 });
 
-app.post(
-  "/",
-  vValidator(
-    "json",
-    object({ name: object({ first: string(), middle: string(), last: string() }), email: pipe(string(), email()) }),
-    ({ success, issues }, c) => {
-      if (!success) return c.json(issues, 400);
-    },
-  ),
-  async (c) => {
-    const credentialId = c.get("credentialId");
-    const credential = await database.query.credentials.findFirst({
-      columns: { id: true, kycId: true },
-      where: eq(credentials.id, credentialId),
-    });
-    if (!credential) return c.text("credential not found", 404);
-    const headers = {
-      authorization,
-      accept: "application/json",
-      "content-type": "application/json",
-      "persona-version": "2023-01-05",
-    } as const;
-    let inquiryId = credential.kycId;
-    if (!inquiryId) {
-      const create = await fetch(`${baseURL}/inquiries`, {
-        headers,
-        method: "POST",
-        body: JSON.stringify({
-          data: {
-            attributes: { fields: c.req.valid("json"), "inquiry-template-id": templateId, "redirect-uri": appOrigin },
-          },
-        }),
-      });
-      if (!create.ok) return c.json(await create.json(), create.status as StatusCode);
-      const { data } = parse(CreateInquiryResponse, await create.json());
-      await database
-        .update(credentials)
-        .set({
-          kycId: data.id,
-          kycEmail: data.attributes["email-address"],
-          kycName: [data.attributes["name-first"], data.attributes["name-middle"], data.attributes["name-last"]]
-            .filter(Boolean)
-            .join(" "),
-        })
-        .where(eq(credentials.id, credentialId));
-      inquiryId = data.id;
-    }
-    const otl = await fetch(`${baseURL}/inquiries/${inquiryId}/generate-one-time-link`, {
-      method: "POST",
+app.post("/", async (c) => {
+  const credentialId = c.get("credentialId");
+  const credential = await database.query.credentials.findFirst({
+    columns: { id: true, kycId: true },
+    where: eq(credentials.id, credentialId),
+  });
+  if (!credential) return c.text("credential not found", 404);
+  const headers = {
+    authorization,
+    accept: "application/json",
+    "content-type": "application/json",
+    "persona-version": "2023-01-05",
+  } as const;
+  let inquiryId = credential.kycId;
+  if (!inquiryId) {
+    const create = await fetch(`${baseURL}/inquiries`, {
       headers,
+      method: "POST",
+      body: JSON.stringify({
+        data: {
+          attributes: { fields: c.req.valid("json"), "inquiry-template-id": templateId, "redirect-uri": appOrigin },
+        },
+      }),
     });
-    if (!otl.ok) return c.json(await otl.json(), otl.status as StatusCode);
-    const { meta } = parse(GenerateOTLResponse, await otl.json());
-    return c.json(meta["one-time-link"]);
-  },
-);
+    if (!create.ok) return c.json(await create.json(), create.status as StatusCode);
+    const { data } = parse(CreateInquiryResponse, await create.json());
+    await database
+      .update(credentials)
+      .set({
+        kycId: data.id,
+      })
+      .where(eq(credentials.id, credentialId));
+    inquiryId = data.id;
+  }
+  const otl = await fetch(`${baseURL}/inquiries/${inquiryId}/generate-one-time-link`, {
+    method: "POST",
+    headers,
+  });
+  if (!otl.ok) return c.json(await otl.json(), otl.status as StatusCode);
+  const { meta } = parse(GenerateOTLResponse, await otl.json());
+  return c.json(meta["one-time-link"]);
+});
 
 export default app;
 
 const InquiryData = object({
   id: string(),
   type: literal("inquiry"),
-  attributes: object({
-    "name-first": string(),
-    "name-middle": string(),
-    "name-last": string(),
-    "email-address": string(),
-  }),
 });
 
 const CreateInquiryResponse = object({ data: InquiryData });
