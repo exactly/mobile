@@ -143,7 +143,7 @@ app.post(
           return c.json({ response_code: "05" });
         }
       case "CLEARING": {
-        if (payload.status !== "SUCCESS") return c.json({});
+        if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
         const nonce = await startSpan({ name: "tx.nonce", op: "tx.nonce" }, () =>
           nonceManager.consume({ address: signerAddress, chainId: chain.id, client: publicClient }),
