@@ -28,6 +28,13 @@ services:
     http_port: 3000
     instance_count: 1
     instance_size_slug: apps-d-1vcpu-1gb
+    log_destinations:
+      - name: opensearch
+        open_search:
+          cluster_name: exactly-opensearch
+          index_name: logs
+          basic_auth:
+            user: doadmin
     envs:
       - key: POSTGRES_URL
         scope: RUN_TIME
