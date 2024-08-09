@@ -106,7 +106,7 @@ app.post(
     if (!credential?.id || !credential.publicKey) return c.json({ response_code: "05" }, 404);
 
     const accountAddress = deriveAddress(credential.publicKey);
-    setUser({ id: credential.id, username: accountAddress });
+    setUser({ id: accountAddress, username: credential.id });
     const call = {
       functionName: "borrow",
       args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
