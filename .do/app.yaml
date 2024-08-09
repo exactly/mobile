@@ -76,6 +76,11 @@ databases:
     production: true
     engine: REDIS
     version: "7"
+  - name: opensearch
+    cluster_name: exactly-opensearch
+    production: true
+    engine: OPENSEARCH
+    version: "2"
 ingress:
   rules:
     - component:
