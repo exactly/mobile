@@ -8,15 +8,12 @@
     "checkJs": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts", "index.js"],
-  "exclude": [
-    "contracts",
-    "server",
-    "**/node_modules",
-    "**/build",
-    "**/dist",
-    "*.config.ts",
-    ".tamagui",
-    ".vercel"
+  "include": [
+    ".expo/types/**/*.ts",
+    "common/**/*.ts",
+    "expo-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tamagui.config.ts"
   ]
 }

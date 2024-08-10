@@ -8,8 +8,18 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "checkJs": true,
     "noEmit": true,
     "pretty": true,
     "strict": true
-  }
+  },
+  "include": [
+    "api/**/*.ts",
+    "database/**/*.ts",
+    "hooks/**/*.ts",
+    "middleware/**/*.ts",
+    "utils/**/*.ts",
+    "index.ts",
+    "instrument.cjs"
+  ]
 }
