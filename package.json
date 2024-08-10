@@ -77,6 +77,7 @@
     "@babel/preset-env": "^7.25.3",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.3.0",
     "@exactly/protocol": "github:exactly/protocol#5afd7b1",
+    "@react-navigation/bottom-tabs": "*",
     "@simplewebauthn/types": "^10.0.0",
     "@tamagui/babel-plugin": "^1.108.2",
     "@types/babel__core": "^7.20.5",
