@@ -1,4 +1,5 @@
 const { getSentryExpoConfig } = require("@sentry/react-native/metro");
+const path = require("node:path");
 
 const config = getSentryExpoConfig(__dirname);
 
@@ -14,13 +15,14 @@ module.exports = {
       ...((config.resolver?.blockList &&
         (Array.isArray(config.resolver.blockList) ? config.resolver.blockList : [config.resolver.blockList])) ??
         []),
-      new RegExp(`${__dirname}/\\.\\w+/`),
-      new RegExp(`${__dirname}/android/`),
-      new RegExp(`${__dirname}/contracts/`),
-      new RegExp(`${__dirname}/build/`),
-      new RegExp(`${__dirname}/dist/`),
-      new RegExp(`${__dirname}/ios/`),
-      new RegExp(`${__dirname}/server/`),
+      new RegExp(path.join(__dirname, String.raw`\.\w+/`)),
+      new RegExp(path.join(__dirname, "android/")),
+      new RegExp(path.join(__dirname, "contracts/")),
+      new RegExp(path.join(__dirname, "build/")),
+      new RegExp(path.join(__dirname, "dist/")),
+      new RegExp(path.join(__dirname, "ios/")),
+      new RegExp(path.join(__dirname, "public/")),
+      new RegExp(path.join(__dirname, "server/")),
     ],
   },
   transformer: {
