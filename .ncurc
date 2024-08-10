@@ -1,5 +1,5 @@
-module.exports = {
-  reject: [
+{
+  "reject": [
     "@openzeppelin/contracts-v4",
     "@openzeppelin/contracts-upgradeable-v4",
     "@react-native-async-storage/async-storage",
@@ -23,6 +23,6 @@ module.exports = {
     "react-native-screens",
     "react-native-svg",
     "react-native-webview",
-    "sharp-cli",
-  ],
-};
+    "sharp-cli"
+  ]
+}
