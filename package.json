@@ -75,6 +75,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.3.0",
     "@exactly/protocol": "github:exactly/protocol#5afd7b1",
     "@simplewebauthn/types": "^10.0.0",
     "@tamagui/babel-plugin": "^1.108.2",
@@ -82,8 +83,8 @@
     "@types/eslint": "^9.6.0",
     "@types/fast-text-encoding": "^1.0.3",
     "@types/react": "~18.2.79",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.1",
+    "@typescript-eslint/parser": "^8.0.1",
     "@wagmi/cli": "^2.1.15",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "^11.0.13",
@@ -93,9 +94,8 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-universe": "^13.0.0",
     "eslint-import-resolver-typescript": "^3.6.1",
-    "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-n": "^17.10.2",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^4.6.2",
@@ -129,6 +129,9 @@
       "viem": "$viem",
       "wagmi": "$wagmi",
       "zustand": "$zustand"
+    },
+    "patchedDependencies": {
+      "eslint-config-universe": "patches/eslint-config-universe.patch"
     },
     "updateConfig": {
       "ignoreDependencies": [

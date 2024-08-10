@@ -4,8 +4,6 @@
     "@openzeppelin/contracts-upgradeable-v4",
     "@react-native-async-storage/async-storage",
     "@types/react",
-    "@typescript-eslint/eslint-plugin",
-    "@typescript-eslint/parser",
     "account-abstraction",
     "eslint",
     "expo-build-properties",
