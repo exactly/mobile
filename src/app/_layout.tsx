@@ -11,7 +11,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { TamaguiProvider } from "tamagui";
 import { WagmiProvider } from "wagmi";
 
-import metadata from "../../package.json";
 import tamagui from "../../tamagui.config";
 import BDOGroteskBold from "../assets/fonts/BDOGrotesk-Bold.otf";
 import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
@@ -19,6 +18,7 @@ import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
 import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
 import ThemeProvider from "../components/context/ThemeProvider";
+import version from "../generated/version";
 import handleError from "../utils/handleError";
 import queryClient, { persister } from "../utils/queryClient";
 import useOneSignal from "../utils/useOneSignal";
@@ -32,7 +32,7 @@ export { ErrorBoundary } from "expo-router";
 const routingInstrumentation = new ReactNavigationInstrumentation();
 init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  release: metadata.version,
+  release: `v${version}`,
   environment: __DEV__ ? "development" : "production",
   tracesSampleRate: 1,
   attachStacktrace: true,
