@@ -6,6 +6,9 @@
     "pretty": true,
     "strict": true,
     "checkJs": true,
+    "moduleDetection": "force",
+    "resolveJsonModule": false,
+    "verbatimModuleSyntax": true,
     "noUncheckedIndexedAccess": true
   },
   "include": [
