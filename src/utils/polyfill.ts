@@ -8,8 +8,8 @@ global.crypto ??= new (require("@peculiar/webcrypto").Crypto)();
 if (global.window) {
   // @ts-expect-error -- enough for mipd
   global.CustomEvent ??= class {}; // eslint-disable-line @typescript-eslint/no-extraneous-class
-  global.window.addEventListener ??= () => {};
-  global.window.removeEventListener ??= () => {};
+  global.window.addEventListener ??= () => undefined;
+  global.window.removeEventListener ??= () => undefined;
   global.window.dispatchEvent ??= () => false;
 }
 

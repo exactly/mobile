@@ -10,7 +10,7 @@ export const persister = createAsyncStoragePersister({ serialize, deserialize, s
 const queryClient = new QueryClient();
 
 queryClient.setQueryDefaults(["passkey"], { queryFn: loadPasskey, retry: false, staleTime: Infinity });
-queryClient.prefetchQuery({ queryKey: ["passkey"] }).catch(() => {});
+queryClient.prefetchQuery({ queryKey: ["passkey"] }).catch(() => undefined);
 
 queryClient.setQueryDefaults(["auth"], { retry: false, staleTime: 24 * 60 * 60_000 });
 

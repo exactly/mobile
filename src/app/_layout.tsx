@@ -40,7 +40,7 @@ init({
   autoSessionTracking: true,
   integrations: [new ReactNativeTracing({ routingInstrumentation, enableNativeFramesTracking: !isRunningInExpoGo() })],
 });
-const useServerFonts = typeof window === "undefined" ? useFonts : () => {};
+const useServerFonts = typeof window === "undefined" ? useFonts : () => undefined;
 
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();

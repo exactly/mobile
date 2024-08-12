@@ -8,10 +8,7 @@ interface ThemeContextState {
   setTheme: (theme: ThemeName) => void;
 }
 
-const ThemeContext = createContext<ThemeContextState>({
-  theme: "light",
-  setTheme: () => {},
-});
+const ThemeContext = createContext<ThemeContextState>({ theme: "light", setTheme: () => undefined });
 
 export function useTheme() {
   const { theme, setTheme } = useContext(ThemeContext);

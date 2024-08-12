@@ -127,7 +127,7 @@ export default function Carousel() {
           renderItem={renderItem}
           onViewableItemsChanged={onViewableItemsChanged}
           horizontal
-          onScrollToIndexFailed={() => {}}
+          onScrollToIndexFailed={() => undefined}
           pagingEnabled={Platform.OS !== "web"}
           bounces={false}
           showsHorizontalScrollIndicator={false}
