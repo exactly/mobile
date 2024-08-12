@@ -9,7 +9,7 @@ import CardDetails from "./CardDetails";
 import LatestActivity from "./LatestActivity";
 import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
-import { getPAN } from "../../utils/server";
+import { getCard } from "../../utils/server";
 import InfoPreview from "../shared/InfoPreview";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -32,9 +32,9 @@ export default function Card() {
     isLoading,
     error,
     refetch,
-  } = useQuery({ queryKey: ["pan"], queryFn: getPAN, enabled: false, staleTime: 60_000 });
+  } = useQuery({ queryKey: ["card"], queryFn: getCard, enabled: false, staleTime: 60_000 });
 
-  function getCard() {
+  function reveal() {
     refetch().catch(handleError);
   }
 
@@ -63,7 +63,7 @@ export default function Card() {
 
             <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
               <StyledAction>
-                <Pressable onPress={getCard}>
+                <Pressable onPress={reveal}>
                   <View gap={ms(10)}>
                     <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                     <Text fontSize={ms(15)}>Details</Text>

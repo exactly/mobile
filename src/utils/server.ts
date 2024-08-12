@@ -1,5 +1,5 @@
 import domain from "@exactly/common/domain";
-import type { Base64URL, CreateCardParameters, Passkey } from "@exactly/common/types";
+import type { Base64URL, Passkey } from "@exactly/common/types";
 import { persistQueryClientSave } from "@tanstack/query-persist-client-core";
 import { Platform } from "react-native";
 import { type create, get } from "react-native-passkeys";
@@ -29,11 +29,7 @@ export async function verifyRegistration({
   return passkey;
 }
 
-export function createCard(parameters: CreateCardParameters) {
-  return auth("/card", parameters);
-}
-
-export function getPAN() {
+export function getCard() {
   return auth<string>("/card");
 }
 
