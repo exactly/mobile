@@ -22,7 +22,7 @@ export default createPublicClient({
     }),
 }));
 
-export type CallFrame = {
+export interface CallFrame {
   type: "CALL" | "CREATE" | "STATICCALL" | "DELEGATECALL";
   from: string;
   to: string;
@@ -40,4 +40,4 @@ export type CallFrame = {
     data?: Hex;
     position: Hex;
   }[];
-};
+}

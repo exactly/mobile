@@ -76,6 +76,14 @@ function addresses(contracts: Record<string, string>): Plugin {
   };
 }
 
-type Deployment = { address: string; abi: Abi };
-type ContractTransaction = { contractName: string; contractAddress: string };
-type DeployBroadcast = { transactions: [ContractTransaction, ContractTransaction] };
+interface Deployment {
+  address: string;
+  abi: Abi;
+}
+interface ContractTransaction {
+  contractName: string;
+  contractAddress: string;
+}
+interface DeployBroadcast {
+  transactions: [ContractTransaction, ContractTransaction];
+}

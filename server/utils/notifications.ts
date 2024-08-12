@@ -8,11 +8,11 @@ const config = createConfiguration({
 
 const client = new DefaultApi(config);
 
-type Notification = {
+interface Notification {
   userId: string;
   headings: NonNullable<OSNotification["headings"]>;
   contents: NonNullable<OSNotification["contents"]>;
-};
+}
 
 export async function sendPushNotification({ userId, headings, contents }: Notification) {
   if (!APP_ID) {

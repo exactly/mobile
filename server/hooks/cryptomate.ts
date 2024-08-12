@@ -189,7 +189,6 @@ export default app;
 const collectorTopic = padHex(v.parse(Hex, process.env.COLLECTOR_ADDRESS.toLowerCase()));
 const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
 const usdcLowercase = usdcAddress.toLowerCase() as Hex;
-type TransferLog = { address: Hex; topics: [Hash, Hash, Hash]; data: Hex; position: Hex };
 function usdcTransfersToCollector({ calls, logs }: CallFrame): TransferLog[] {
   return [
     ...(logs?.filter(
@@ -198,4 +197,11 @@ function usdcTransfersToCollector({ calls, logs }: CallFrame): TransferLog[] {
     ) ?? []),
     ...(calls?.flatMap(usdcTransfersToCollector) ?? []),
   ];
+}
+
+interface TransferLog {
+  address: Hex;
+  topics: [Hash, Hash, Hash];
+  data: Hex;
+  position: Hex;
 }
