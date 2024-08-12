@@ -1,7 +1,5 @@
 import { ArrowRight, Calculator, ChevronRight, Eye, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
-import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { valibotValidator } from "@tanstack/valibot-form-adapter";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -11,10 +9,8 @@ import CardDetails from "./CardDetails";
 import LatestActivity from "./LatestActivity";
 import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
-import { createCard, getPAN } from "../../utils/server";
-import Button from "../shared/Button";
+import { getPAN } from "../../utils/server";
 import InfoPreview from "../shared/InfoPreview";
-import Input from "../shared/Input";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -30,17 +26,6 @@ const StyledAction = styled(View, {
   justifyContent: "space-between",
 });
 
-function handleCreateCard(fullName: string, email: string) {
-  createCard({
-    cardholder: fullName,
-    email,
-    phone: { countryCode: "55", number: "988887777" },
-    limits: { daily: 1000, weekly: 3000, monthly: 5000 },
-  })
-    .then()
-    .catch(handleError);
-}
-
 export default function Card() {
   const {
     data: uri,
@@ -49,25 +34,8 @@ export default function Card() {
     refetch,
   } = useQuery({ queryKey: ["pan"], queryFn: getPAN, enabled: false, staleTime: 60_000 });
 
-  const form = useForm({
-    defaultValues: {
-      first: "",
-      middle: "",
-      last: "",
-      email: "",
-    },
-    onSubmit: ({ value }) => {
-      handleCreateCard(`${value.first} ${value.middle} ${value.last}`, value.email);
-    },
-    validatorAdapter: valibotValidator(), // TODO implement validations
-  });
-
   function getCard() {
     refetch().catch(handleError);
-  }
-
-  function submit() {
-    form.handleSubmit().catch(handleError);
   }
 
   return (
@@ -86,97 +54,12 @@ export default function Card() {
 
             {isLoading && <Spinner color="$interactiveBaseBrandDefault" />}
             {!isLoading && uri && <CardDetails uri={uri} />}
+
             {error && (
               <Text color="$uiErrorPrimary" fontWeight="bold">
                 {error.message}
               </Text>
             )}
-
-            <View gap={ms(10)}>
-              <Text fontSize={ms(16)} fontWeight="bold">
-                Create a new card
-              </Text>
-
-              <form.Field name="first">
-                {(field) => (
-                  <View gap={ms(2)}>
-                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
-                      First name
-                    </Text>
-                    <Input
-                      value={field.state.value}
-                      placeholder="Vitalik"
-                      onChangeText={(text) => {
-                        form.setFieldValue("first", text);
-                      }}
-                    />
-                    {field.state.meta.errors.length > 0 ? <Text>{field.state.meta.errors.join(", ")}</Text> : undefined}
-                  </View>
-                )}
-              </form.Field>
-
-              <form.Field name="middle">
-                {(field) => (
-                  <View gap={ms(2)}>
-                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
-                      Middle name
-                    </Text>
-                    <Input
-                      value={field.state.value}
-                      placeholder="Sergey"
-                      onChangeText={(text) => {
-                        form.setFieldValue("middle", text);
-                      }}
-                    />
-                    {field.state.meta.errors.length > 0 ? <Text>{field.state.meta.errors.join(", ")}</Text> : undefined}
-                  </View>
-                )}
-              </form.Field>
-
-              <form.Field name="last">
-                {(field) => (
-                  <View gap={ms(2)}>
-                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
-                      Last name
-                    </Text>
-                    <Input
-                      value={field.state.value}
-                      placeholder="Buterin"
-                      onChangeText={(text) => {
-                        form.setFieldValue("last", text);
-                      }}
-                    />
-                    {field.state.meta.errors.length > 0 ? <Text>{field.state.meta.errors.join(", ")}</Text> : undefined}
-                  </View>
-                )}
-              </form.Field>
-
-              <form.Field name="email">
-                {(field) => (
-                  <View gap={ms(2)}>
-                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
-                      Email
-                    </Text>
-                    <Input
-                      value={field.state.value}
-                      placeholder="vb@gmail.com"
-                      onChangeText={(text) => {
-                        form.setFieldValue("email", text);
-                      }}
-                    />
-                    {field.state.meta.errors.length > 0 ? <Text>{field.state.meta.errors.join(", ")}</Text> : undefined}
-                  </View>
-                )}
-              </form.Field>
-
-              <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
-                {([canSubmit, isSubmitting]) => (
-                  <Button contained disabled={!canSubmit} onPress={submit}>
-                    {isSubmitting ? "Creating card..." : "Create card"}
-                  </Button>
-                )}
-              </form.Subscribe>
-            </View>
 
             <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
               <StyledAction>
