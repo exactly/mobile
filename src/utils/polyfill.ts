@@ -2,8 +2,7 @@
 
 import "fast-text-encoding";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, unicorn/prefer-module
-global.crypto ??= new (require("@peculiar/webcrypto").Crypto)();
+global.crypto ??= new (require("@peculiar/webcrypto").Crypto)(); // eslint-disable-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, unicorn/prefer-module
 
 if (global.window) {
   // @ts-expect-error -- enough for mipd

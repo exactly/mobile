@@ -10,7 +10,7 @@ const appId = process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID;
 const { initialization, login, logout } = (
   Platform.OS === "web"
     ? () => {
-        const OneSignal = (require("react-onesignal") as { default: typeof OneSignalWeb }).default; // eslint-disable-line @typescript-eslint/no-var-requires, unicorn/prefer-module
+        const OneSignal = (require("react-onesignal") as { default: typeof OneSignalWeb }).default; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
         return {
           initialization:
             appId === undefined ? Promise.resolve() : OneSignal.init({ appId, allowLocalhostAsSecureOrigin: __DEV__ }),
@@ -19,7 +19,7 @@ const { initialization, login, logout } = (
         };
       }
     : () => {
-        const { OneSignal } = require("react-native-onesignal") as typeof OneSignalNative; // eslint-disable-line @typescript-eslint/no-var-requires, unicorn/prefer-module
+        const { OneSignal } = require("react-native-onesignal") as typeof OneSignalNative; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
         return {
           initialization: (() => {
             if (appId !== undefined) OneSignal.initialize(appId);
