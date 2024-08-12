@@ -9,6 +9,7 @@ module.exports = {
     "universe",
     "eslint:recommended",
     "plugin:@typescript-eslint/strict-type-checked",
+    "plugin:@typescript-eslint/stylistic-type-checked",
     "plugin:@eslint-community/eslint-plugin-eslint-comments/recommended",
     "plugin:import/recommended",
     "plugin:import/typescript",
@@ -24,13 +25,9 @@ module.exports = {
     "no-console": "warn",
     "no-restricted-imports": ["error", { patterns: ["./server/"] }],
     "no-shadow": "off", // @typescript-eslint/no-shadow
-    "react-native/no-raw-text": [
-      "error",
-      { skip: ["Button", "Link", "SubmitButton", "LinkButton", "Heading", "SizableText", "ActionButton"] },
-    ],
     "unicorn/filename-case": "off", // use default export name
+    "unicorn/no-useless-undefined": ["error", { checkArrowFunctionBody: false }], // @typescript-eslint/no-empty-function
     "unicorn/number-literal-case": "off", // incompatible with prettier
-    "unicorn/prefer-top-level-await": "off", // unsupported in react-native
     "unicorn/switch-case-braces": ["error", "avoid"], // consistently avoid braces
   },
   overrides: [
@@ -42,18 +39,25 @@ module.exports = {
         "plugin:react-hooks/recommended",
         "plugin:react-native/all",
       ],
+      rules: {
+        "react-native/no-raw-text": [
+          "error",
+          { skip: ["ActionButton", "Button", "Heading", "Link", "LinkButton", "SizableText", "SubmitButton"] },
+        ],
+        "unicorn/prefer-top-level-await": "off", // unsupported in react-native
+      },
     },
     {
       files: [...nodeFiles, "server/**"],
-      extends: ["plugin:n/recommended"],
+      extends: ["universe/node", "plugin:n/recommended"],
       rules: {
-        "@typescript-eslint/no-var-requires": "off",
-        "n/no-missing-import": "off",
-        "n/no-unpublished-import": "off",
-        "n/no-unsupported-features/es-syntax": ["error", { ignores: ["modules", "dynamicImport"] }],
-        "n/no-unpublished-require": "off",
-        "unicorn/prefer-module": "off",
+        "import/no-unresolved": "off", // handled by bundler
+        "n/no-missing-import": "off", // handled by bundler
       },
+    },
+    {
+      files: ["**/*.cjs"],
+      rules: { "@typescript-eslint/no-require-imports": "off" },
     },
   ],
   ignorePatterns: [".expo/", "build/", "dist/", "expo-env.d.ts", "generated/", "public/", "server/drizzle/"],
