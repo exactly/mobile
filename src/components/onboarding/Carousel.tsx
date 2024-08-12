@@ -36,7 +36,7 @@ export interface Page {
 
 const containerStyle: StyleProp<ViewStyle> = { justifyContent: "center", alignItems: "center" };
 
-const pages: Page[] = [
+const pages: [Page, ...Page[]] = [
   {
     backgroundImage: exaCardBlob,
     image: exaCard,
@@ -67,7 +67,7 @@ export default function Carousel() {
   const x = useSharedValue(0);
   const progress = useSharedValue(0);
 
-  const currentItem = pages[activeIndex] ?? (pages[0] as Page);
+  const currentItem = pages[activeIndex] ?? pages[0];
   const { title, disabled } = currentItem;
 
   const onViewableItemsChanged = useCallback(
