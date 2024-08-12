@@ -1,11 +1,11 @@
-import { CreateCardParameters } from "@exactly/common/types";
-import { vValidator } from "@hono/valibot-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
+import { parsePhoneNumber } from "libphonenumber-js";
 
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
 import { createCard, getPAN } from "../utils/cryptomate";
+import { getInquiry } from "../utils/persona";
 
 const app = new Hono();
 
@@ -13,31 +13,27 @@ app.use("*", auth);
 
 app.get("/", async (c) => {
   const credentialId = c.get("credentialId");
-  const card = await database.query.cards.findFirst({
-    columns: { id: true },
-    where: eq(cards.credentialId, credentialId),
+  const credential = await database.query.credentials.findFirst({
+    where: eq(credentials.id, credentialId),
+    columns: { kycId: true },
+    with: { cards: { columns: { id: true } } },
   });
-  if (!card) return c.text("card not found", 404);
-  return c.json(await getPAN(card.id));
+  if (!credential) return c.text("credential not found", 401);
+  if (!credential.kycId) return c.text("kyc required", 403);
+  if (credential.cards.length > 0) return c.json(await getPAN(credential.cards[0]!.id)); // eslint-disable-line @typescript-eslint/no-non-null-assertion
+  const { data } = await getInquiry(credential.kycId);
+  if (data.attributes.status !== "approved") return c.json("kyc not approved", 403);
+  const phone = parsePhoneNumber(data.attributes["phone-number"]);
+  const newCard = await createCard({
+    cardholder: [data.attributes["name-first"], data.attributes["name-middle"], data.attributes["name-last"]]
+      .filter(Boolean)
+      .join(" "),
+    email: data.attributes["email-address"],
+    phone: { number: phone.nationalNumber, countryCode: phone.countryCallingCode },
+    limits: { daily: 1000, weekly: 3000, monthly: 5000 },
+  });
+  await database.insert(cards).values([{ id: newCard.id, credentialId, lastFour: newCard.last4 }]);
+  return c.json(await getPAN(newCard.id));
 });
-
-app.post(
-  "/",
-  vValidator("json", CreateCardParameters, ({ success, issues }, c) => {
-    if (!success) return c.json(issues, 400);
-  }),
-  async (c) => {
-    const credentialId = c.get("credentialId");
-    const credential = await database.query.credentials.findFirst({
-      columns: { kyc: true },
-      where: eq(credentials.id, credentialId),
-    });
-    if (!credential) return c.text("credential not found", 404);
-    if (!credential.kyc) return c.text("kyc required", 403);
-    const card = await createCard(c.req.valid("json"));
-    await database.insert(cards).values([{ id: card.id, lastFour: card.last4, credentialId }]);
-    return c.json(card);
-  },
-);
 
 export default app;

@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { boolean, customType, integer, jsonb, pgTable, text } from "drizzle-orm/pg-core";
+import { customType, integer, jsonb, pgTable, text } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Uint8Array; driverData: string }>({ dataType: () => "bytea" });
 
@@ -8,7 +8,6 @@ export const credentials = pgTable("credentials", {
   publicKey: bytea("public_key").notNull(),
   transports: text("transports").array(),
   counter: integer("counter").notNull(),
-  kyc: boolean("kyc").default(false),
   kycId: text("kyc_id"),
 });
 
