@@ -83,7 +83,7 @@ export default function Activity() {
                 </View>
               )}
 
-              <Button contained disabled={passed || isFetchingStatus} onPress={handleKYC}>
+              <Button contained disabled={passed ?? isFetchingStatus} onPress={handleKYC}>
                 {passed ? "KYC Complete" : "Start KYC"}
               </Button>
             </View>

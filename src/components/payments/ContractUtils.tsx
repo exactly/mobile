@@ -90,7 +90,7 @@ export default function PasskeyUtils() {
 
       {(isSending || isDepositing || isApproving) && <Spinner color="$interactiveBaseBrandDefault" />}
 
-      {(enterMarketError || depositError || approveError) && (
+      {(enterMarketError ?? depositError ?? approveError) && (
         <Text color="$uiErrorPrimary" fontWeight="bold">
           {enterMarketError
             ? enterMarketError.message

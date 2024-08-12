@@ -9,14 +9,8 @@ import SafeView from "./SafeView";
 export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const onPress = useCallback(
     (route: NavigationRoute, focused: boolean) => {
-      const event = navigation.emit({
-        type: "tabPress",
-        target: route.key,
-        canPreventDefault: true,
-      });
-      if (!focused && !event.defaultPrevented) {
-        navigation.navigate(route.name, route.params);
-      }
+      const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+      if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
     },
     [navigation],
   );
@@ -31,7 +25,7 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
         justifyContent="center"
       >
         {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key] || { options: undefined };
+          const { options } = descriptors[route.key] ?? { options: undefined };
           if (!options) throw new Error("no navigation button options found");
           const label = options.title;
           const icon = options.tabBarIcon;

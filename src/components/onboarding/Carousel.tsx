@@ -67,7 +67,7 @@ export default function Carousel() {
   const x = useSharedValue(0);
   const progress = useSharedValue(0);
 
-  const currentItem = pages[activeIndex] || (pages[0] as Page);
+  const currentItem = pages[activeIndex] ?? (pages[0] as Page);
   const { title, disabled } = currentItem;
 
   const onViewableItemsChanged = useCallback(
