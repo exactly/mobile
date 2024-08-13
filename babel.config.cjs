@@ -1,5 +1,5 @@
 /** @type {import('@babel/core').ConfigFunction} */
-export default function config(api) {
+module.exports = function config(api) {
   /** @type {(ever: boolean) => void} */ (/** @type {unknown} */ (api.cache))(true);
   return {
     presets: ["babel-preset-expo"],
@@ -24,4 +24,4 @@ export default function config(api) {
       "react-native-reanimated/plugin",
     ],
   };
-}
+};
