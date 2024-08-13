@@ -1,0 +1,12 @@
+specVersion: v0.1.0
+package:
+  name: exactly
+  version: v0.1.0
+protobuf:
+  files:
+    - exa.proto
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: target/wasm32-unknown-unknown/release/substreams.wasm
+network: ethereum

@@ -1,0 +1,12 @@
+{
+  "name": "@exactly/substreams",
+  "scripts": {
+    "test": "concurrently 'npm:test:*' --group -c auto",
+    "test:fmt": "cargo fmt --check",
+    "test:proto": "protolint *.proto"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "protolint": "^0.50.5"
+  }
+}
