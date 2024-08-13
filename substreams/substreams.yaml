@@ -19,6 +19,13 @@ modules:
     valueType: proto:exa.Accounts
     inputs:
       - map: map_accounts
+  - name: map_transfers
+    kind: map
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+      - store: store_accounts
+    output:
+      type: proto:exa.Transfers
 binaries:
   default:
     type: wasm/rust-v1
