@@ -9,6 +9,7 @@ use substreams::{
 use substreams_ethereum::pb::eth::v2::Block;
 
 mod abi;
+#[allow(clippy::all)]
 mod pb;
 
 #[substreams::handlers::map]
