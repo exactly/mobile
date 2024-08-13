@@ -1,6 +1,11 @@
 use abi::entrypoint::events::AccountDeployed;
 use pb::exa::Accounts;
-use substreams::{errors::Error, hex};
+use substreams::{
+  errors::Error,
+  hex,
+  store::{StoreNew, StoreSet, StoreSetProto},
+  Hex,
+};
 use substreams_ethereum::pb::eth::v2::Block;
 
 mod abi;
@@ -17,4 +22,11 @@ pub fn map_accounts(block: Block) -> Result<Accounts, Error> {
       })
       .collect(),
   })
+}
+
+#[substreams::handlers::store]
+pub fn store_accounts(accounts: Accounts, store: StoreSetProto<Vec<u8>>) {
+  for account in accounts.accounts {
+    store.set(0, format!("account:{}", Hex(&account)), &account);
+  }
 }
