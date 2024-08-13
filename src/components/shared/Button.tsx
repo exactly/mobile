@@ -37,6 +37,7 @@ export default styled(Button, {
     },
     main: {
       true: {
+        flex: 1,
         borderColor: "transparent",
         fontSize: ms(15),
         fontWeight: 700,
@@ -44,7 +45,6 @@ export default styled(Button, {
         padding: "$s4_5",
         borderRadius: "$r4",
         scaleIcon: 1.5,
-        flex: 1,
         maxHeight: ms(64),
       },
     },
@@ -63,6 +63,11 @@ export default styled(Button, {
     fullwidth: {
       true: {
         width: "100%",
+      },
+    },
+    halfWidth: {
+      true: {
+        flexBasis: "50%",
       },
     },
   } as const,
