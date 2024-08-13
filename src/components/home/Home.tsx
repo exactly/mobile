@@ -6,8 +6,8 @@ import { ScrollView } from "tamagui";
 
 import Balance from "./Balance";
 import HomeActions from "./HomeActions";
+import InfoCard from "./InfoCard";
 import LatestActivity from "./LatestActivity";
-import InfoPreview from "../shared/InfoPreview";
 import ProfileHeader from "../shared/ProfileHeader";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -21,12 +21,12 @@ export default function Home() {
         <View gap={ms(20)} flex={1} padded>
           <Balance />
           <HomeActions />
-          <InfoPreview
+          <InfoCard
             title="Credit limit"
             renderAction={
               <Pressable>
                 <View flexDirection="row" gap={2} alignItems="center">
-                  <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
+                  <Text color="$interactiveTextBrandDefault" emphasized footnote>
                     Manage
                   </Text>
                   <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
@@ -37,13 +37,13 @@ export default function Home() {
             <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
               Learn more about your credit limit.
             </Text>
-          </InfoPreview>
-          <InfoPreview
+          </InfoCard>
+          <InfoCard
             title="Available to spend"
             renderAction={
               <Pressable>
                 <View flexDirection="row" gap={2} alignItems="center">
-                  <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
+                  <Text color="$interactiveTextBrandDefault" emphasized footnote>
                     Manage
                   </Text>
                   <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
@@ -54,13 +54,13 @@ export default function Home() {
             <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
               No funds to spend.
             </Text>
-          </InfoPreview>
-          <InfoPreview
+          </InfoCard>
+          <InfoCard
             title="Upcoming installments"
             renderAction={
               <Pressable>
                 <View flexDirection="row" gap={2} alignItems="center">
-                  <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
+                  <Text color="$interactiveTextBrandDefault" emphasized footnote>
                     View all
                   </Text>
                   <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
@@ -71,14 +71,14 @@ export default function Home() {
             <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
               There are no installments to show yet.
             </Text>
-          </InfoPreview>
+          </InfoCard>
 
-          <InfoPreview
+          <InfoCard
             title="Latest activity"
             renderAction={
               <Pressable>
                 <View flexDirection="row" gap={2} alignItems="center">
-                  <Text color="$interactiveTextBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
+                  <Text color="$interactiveTextBrandDefault" emphasized footnote>
                     View all
                   </Text>
                   <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
@@ -87,7 +87,7 @@ export default function Home() {
             }
           >
             <LatestActivity />
-          </InfoPreview>
+          </InfoCard>
         </View>
       </ScrollView>
     </SafeView>

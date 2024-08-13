@@ -76,7 +76,7 @@ export default function Passkeys() {
             <Text emphasized title brand centered>
               A secure and easy way to access your account
             </Text>
-            <Text secondary fontSize={ms(13)} color="$uiBaseSecondary" textAlign="center">
+            <Text fontSize={ms(13)} color="$uiNeutralSecondary" textAlign="center">
               To keep your account secure, Exa App uses passkeys, a passwordless authentication method protected by your
               device biometric verification.
             </Text>

@@ -10,7 +10,7 @@ import LatestActivity from "./LatestActivity";
 import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
 import { getCard } from "../../utils/server";
-import InfoPreview from "../shared/InfoPreview";
+import InfoCard from "../home/InfoCard";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -24,6 +24,7 @@ const StyledAction = styled(View, {
   backgroundColor: "$backgroundSoft",
   borderColor: "$borderNeutralSoft",
   justifyContent: "space-between",
+  flexBasis: "50%",
 });
 
 export default function Card() {
@@ -79,12 +80,7 @@ export default function Card() {
                   <View gap={ms(10)}>
                     <Snowflake size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                     <Text fontSize={ms(15)}>Freeze</Text>
-                    <Switch
-                      size={ms(24)}
-                      backgroundColor="$backgroundMild"
-                      maxWidth="50%"
-                      borderColor="$borderNeutralSoft"
-                    >
+                    <Switch backgroundColor="$backgroundMild" borderColor="$borderNeutralSoft">
                       <Switch.Thumb
                         animation="quicker"
                         backgroundColor="$backgroundSoft"
@@ -96,7 +92,7 @@ export default function Card() {
               </StyledAction>
             </View>
 
-            <InfoPreview
+            <InfoCard
               title="Installments"
               renderAction={
                 <Pressable>
@@ -154,9 +150,9 @@ export default function Card() {
                   </Pressable>
                 </View>
               </View>
-            </InfoPreview>
+            </InfoCard>
 
-            <InfoPreview
+            <InfoCard
               title="Spending limits"
               renderAction={
                 <Pressable>
@@ -183,9 +179,9 @@ export default function Card() {
                   </View>
                 </Pressable>
               </View>
-            </InfoPreview>
+            </InfoCard>
 
-            <InfoPreview
+            <InfoCard
               title="Latest activity"
               renderAction={
                 <Pressable>
@@ -199,7 +195,7 @@ export default function Card() {
               }
             >
               <LatestActivity />
-            </InfoPreview>
+            </InfoCard>
           </View>
         </View>
       </ScrollView>

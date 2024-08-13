@@ -27,12 +27,20 @@ export default function HomeActions() {
         contained
         main
         spaced
+        halfWidth
         onPress={addFunds}
         iconAfter={<ArrowDownToLine color="$interactiveOnBaseBrandDefault" />}
       >
         Add funds
       </Button>
-      <Button outlined main spaced onPress={send} iconAfter={<ArrowUpRight color="$interactiveOnBaseBrandSoft" />}>
+      <Button
+        outlined
+        main
+        spaced
+        halfWidth
+        onPress={send}
+        iconAfter={<ArrowUpRight color="$interactiveOnBaseBrandSoft" />}
+      >
         Send
       </Button>
     </View>

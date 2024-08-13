@@ -154,7 +154,14 @@ export default function Carousel() {
             </Text>
             <View height={ms(20)}>
               {disabled && (
-                <Text pill fontSize={ms(11)}>
+                <Text
+                  pill
+                  emphasized
+                  caption2
+                  alignSelf="center"
+                  backgroundColor="$interactiveBaseBrandDefault"
+                  color="$interactiveOnBaseBrandDefault"
+                >
                   COMING SOON
                 </Text>
               )}
