@@ -3,6 +3,7 @@
   "scripts": {
     "test": "concurrently 'npm:test:*' --group -c auto",
     "test:fmt": "cargo fmt --check",
+    "test:clippy": "cargo clippy",
     "test:proto": "protolint *.proto"
   },
   "devDependencies": {
