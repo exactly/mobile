@@ -16,6 +16,69 @@ export default styled(Text, {
         letterSpacing: ms(-0.2),
       },
     },
+    title2: {
+      true: {
+        fontSize: ms(22),
+        lineHeight: ms(28),
+        letterSpacing: ms(-0.2),
+      },
+    },
+    title3: {
+      true: {
+        fontSize: ms(20),
+        lineHeight: ms(25),
+        letterSpacing: ms(-0.2),
+      },
+    },
+    headline: {
+      true: {
+        fontSize: ms(17),
+        lineHeight: ms(23),
+        letterSpacing: ms(-0.2),
+      },
+    },
+    body: {
+      true: {
+        fontSize: ms(17),
+        lineHeight: ms(23),
+        letterSpacing: ms(-0.2),
+      },
+    },
+    callout: {
+      true: {
+        fontSize: ms(16),
+        lineHeight: ms(21),
+        letterSpacing: ms(-0.2),
+      },
+    },
+    subHeadline: {
+      true: {
+        fontSize: ms(15),
+        lineHeight: ms(21),
+        letterSpacing: ms(-0.2),
+      },
+    },
+    footnote: {
+      true: {
+        fontSize: ms(13),
+        lineHeight: ms(18),
+        letterSpacing: ms(-0.2),
+      },
+    },
+    caption: {
+      true: {
+        fontSize: ms(12),
+        lineHeight: ms(16),
+        letterSpacing: ms(-0.2),
+      },
+    },
+    caption2: {
+      true: {
+        fontSize: ms(11),
+        lineHeight: ms(14),
+        letterSpacing: ms(-0.2),
+      },
+    },
     brand: {
       true: {
         color: "$interactiveBaseBrandDefault",
@@ -26,20 +89,17 @@ export default styled(Text, {
         textAlign: "center",
       },
     },
-    secondary: {
-      true: {
-        color: "$uiNeutralSecondary",
-      },
-    },
     pill: {
       true: {
-        backgroundColor: "$interactiveBaseBrandDefault",
-        color: "$interactiveBaseBrandSoftDefault",
         fontWeight: "bold",
         paddingHorizontal: ms(4),
         paddingVertical: ms(2),
         borderRadius: "$r2",
-        alignSelf: "center",
+      },
+    },
+    strikeThrough: {
+      true: {
+        textDecorationLine: "line-through",
       },
     },
   } as const,
