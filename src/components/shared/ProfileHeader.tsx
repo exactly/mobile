@@ -1,4 +1,5 @@
 import { BellRing, EyeOff, Settings } from "@tamagui/lucide-icons";
+import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -6,7 +7,6 @@ import { Image, styled } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
 
 import shortenAddress from "../../utils/shortenAddress";
-import { useTheme } from "../context/ThemeProvider";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
@@ -23,8 +23,11 @@ const OnlineIndicator = styled(View, {
   zIndex: 1,
 });
 
+function settings() {
+  router.push("/settings");
+}
+
 export default function ProfileHeader() {
-  const { toggle } = useTheme();
   const { address } = useAccount();
   const {
     connect,
@@ -62,7 +65,7 @@ export default function ProfileHeader() {
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
           <EyeOff color="$uiNeutralPrimary" />
           <BellRing color="$uiNeutralPrimary" />
-          <Pressable onPress={toggle}>
+          <Pressable onPress={settings}>
             <Settings color="$uiNeutralPrimary" />
           </Pressable>
         </View>
