@@ -11,6 +11,7 @@
     "prepare": "bun --bun wagmi generate && node -e 'require(\"fs\").writeFileSync(\"src/generated/version.ts\", `export default \"${require(\"./package.json\").version}\" as const;`)'",
     "eas-build-pre-install": "export FOUNDRY_DIR=${FOUNDRY_DIR-$HOME/workingdir} && curl -L https://foundry.paradigm.xyz | bash || true && foundryup",
     "test": "concurrently 'npm:test:*' --group -c auto",
+    "test:build": "expo export --platform web",
     "test:ts:expo": "tsc",
     "test:ts:node": "tsc -p tsconfig.node.json",
     "test:contracts": "pnpm test --filter plugin",
