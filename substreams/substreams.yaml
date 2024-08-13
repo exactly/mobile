@@ -5,6 +5,14 @@ package:
 protobuf:
   files:
     - exa.proto
+modules:
+  - name: map_accounts
+    kind: map
+    initialBlock: 123_125_164
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:exa.Accounts
 binaries:
   default:
     type: wasm/rust-v1
