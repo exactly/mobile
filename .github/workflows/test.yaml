@@ -26,4 +26,4 @@ jobs:
           cache-dependency-path: contracts/requirements.txt
       - run: pip install -r contracts/requirements.txt
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - run: pnpm test --recursive --no-bail
