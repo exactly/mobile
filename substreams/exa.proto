@@ -5,3 +5,7 @@ package exa;
 message Accounts {
   repeated bytes accounts = 1;
 }
+
+message Transfers {
+  repeated bytes receivers = 1;
+}
