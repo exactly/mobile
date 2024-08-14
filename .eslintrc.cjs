@@ -53,6 +53,7 @@ module.exports = {
       rules: {
         "import/no-unresolved": "off", // handled by bundler
         "n/no-missing-import": "off", // handled by bundler
+        "unicorn/prefer-top-level-await": "off", // unsupported in cjs
       },
     },
     {
