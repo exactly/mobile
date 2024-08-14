@@ -66,11 +66,9 @@ export default function AssetList() {
             <View gap={ms(5)} flex={1}>
               <View flexDirection="row" alignItems="center" justifyContent="flex-end">
                 <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
-                  {Number(usdValue / BigInt(10 ** 18)).toLocaleString("en-US", {
+                  {(Number(usdValue) / 1e18).toLocaleString("en-US", {
                     style: "currency",
                     currency: "USD",
-                    currencySign: "standard",
-                    currencyDisplay: "symbol",
                   })}
                 </Text>
               </View>

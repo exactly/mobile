@@ -21,6 +21,7 @@ export default function Balance() {
   });
 
   let usdBalance = 0n;
+
   if (markets) {
     for (const market of markets) {
       if (market.floatingDepositAssets > 0n) {
@@ -28,6 +29,11 @@ export default function Balance() {
       }
     }
   }
+
+  const formattedBalance = (Number(usdBalance) / 1e18).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
 
   function onPress() {
     setIsOpen(!isOpen);
@@ -51,12 +57,7 @@ export default function Balance() {
           <View flexDirection="row" justifyContent="center" alignItems="center" gap="$s3_5">
             <View flexDirection="row" maxWidth="100%">
               <Text textAlign="center" fontFamily="$mono" fontSize={ms(40)} fontWeight="bold" overflow="hidden">
-                {Number(usdBalance / BigInt(10 ** 18)).toLocaleString("en-US", {
-                  style: "currency",
-                  currency: "USD",
-                  currencySign: "standard",
-                  currencyDisplay: "symbol",
-                })}
+                {formattedBalance}
               </Text>
             </View>
             <View>
