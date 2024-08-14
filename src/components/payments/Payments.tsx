@@ -4,10 +4,13 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, styled, Switch } from "tamagui";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
 import NextPayment from "./NextPayment";
 import PaymentHistory from "./PaymentHistory";
 import UpcomingPayments from "./UpcomingPayments";
+import { previewerAddress, useReadPreviewerExactly } from "../../generated/contracts";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -31,6 +34,28 @@ function manage() {
 }
 
 export default function Payments() {
+  const { address } = useAccount();
+  const { data: markets } = useReadPreviewerExactly({
+    address: previewerAddress,
+    account: address,
+    args: [address ?? zeroAddress],
+  });
+
+  let totalDebtUsdValue = 0n;
+
+  if (markets) {
+    for (const market of markets) {
+      if (market.floatingBorrowAssets > 0n) {
+        totalDebtUsdValue += (market.floatingBorrowAssets * market.usdPrice) / BigInt(10 ** market.decimals);
+      }
+    }
+  }
+
+  const formattedDebt = (Number(totalDebtUsdValue) / 1e18).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+
   return (
     <SafeView fullScreen tab>
       <ScrollView flex={1}>
@@ -48,12 +73,7 @@ export default function Payments() {
             <View gap="$s6">
               <View flexDirection="column" justifyContent="center" alignItems="center">
                 <Text textAlign="center" fontFamily="$mono" fontSize={ms(40)} fontWeight="bold" overflow="hidden">
-                  {Number(5838.42).toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    currencySign: "standard",
-                    currencyDisplay: "symbol",
-                  })}
+                  {formattedDebt}
                 </Text>
               </View>
               <View gap="$s3" alignItems="center">
