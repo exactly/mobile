@@ -40,4 +40,5 @@ jobs:
           curl -L $LINK | tar -xzC /usr/local/bin -f - substreams
 
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run --recursive --no-bail build
       - run: pnpm test --recursive --no-bail
