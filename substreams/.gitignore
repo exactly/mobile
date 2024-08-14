@@ -4,3 +4,4 @@ src/pb/
 target/
 
 *.log
+*.spkg
