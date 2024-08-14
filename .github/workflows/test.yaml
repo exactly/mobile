@@ -7,6 +7,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_ALCHEMY_API_KEY: test
+      EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID: test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
