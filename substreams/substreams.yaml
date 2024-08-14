@@ -5,10 +5,12 @@ package:
 protobuf:
   files:
     - exa.proto
+  importPaths:
+    - "."
 modules:
   - name: map_accounts
     kind: map
-    initialBlock: 123_125_164
+    initialBlock: 123125164
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
