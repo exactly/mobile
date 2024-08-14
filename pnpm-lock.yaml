@@ -274,6 +274,9 @@ importers:
       expo-dev-client:
         specifier: ~4.0.23
         version: 4.0.23(expo@51.0.28(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+      expo-doctor:
+        specifier: ^1.9.0
+        version: 1.9.0
       metro-config:
         specifier: '*'
         version: 0.80.10(bufferutil@4.0.8)(utf-8-validate@5.0.10)
@@ -1866,7 +1869,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.18.29':
     resolution: {integrity: sha512-X810C48Ss+67RdZU39YEO1khNYo1RmjouRV+vVe0QhMoTe8R6OA3t+XYEdwaNbJ5p/DJN7szfHfNmX2glpC7xg==}
@@ -5646,6 +5649,10 @@ packages:
     resolution: {integrity: sha512-C/ulbzfhcEsEk1X0gF3XaJPSwCZJqnHPpYqPGUf4xaXzk/TZpeMTqF6f3nfMyZjpj67L6DetvaJWv8jiDzZ/6Q==}
     peerDependencies:
       expo: '*'
+
+  expo-doctor@1.9.0:
+    resolution: {integrity: sha512-mCkOqkQS2s55p4pKWPWtiwe15ZBUYOPuKrBSJzZieey5cjsc2msrCW8W8nfNz/rWx89usEQtCYFPzJtifZX+sw==}
+    hasBin: true
 
   expo-file-system@17.0.1:
     resolution: {integrity: sha512-dYpnZJqTGj6HCYJyXAgpFkQWsiCH3HY1ek2cFZVHFoEc5tLz9gmdEgTF6nFHurvmvfmXqxi7a5CXyVm0aFYJBw==}
@@ -16787,6 +16794,8 @@ snapshots:
       expo: 51.0.28(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       expo-dev-menu-interface: 1.8.3(expo@51.0.28(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
       semver: 7.6.3
+
+  expo-doctor@1.9.0: {}
 
   expo-file-system@17.0.1(expo@51.0.28(@babel/core@7.25.2)(@babel/preset-env@7.25.3(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10)):
     dependencies:
