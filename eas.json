@@ -3,7 +3,7 @@
     "base": {
       "resourceClass": "large",
       "node": "22.6.0",
-      "pnpm": "9.7.0",
+      "pnpm": "9.7.1",
       "android": {
         "image": "latest"
       },
