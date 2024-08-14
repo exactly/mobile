@@ -1,39 +1,46 @@
 import { auditorAddress } from "@exactly/common/generated/chain";
 import { setStringAsync } from "expo-clipboard";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { ms } from "react-native-size-matters";
 import { View, Spinner } from "tamagui";
-import { erc20Abi, zeroAddress } from "viem";
-import { useAccount, useBalance, useSimulateContract, useWriteContract } from "wagmi";
+import { zeroAddress } from "viem";
+import { useAccount, useBalance, useWriteContract } from "wagmi";
 
 import {
   marketUSDCAddress,
+  previewerAddress,
   usdcAddress,
+  useReadPreviewerExactly,
   useSimulateAuditorEnterMarket,
+  useSimulateMarketApprove,
+  useSimulateMarketBorrow,
   useSimulateMarketDeposit,
 } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 
+function copyHash(hash: string | undefined) {
+  if (!hash) return;
+  setStringAsync(hash).catch(handleError);
+}
+
 export default function PasskeyUtils() {
   const { address } = useAccount();
-  const { data: balance } = useBalance({ token: usdcAddress, address });
+  const { data: balanceUSDC } = useBalance({ token: usdcAddress, address });
+  const { data: markets } = useReadPreviewerExactly({
+    address: previewerAddress,
+    account: address,
+    args: [address ?? zeroAddress],
+  });
 
-  const {
-    writeContract: enterMarket,
-    data: enterMarketHash,
-    isPending: isSending,
-    error: enterMarketError,
-  } = useWriteContract();
-  const {
-    writeContract: depositMarket,
-    data: depositHash,
-    isPending: isDepositing,
-    error: depositError,
-  } = useWriteContract();
-  const { writeContract: approve, data: approveHash, isPending: isApproving, error: approveError } = useWriteContract();
+  const depositedUSDC = markets?.find((market) => market.asset === usdcAddress)?.floatingDepositAssets ?? 0n;
 
+  const { data: approveUSDCSimulation } = useSimulateMarketApprove({
+    address: usdcAddress,
+    args: [marketUSDCAddress, balanceUSDC?.value ?? 0n],
+    query: { enabled: !!address && !!balanceUSDC && balanceUSDC.value > 0n },
+  });
   const { data: enterUSDCSimulation } = useSimulateAuditorEnterMarket({
     address: auditorAddress,
     args: [marketUSDCAddress],
@@ -41,46 +48,46 @@ export default function PasskeyUtils() {
   });
   const { data: depositUSDCSimulation } = useSimulateMarketDeposit({
     address: marketUSDCAddress,
-    args: [balance?.value ?? 0n, address ?? zeroAddress],
-    query: { enabled: !!address && !!balance && balance.value > 0n },
+    args: [balanceUSDC?.value ?? 0n, address ?? zeroAddress],
+    query: { enabled: !!address && !!balanceUSDC && balanceUSDC.value > 0n },
   });
-  const { data: approveUSDCSimulation } = useSimulateContract({
-    abi: erc20Abi,
-    functionName: "approve",
-    address: usdcAddress,
-    args: [marketUSDCAddress, balance?.value ?? 0n],
-    query: { enabled: !!address && !!balance && balance.value > 0n },
+  const { data: borrowUSDCSimulation } = useSimulateMarketBorrow({
+    address: marketUSDCAddress,
+    args: [4_000_000n, address ?? zeroAddress, address ?? zeroAddress],
+    query: { enabled: !!address && !!depositedUSDC && depositedUSDC > 0n },
   });
 
-  const enterUSDC = useCallback(() => {
-    if (!enterUSDCSimulation) throw new Error("no enter market simulation");
-    enterMarket(enterUSDCSimulation.request);
-  }, [enterUSDCSimulation, enterMarket]);
-
-  const depositUSDC = useCallback(() => {
-    if (!depositUSDCSimulation) throw new Error("no deposit simulation");
-    depositMarket(depositUSDCSimulation.request);
-  }, [depositMarket, depositUSDCSimulation]);
+  const { writeContract: approve, data: approveHash, isPending: isApproving, error: approveError } = useWriteContract();
+  const {
+    writeContract: enter,
+    data: enterMarketHash,
+    isPending: isSending,
+    error: enterMarketError,
+  } = useWriteContract();
+  const {
+    writeContract: deposit,
+    data: depositHash,
+    isPending: isDepositing,
+    error: depositError,
+  } = useWriteContract();
+  const { writeContract: borrow, data: borrowHash, isPending: isBorrowing, error: borrowError } = useWriteContract();
 
   const approveUSDC = useCallback(() => {
     if (!approveUSDCSimulation) throw new Error("no approve simulation");
     approve(approveUSDCSimulation.request);
   }, [approve, approveUSDCSimulation]);
-
-  const copyEnterMarketHash = () => {
-    if (!enterMarketHash) return;
-    setStringAsync(enterMarketHash).catch(handleError);
-  };
-
-  const copyDepositHash = () => {
-    if (!depositHash) return;
-    setStringAsync(depositHash).catch(handleError);
-  };
-
-  const copyApproveHash = () => {
-    if (!approveHash) return;
-    setStringAsync(approveHash).catch(handleError);
-  };
+  const enterUSDC = useCallback(() => {
+    if (!enterUSDCSimulation) throw new Error("no enter market simulation");
+    enter(enterUSDCSimulation.request);
+  }, [enterUSDCSimulation, enter]);
+  const depositUSDC = useCallback(() => {
+    if (!depositUSDCSimulation) throw new Error("no deposit simulation");
+    deposit(depositUSDCSimulation.request);
+  }, [deposit, depositUSDCSimulation]);
+  const borrowUSDC = useCallback(() => {
+    if (!borrowUSDCSimulation) throw new Error("no borrow simulation");
+    borrow(borrowUSDCSimulation.request);
+  }, [borrow, borrowUSDCSimulation]);
 
   return (
     <View gap={ms(10)}>
@@ -88,9 +95,9 @@ export default function PasskeyUtils() {
         Exactly
       </Text>
 
-      {(isSending || isDepositing || isApproving) && <Spinner color="$interactiveBaseBrandDefault" />}
+      {(isSending || isDepositing || isApproving || isBorrowing) && <Spinner color="$interactiveBaseBrandDefault" />}
 
-      {(enterMarketError ?? depositError ?? approveError) && (
+      {(enterMarketError ?? depositError ?? approveError ?? borrowError) && (
         <Text color="$uiErrorPrimary" fontWeight="bold">
           {enterMarketError
             ? enterMarketError.message
@@ -98,7 +105,9 @@ export default function PasskeyUtils() {
               ? depositError.message
               : approveError
                 ? approveError.message
-                : "Error"}
+                : borrowError
+                  ? borrowError.message
+                  : "Error"}
         </Text>
       )}
 
@@ -111,11 +120,19 @@ export default function PasskeyUtils() {
       )}
 
       <View flexDirection="row" gap={ms(10)}>
-        <Button contained onPress={approveUSDC} padding={ms(10)} flex={1}>
+        <Button contained onPress={approveUSDC} disabled={!approveUSDCSimulation} padding={ms(10)} flex={1}>
           Approve USDC
         </Button>
         {approveHash && (
-          <Button outlined borderRadius="$r2" onPress={copyApproveHash} padding={ms(10)} flex={1}>
+          <Button
+            outlined
+            borderRadius="$r2"
+            onPress={() => {
+              copyHash(approveHash);
+            }}
+            padding={ms(10)}
+            flex={1}
+          >
             Copy
           </Button>
         )}
@@ -130,11 +147,25 @@ export default function PasskeyUtils() {
       )}
 
       <View flexDirection="row" gap={ms(10)}>
-        <Button contained onPress={enterUSDC} padding={ms(10)} flex={1}>
+        <Button
+          contained
+          onPress={enterUSDC}
+          disabled={balanceUSDC?.value === 0n || !enterUSDCSimulation}
+          padding={ms(10)}
+          flex={1}
+        >
           Enter USDC market
         </Button>
         {enterMarketHash && (
-          <Button outlined borderRadius="$r2" onPress={copyEnterMarketHash} padding={ms(10)} flex={1}>
+          <Button
+            outlined
+            borderRadius="$r2"
+            onPress={() => {
+              copyHash(enterMarketHash);
+            }}
+            padding={ms(10)}
+            flex={1}
+          >
             Copy
           </Button>
         )}
@@ -149,11 +180,58 @@ export default function PasskeyUtils() {
       )}
 
       <View flexDirection="row" gap={ms(10)}>
-        <Button contained onPress={depositUSDC} padding={ms(10)} flex={1}>
-          Deposit
+        <Button
+          contained
+          onPress={depositUSDC}
+          disabled={balanceUSDC?.value === 0n || !depositUSDCSimulation}
+          padding={ms(10)}
+          flex={1}
+        >
+          Deposit USDC
         </Button>
         {depositHash && (
-          <Button outlined borderRadius="$r2" onPress={copyDepositHash} padding={ms(10)} flex={1}>
+          <Button
+            outlined
+            borderRadius="$r2"
+            onPress={() => {
+              copyHash(depositHash);
+            }}
+            padding={ms(10)}
+            flex={1}
+          >
+            Copy
+          </Button>
+        )}
+      </View>
+
+      {borrowHash && (
+        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+            {borrowHash}
+          </Text>
+        </View>
+      )}
+
+      <View flexDirection="row" gap={ms(10)}>
+        <Button
+          contained
+          onPress={borrowUSDC}
+          disabled={depositedUSDC === 0n || !borrowUSDCSimulation}
+          padding={ms(10)}
+          flex={1}
+        >
+          Borrow USDC
+        </Button>
+        {borrowHash && (
+          <Button
+            outlined
+            borderRadius="$r2"
+            onPress={() => {
+              copyHash(borrowHash);
+            }}
+            padding={ms(10)}
+            flex={1}
+          >
             Copy
           </Button>
         )}
