@@ -6,7 +6,7 @@ use substreams::{
   store::{StoreGet, StoreGetProto, StoreNew, StoreSet, StoreSetProto},
   Hex,
 };
-use substreams_ethereum::pb::eth::v2::Block;
+use substreams_ethereum::{pb::eth::v2::Block, Event};
 
 mod abi;
 #[allow(clippy::all)]
@@ -41,10 +41,12 @@ pub fn store_accounts(accounts: Accounts, store: StoreSetProto<Vec<u8>>) {
 pub fn map_transfers(block: Block, store: StoreGetProto<Vec<u8>>) -> Result<Transfers, Error> {
   Ok(Transfers {
     receivers: block
-      .events::<Transfer>(&[&hex!("0b2c639c533813f4aa9d7837caf62653d097ff85")])
-      .filter_map(|(event, _)| match store.get_last(format!("account:{}", Hex(&event.to))) {
-        Some(account) if !event.value.is_zero() => Some(account),
-        _ => None,
+      .logs()
+      .filter_map(|log| {
+        Transfer::match_and_decode(log).and_then(|event| match store.get_last(format!("account:{}", Hex(&event.to))) {
+          Some(account) if !event.value.is_zero() => Some(account),
+          _ => None,
+        })
       })
       .collect(),
   })
