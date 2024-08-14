@@ -4,7 +4,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
