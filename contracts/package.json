@@ -1,6 +1,7 @@
 {
   "name": "@exactly/plugin",
   "scripts": {
+    "build": "forge build",
     "test": "concurrently 'npm:test:*' --group -c auto",
     "test:fmt": "forge fmt --check",
     "test:sizes": "forge build --sizes --skip test",
