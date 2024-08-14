@@ -7,5 +7,10 @@ message Accounts {
 }
 
 message Transfers {
-  repeated bytes receivers = 1;
+  repeated Transfer transfers = 1;
+}
+
+message Transfer {
+  bytes asset = 1;
+  bytes receiver = 2;
 }

@@ -1,5 +1,5 @@
 use abi::{entrypoint::events::AccountDeployed, erc20::events::Transfer};
-use pb::exa::{Accounts, Transfers};
+use pb::exa;
 use substreams::{
   errors::Error,
   hex,
@@ -13,8 +13,8 @@ mod abi;
 mod pb;
 
 #[substreams::handlers::map]
-pub fn map_accounts(block: Block) -> Result<Accounts, Error> {
-  Ok(Accounts {
+pub fn map_accounts(block: Block) -> Result<exa::Accounts, Error> {
+  Ok(exa::Accounts {
     accounts: block
       .logs()
       .filter_map(|log| {
@@ -31,20 +31,20 @@ pub fn map_accounts(block: Block) -> Result<Accounts, Error> {
 }
 
 #[substreams::handlers::store]
-pub fn store_accounts(accounts: Accounts, store: StoreSetProto<Vec<u8>>) {
+pub fn store_accounts(accounts: exa::Accounts, store: StoreSetProto<Vec<u8>>) {
   for account in accounts.accounts {
     store.set(0, format!("account:{}", Hex(&account)), &account);
   }
 }
 
 #[substreams::handlers::map]
-pub fn map_transfers(block: Block, store: StoreGetProto<Vec<u8>>) -> Result<Transfers, Error> {
-  Ok(Transfers {
-    receivers: block
+pub fn map_transfers(block: Block, store: StoreGetProto<Vec<u8>>) -> Result<exa::Transfers, Error> {
+  Ok(exa::Transfers {
+    transfers: block
       .logs()
       .filter_map(|log| {
         Transfer::match_and_decode(log).and_then(|event| match store.get_last(format!("account:{}", Hex(&event.to))) {
-          Some(account) if !event.value.is_zero() => Some(account),
+          Some(receiver) if !event.value.is_zero() => Some(exa::Transfer { asset: log.address().to_vec(), receiver }),
           _ => None,
         })
       })
