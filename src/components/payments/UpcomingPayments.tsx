@@ -1,39 +1,37 @@
 import { ChevronRight } from "@tamagui/lucide-icons";
+import { intlFormat } from "date-fns";
 import React from "react";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
+import { previewerAddress, useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 interface Payment {
-  date: string;
-  amount: number;
-}
-
-const payments: [Payment, ...Payment[]] = [
-  { date: "Jun 28, 2024", amount: 852.96 },
-  { date: "Jul 28, 2024", amount: 852.96 },
-  { date: "Aug 28, 2024", amount: 852.96 },
-];
-
-function ListItem({ date, amount }: Payment) {
-  return (
-    <View flexDirection="row" justifyContent="space-between" alignItems="center">
-      <View>
-        <Text>{date}</Text>
-      </View>
-      <View flexDirection="row" alignItems="center" gap="$s2">
-        <View>
-          <Text>${amount}</Text>
-        </View>
-        <View>
-          <ChevronRight size={24} color="$iconBrandDefault" />
-        </View>
-      </View>
-    </View>
-  );
+  maturity: bigint;
+  amount: bigint;
 }
 
 export default function UpcomingPayments() {
+  const { address } = useAccount();
+  const { data: markets } = useReadPreviewerExactly({
+    address: previewerAddress,
+    account: address,
+    args: [address ?? zeroAddress],
+  });
+  const duePayments = new Map<bigint, bigint>();
+  if (markets) {
+    for (const { fixedBorrowPositions, usdPrice, decimals } of markets) {
+      for (const { maturity, previewValue } of fixedBorrowPositions) {
+        if (!previewValue) continue;
+        duePayments.set(
+          maturity,
+          (duePayments.get(maturity) ?? 0n) + (previewValue * usdPrice) / 10n ** BigInt(decimals),
+        );
+      }
+    }
+  }
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s6">
       <View flexDirection="row" gap="$s3" alignItems="center" justifyContent="space-between">
@@ -41,9 +39,32 @@ export default function UpcomingPayments() {
           Next payments
         </Text>
       </View>
-      {payments.map(({ date, amount }, index) => (
-        <ListItem key={index} date={date} amount={amount} />
+      {[...duePayments].map(([maturity, amount], index) => (
+        <ListItem key={index} maturity={maturity} amount={amount} />
       ))}
+    </View>
+  );
+}
+
+function ListItem({ maturity, amount }: Payment) {
+  return (
+    <View flexDirection="row" justifyContent="space-between" alignItems="center">
+      <View>
+        <Text>{intlFormat(new Date(Number(maturity) * 1000), { dateStyle: "medium" })}</Text>
+      </View>
+      <View flexDirection="row" alignItems="center" gap="$s2">
+        <View>
+          <Text>
+            {(Number(amount) / 1e18).toLocaleString(undefined, {
+              style: "currency",
+              currency: "USD",
+            })}
+          </Text>
+        </View>
+        <View>
+          <ChevronRight size={24} color="$iconBrandDefault" />
+        </View>
+      </View>
     </View>
   );
 }

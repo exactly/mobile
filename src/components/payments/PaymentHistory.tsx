@@ -6,6 +6,7 @@ import { ms } from "react-native-size-matters";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
+// TODO remove once payment history is retrieved
 interface Payment {
   status: string;
   date: string;
@@ -13,31 +14,7 @@ interface Payment {
   amount: number;
   asset: string;
 }
-
-const payments: Payment[] = [
-  {
-    status: "Paid",
-    date: "11/03/24",
-    usdValue: 2499.88,
-    amount: 2499.88,
-    asset: "USDC",
-  },
-  {
-    status: "Paid",
-    date: "08/03/24",
-    usdValue: 487,
-    amount: 0.1542,
-    asset: "ETH",
-  },
-  {
-    status: "Paid",
-    date: "21/02/24",
-    usdValue: 1049.86,
-    amount: 1049.86,
-    asset: "USDC",
-  },
-];
-
+const payments: Payment[] = [];
 export default function PaymentHistory() {
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s4">
@@ -54,49 +31,54 @@ export default function PaymentHistory() {
           </View>
         </Pressable>
       </View>
-
-      {payments.map(({ status, date, usdValue, asset, amount }, index) => (
-        <View key={index} flexDirection="row" gap={ms(16)} alignItems="center">
-          <View
-            width={ms(40)}
-            height={ms(40)}
-            backgroundColor="$backgroundBrandMild"
-            borderRadius="$r3"
-            justifyContent="center"
-            alignItems="center"
-          >
-            <Check size={ms(20)} color="$uiSuccessPrimary" fontWeight="bold" />
-          </View>
-          <View flex={1} gap={ms(5)}>
-            <View flexDirection="row" justifyContent="space-between" alignItems="center">
-              <View gap={ms(5)}>
-                <Text fontSize={ms(15)}>{status}</Text>
-                <Text fontSize={ms(12)} color="$uiNeutralSecondary">
-                  {date}
-                </Text>
-              </View>
-              <View gap={ms(5)}>
-                <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                  <Text fontSize={ms(15)} fontWeight="bold">
-                    -
-                  </Text>
-                  <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
-                    {usdValue.toLocaleString("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                      currencySign: "standard",
-                      currencyDisplay: "symbol",
-                    })}
+      {payments.length > 0 ? (
+        payments.map(({ status, date, usdValue, asset, amount }, index) => (
+          <View key={index} flexDirection="row" gap={ms(16)} alignItems="center">
+            <View
+              width={ms(40)}
+              height={ms(40)}
+              backgroundColor="$backgroundBrandMild"
+              borderRadius="$r3"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <Check size={ms(20)} color="$uiSuccessPrimary" fontWeight="bold" />
+            </View>
+            <View flex={1} gap={ms(5)}>
+              <View flexDirection="row" justifyContent="space-between" alignItems="center">
+                <View gap={ms(5)}>
+                  <Text fontSize={ms(15)}>{status}</Text>
+                  <Text fontSize={ms(12)} color="$uiNeutralSecondary">
+                    {date}
                   </Text>
                 </View>
-                <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                  {amount.toLocaleString("en-US")} {asset}
-                </Text>
+                <View gap={ms(5)}>
+                  <View flexDirection="row" alignItems="center" justifyContent="flex-end">
+                    <Text fontSize={ms(15)} fontWeight="bold">
+                      -
+                    </Text>
+                    <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
+                      {usdValue.toLocaleString(undefined, {
+                        style: "currency",
+                        currency: "USD",
+                        currencySign: "standard",
+                        currencyDisplay: "symbol",
+                      })}
+                    </Text>
+                  </View>
+                  <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                    {amount.toLocaleString()} {asset}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      ))}
+        ))
+      ) : (
+        <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
+          No payments have been made.
+        </Text>
+      )}
     </View>
   );
 }

@@ -27,8 +27,6 @@ const StyledAction = styled(View, {
   flexBasis: "50%",
 });
 
-const paymentsAmount = 6;
-
 function manage() {
   router.push("/");
 }
@@ -40,22 +38,19 @@ export default function Payments() {
     account: address,
     args: [address ?? zeroAddress],
   });
-
-  let totalDebtUsdValue = 0n;
-
+  let usdDue = 0n;
   if (markets) {
     for (const market of markets) {
+      if (market.fixedBorrowPositions.length > 0) {
+        for (const { position } of market.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {
+          usdDue += ((position.principal + position.fee) * market.usdPrice) / 10n ** BigInt(market.decimals);
+        }
+      }
       if (market.floatingBorrowAssets > 0n) {
-        totalDebtUsdValue += (market.floatingBorrowAssets * market.usdPrice) / BigInt(10 ** market.decimals);
+        usdDue += (market.floatingBorrowAssets * market.usdPrice) / 10n ** BigInt(market.decimals);
       }
     }
   }
-
-  const formattedDebt = (Number(totalDebtUsdValue) / 1e18).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-
   return (
     <SafeView fullScreen tab>
       <ScrollView flex={1}>
@@ -73,19 +68,15 @@ export default function Payments() {
             <View gap="$s6">
               <View flexDirection="column" justifyContent="center" alignItems="center">
                 <Text textAlign="center" fontFamily="$mono" fontSize={ms(40)} fontWeight="bold" overflow="hidden">
-                  {formattedDebt}
+                  {(Number(usdDue) / 1e18).toLocaleString(undefined, { style: "currency", currency: "USD" })}
                 </Text>
               </View>
               <View gap="$s3" alignItems="center">
                 <Text emphasized title3 color="$uiNeutralSecondary">
                   Total debt
                 </Text>
-                <Text pill caption2 backgroundColor="$interactiveDisabled" color="$uiNeutralSecondary">
-                  IN {paymentsAmount} PAYMENTS
-                </Text>
               </View>
             </View>
-
             <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
               <StyledAction>
                 <Pressable>
@@ -116,7 +107,6 @@ export default function Payments() {
             </View>
           </View>
         </View>
-
         <View padded gap="$s6">
           <NextPayment />
           <UpcomingPayments />

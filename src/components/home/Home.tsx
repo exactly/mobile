@@ -34,7 +34,7 @@ export default function Home() {
               </Pressable>
             }
           >
-            <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
+            <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
               Learn more about your credit limit.
             </Text>
           </InfoCard>
@@ -51,7 +51,7 @@ export default function Home() {
               </Pressable>
             }
           >
-            <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
+            <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
               No funds to spend.
             </Text>
           </InfoCard>
@@ -68,7 +68,7 @@ export default function Home() {
               </Pressable>
             }
           >
-            <Text textAlign="center" fontSize={15} color="$uiNeutralSecondary">
+            <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
               There are no installments to show yet.
             </Text>
           </InfoCard>

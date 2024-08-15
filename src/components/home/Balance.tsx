@@ -30,7 +30,7 @@ export default function Balance() {
     }
   }
 
-  const formattedBalance = (Number(usdBalance) / 1e18).toLocaleString("en-US", {
+  const formattedBalance = (Number(usdBalance) / 1e18).toLocaleString(undefined, {
     style: "currency",
     currency: "USD",
   });

@@ -1,9 +1,9 @@
 import { auditorAddress } from "@exactly/common/generated/chain";
 import { setStringAsync } from "expo-clipboard";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import { ms } from "react-native-size-matters";
 import { View, Spinner } from "tamagui";
-import { zeroAddress } from "viem";
+import { maxUint256, zeroAddress } from "viem";
 import { useAccount, useBalance, useWriteContract } from "wagmi";
 
 import {
@@ -13,11 +13,12 @@ import {
   useReadPreviewerExactly,
   useSimulateAuditorEnterMarket,
   useSimulateMarketApprove,
-  useSimulateMarketBorrow,
+  useSimulateMarketBorrowAtMaturity,
   useSimulateMarketDeposit,
 } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import Button from "../shared/Button";
+import Input from "../shared/Input";
 import Text from "../shared/Text";
 
 function copyHash(hash: string | undefined) {
@@ -25,7 +26,8 @@ function copyHash(hash: string | undefined) {
   setStringAsync(hash).catch(handleError);
 }
 
-export default function PasskeyUtils() {
+export default function ContractUtils() {
+  const [borrowAmount, setBorrowAmount] = useState<number>(0);
   const { address } = useAccount();
   const { data: balanceUSDC } = useBalance({ token: usdcAddress, address });
   const { data: markets } = useReadPreviewerExactly({
@@ -34,7 +36,10 @@ export default function PasskeyUtils() {
     args: [address ?? zeroAddress],
   });
 
-  const depositedUSDC = markets?.find((market) => market.asset === usdcAddress)?.floatingDepositAssets ?? 0n;
+  const marketUSDC = markets?.find((market) => market.asset === usdcAddress);
+  const floatingUSDCDeposit = marketUSDC?.floatingDepositAssets ?? 0n;
+  const firstMaturity = marketUSDC?.fixedPools[0]?.maturity ?? 0n;
+  const borrowAssets = BigInt(borrowAmount * 10 ** (marketUSDC?.decimals ?? 6));
 
   const { data: approveUSDCSimulation } = useSimulateMarketApprove({
     address: usdcAddress,
@@ -51,10 +56,10 @@ export default function PasskeyUtils() {
     args: [balanceUSDC?.value ?? 0n, address ?? zeroAddress],
     query: { enabled: !!address && !!balanceUSDC && balanceUSDC.value > 0n },
   });
-  const { data: borrowUSDCSimulation } = useSimulateMarketBorrow({
+  const { data: borrowUSDCSimulation } = useSimulateMarketBorrowAtMaturity({
     address: marketUSDCAddress,
-    args: [4_000_000n, address ?? zeroAddress, address ?? zeroAddress],
-    query: { enabled: !!address && !!depositedUSDC && depositedUSDC > 0n },
+    args: [firstMaturity, borrowAssets, maxUint256, address ?? zeroAddress, address ?? zeroAddress],
+    query: { enabled: !!address && !!floatingUSDCDeposit && floatingUSDCDeposit > 0n },
   });
 
   const { writeContract: approve, data: approveHash, isPending: isApproving, error: approveError } = useWriteContract();
@@ -90,8 +95,8 @@ export default function PasskeyUtils() {
   }, [borrow, borrowUSDCSimulation]);
 
   return (
-    <View gap={ms(10)}>
-      <Text fontSize={ms(16)} fontWeight="bold">
+    <View gap="$s4">
+      <Text fontSize={ms(16)} subHeadline fontWeight="bold">
         Exactly
       </Text>
 
@@ -119,7 +124,7 @@ export default function PasskeyUtils() {
         </View>
       )}
 
-      <View flexDirection="row" gap={ms(10)}>
+      <View flexDirection="row" gap="$s4">
         <Button contained onPress={approveUSDC} disabled={!approveUSDCSimulation} padding={ms(10)} flex={1}>
           Approve USDC
         </Button>
@@ -146,7 +151,7 @@ export default function PasskeyUtils() {
         </View>
       )}
 
-      <View flexDirection="row" gap={ms(10)}>
+      <View flexDirection="row" gap="$s4">
         <Button
           contained
           onPress={enterUSDC}
@@ -179,7 +184,7 @@ export default function PasskeyUtils() {
         </View>
       )}
 
-      <View flexDirection="row" gap={ms(10)}>
+      <View flexDirection="row" gap="$s4">
         <Button
           contained
           onPress={depositUSDC}
@@ -204,37 +209,46 @@ export default function PasskeyUtils() {
         )}
       </View>
 
-      {borrowHash && (
-        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
-          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
-            {borrowHash}
-          </Text>
-        </View>
-      )}
-
-      <View flexDirection="row" gap={ms(10)}>
-        <Button
-          contained
-          onPress={borrowUSDC}
-          disabled={depositedUSDC === 0n || !borrowUSDCSimulation}
-          padding={ms(10)}
-          flex={1}
-        >
-          Borrow USDC
-        </Button>
+      <View gap="$s4">
+        <Text fontSize={ms(16)}>Borrow</Text>
+        <Input
+          inputMode="numeric"
+          value={borrowAmount.toString()}
+          onChange={(event) => {
+            setBorrowAmount(Number(event.nativeEvent.text));
+          }}
+        />
         {borrowHash && (
+          <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+            <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+              {borrowHash}
+            </Text>
+          </View>
+        )}
+        <View flexDirection="row" gap="$s4">
           <Button
-            outlined
-            borderRadius="$r2"
-            onPress={() => {
-              copyHash(borrowHash);
-            }}
+            contained
+            onPress={borrowUSDC}
+            disabled={floatingUSDCDeposit === 0n || !borrowUSDCSimulation}
             padding={ms(10)}
             flex={1}
           >
-            Copy
+            Borrow USDC
           </Button>
-        )}
+          {borrowHash && (
+            <Button
+              outlined
+              borderRadius="$r2"
+              onPress={() => {
+                copyHash(borrowHash);
+              }}
+              padding={ms(10)}
+              flex={1}
+            >
+              Copy
+            </Button>
+          )}
+        </View>
       </View>
     </View>
   );
