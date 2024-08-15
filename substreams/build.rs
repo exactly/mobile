@@ -4,7 +4,7 @@ use substreams_ethereum::Abigen;
 
 fn main() -> Result<(), Error> {
   println!("cargo::rerun-if-changed=abi");
-  println!("cargo::rerun-if-changed=exa.proto");
+  println!("cargo::rerun-if-changed=proto");
   println!("cargo::rerun-if-changed=substreams.yaml");
 
   Abigen::new("EntryPoint", "abi/entrypoint.json")?.generate()?.write_to_file("src/abi/entrypoint.rs")?;

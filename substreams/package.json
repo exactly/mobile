@@ -5,7 +5,7 @@
     "test": "concurrently 'npm:test:*' --group -c auto",
     "test:fmt": "cargo fmt --check",
     "test:clippy": "cargo clippy --quiet -- --deny warnings",
-    "test:proto": "protolint *.proto"
+    "test:proto": "protolint ."
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.36.0",

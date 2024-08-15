@@ -1,6 +1,6 @@
 src/abi/**/*
 !src/abi/mod.rs
-src/pb/
+src/proto/
 target/
 
 *.log

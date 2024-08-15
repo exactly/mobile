@@ -1,5 +1,5 @@
 use abi::{entrypoint::events::AccountDeployed, erc20::events::Transfer};
-use pb::exa;
+use proto::exa;
 use substreams::{
   errors::Error,
   hex,
@@ -10,7 +10,7 @@ use substreams_ethereum::{pb::eth::v2::Block, Event};
 
 mod abi;
 #[allow(clippy::all)]
-mod pb;
+mod proto;
 
 #[substreams::handlers::map]
 pub fn map_accounts(block: Block) -> Result<exa::Accounts, Error> {

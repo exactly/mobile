@@ -6,7 +6,7 @@ protobuf:
   files:
     - exa.proto
   importPaths:
-    - "."
+    - proto
 modules:
   - name: map_accounts
     kind: map
