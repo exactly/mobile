@@ -43,6 +43,7 @@
     "@tanstack/valibot-form-adapter": "^0.28.0",
     "@wagmi/core": "^2.13.4",
     "abitype": "^1.0.6",
+    "date-fns": "^3.6.0",
     "expo": "~51.0.28",
     "expo-clipboard": "~6.0.3",
     "expo-font": "~12.0.9",
