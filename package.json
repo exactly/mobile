@@ -47,7 +47,7 @@
     "expo-clipboard": "~6.0.3",
     "expo-font": "~12.0.9",
     "expo-linking": "~6.3.1",
-    "expo-router": "~3.5.22",
+    "expo-router": "~3.5.23",
     "expo-status-bar": "~1.12.1",
     "fast-text-encoding": "^1.0.6",
     "moti": "^0.29.0",
@@ -69,12 +69,12 @@
     "valibot": "^0.37.0",
     "viem": "^2.19.4",
     "wagmi": "^2.12.5",
-    "zustand": "^4.5.4"
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
-    "@eslint-community/eslint-plugin-eslint-comments": "^4.3.0",
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.4.0",
     "@exactly/protocol": "github:exactly/protocol#5afd7b1",
     "@react-navigation/bottom-tabs": "*",
     "@simplewebauthn/types": "^10.0.0",
