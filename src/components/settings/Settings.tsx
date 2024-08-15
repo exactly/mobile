@@ -26,20 +26,20 @@ export default function Settings() {
   const { canGoBack } = useRouter();
   return (
     <SafeView fullScreen tab>
-      <ScrollView flex={1}>
-        <View fullScreen padded gap={ms(20)}>
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
-            <View position="absolute" left={0}>
-              {canGoBack() && (
-                <Pressable onPress={back}>
-                  <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
-                </Pressable>
-              )}
-            </View>
-            <Text color="$uiNeutralPrimary" fontSize={ms(15)} fontWeight="bold">
-              Settings
-            </Text>
+      <View fullScreen padded gap={ms(20)}>
+        <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
+          <View position="absolute" left={0}>
+            {canGoBack() && (
+              <Pressable onPress={back}>
+                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+              </Pressable>
+            )}
           </View>
+          <Text color="$uiNeutralPrimary" fontSize={ms(15)} fontWeight="bold">
+            Settings
+          </Text>
+        </View>
+        <ScrollView flex={1}>
           <View gap={ms(10)}>
             <Text fontSize={ms(16)} fontWeight="bold">
               Onboarding
@@ -47,13 +47,13 @@ export default function Settings() {
             <Button contained onPress={startOnboarding}>
               Start Onboarding
             </Button>
+            <PersonaUtils />
+            <WalletUtils />
+            <PasskeyUtils />
+            <ContractUtils />
           </View>
-          <PersonaUtils />
-          <WalletUtils />
-          <PasskeyUtils />
-          <ContractUtils />
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </SafeView>
   );
 }
