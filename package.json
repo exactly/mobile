@@ -10,6 +10,7 @@
     "prepare": "bun --bun wagmi generate && node -e 'require(\"fs\").writeFileSync(\"src/generated/version.ts\", `export default \"${require(\"./package.json\").version}\" as const;`)'",
     "eas-build-pre-install": "export FOUNDRY_DIR=${FOUNDRY_DIR-$HOME/workingdir} && curl -L https://foundry.paradigm.xyz | bash || true && foundryup",
     "test": "concurrently 'npm:test:*' --group -c auto",
+    "test:deps": "pnpm audit",
     "test:expo": "expo-doctor",
     "test:build": "expo export --platform web",
     "test:ts:expo": "tsc",
