@@ -38,23 +38,6 @@ export default function Home() {
             </Text>
           </InfoCard>
           <InfoCard
-            title="Available to spend"
-            renderAction={
-              <Pressable>
-                <View flexDirection="row" gap={2} alignItems="center">
-                  <Text color="$interactiveTextBrandDefault" emphasized footnote>
-                    Manage
-                  </Text>
-                  <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
-                </View>
-              </Pressable>
-            }
-          >
-            <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
-              No funds to spend.
-            </Text>
-          </InfoCard>
-          <InfoCard
             title="Upcoming installments"
             renderAction={
               <Pressable>
