@@ -1,5 +1,4 @@
 import { CircleDollarSign, Coins, Info } from "@tamagui/lucide-icons";
-import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -25,10 +24,6 @@ const StyledAction = styled(View, {
   justifyContent: "space-between",
   flexBasis: "50%",
 });
-
-function manage() {
-  router.push("/");
-}
 
 export default function Payments() {
   const { address } = useAccount();
@@ -80,7 +75,7 @@ export default function Payments() {
                   <View gap={ms(10)}>
                     <Coins size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                     <Text fontSize={ms(15)}>Auto-pay</Text>
-                    <Switch backgroundColor="$backgroundMild" borderColor="$borderNeutralSoft">
+                    <Switch disabled backgroundColor="$backgroundMild" borderColor="$borderNeutralSoft">
                       <Switch.Thumb
                         animation="quicker"
                         backgroundColor="$backgroundSoft"
@@ -91,11 +86,13 @@ export default function Payments() {
                 </Pressable>
               </StyledAction>
               <StyledAction>
-                <Pressable onPress={manage}>
+                <Pressable>
                   <View gap={ms(10)}>
-                    <CircleDollarSign size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
-                    <Text fontSize={ms(15)}>Collateral</Text>
-                    <Text color="$interactiveBaseBrandDefault" fontSize={ms(15)} fontWeight="bold">
+                    <CircleDollarSign size={ms(24)} color="$interactiveDisabled" fontWeight="bold" />
+                    <Text fontSize={ms(15)} color="$interactiveDisabled">
+                      Collateral
+                    </Text>
+                    <Text color="$interactiveDisabled" fontSize={ms(15)} fontWeight="bold">
                       Manage
                     </Text>
                   </View>

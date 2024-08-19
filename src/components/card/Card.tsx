@@ -77,10 +77,13 @@ export default function Card() {
               <StyledAction>
                 <Pressable>
                   <View gap={ms(10)}>
-                    <Snowflake size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
-                    <Text fontSize={ms(15)}>Freeze</Text>
-                    <Switch backgroundColor="$backgroundMild" borderColor="$borderNeutralSoft">
+                    <Snowflake size={ms(24)} color="$interactiveDisabled" fontWeight="bold" />
+                    <Text fontSize={ms(15)} color="$interactiveDisabled">
+                      Freeze
+                    </Text>
+                    <Switch disabled backgroundColor="$backgroundMild" borderColor="$borderNeutralSoft">
                       <Switch.Thumb
+                        disabled
                         animation="quicker"
                         backgroundColor="$backgroundSoft"
                         shadowColor="$uiNeutralPrimary"
