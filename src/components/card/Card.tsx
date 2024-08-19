@@ -166,9 +166,9 @@ export default function Card() {
               }
             >
               <View gap={ms(20)}>
-                <SpendingLimitButton title="Daily" amount={324.87} limit={500} currency="$" />
-                <SpendingLimitButton title="Weekly" amount={1000} limit={2000} currency="$" />
-                <SpendingLimitButton title="Monthly" amount={4713.64} limit={9000} currency="$" />
+                <SpendingLimitButton title="Daily" limit={1000} />
+                <SpendingLimitButton title="Weekly" limit={3000} />
+                <SpendingLimitButton title="Monthly" limit={5000} />
               </View>
 
               <View borderTopWidth={1} borderTopColor="$borderNeutralSeparator" paddingTop={ms(20)}>
