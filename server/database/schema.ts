@@ -6,6 +6,8 @@ const bytea = customType<{ data: Uint8Array; driverData: string }>({ dataType: (
 export const credentials = pgTable("credentials", {
   id: text("id").primaryKey(),
   publicKey: bytea("public_key").notNull(),
+  factory: text("factory").notNull(),
+  account: text("account").notNull(),
   transports: text("transports").array(),
   counter: integer("counter").notNull(),
   kycId: text("kyc_id"),

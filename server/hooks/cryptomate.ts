@@ -23,13 +23,13 @@ import {
   encodeFunctionData,
   erc20Abi,
   type Hash,
+  isAddress,
   nonceManager,
   padHex,
 } from "viem";
 
 import database, { cards, credentials, transactions } from "../database/index";
 import { iExaAccountAbi as exaAccountAbi, marketUSDCAddress, usdcAddress } from "../generated/contracts";
-import deriveAddress from "../utils/deriveAddress";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 import signTransactionSync, { signerAddress } from "../utils/signTransactionSync";
 
@@ -98,22 +98,23 @@ app.post(
     setTag("cryptomate.status", payload.status);
     setContext("cryptomate", payload);
     const [credential] = await database
-      .select({ id: credentials.id, publicKey: credentials.publicKey })
+      .select({ id: credentials.id, account: credentials.account })
       .from(cards)
       .leftJoin(credentials, eq(cards.credentialId, credentials.id))
       .where(eq(cards.id, payload.data.card_id))
       .limit(1);
-    if (!credential?.id || !credential.publicKey) return c.json({ response_code: "05" }, 404);
+    if (!credential?.id || !credential.account || !isAddress(credential.account, { strict: false })) {
+      return c.json({ response_code: "05" }, 404);
+    }
 
-    const accountAddress = deriveAddress(credential.publicKey);
-    setUser({ id: accountAddress, username: credential.id });
+    setUser({ id: credential.account, username: credential.id });
     const call = {
       functionName: "borrow",
       args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
     } as const;
     const transaction = {
       from: signerAddress,
-      to: accountAddress,
+      to: credential.account,
       data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
     } as const;
 

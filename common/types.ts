@@ -1,5 +1,14 @@
 import { type InferOutput, custom, email, number, object, pipe, regex, string } from "valibot";
-import { type Hash as ViemHash, type Hex as ViemHex, isHash, isHex } from "viem";
+import {
+  type Address as ViemAddress,
+  type Hash as ViemHash,
+  type Hex as ViemHex,
+  isAddress,
+  isHash,
+  isHex,
+} from "viem";
+
+export const Address = custom<ViemAddress>(isAddress as (address: unknown) => address is ViemAddress);
 
 export const Base64URL = pipe(string(), regex(/^[\w-]+$/));
 
@@ -7,7 +16,7 @@ export const Hash = custom<ViemHash>(isHash as (hash: unknown) => hash is ViemHa
 
 export const Hex = custom<ViemHex>(isHex);
 
-export const Passkey = object({ credentialId: Base64URL, x: Hash, y: Hash });
+export const Passkey = object({ credentialId: Base64URL, factory: Address, x: Hash, y: Hash });
 
 export const CreateCardParameters = object({
   cardholder: string(),
@@ -17,6 +26,7 @@ export const CreateCardParameters = object({
 });
 
 /* eslint-disable @typescript-eslint/no-redeclare */
+export type Address = InferOutput<typeof Address>;
 export type Base64URL = InferOutput<typeof Base64URL>;
 export type Hash = InferOutput<typeof Hash>;
 export type Hex = InferOutput<typeof Hex>;

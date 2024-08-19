@@ -44,7 +44,7 @@ alchemyConnector.type = "alchemy" as const;
 export default function alchemyConnector(publicClient: ClientWithAlchemyMethods) {
   let accountClient: SmartAccountClient<Transport, Chain, SmartContractAccount<"WebauthnAccount", "0.6.0">> | undefined;
 
-  async function createAccountClient({ credentialId, x, y }: Passkey) {
+  async function createAccountClient({ credentialId, factory, x, y }: Passkey) {
     const transport = custom(publicClient);
     return createSmartAccountClient({
       chain,
@@ -54,7 +54,7 @@ export default function alchemyConnector(publicClient: ClientWithAlchemyMethods)
         transport,
         source: "WebauthnAccount" as const,
         entryPoint: getEntryPoint(chain, { version: "0.6.0" }),
-        getAccountInitCode: () => Promise.resolve(accountInitCode({ x, y })),
+        getAccountInitCode: () => Promise.resolve(accountInitCode({ factory, x, y })),
         getDummySignature: () => "0x",
         async signUserOperationHash(uoHash) {
           const credential = await get({

@@ -1,10 +1,10 @@
-import { concatHex, encodeFunctionData, hexToBigInt, type Hash } from "viem";
+import { type Address, concatHex, encodeFunctionData, type Hash, hexToBigInt } from "viem";
 
-import { exaAccountFactoryAbi, exaAccountFactoryAddress } from "./generated/chain";
+import { exaAccountFactoryAbi } from "./generated/chain";
 
-export default function accountInitCode({ x, y }: { x: Hash; y: Hash }) {
+export default function accountInitCode({ factory, x, y }: { factory: Address; x: Hash; y: Hash }) {
   return concatHex([
-    exaAccountFactoryAddress,
+    factory,
     encodeFunctionData({
       abi: exaAccountFactoryAbi,
       functionName: "createAccount",

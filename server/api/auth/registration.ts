@@ -1,4 +1,5 @@
 import domain from "@exactly/common/domain";
+import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
 import { Base64URL } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
@@ -12,6 +13,7 @@ import type { Hash } from "viem";
 import database, { credentials } from "../../database";
 import authSecret from "../../utils/authSecret";
 import decodePublicKey from "../../utils/decodePublicKey";
+import deriveAddress from "../../utils/deriveAddress";
 import expectedOrigin from "../../utils/expectedOrigin";
 import redis from "../../utils/redis";
 
@@ -97,15 +99,20 @@ app.post(
     const expires = new Date(Date.now() + 24 * 60 * 60_000);
     await Promise.all([
       setSignedCookie(c, "credential_id", credentialID, authSecret, { domain, expires, httpOnly: true }),
-      database
-        .insert(credentials)
-        .values([
-          { id: credentialID, publicKey: credentialPublicKey, transports: attestation.response.transports, counter },
-        ]),
+      database.insert(credentials).values([
+        {
+          id: credentialID,
+          publicKey: credentialPublicKey,
+          factory: exaAccountFactoryAddress,
+          account: deriveAddress(exaAccountFactoryAddress, credentialPublicKey),
+          transports: attestation.response.transports,
+          counter,
+        },
+      ]),
       redis.del(userId),
     ]);
 
-    return c.json({ credentialId: credentialID, x, y, auth: expires.getTime() });
+    return c.json({ credentialId: credentialID, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() });
   },
 );
 
