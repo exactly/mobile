@@ -7,7 +7,6 @@ import { ScrollView } from "tamagui";
 import Balance from "./Balance";
 import HomeActions from "./HomeActions";
 import InfoCard from "./InfoCard";
-import LatestActivity from "./LatestActivity";
 import ProfileHeader from "../shared/ProfileHeader";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -71,22 +70,6 @@ export default function Home() {
             <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
               There are no installments to show yet.
             </Text>
-          </InfoCard>
-
-          <InfoCard
-            title="Latest activity"
-            renderAction={
-              <Pressable>
-                <View flexDirection="row" gap={2} alignItems="center">
-                  <Text color="$interactiveTextBrandDefault" emphasized footnote>
-                    View all
-                  </Text>
-                  <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
-                </View>
-              </Pressable>
-            }
-          >
-            <LatestActivity />
           </InfoCard>
         </View>
       </ScrollView>
