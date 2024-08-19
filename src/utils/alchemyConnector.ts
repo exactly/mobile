@@ -11,8 +11,8 @@ import {
 } from "@alchemy/aa-core";
 import accountInitCode from "@exactly/common/accountInitCode";
 import alchemyGasPolicyId from "@exactly/common/alchemyGasPolicyId";
-import chain from "@exactly/common/chain";
 import domain from "@exactly/common/domain";
+import chain from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/types";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";

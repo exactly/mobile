@@ -1,3 +1,4 @@
+import { auditorAddress } from "@exactly/common/generated/chain";
 import { setStringAsync } from "expo-clipboard";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
@@ -6,7 +7,6 @@ import { erc20Abi, zeroAddress } from "viem";
 import { useAccount, useBalance, useSimulateContract, useWriteContract } from "wagmi";
 
 import {
-  auditorAddress,
   marketUSDCAddress,
   usdcAddress,
   useSimulateAuditorEnterMarket,

@@ -1,5 +1,5 @@
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
-import chain from "@exactly/common/chain";
+import chain from "@exactly/common/generated/chain";
 import { type CallParameters, createPublicClient, formatTransactionRequest, type Hash, type Hex, http } from "viem";
 
 if (!chain.rpcUrls.alchemy?.http[0]) throw new Error("missing alchemy rpc url");

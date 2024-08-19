@@ -1,4 +1,4 @@
-import { exaAccountFactoryAddress } from "@exactly/common/generated/contracts";
+import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
 import { checksumAddress, encodeAbiParameters, encodePacked, keccak256, slice } from "viem";
 
 import decodePublicKey from "./decodePublicKey";

@@ -1,4 +1,4 @@
-import chain from "@exactly/common/chain";
+import chain from "@exactly/common/generated/chain";
 import { Hash } from "@exactly/common/types";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { parse } from "valibot";

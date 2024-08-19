@@ -1,6 +1,6 @@
 FROM node:22.6.0-slim AS base
 
-ARG EXPO_PUBLIC_CHAIN_ID="11155420"
+ARG CHAIN_ID="11155420"
 
 FROM base AS build
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

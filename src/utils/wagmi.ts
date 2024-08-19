@@ -1,6 +1,6 @@
 import { createAlchemyPublicRpcClient } from "@alchemy/aa-alchemy";
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
-import chain from "@exactly/common/chain";
+import chain from "@exactly/common/generated/chain";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createConfig, createStorage, custom } from "wagmi";
 

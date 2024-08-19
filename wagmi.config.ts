@@ -1,10 +1,12 @@
-import chain from "@exactly/common/chain";
 import { defineConfig, type Plugin } from "@wagmi/cli";
 import { actions, foundry, react } from "@wagmi/cli/plugins";
 import { type Abi, getAddress } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
-const network = { [optimism.id]: "optimism", [optimismSepolia.id]: "op-sepolia" }[chain.id] ?? chain.name;
+const chainId = Number(process.env.CHAIN_ID ?? "11155420");
+
+const network = { [optimism.id]: "optimism", [optimismSepolia.id]: "op-sepolia" }[chainId];
+if (!network) throw new Error("unknown chain id");
 
 const [
   auditor,
@@ -21,7 +23,7 @@ const [
   import(`@exactly/protocol/deployments/${network}/MarketWETH.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/Previewer.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/USDC.json`) as Promise<Deployment>,
-  import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(chain.id)}/run-latest.json`) as Promise<DeployBroadcast>,
+  import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(chainId)}/run-latest.json`) as Promise<DeployBroadcast>,
 ]);
 
 export default defineConfig([
@@ -34,7 +36,6 @@ export default defineConfig([
     ],
     plugins: [
       addresses({
-        auditor: auditor.address,
         marketUSDC: marketUSDC.address,
         marketWETH: marketWETH.address,
         previewer: previewer.address,
@@ -52,14 +53,15 @@ export default defineConfig([
     ],
   },
   {
-    out: "common/generated/contracts.ts",
+    out: "common/generated/chain.ts",
     contracts: [
       { name: "Auditor", abi: auditor.abi },
       { name: "Market", abi: marketWETH.abi },
     ],
     plugins: [
-      addresses({ exaAccountFactory: factory.contractAddress }),
+      addresses({ auditor: auditor.address, exaAccountFactory: factory.contractAddress }),
       foundry({ project: "contracts", include: ["ExaAccountFactory.sol/**"] }),
+      chain(),
     ],
   },
 ]);
@@ -69,10 +71,16 @@ function addresses(contracts: Record<string, string>): Plugin {
     name: "Addresses",
     run: () => ({
       content: `${Object.entries(contracts)
-        .map(([key, value]) => `export const ${key}Address = "${getAddress(value)}" as const;`)
+        .map(([key, value]) => `export const ${key}Address = "${getAddress(value)}" as const`)
         .join("\n")}\n`,
     }),
   };
+}
+
+function chain(): Plugin {
+  const importName = { [optimism.id]: "optimism", [optimismSepolia.id]: "optimismSepolia" }[chainId];
+  if (!importName) throw new Error("unknown chain id");
+  return { name: "Chain", run: () => ({ content: `export { ${importName} as default } from "@alchemy/aa-core"` }) };
 }
 
 interface Deployment {

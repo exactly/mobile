@@ -7,8 +7,8 @@ envs:
   - key: APP_DOMAIN
     scope: RUN_AND_BUILD_TIME
     value: ${APP_DOMAIN}
-  - key: EXPO_PUBLIC_CHAIN_ID
-    scope: RUN_AND_BUILD_TIME
+  - key: CHAIN_ID
+    scope: BUILD_TIME
     value: "10"
   - key: EXPO_PUBLIC_ALCHEMY_API_KEY
     scope: RUN_AND_BUILD_TIME

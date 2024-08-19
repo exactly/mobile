@@ -11,7 +11,7 @@
         "image": "latest"
       },
       "env": {
-        "EXPO_PUBLIC_CHAIN_ID": "10",
+        "CHAIN_ID": "10",
         "APP_DOMAIN": "web.exactly.app"
       }
     },

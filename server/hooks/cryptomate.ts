@@ -1,4 +1,4 @@
-import chain from "@exactly/common/chain";
+import chain from "@exactly/common/generated/chain";
 import { Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import {
