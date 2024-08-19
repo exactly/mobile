@@ -32,6 +32,7 @@ export default function UpcomingPayments() {
       }
     }
   }
+  const payments = [...duePayments];
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s6">
       <View flexDirection="row" gap="$s3" alignItems="center" justifyContent="space-between">
@@ -39,9 +40,16 @@ export default function UpcomingPayments() {
           Next payments
         </Text>
       </View>
-      {[...duePayments].map(([maturity, amount], index) => (
-        <ListItem key={index} maturity={maturity} amount={amount} />
-      ))}
+
+      {payments.length > 0 ? (
+        payments.map(([maturity, amount], index) => <ListItem key={index} maturity={maturity} amount={amount} />)
+      ) : (
+        <View>
+          <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
+            There are no fixed payments due.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
