@@ -8,9 +8,8 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import NextPayment from "./NextPayment";
-import PaymentHistory from "./PaymentHistory";
 import UpcomingPayments from "./UpcomingPayments";
-import { previewerAddress, useReadPreviewerExactly } from "../../generated/contracts";
+import { previewerAddress, usdcAddress, useReadPreviewerExactly } from "../../generated/contracts";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -40,14 +39,12 @@ export default function Payments() {
   });
   let usdDue = 0n;
   if (markets) {
-    for (const market of markets) {
-      if (market.fixedBorrowPositions.length > 0) {
-        for (const { position } of market.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {
-          usdDue += ((position.principal + position.fee) * market.usdPrice) / 10n ** BigInt(market.decimals);
-        }
-      }
-      if (market.floatingBorrowAssets > 0n) {
-        usdDue += (market.floatingBorrowAssets * market.usdPrice) / 10n ** BigInt(market.decimals);
+    const usdcMarket = markets.find(
+      (market): market is NonNullable<typeof markets>[number] => market.asset === usdcAddress,
+    );
+    if (usdcMarket && usdcMarket.fixedBorrowPositions.length > 0) {
+      for (const { position } of usdcMarket.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {
+        usdDue += ((position.principal + position.fee) * usdcMarket.usdPrice) / 10n ** BigInt(usdcMarket.decimals);
       }
     }
   }
@@ -110,7 +107,6 @@ export default function Payments() {
         <View padded gap="$s6">
           <NextPayment />
           <UpcomingPayments />
-          <PaymentHistory />
         </View>
       </ScrollView>
     </SafeView>

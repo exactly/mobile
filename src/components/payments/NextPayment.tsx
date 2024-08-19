@@ -1,19 +1,12 @@
-import { Coins, FileText, IterationCw } from "@tamagui/lucide-icons";
+import { Coins, FileText } from "@tamagui/lucide-icons";
 import { formatDistanceToNow, intlFormat } from "date-fns";
-import React, { useCallback } from "react";
+import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { maxUint256, zeroAddress } from "viem";
-import { useAccount, useWriteContract } from "wagmi";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
-import {
-  debtManagerAddress,
-  marketUSDCAddress,
-  previewerAddress,
-  useReadPreviewerExactly,
-  useSimulateDebtManagerRollFixedToFloating,
-  useSimulateMarketApprove,
-} from "../../generated/contracts";
+import { previewerAddress, usdcAddress, useReadPreviewerExactly } from "../../generated/contracts";
 import WAD from "../../utils/WAD";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
@@ -26,48 +19,28 @@ export default function NextPayment() {
     account: address,
     args: [address ?? zeroAddress],
   });
+
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (markets) {
-    for (const { fixedBorrowPositions, usdPrice, decimals } of markets) {
+    const usdcMarket = markets.find(
+      (market): market is NonNullable<typeof markets>[number] => market.asset === usdcAddress,
+    );
+    if (usdcMarket) {
+      const { fixedBorrowPositions, usdPrice, decimals } = usdcMarket;
       for (const { maturity, previewValue, position } of fixedBorrowPositions) {
         if (!previewValue) continue;
-        const payment = usdDue.get(maturity);
-        const preview = (payment?.previewValue ?? 0n) + (previewValue * usdPrice) / 10n ** BigInt(decimals);
-        if (payment) {
-          payment.previewValue += preview;
-          payment.position += ((position.principal + position.fee) * usdPrice) / 10n ** BigInt(decimals);
-        } else {
-          usdDue.set(maturity, {
-            previewValue: preview,
-            position: ((position.principal + position.fee) * usdPrice) / 10n ** BigInt(decimals),
-          });
-        }
+        const preview = (previewValue * usdPrice) / 10n ** BigInt(decimals);
+        const positionValue = ((position.principal + position.fee) * usdPrice) / 10n ** BigInt(decimals);
+        usdDue.set(maturity, {
+          previewValue: preview,
+          position: positionValue,
+        });
       }
     }
   }
+
   const maturity = usdDue.keys().next().value as bigint | undefined;
   const duePayment = usdDue.get(maturity ?? 0n);
-
-  const { data: approveSimulation } = useSimulateMarketApprove({
-    address: marketUSDCAddress,
-    args: [debtManagerAddress, maxUint256],
-  });
-  const { data: rolloverSimulation } = useSimulateDebtManagerRollFixedToFloating({
-    address: debtManagerAddress,
-    args: [marketUSDCAddress, maturity ?? 0n, maxUint256, WAD],
-  });
-
-  const { writeContract: approve } = useWriteContract();
-  const { writeContract: rollover } = useWriteContract();
-
-  const approveMarket = useCallback(() => {
-    if (!approveSimulation) throw new Error("no approve simulation");
-    approve(approveSimulation.request);
-  }, [approve, approveSimulation]);
-  const rollFixedToFloating = useCallback(() => {
-    if (!rolloverSimulation) throw new Error("no rollover simulation");
-    rollover(rolloverSimulation.request);
-  }, [rollover, rolloverSimulation]);
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s5">
       {maturity ? (
@@ -136,25 +109,7 @@ export default function NextPayment() {
                 <Button contained main spaced halfWidth iconAfter={<Coins color="$interactiveOnBaseBrandDefault" />}>
                   Pay
                 </Button>
-                <Button
-                  outlined
-                  main
-                  spaced
-                  halfWidth
-                  iconAfter={
-                    <IterationCw
-                      color={rolloverSimulation ? "$interactiveOnBaseBrandSoft" : "$interactiveOnDisabled"}
-                    />
-                  }
-                  onPress={rollFixedToFloating}
-                  disabled={!rolloverSimulation}
-                >
-                  Rollover
-                </Button>
               </View>
-              <Button outlined main spaced onPress={approveMarket} disabled={!approveSimulation}>
-                Approve
-              </Button>
             </View>
           )}
         </>
