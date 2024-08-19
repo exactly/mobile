@@ -5,6 +5,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
 import Balance from "./Balance";
+import CreditLimit from "./CreditLimit";
 import HomeActions from "./HomeActions";
 import InfoCard from "./InfoCard";
 import ProfileHeader from "../shared/ProfileHeader";
@@ -20,23 +21,7 @@ export default function Home() {
         <View gap={ms(20)} flex={1} padded>
           <Balance />
           <HomeActions />
-          <InfoCard
-            title="Credit limit"
-            renderAction={
-              <Pressable>
-                <View flexDirection="row" gap={2} alignItems="center">
-                  <Text color="$interactiveTextBrandDefault" emphasized footnote>
-                    Manage
-                  </Text>
-                  <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
-                </View>
-              </Pressable>
-            }
-          >
-            <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
-              Learn more about your credit limit.
-            </Text>
-          </InfoCard>
+          <CreditLimit />
           <InfoCard
             title="Upcoming installments"
             renderAction={
