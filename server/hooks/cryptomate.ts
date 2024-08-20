@@ -30,8 +30,8 @@ import {
 
 import database, { cards, credentials, transactions } from "../database/index";
 import { iExaAccountAbi as exaAccountAbi, marketUSDCAddress, usdcAddress } from "../generated/contracts";
+import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
-import signTransactionSync, { signerAddress } from "../utils/signTransactionSync";
 
 const debug = createDebug("exa:server:event");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
@@ -113,7 +113,7 @@ app.post(
       args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
     } as const;
     const transaction = {
-      from: signerAddress,
+      from: keeperAddress,
       to: credential.account,
       data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
     } as const;
@@ -147,7 +147,7 @@ app.post(
         if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
         const nonce = await startSpan({ name: "tx.nonce", op: "tx.nonce" }, () =>
-          nonceManager.consume({ address: signerAddress, chainId: chain.id, client: publicClient }),
+          nonceManager.consume({ address: keeperAddress, chainId: chain.id, client: publicClient }),
         );
         setContext("tx", { nonce });
         const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
