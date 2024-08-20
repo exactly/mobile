@@ -1,4 +1,6 @@
+import type { Passkey } from "@exactly/common/types";
 import { ArrowRight } from "@tamagui/lucide-icons";
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { StyleProp, ViewStyle, ViewToken } from "react-native";
@@ -23,6 +25,10 @@ import exaCardBlob from "../../assets/images/exa-card-blob.svg";
 import exaCard from "../../assets/images/exa-card.svg";
 import qrCodeBlob from "../../assets/images/qr-code-blob.svg";
 import qrCode from "../../assets/images/qr-code.svg";
+import handleError from "../../utils/handleError";
+import queryClient from "../../utils/queryClient";
+import { getPasskey } from "../../utils/server";
+import storePasskey from "../../utils/storePasskey";
 import ActionButton from "../shared/ActionButton";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -59,6 +65,11 @@ const pages: [Page, ...Page[]] = [
     title: "In-store QR payments, with crypto",
   },
 ];
+
+async function handleRecovery() {
+  queryClient.setQueryData(["passkey"], await storePasskey(await getPasskey()));
+  router.push("/onboarding/success");
+}
 
 export default function Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -181,7 +192,11 @@ export default function Carousel() {
             </View>
 
             <View flexDirection="row" justifyContent="center">
-              <Pressable>
+              <Pressable
+                onPress={() => {
+                  handleRecovery().catch(handleError);
+                }}
+              >
                 <Text fontSize={ms(13)} textAlign="center" fontWeight="bold" color="$interactiveBaseBrandDefault">
                   Recover an existing account
                 </Text>
