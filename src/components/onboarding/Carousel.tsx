@@ -1,6 +1,4 @@
-import type { Passkey } from "@exactly/common/types";
 import { ArrowRight } from "@tamagui/lucide-icons";
-import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { StyleProp, ViewStyle, ViewToken } from "react-native";
@@ -28,7 +26,6 @@ import qrCode from "../../assets/images/qr-code.svg";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import { getPasskey } from "../../utils/server";
-import storePasskey from "../../utils/storePasskey";
 import ActionButton from "../shared/ActionButton";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -67,7 +64,7 @@ const pages: [Page, ...Page[]] = [
 ];
 
 async function handleRecovery() {
-  queryClient.setQueryData(["passkey"], await storePasskey(await getPasskey()));
+  queryClient.setQueryData(["passkey"], await getPasskey());
   router.push("/onboarding/success");
 }
 

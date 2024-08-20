@@ -1,12 +1,11 @@
 import domain from "@exactly/common/domain";
 import type { Base64URL, Passkey } from "@exactly/common/types";
-import { persistQueryClientSave } from "@tanstack/query-persist-client-core";
 import { Platform } from "react-native";
 import { type create, get } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 import { check, number, parse, pipe } from "valibot";
 
-import queryClient, { persister } from "./queryClient";
+import queryClient from "./queryClient";
 
 export function registrationOptions() {
   return server<Parameters<typeof create>[0]>("/auth/registration");
@@ -24,7 +23,6 @@ export async function verifyRegistration({
     { body: attestation },
   );
   await queryClient.setQueryData(["auth"], parse(Auth, expires));
-  await persistQueryClientSave({ queryClient, persister });
   return passkey;
 }
 
@@ -59,7 +57,6 @@ async function auth<T = unknown>(url: `/${string}`, body?: unknown, method?: "GE
       body: assertion,
     });
     await queryClient.setQueryData(["auth"], parse(Auth, expires));
-    await persistQueryClientSave({ queryClient, persister });
   }
 
   return server<T>(url, { method, body, credentials: "include" });
