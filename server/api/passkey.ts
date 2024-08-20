@@ -13,10 +13,10 @@ app.get("/", async (c) => {
   const credentialId = c.get("credentialId");
   const credential = await database.query.credentials.findFirst({
     where: eq(credentials.id, credentialId),
-    columns: { publicKey: true },
+    columns: { publicKey: true, factory: true },
   });
   if (!credential) return c.text("credential not found", 401);
-  return c.json(decodePublicKey(credential.publicKey));
+  return c.json({ credentialId, factory: credential.factory, ...decodePublicKey(credential.publicKey) });
 });
 
 export default app;
