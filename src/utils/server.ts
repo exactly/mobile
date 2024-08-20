@@ -6,7 +6,6 @@ import { type create, get } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 import { check, number, parse, pipe } from "valibot";
 
-import loadPasskey from "./loadPasskey";
 import queryClient, { persister } from "./queryClient";
 
 export function registrationOptions() {
@@ -45,13 +44,16 @@ async function auth<T = unknown>(url: `/${string}`, body?: unknown, method?: "GE
   try {
     parse(Auth, queryClient.getQueryData(["auth"]));
   } catch {
-    const { credentialId } = await loadPasskey();
-    const query = `?credentialId=${credentialId}`;
-    const options = await server<Parameters<typeof get>[0]>(`/auth/authentication${query}`);
+    const credentialId = queryClient.getQueryData<Passkey>(["passkey"])?.credentialId;
+    const options = await server<Parameters<typeof get>[0]>(
+      `/auth/authentication${credentialId ? `?credentialId=${credentialId}` : ""}`,
+    );
     if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
     const assertion = await get(options);
     if (!assertion) throw new Error("bad assertion");
-    const { expires } = await server<{ expires: number }>(`/auth/authentication${query}`, { body: assertion });
+    const { expires } = await server<{ expires: number }>(`/auth/authentication?credentialId=${assertion.id}`, {
+      body: assertion,
+    });
     await queryClient.setQueryData(["auth"], parse(Auth, expires));
     await persistQueryClientSave({ queryClient, persister });
   }

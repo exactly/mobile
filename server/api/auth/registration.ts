@@ -4,9 +4,9 @@ import { Base64URL } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
-import { cose } from "@simplewebauthn/server/helpers";
+import { cose, generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
 import { Hono } from "hono";
-import { setSignedCookie } from "hono/cookie";
+import { setCookie, setSignedCookie } from "hono/cookie";
 import { any, array, literal, looseObject, nullish, object, picklist, pipe, transform } from "valibot";
 import type { Hash } from "viem";
 
@@ -21,24 +21,28 @@ const app = new Hono();
 
 app.get("/", async (c) => {
   const timeout = 5 * 60_000;
-  const options = await generateRegistrationOptions({
-    rpID: domain,
-    rpName: "exactly",
-    userName: "user", // TODO change username
-    userDisplayName: "user", // TODO change display name
-    supportedAlgorithmIDs: [cose.COSEALG.ES256],
-    authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
-    // TODO excludeCredentials?
-    timeout,
-  });
-  await redis.set(options.user.id, options.challenge, "PX", timeout);
+  const [options, sessionId] = await Promise.all([
+    generateRegistrationOptions({
+      rpID: domain,
+      rpName: "exactly",
+      userName: "user", // TODO change username
+      userDisplayName: "user", // TODO change display name
+      supportedAlgorithmIDs: [cose.COSEALG.ES256],
+      authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
+      // TODO excludeCredentials?
+      timeout,
+    }),
+    generateChallenge().then(isoBase64URL.fromBuffer),
+  ]);
+  setCookie(c, "session_id", sessionId, { domain, expires: new Date(Date.now() + timeout), httpOnly: true });
+  await redis.set(sessionId, options.challenge, "PX", timeout);
   return c.json(options);
 });
 
 app.post(
   "/",
-  vValidator("query", object({ userId: Base64URL }), ({ success }, c) => {
-    if (!success) return c.text("bad user", 400);
+  vValidator("cookie", object({ session_id: Base64URL }), ({ success }, c) => {
+    if (!success) return c.text("bad session", 400);
   }),
   vValidator(
     "json",
@@ -65,8 +69,8 @@ app.post(
     },
   ),
   async (c) => {
-    const { userId } = c.req.valid("query");
-    const challenge = await redis.get(userId);
+    const { session_id: sessionId } = c.req.valid("cookie");
+    const challenge = await redis.get(sessionId);
     if (!challenge) return c.text("no registration", 400);
 
     const attestation = c.req.valid("json");
@@ -82,6 +86,8 @@ app.post(
     } catch (error) {
       captureException(error);
       return c.text(error instanceof Error ? error.message : String(error), 400);
+    } finally {
+      await redis.del(sessionId);
     }
     const { verified, registrationInfo } = verification;
     if (!verified || !registrationInfo) return c.text("bad registration", 400);
@@ -109,7 +115,6 @@ app.post(
           counter,
         },
       ]),
-      redis.del(userId),
     ]);
 
     return c.json({ credentialId: credentialID, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() });

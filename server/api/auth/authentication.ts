@@ -3,11 +3,12 @@ import { Base64URL } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
+import { generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { setSignedCookie } from "hono/cookie";
-import { any, literal, looseObject, object } from "valibot";
+import { setCookie, setSignedCookie } from "hono/cookie";
+import { any, literal, looseObject, object, optional } from "valibot";
 
 import database, { credentials } from "../../database";
 import authSecret from "../../utils/authSecret";
@@ -16,25 +17,36 @@ import redis from "../../utils/redis";
 
 const app = new Hono();
 
-const queryValidator = vValidator("query", object({ credentialId: Base64URL }), ({ success }, c) => {
-  if (!success) return c.text("bad credential", 400);
-});
-
-app.get("/", queryValidator, async (c) => {
-  const timeout = 5 * 60_000;
-  const { credentialId } = c.req.valid("query");
-  const options = await generateAuthenticationOptions({
-    rpID: domain,
-    allowCredentials: [{ id: credentialId }],
-    timeout,
-  });
-  await redis.set(credentialId, options.challenge, "PX", timeout);
-  return c.json(options);
-});
+app.get(
+  "/",
+  vValidator("query", object({ credentialId: optional(Base64URL) }), ({ success }, c) => {
+    if (!success) return c.text("bad credential", 400);
+  }),
+  async (c) => {
+    const timeout = 5 * 60_000;
+    const { credentialId } = c.req.valid("query");
+    const [options, sessionId] = await Promise.all([
+      generateAuthenticationOptions({
+        rpID: domain,
+        allowCredentials: credentialId ? [{ id: credentialId }] : undefined,
+        timeout,
+      }),
+      generateChallenge().then(isoBase64URL.fromBuffer),
+    ]);
+    setCookie(c, "session_id", sessionId, { domain, expires: new Date(Date.now() + timeout), httpOnly: true });
+    await redis.set(sessionId, options.challenge, "PX", timeout);
+    return c.json(options);
+  },
+);
 
 app.post(
   "/",
-  queryValidator,
+  vValidator("query", object({ credentialId: Base64URL }), ({ success }, c) => {
+    if (!success) return c.text("bad credential", 400);
+  }),
+  vValidator("cookie", object({ session_id: Base64URL }), ({ success }, c) => {
+    if (!success) return c.text("bad session", 400);
+  }),
   vValidator(
     "json",
     looseObject({
@@ -54,9 +66,10 @@ app.post(
   ),
   async (c) => {
     const { credentialId } = c.req.valid("query");
+    const { session_id: sessionId } = c.req.valid("cookie");
     const [credential, challenge] = await Promise.all([
       database.query.credentials.findFirst({ where: eq(credentials.id, credentialId) }),
-      redis.get(credentialId),
+      redis.get(sessionId),
     ]);
     if (!credential) return c.text("unknown credential", 400);
     if (!challenge) return c.text("no authentication", 400);
@@ -78,6 +91,8 @@ app.post(
     } catch (error) {
       captureException(error);
       return c.text(error instanceof Error ? error.message : String(error), 400);
+    } finally {
+      await redis.del(sessionId);
     }
     const {
       verified,
@@ -89,7 +104,6 @@ app.post(
     await Promise.all([
       setSignedCookie(c, "credential_id", credentialId, authSecret, { domain, expires, httpOnly: true }),
       database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID)),
-      redis.del(credentialId),
     ]);
 
     return c.json({ expires: expires.getTime() });
