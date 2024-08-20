@@ -8,7 +8,7 @@
     "test:proto": "protolint ."
   },
   "devDependencies": {
-    "@bufbuild/buf": "^1.36.0",
+    "@bufbuild/buf": "^1.37.0",
     "concurrently": "^8.2.2",
     "protolint": "^0.50.5"
   }
