@@ -40,6 +40,10 @@ export function kycStatus() {
   return auth<boolean>("/kyc");
 }
 
+export function getPasskey() {
+  return auth<Passkey>("/passkey");
+}
+
 async function auth<T = unknown>(url: `/${string}`, body?: unknown, method?: "GET" | "POST") {
   try {
     parse(Auth, queryClient.getQueryData(["auth"]));

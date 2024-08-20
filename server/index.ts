@@ -11,6 +11,7 @@ import authentication from "./api/auth/authentication";
 import registration from "./api/auth/registration";
 import card from "./api/card";
 import kyc from "./api/kyc";
+import passkey from "./api/passkey";
 import cryptomate from "./hooks/cryptomate";
 import androidFingerprint from "./utils/android/fingerprint";
 import appOrigin from "./utils/appOrigin";
@@ -24,6 +25,7 @@ app.route("/api/auth/authentication", authentication);
 app.route("/api/auth/registration", registration);
 app.route("/api/card", card);
 app.route("/api/kyc", kyc);
+app.route("/api/passkey", passkey);
 
 app.route("/hooks/cryptomate", cryptomate);
 

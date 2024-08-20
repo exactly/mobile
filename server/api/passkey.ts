@@ -1,0 +1,22 @@
+import { eq } from "drizzle-orm";
+import { Hono } from "hono";
+
+import database, { credentials } from "../database";
+import auth from "../middleware/auth";
+import decodePublicKey from "../utils/decodePublicKey";
+
+const app = new Hono();
+
+app.use("*", auth);
+
+app.get("/", async (c) => {
+  const credentialId = c.get("credentialId");
+  const credential = await database.query.credentials.findFirst({
+    where: eq(credentials.id, credentialId),
+    columns: { publicKey: true },
+  });
+  if (!credential) return c.text("credential not found", 401);
+  return c.json(decodePublicKey(credential.publicKey));
+});
+
+export default app;
