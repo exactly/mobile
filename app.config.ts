@@ -6,7 +6,7 @@ import type { OneSignalPluginProps } from "onesignal-expo-plugin/types/types";
 
 import metadata from "./package.json";
 
-process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
+if (process.env.APP_DOMAIN) process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
 
 export default {
   name: "exactly",
