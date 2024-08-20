@@ -11,8 +11,9 @@ import { setCookie, setSignedCookie } from "hono/cookie";
 import { any, literal, looseObject, object, optional } from "valibot";
 
 import database, { credentials } from "../../database";
+import androidOrigin from "../../utils/android/origin";
+import appOrigin from "../../utils/appOrigin";
 import authSecret from "../../utils/authSecret";
-import expectedOrigin from "../../utils/expectedOrigin";
 import redis from "../../utils/redis";
 
 const app = new Hono();
@@ -79,7 +80,7 @@ app.post(
       verification = await verifyAuthenticationResponse({
         response: c.req.valid("json"),
         expectedRPID: domain,
-        expectedOrigin: expectedOrigin(c.req.header("user-agent")),
+        expectedOrigin: [appOrigin, androidOrigin],
         expectedChallenge: challenge,
         authenticator: {
           credentialID: credentialId,

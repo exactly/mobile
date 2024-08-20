@@ -11,10 +11,11 @@ import { any, array, literal, looseObject, nullish, object, picklist, pipe, tran
 import type { Hash } from "viem";
 
 import database, { credentials } from "../../database";
+import androidOrigin from "../../utils/android/origin";
+import appOrigin from "../../utils/appOrigin";
 import authSecret from "../../utils/authSecret";
 import decodePublicKey from "../../utils/decodePublicKey";
 import deriveAddress from "../../utils/deriveAddress";
-import expectedOrigin from "../../utils/expectedOrigin";
 import redis from "../../utils/redis";
 
 const app = new Hono();
@@ -79,7 +80,7 @@ app.post(
       verification = await verifyRegistrationResponse({
         response: attestation,
         expectedRPID: domain,
-        expectedOrigin: expectedOrigin(c.req.header("user-agent")),
+        expectedOrigin: [appOrigin, androidOrigin],
         expectedChallenge: challenge,
         supportedAlgorithmIDs: [cose.COSEALG.ES256],
       });
