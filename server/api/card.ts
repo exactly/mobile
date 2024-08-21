@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { parsePhoneNumber } from "libphonenumber-js";
+import { parsePhoneNumberWithError } from "libphonenumber-js";
 
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
@@ -23,8 +23,12 @@ app.get("/", async (c) => {
   if (credential.cards.length > 0) return c.json(await getPAN(credential.cards[0]!.id)); // eslint-disable-line @typescript-eslint/no-non-null-assertion
   const { data } = await getInquiry(credential.kycId);
   if (data.attributes.status !== "approved") return c.json("kyc not approved", 403);
-  const phone = parsePhoneNumber(data.attributes["phone-number"]);
-  const newCard = await createCard({
+  const phone = parsePhoneNumberWithError(
+    data.attributes["phone-number"].startsWith("+")
+      ? data.attributes["phone-number"]
+      : `+${data.attributes["phone-number"]}`,
+  );
+  const card = await createCard({
     cardholder: [data.attributes["name-first"], data.attributes["name-middle"], data.attributes["name-last"]]
       .filter(Boolean)
       .join(" "),
@@ -32,8 +36,8 @@ app.get("/", async (c) => {
     phone: { number: phone.nationalNumber, countryCode: phone.countryCallingCode },
     limits: { daily: 1000, weekly: 3000, monthly: 5000 },
   });
-  await database.insert(cards).values([{ id: newCard.id, credentialId, lastFour: newCard.last4 }]);
-  return c.json(await getPAN(newCard.id));
+  await database.insert(cards).values([{ id: card.id, credentialId, lastFour: card.last4 }]);
+  return c.json(await getPAN(card.id));
 });
 
 export default app;
