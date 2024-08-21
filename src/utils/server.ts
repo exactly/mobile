@@ -30,8 +30,8 @@ export function getCard() {
   return auth<string>("/card");
 }
 
-export function kycOTL() {
-  return auth<string>("/kyc", undefined, "POST");
+export function kyc(inquiryId?: string) {
+  return auth<string>("/kyc", { inquiryId: inquiryId ?? undefined }, "POST");
 }
 
 export function kycStatus() {

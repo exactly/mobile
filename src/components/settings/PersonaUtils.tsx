@@ -1,5 +1,5 @@
 import { A } from "@expo/html-elements";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import { Platform } from "react-native";
 import { Environment, Inquiry } from "react-native-persona";
@@ -7,7 +7,7 @@ import { ms } from "react-native-size-matters";
 import { Spinner } from "tamagui";
 
 import handleError from "../../utils/handleError";
-import { kycOTL, kycStatus } from "../../utils/server";
+import { kyc, kycStatus } from "../../utils/server";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -18,12 +18,11 @@ const templateId = process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID;
 const environment = __DEV__ ? Environment.SANDBOX : Environment.PRODUCTION;
 
 export default function PersonaUtils() {
-  const queryClient = useQueryClient();
   const {
     data: oneTimeLink,
     refetch: fetchOTL,
     isFetching: isFetchingOTL,
-  } = useQuery({ queryKey: ["personaOTL"], enabled: false, queryFn: kycOTL, retry: false });
+  } = useQuery({ queryKey: ["personaOTL"], enabled: false, queryFn: () => kyc(), retry: false });
   const {
     data: passed,
     isFetching: isFetchingStatus,
@@ -40,16 +39,16 @@ export default function PersonaUtils() {
     if (flow === "native") {
       Inquiry.fromTemplate(templateId)
         .environment(environment)
-        .onComplete((inquiryId, status, fields, extraData) => {
-          queryClient.setQueryData(["kycStatus"], true);
-          // TODO update kyc status in db
+        .onComplete((inquiryId) => {
+          if (!inquiryId) throw new Error("no inquiry id");
+          kyc(inquiryId).catch(handleError);
         })
         .onError(handleError)
         .build()
         .start();
-      return;
+    } else {
+      fetchOTL().catch(handleError);
     }
-    fetchOTL().catch(handleError);
   }
 
   useEffect(() => {
