@@ -1,4 +1,4 @@
-import { type BaseIssue, type BaseSchema, literal, object, parse, string } from "valibot";
+import { type BaseIssue, type BaseSchema, literal, nullable, object, parse, string } from "valibot";
 
 import appOrigin from "./appOrigin";
 
@@ -49,7 +49,7 @@ const GetInquiryResponse = object({
     attributes: object({
       status: string(),
       "name-first": string(),
-      "name-middle": string(),
+      "name-middle": nullable(string()),
       "name-last": string(),
       "email-address": string(),
       "phone-number": string(),
