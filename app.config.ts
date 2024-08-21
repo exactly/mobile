@@ -13,20 +13,22 @@ export default {
   slug: "exactly",
   scheme: "exactly",
   version: metadata.version,
-
   icon: "src/assets/icon.png",
   orientation: "portrait",
   assetBundlePatterns: ["**/*"],
   splash: { image: "src/assets/splash.png", resizeMode: "contain" },
-
-  android: { package: "app.exactly", adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" } },
+  android: {
+    package: "app.exactly",
+    adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" },
+    permissions: ["android.permission.CAMERA"],
+  },
   ios: {
     bundleIdentifier: "app.exactly",
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
     supportsTablet: true,
+    infoPlist: { NSCameraUsageDescription: "This app uses the camera to verify your identity." },
   },
   web: { output: "static", favicon: "src/assets/favicon.png" },
-
   plugins: [
     [
       "expo-build-properties",
@@ -62,7 +64,6 @@ export default {
     ],
   ],
   experiments: { typedRoutes: true },
-
   extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
   owner: "exactly",
 } as ExpoConfig;
