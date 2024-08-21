@@ -20,9 +20,7 @@ export default function CreditLimit() {
 
   let creditLimit = 0n;
   if (markets) {
-    const usdcMarket = markets.find(
-      (market): market is NonNullable<typeof markets>[number] => market.asset === usdcAddress,
-    );
+    const usdcMarket = markets.find((market) => market.asset === usdcAddress);
     if (!usdcMarket) return;
     creditLimit = (usdcMarket.maxBorrowAssets * usdcMarket.usdPrice) / 10n ** BigInt(usdcMarket.decimals);
   }

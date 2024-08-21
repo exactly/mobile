@@ -34,13 +34,10 @@ export default function Payments() {
   });
   let usdDue = 0n;
   if (markets) {
-    const usdcMarket = markets.find(
-      (market): market is NonNullable<typeof markets>[number] => market.asset === usdcAddress,
-    );
-    if (usdcMarket && usdcMarket.fixedBorrowPositions.length > 0) {
-      for (const { position } of usdcMarket.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {
-        usdDue += ((position.principal + position.fee) * usdcMarket.usdPrice) / 10n ** BigInt(usdcMarket.decimals);
-      }
+    const usdcMarket = markets.find((market) => market.asset === usdcAddress);
+    if (!usdcMarket) return;
+    for (const { position } of usdcMarket.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {
+      usdDue += ((position.principal + position.fee) * usdcMarket.usdPrice) / 10n ** BigInt(usdcMarket.decimals);
     }
   }
   return (

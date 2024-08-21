@@ -22,20 +22,17 @@ export default function NextPayment() {
 
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (markets) {
-    const usdcMarket = markets.find(
-      (market): market is NonNullable<typeof markets>[number] => market.asset === usdcAddress,
-    );
-    if (usdcMarket) {
-      const { fixedBorrowPositions, usdPrice, decimals } = usdcMarket;
-      for (const { maturity, previewValue, position } of fixedBorrowPositions) {
-        if (!previewValue) continue;
-        const preview = (previewValue * usdPrice) / 10n ** BigInt(decimals);
-        const positionValue = ((position.principal + position.fee) * usdPrice) / 10n ** BigInt(decimals);
-        usdDue.set(maturity, {
-          previewValue: preview,
-          position: positionValue,
-        });
-      }
+    const usdcMarket = markets.find((market) => market.asset === usdcAddress);
+    if (!usdcMarket) return;
+    const { fixedBorrowPositions, usdPrice, decimals } = usdcMarket;
+    for (const { maturity, previewValue, position } of fixedBorrowPositions) {
+      if (!previewValue) continue;
+      const preview = (previewValue * usdPrice) / 10n ** BigInt(decimals);
+      const positionValue = ((position.principal + position.fee) * usdPrice) / 10n ** BigInt(decimals);
+      usdDue.set(maturity, {
+        previewValue: preview,
+        position: positionValue,
+      });
     }
   }
 
