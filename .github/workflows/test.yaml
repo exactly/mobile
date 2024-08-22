@@ -30,15 +30,6 @@ jobs:
           cache-dependency-path: contracts/requirements.txt
       - run: pip install -r contracts/requirements.txt
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: nightly
-          components: clippy, rustfmt
-          target: wasm32-unknown-unknown
-      - run: |
-          LINK=$(curl -s https://api.github.com/repos/streamingfast/substreams/releases/latest | awk "/download.url.*linux_$(uname -m)/ {print \$2}" | sed 's/"//g')
-          curl -L $LINK | tar -xzC /usr/local/bin -f - substreams
-
       - run: pnpm install --frozen-lockfile
       - run: pnpm run --recursive --no-bail build
       - run: pnpm test --recursive --no-bail
