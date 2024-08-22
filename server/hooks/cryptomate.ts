@@ -1,4 +1,8 @@
-import chain from "@exactly/common/generated/chain";
+import chain, {
+  iExaAccountAbi as exaAccountAbi,
+  marketUSDCAddress,
+  usdcAddress,
+} from "@exactly/common/generated/chain";
 import { Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -29,7 +33,6 @@ import {
 } from "viem";
 
 import database, { cards, credentials, transactions } from "../database/index";
-import { iExaAccountAbi as exaAccountAbi, marketUSDCAddress, usdcAddress } from "../generated/contracts";
 import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 

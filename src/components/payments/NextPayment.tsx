@@ -1,3 +1,4 @@
+import { previewerAddress, usdcAddress } from "@exactly/common/generated/chain";
 import { Coins, FileText } from "@tamagui/lucide-icons";
 import { formatDistanceToNow, intlFormat } from "date-fns";
 import React from "react";
@@ -6,7 +7,7 @@ import { ms } from "react-native-size-matters";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import { previewerAddress, usdcAddress, useReadPreviewerExactly } from "../../generated/contracts";
+import { useReadPreviewerExactly } from "../../generated/contracts";
 import WAD from "../../utils/WAD";
 import Button from "../shared/Button";
 import Text from "../shared/Text";

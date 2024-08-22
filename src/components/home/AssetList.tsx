@@ -1,3 +1,4 @@
+import { previewerAddress } from "@exactly/common/generated/chain";
 import { Minus } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
@@ -5,7 +6,7 @@ import { Image, View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import { previewerAddress, useReadPreviewerExactly } from "../../generated/contracts";
+import { useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 
 const symbolToIcon: Record<string, string> = {

@@ -1,3 +1,4 @@
+import { previewerAddress } from "@exactly/common/generated/chain";
 import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
@@ -8,7 +9,7 @@ import { useAccount } from "wagmi";
 
 import AssetChange from "./AssetChange";
 import AssetList from "./AssetList";
-import { previewerAddress, useReadPreviewerExactly } from "../../generated/contracts";
+import { useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 
 export default function Balance() {

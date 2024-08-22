@@ -1,3 +1,4 @@
+import { previewerAddress, usdcAddress } from "@exactly/common/generated/chain";
 import { CircleDollarSign, Coins, Info } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
@@ -8,7 +9,7 @@ import { useAccount } from "wagmi";
 
 import NextPayment from "./NextPayment";
 import UpcomingPayments from "./UpcomingPayments";
-import { previewerAddress, usdcAddress, useReadPreviewerExactly } from "../../generated/contracts";
+import { useReadPreviewerExactly } from "../../generated/contracts";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";

@@ -1,10 +1,11 @@
+import { previewerAddress } from "@exactly/common/generated/chain";
 import { ChevronRight } from "@tamagui/lucide-icons";
 import { intlFormat } from "date-fns";
 import React from "react";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import { previewerAddress, useReadPreviewerExactly } from "../../generated/contracts";
+import { useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 import View from "../shared/View";
 

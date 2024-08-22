@@ -1,5 +1,5 @@
 import { defineConfig, type Plugin } from "@wagmi/cli";
-import { actions, foundry, react } from "@wagmi/cli/plugins";
+import { foundry, react } from "@wagmi/cli/plugins";
 import { type Abi, getAddress } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
@@ -14,6 +14,7 @@ const [
   marketWETH,
   previewer,
   usdc,
+  weth,
   {
     transactions: [exaPlugin, factory],
   },
@@ -23,6 +24,7 @@ const [
   import(`@exactly/protocol/deployments/${network}/MarketWETH.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/Previewer.json`) as Promise<Deployment>,
   import(`@exactly/protocol/deployments/${network}/USDC.json`) as Promise<Deployment>,
+  import(`@exactly/protocol/deployments/${network}/WETH.json`) as Promise<Deployment>,
   import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(chainId)}/run-latest.json`) as Promise<DeployBroadcast>,
 ]);
 
@@ -34,23 +36,7 @@ export default defineConfig([
       { name: "Market", abi: marketWETH.abi },
       { name: "Previewer", abi: previewer.abi },
     ],
-    plugins: [
-      addresses({
-        marketUSDC: marketUSDC.address,
-        marketWETH: marketWETH.address,
-        previewer: previewer.address,
-        usdc: usdc.address,
-      }),
-      actions(),
-      react(),
-    ],
-  },
-  {
-    out: "server/generated/contracts.ts",
-    plugins: [
-      addresses({ exaPlugin: exaPlugin.contractAddress, marketUSDC: marketUSDC.address, usdc: usdc.address }),
-      foundry({ project: "contracts", include: ["IExaAccount.sol/**"] }),
-    ],
+    plugins: [react()],
   },
   {
     out: "common/generated/chain.ts",
@@ -59,8 +45,20 @@ export default defineConfig([
       { name: "Market", abi: marketWETH.abi },
     ],
     plugins: [
-      addresses({ auditor: auditor.address, exaAccountFactory: factory.contractAddress }),
-      foundry({ project: "contracts", include: ["ExaAccountFactory.sol/**"] }),
+      addresses({
+        auditor: auditor.address,
+        exaAccountFactory: factory.contractAddress,
+        exaPlugin: exaPlugin.contractAddress,
+        marketUSDC: marketUSDC.address,
+        marketWETH: marketWETH.address,
+        previewer: previewer.address,
+        usdc: usdc.address,
+        weth: weth.address,
+      }),
+      foundry({
+        project: "contracts",
+        include: ["ExaAccountFactory.sol/ExaAccountFactory.json", "IExaAccount.sol/IExaAccount.json"],
+      }),
       chain(),
     ],
   },

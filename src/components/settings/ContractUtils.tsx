@@ -1,4 +1,4 @@
-import { auditorAddress } from "@exactly/common/generated/chain";
+import { auditorAddress, marketUSDCAddress, previewerAddress, usdcAddress } from "@exactly/common/generated/chain";
 import { setStringAsync } from "expo-clipboard";
 import React, { useCallback, useState } from "react";
 import { ms } from "react-native-size-matters";
@@ -7,9 +7,6 @@ import { maxUint256, zeroAddress } from "viem";
 import { useAccount, useBalance, useWriteContract } from "wagmi";
 
 import {
-  marketUSDCAddress,
-  previewerAddress,
-  usdcAddress,
   useReadPreviewerExactly,
   useSimulateAuditorEnterMarket,
   useSimulateMarketApprove,
