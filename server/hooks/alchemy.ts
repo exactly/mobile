@@ -3,7 +3,12 @@ import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import createDebug from "debug";
 import { Hono } from "hono";
+import { validator } from "hono/validator";
+import { createHmac } from "node:crypto";
 import * as v from "valibot";
+
+if (!process.env.ALCHEMY_SIGNING_KEY) throw new Error("missing alchemy signing key");
+const signingKey = process.env.ALCHEMY_SIGNING_KEY;
 
 const debug = createDebug("exa:alchemy");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
@@ -12,6 +17,16 @@ const app = new Hono();
 
 app.post(
   "/",
+  validator("header", async ({ "x-alchemy-signature": signature }, c) => {
+    if (
+      signature !==
+      createHmac("sha256", signingKey)
+        .update(Buffer.from(await c.req.arrayBuffer()))
+        .digest("hex")
+    ) {
+      return c.text("unauthorized", 401);
+    }
+  }),
   vValidator(
     "json",
     v.object({

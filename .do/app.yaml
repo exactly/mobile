@@ -45,6 +45,9 @@ services:
       - key: NODE_ENV
         scope: RUN_TIME
         value: production
+      - key: ALCHEMY_SIGNING_KEY
+        scope: RUN_TIME
+        type: SECRET
       - key: ANDROID_CERT_FINGERPRINT
         scope: RUN_TIME
       - key: AUTH_SECRET
