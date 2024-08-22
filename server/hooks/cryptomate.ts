@@ -33,11 +33,11 @@ import { iExaAccountAbi as exaAccountAbi, marketUSDCAddress, usdcAddress } from 
 import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 
-const debug = createDebug("exa:server:event");
-Object.assign(debug, { inspectOpts: { depth: undefined } });
-
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
 if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
+
+const debug = createDebug("exa:cryptomate");
+Object.assign(debug, { inspectOpts: { depth: undefined } });
 
 const app = new Hono();
 
