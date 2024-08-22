@@ -1,17 +1,21 @@
 import { relations } from "drizzle-orm";
-import { customType, integer, jsonb, pgTable, text } from "drizzle-orm/pg-core";
+import { customType, integer, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Uint8Array; driverData: string }>({ dataType: () => "bytea" });
 
-export const credentials = pgTable("credentials", {
-  id: text("id").primaryKey(),
-  publicKey: bytea("public_key").notNull(),
-  factory: text("factory").notNull(),
-  account: text("account").notNull(),
-  transports: text("transports").array(),
-  counter: integer("counter").notNull(),
-  kycId: text("kyc_id"),
-});
+export const credentials = pgTable(
+  "credentials",
+  {
+    id: text("id").primaryKey(),
+    publicKey: bytea("public_key").notNull(),
+    factory: text("factory").notNull(),
+    account: text("account").notNull(),
+    transports: text("transports").array(),
+    counter: integer("counter").notNull(),
+    kycId: text("kyc_id"),
+  },
+  (table) => ({ accountIndex: uniqueIndex("account_index").on(table.account) }),
+);
 
 export const cards = pgTable("cards", {
   id: text("id").primaryKey(),
