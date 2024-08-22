@@ -1,8 +1,17 @@
+import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/generated/chain";
 import { Hash } from "@exactly/common/types";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { parse } from "valibot";
-import { keccak256, nonceManager, serializeTransaction, toHex, type TransactionSerializable } from "viem";
+import {
+  createWalletClient,
+  http,
+  keccak256,
+  nonceManager,
+  serializeTransaction,
+  toHex,
+  type TransactionSerializable,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 if (!chain.rpcUrls.alchemy?.http[0]) throw new Error("missing alchemy rpc url");
@@ -18,3 +27,9 @@ export function signTransactionSync(transaction: TransactionSerializable) {
   const signature = { r: toHex(r), s: toHex(s), v: recovery ? 28n : 27n, yParity: recovery };
   return serializer(transaction, signature);
 }
+
+export default createWalletClient({
+  chain,
+  account,
+  transport: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`),
+});
