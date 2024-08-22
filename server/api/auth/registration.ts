@@ -18,6 +18,11 @@ import decodePublicKey from "../../utils/decodePublicKey";
 import deriveAddress from "../../utils/deriveAddress";
 import redis from "../../utils/redis";
 
+if (!process.env.ALCHEMY_WEBHOOK_ID) throw new Error("missing alchemy webhook id");
+if (!process.env.ALCHEMY_WEBHOOKS_KEY) throw new Error("missing alchemy webhooks key");
+const webhookId = process.env.ALCHEMY_WEBHOOK_ID;
+const webhooksKey = process.env.ALCHEMY_WEBHOOKS_KEY;
+
 const app = new Hono();
 
 app.get("/", async (c) => {
@@ -104,18 +109,28 @@ app.post(
     }
 
     const expires = new Date(Date.now() + 24 * 60 * 60_000);
+    const account = deriveAddress(exaAccountFactoryAddress, credentialPublicKey);
     await Promise.all([
       setSignedCookie(c, "credential_id", credentialID, authSecret, { domain, expires, httpOnly: true }),
       database.insert(credentials).values([
         {
+          account,
           id: credentialID,
           publicKey: credentialPublicKey,
           factory: exaAccountFactoryAddress,
-          account: deriveAddress(exaAccountFactoryAddress, credentialPublicKey),
           transports: attestation.response.transports,
           counter,
         },
       ]),
+      fetch("https://dashboard.alchemy.com/api/update-webhook-addresses", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-Alchemy-Token": webhooksKey },
+        body: JSON.stringify({ webhook_id: webhookId, addresses_to_add: [account], addresses_to_remove: [] }),
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error(`${String(response.status)} ${response.statusText}`);
+        })
+        .catch((error: unknown) => captureException(error)),
     ]);
 
     return c.json({ credentialId: credentialID, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() });

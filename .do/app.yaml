@@ -48,6 +48,11 @@ services:
       - key: ALCHEMY_SIGNING_KEY
         scope: RUN_TIME
         type: SECRET
+      - key: ALCHEMY_WEBHOOK_ID
+        scope: RUN_TIME
+      - key: ALCHEMY_WEBHOOKS_KEY
+        scope: RUN_TIME
+        type: SECRET
       - key: ANDROID_CERT_FINGERPRINT
         scope: RUN_TIME
       - key: AUTH_SECRET
