@@ -5,11 +5,10 @@ import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.s
 
 interface IExaAccount {
   function propose(IMarket market, uint256 amount, address receiver) external;
-  function enterMarket(IMarket market) external;
-  function approve(IMarket market, uint256 amount) external;
-  function deposit(IMarket market, uint256 amount) external;
+
   function borrow(IMarket market, uint256 amount) external;
   function borrowAtMaturity(IMarket market, uint256 maturity, uint256 amount, uint256 maxAmount) external;
+  function poke(IMarket market) external;
   function withdraw(IMarket market, uint256 amount) external;
   function withdrawToCollector(IMarket market, uint256 amount) external;
 }
@@ -22,6 +21,7 @@ error Timelocked();
 error WrongAmount();
 error WrongMarket();
 error WrongReceiver();
+error ZeroAmount();
 
 interface IAuditor {
   function markets(IMarket market)
