@@ -1,5 +1,5 @@
 import chain, { auditorAbi, auditorAddress, marketAbi, wethAddress } from "@exactly/common/generated/chain";
-import { AddressLax } from "@exactly/common/types";
+import { Address, AddressLax } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import createDebug from "debug";
@@ -8,7 +8,7 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { createHmac } from "node:crypto";
 import * as v from "valibot";
-import { getAddress, isAddress } from "viem";
+import { getAddress } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
@@ -89,9 +89,8 @@ app.post(
         if (!accounts[account]) return;
         const asset = rawContract.address ?? wethAddress;
         await redis.hgetall(`${String(chain.id)}:${asset}`).then(async (found) => {
-          if (found.market && isAddress(found.market) && !Number.isNaN(Number(found.index))) {
-            return { address: found.market, index: Number(found.index) };
-          }
+          const parsed = v.safeParse(MarketEntry, found);
+          if (parsed.success) return parsed.output;
           const markets = await publicClient.readContract({
             address: auditorAddress,
             functionName: "allMarkets",
@@ -116,3 +115,5 @@ app.post(
 );
 
 export default app;
+
+const MarketEntry = v.object({ address: Address, index: v.pipe(v.string(), v.transform(Number)) });
