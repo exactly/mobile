@@ -8,7 +8,7 @@ import { cose, generateChallenge, isoBase64URL } from "@simplewebauthn/server/he
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
 import { any, array, literal, looseObject, nullish, object, picklist, pipe, transform } from "valibot";
-import type { Hash } from "viem";
+import type { Hex } from "viem";
 
 import database, { credentials } from "../../database";
 import androidOrigin from "../../utils/android/origin";
@@ -101,7 +101,7 @@ app.post(
     const { credentialID, credentialPublicKey, credentialDeviceType, counter } = registrationInfo;
     if (credentialDeviceType !== "multiDevice") return c.text("backup eligibility required", 400); // TODO improve ux
 
-    let x: Hash, y: Hash;
+    let x: Hex, y: Hex;
     try {
       ({ x, y } = decodePublicKey(credentialPublicKey));
     } catch (error) {
