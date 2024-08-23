@@ -7,7 +7,7 @@ import chain, {
   marketAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
-import { Address, AddressLax } from "@exactly/common/types";
+import { Address, AddressLax, Hash } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import createDebug from "debug";
@@ -53,7 +53,7 @@ app.post(
         network: v.literal(chain.id === optimism.id ? "OPT_MAINNET" : "OPT_SEPOLIA"),
         activity: v.array(
           v.intersect([
-            v.object({ fromAddress: AddressLax, toAddress: AddressLax }),
+            v.object({ hash: Hash, fromAddress: AddressLax, toAddress: AddressLax }),
             v.variant("category", [
               v.object({
                 category: v.picklist(["external", "internal"]),
