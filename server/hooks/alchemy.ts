@@ -1,4 +1,10 @@
-import chain, { auditorAbi, auditorAddress, marketAbi, wethAddress } from "@exactly/common/generated/chain";
+import chain, {
+  auditorAbi,
+  auditorAddress,
+  iExaAccountAbi as exaAccountAbi,
+  marketAbi,
+  wethAddress,
+} from "@exactly/common/generated/chain";
 import { Address, AddressLax } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
@@ -12,6 +18,7 @@ import { getAddress } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
+import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
 import redis from "../utils/redis";
 
@@ -88,7 +95,7 @@ app.post(
       transfers.map(async ({ toAddress: account, rawContract }) => {
         if (!accounts[account]) return;
         const asset = rawContract.address ?? wethAddress;
-        await redis.hgetall(`${String(chain.id)}:${asset}`).then(async (found) => {
+        const market = await redis.hgetall(`${String(chain.id)}:${asset}`).then(async (found) => {
           const parsed = v.safeParse(MarketEntry, found);
           if (parsed.success) return parsed.output;
           const markets = await publicClient.readContract({
@@ -108,6 +115,15 @@ app.post(
             ),
           )[asset];
         });
+        if (!market) return;
+        const hash = await keeper.writeContract({
+          address: account,
+          functionName: "enterMarket",
+          args: [market.address],
+          abi: exaAccountAbi,
+        });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        if (receipt.status !== "success") captureException(new Error("tx reverted"));
       }),
     );
     return c.json({});
