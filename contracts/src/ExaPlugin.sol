@@ -231,9 +231,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.executionFunctions[1] = this.enterMarket.selector;
     manifest.executionFunctions[2] = this.approve.selector;
     manifest.executionFunctions[3] = this.deposit.selector;
-    manifest.executionFunctions[4] = this.withdraw.selector;
-    manifest.executionFunctions[5] = this.borrow.selector;
-    manifest.executionFunctions[6] = this.borrowAtMaturity.selector;
+    manifest.executionFunctions[4] = this.borrow.selector;
+    manifest.executionFunctions[5] = this.borrowAtMaturity.selector;
+    manifest.executionFunctions[6] = this.withdraw.selector;
 
     ManifestFunction memory keeperUserOpValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -294,15 +294,15 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.withdraw.selector,
-      associatedFunction: keeperRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.borrow.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.borrowAtMaturity.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.withdraw.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
 
