@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
 
-import { Test, stdError } from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
