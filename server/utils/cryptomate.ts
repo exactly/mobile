@@ -1,11 +1,11 @@
-import type { CreateCardParameters } from "@exactly/common/types";
+import { Address, type CreateCardParameters } from "@exactly/common/types";
 import * as v from "valibot";
 
 if (!process.env.CRYPTOMATE_URL || !process.env.CRYPTOMATE_API_KEY) throw new Error("missing cryptomate vars");
 const baseURL = process.env.CRYPTOMATE_URL;
 const apiKey = process.env.CRYPTOMATE_API_KEY;
 
-export function createCard({ cardholder, email, phone, limits }: CreateCardParameters) {
+export function createCard({ account, cardholder, email, phone, limits }: CreateCardParameters) {
   return request(
     CreateCardResponse,
     "/cards/virtual-cards/create",
@@ -14,10 +14,11 @@ export function createCard({ cardholder, email, phone, limits }: CreateCardParam
       email,
       phone_country_code: phone.countryCode,
       phone: phone.number,
-      approval_method: "WEBHOOK",
+      approval_method: "DEFI",
       daily_limit: limits.daily,
       weekly_limit: limits.weekly,
       monthly_limit: limits.monthly,
+      metadata: { account },
     }),
   );
 }
@@ -47,10 +48,11 @@ const CreateCardRequest = v.object({
   email: v.pipe(v.string(), v.email()),
   phone_country_code: v.pipe(v.string(), v.regex(/^\d{2}$/)),
   phone: v.pipe(v.string(), v.regex(/^\d+$/)),
-  approval_method: v.literal("WEBHOOK"),
+  approval_method: v.literal("DEFI"),
   daily_limit: v.number(),
   weekly_limit: v.number(),
   monthly_limit: v.number(),
+  metadata: v.object({ account: Address }),
 });
 
 const CreateCardResponse = v.object({

@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
+import { getAddress } from "viem";
 
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
@@ -15,7 +16,7 @@ app.get("/", async (c) => {
   const credentialId = c.get("credentialId");
   const credential = await database.query.credentials.findFirst({
     where: eq(credentials.id, credentialId),
-    columns: { kycId: true },
+    columns: { account: true, kycId: true },
     with: { cards: { columns: { id: true } } },
   });
   if (!credential) return c.text("credential not found", 401);
@@ -29,6 +30,7 @@ app.get("/", async (c) => {
       : `+${data.attributes["phone-number"]}`,
   );
   const card = await createCard({
+    account: getAddress(credential.account),
     cardholder: [data.attributes["name-first"], data.attributes["name-middle"], data.attributes["name-last"]]
       .filter(Boolean)
       .join(" "),

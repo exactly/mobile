@@ -25,6 +25,7 @@ export const Hex = custom<ViemHex>(isHex);
 export const Passkey = object({ credentialId: Base64URL, factory: Address, x: Hash, y: Hash });
 
 export const CreateCardParameters = object({
+  account: Address,
   cardholder: string(),
   email: pipe(string(), email()),
   phone: object({ countryCode: pipe(string(), regex(/^\d{2}$/)), number: pipe(string(), regex(/^\d+$/)) }),
