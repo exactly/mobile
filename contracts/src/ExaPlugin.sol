@@ -53,12 +53,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
   IAuditor public immutable AUDITOR;
-
-  uint256 public constant BORROW_LIMIT = 1000e18;
-
-  address public collector;
   uint256 public immutable INTERVAL = 30 days;
   uint256 public immutable PROPOSAL_DELAY = 5 minutes;
+
+  address public collector;
   mapping(address account => uint256 limit) public borrowLimits;
   mapping(address account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
   mapping(address account => Proposal lastProposal) public proposals;
