@@ -35,7 +35,7 @@ app.get("/", async (c) => {
       .filter(Boolean)
       .join(" "),
     email: data.attributes["email-address"],
-    phone: { number: phone.nationalNumber, countryCode: phone.countryCallingCode },
+    phone: { countryCode: phone.countryCallingCode, number: phone.nationalNumber },
     limits: { daily: 1000, weekly: 3000, monthly: 5000 },
   });
   await database.insert(cards).values([{ id: card.id, credentialId, lastFour: card.last4 }]);
