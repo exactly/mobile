@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 
 interface IExaAccount {
+  function propose(IMarket market, uint256 amount, address receiver) external;
   function enterMarket(IMarket market) external;
   function approve(IMarket market, uint256 amount) external;
   function deposit(IMarket market, uint256 amount) external;
@@ -15,6 +16,11 @@ interface IExaAccount {
 error BorrowLimitExceeded();
 error NotAuthorized();
 error NotMarket();
+error NoProposal();
+error Timelocked();
+error WrongAmount();
+error WrongMarket();
+error WrongReceiver();
 
 interface IAuditor {
   function markets(IMarket market)

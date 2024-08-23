@@ -18,6 +18,7 @@ import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.
 
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
 
+import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 import { ERC1967Proxy } from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
@@ -30,7 +31,18 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
 import { ExaPlugin, FunctionId } from "../src/ExaPlugin.sol";
-import { BorrowLimitExceeded, IAuditor, IExaAccount, IMarket, NotAuthorized } from "../src/IExaAccount.sol";
+import {
+  BorrowLimitExceeded,
+  IAuditor,
+  IExaAccount,
+  IMarket,
+  NoProposal,
+  NotAuthorized,
+  Timelocked,
+  WrongAmount,
+  WrongMarket,
+  WrongReceiver
+} from "../src/IExaAccount.sol";
 
 // TODO use mock asset with price != 1
 // TODO use price feed for that asset with 8 decimals
@@ -244,22 +256,217 @@ contract ExaPluginTest is Test {
   }
 
   function testWithdrawSuccess() external {
+    uint256 amount = 100 ether;
+    address receiver = address(0x420);
     vm.startPrank(keeper);
-    account.approve(market, 100 ether);
-    account.deposit(market, 100 ether);
+    account.approve(market, amount);
+    account.deposit(market, amount);
+    vm.stopPrank();
 
-    uint256 prevBalance = asset.balanceOf(collector);
-    account.withdraw(market, 100 ether);
-    assertEq(asset.balanceOf(collector), prevBalance + 100 ether);
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    uint256 prevBalance = asset.balanceOf(receiver);
+    vm.prank(owner);
+    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, receiver, address(account))));
+    assertEq(asset.balanceOf(receiver), prevBalance + amount, "receiver balance doesn't match");
   }
 
-  function testWithdrawFailure() external {
+  function testWithdrawSuccessKeeper() external {
+    uint256 amount = 100 ether;
     vm.startPrank(keeper);
-    account.approve(market, 100 ether);
-    account.deposit(market, 100 ether);
+    account.approve(market, amount);
+    account.deposit(market, amount);
+    vm.stopPrank();
 
-    vm.expectRevert(stdError.arithmeticError);
-    account.withdraw(market, 200 ether);
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    uint256 prevBalance = asset.balanceOf(address(account));
+    vm.prank(keeper);
+    account.withdraw(market, amount);
+    assertEq(asset.balanceOf(address(account)), prevBalance + amount);
+  }
+
+  function testWithdrawNoProposal() external {
+    uint256 amount = 1;
+
+    vm.startPrank(keeper);
+    account.approve(market, amount);
+    account.deposit(market, amount);
+    vm.stopPrank();
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+    vm.stopPrank();
+  }
+
+  function testWithdrawNoProposalKeeper() external {
+    uint256 amount = 100 ether;
+    vm.startPrank(keeper);
+    account.approve(market, amount);
+    account.deposit(market, amount);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.withdraw(market, amount + 1);
+    vm.stopPrank();
+  }
+
+  function testWithdrawTimelocked() external {
+    uint256 amount = 1;
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(Timelocked.selector)
+      )
+    );
+    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+    vm.stopPrank();
+  }
+
+  function testWithdrawTimelockedKeeper() external {
+    uint256 amount = 1;
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+
+    vm.startPrank(keeper);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(Timelocked.selector)
+      )
+    );
+    account.withdraw(market, amount);
+    vm.stopPrank();
+  }
+
+  function testWithdrawWrongAmount() external {
+    uint256 amount = 1;
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(WrongAmount.selector)
+      )
+    );
+    account.execute(
+      address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount + 1, address(account), address(account)))
+    );
+    vm.stopPrank();
+  }
+
+  function testWithdrawWrongAmountKeeper() external {
+    uint256 amount = 1;
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    vm.startPrank(keeper);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(WrongAmount.selector)
+      )
+    );
+    account.withdraw(market, amount + 1);
+    vm.stopPrank();
+  }
+
+  function testWithdrawWrongMarket() external {
+    uint256 amount = 1;
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, amount, address(account))));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(WrongMarket.selector)
+      )
+    );
+    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+    vm.stopPrank();
+  }
+
+  function testWithdrawWrongMarketKeeper() external {
+    uint256 amount = 1;
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, amount, address(account))));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    vm.startPrank(keeper);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(WrongMarket.selector)
+      )
+    );
+    account.withdraw(market, amount);
+    vm.stopPrank();
+  }
+
+  function testWithdrawWrongReceiver() external {
+    uint256 amount = 1;
+    address receiver = address(0x420);
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    address random = address(0x123);
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(WrongReceiver.selector)
+      )
+    );
+    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, random, address(account))));
+    vm.stopPrank();
   }
 
   function testWithdrawNotKeeper() external {
@@ -278,6 +485,10 @@ contract ExaPluginTest is Test {
   }
 
   function testKeeperUserOp() external {
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, 69, address(this))));
+    skip(exaPlugin.PROPOSAL_DELAY());
+
     UserOperation[] memory ops = new UserOperation[](6);
     ops[0] = _op(abi.encodeCall(IExaAccount.enterMarket, (market)), keeperKey);
     ops[1] = _op(abi.encodeCall(IExaAccount.approve, (market, 420)), keeperKey, 1);
@@ -289,7 +500,8 @@ contract ExaPluginTest is Test {
     entryPoint.handleOps(ops, payable(this));
 
     assertEq(market.balanceOf(address(account)), 420 - 69);
-    assertEq(asset.balanceOf(collector), 69 + 69 + 69);
+    assertEq(asset.balanceOf(address(this)), 69);
+    assertEq(asset.balanceOf(collector), 69 + 69);
   }
 
   function _op(bytes memory callData, uint256 privateKey) internal view returns (UserOperation memory op) {
