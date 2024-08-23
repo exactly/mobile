@@ -2,6 +2,8 @@ import chain, {
   auditorAbi,
   auditorAddress,
   iExaAccountAbi as exaAccountAbi,
+  exaAccountFactoryAbi,
+  exaAccountFactoryAddress,
   marketAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
@@ -14,10 +16,11 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { createHmac } from "node:crypto";
 import * as v from "valibot";
-import { getAddress } from "viem";
+import { bytesToBigInt, getAddress } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
+import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
 import redis from "../utils/redis";
@@ -116,6 +119,19 @@ app.post(
           )[asset];
         });
         if (!market) return;
+        if (!(await publicClient.getCode({ address: account }))) {
+          const hash = await keeper.writeContract({
+            address: exaAccountFactoryAddress,
+            functionName: "createAccount",
+            args: [0n, [decodePublicKey(accounts[account], bytesToBigInt)]],
+            abi: exaAccountFactoryAbi,
+          });
+          const receipt = await publicClient.waitForTransactionReceipt({ hash });
+          if (receipt.status !== "success") {
+            captureException(new Error("tx reverted"));
+            return;
+          }
+        }
         const hash = await keeper.writeContract({
           address: account,
           functionName: "enterMarket",
