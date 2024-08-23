@@ -1,7 +1,6 @@
 import chain, {
   auditorAbi,
   auditorAddress,
-  iExaAccountAbi as exaAccountAbi,
   exaAccountFactoryAbi,
   exaAccountFactoryAddress,
   marketAbi,
@@ -94,6 +93,7 @@ app.post(
       .then((result) =>
         Object.fromEntries(result.map(({ account, publicKey }) => [getAddress(account), publicKey] as const)),
       );
+    const pokes = new Map<Address, { publicKey: Uint8Array; markets: Set<Address> }>();
     await Promise.all(
       transfers.map(async ({ toAddress: account, rawContract }) => {
         if (!accounts[account]) return;
@@ -119,11 +119,18 @@ app.post(
           )[asset];
         });
         if (!market) return;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        if (pokes.has(account)) pokes.get(account)!.markets.add(market.address);
+        else pokes.set(account, { publicKey: accounts[account], markets: new Set([market.address]) });
+      }),
+    );
+    await Promise.all(
+      [...pokes.entries()].map(async ([account, { publicKey, markets }]) => {
         if (!(await publicClient.getCode({ address: account }))) {
           const hash = await keeper.writeContract({
             address: exaAccountFactoryAddress,
             functionName: "createAccount",
-            args: [0n, [decodePublicKey(accounts[account], bytesToBigInt)]],
+            args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
             abi: exaAccountFactoryAbi,
           });
           const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -132,14 +139,18 @@ app.post(
             return;
           }
         }
-        const hash = await keeper.writeContract({
-          address: account,
-          functionName: "enterMarket",
-          args: [market.address],
-          abi: exaAccountAbi,
-        });
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
-        if (receipt.status !== "success") captureException(new Error("tx reverted"));
+        await Promise.all(
+          [...markets].map(async (market) => {
+            const hash = await keeper.writeContract({
+              address: account,
+              functionName: "enterMarket",
+              args: [market],
+              abi: [{ type: "function", name: "enterMarket", inputs: [{ type: "address" }] }],
+            });
+            const receipt = await publicClient.waitForTransactionReceipt({ hash });
+            if (receipt.status !== "success") captureException(new Error("tx reverted"));
+          }),
+        );
       }),
     );
     return c.json({});
