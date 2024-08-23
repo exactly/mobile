@@ -113,6 +113,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function poke(IMarket market) external onlyMarket(market) {
     uint256 assets = IERC20(market.asset()).balanceOf(msg.sender);
+    // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (assets == 0) revert ZeroAmount();
 
     // slither-disable-next-line unused-return -- unneeded
@@ -206,6 +207,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
       Proposal memory proposal = proposals[owner];
 
+      // slither-disable-next-line incorrect-equality -- unsigned zero check
       if (proposal.amount == 0) revert NoProposal();
       if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
       if (proposal.amount < assets) revert WrongAmount();
@@ -343,6 +345,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function isMarket(IMarket market) internal view returns (bool isMarket_) {
+    // slither-disable-next-line unused-return -- unneeded
     (,,, isMarket_,) = AUDITOR.markets(market);
   }
 
