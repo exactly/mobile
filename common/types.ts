@@ -1,14 +1,20 @@
-import { type InferOutput, custom, email, number, object, pipe, regex, string } from "valibot";
+import { type InferOutput, custom, email, number, object, pipe, regex, string, transform } from "valibot";
 import {
   type Address as ViemAddress,
   type Hash as ViemHash,
   type Hex as ViemHex,
+  checksumAddress,
   isAddress,
   isHash,
   isHex,
 } from "viem";
 
-export const Address = custom<ViemAddress>(isAddress as (address: unknown) => address is ViemAddress);
+export const Address = custom<ViemAddress>(isAddress as (input: unknown) => input is ViemAddress);
+
+export const AddressLax = pipe(
+  custom<ViemAddress>((input) => typeof input === "string" && isAddress(input, { strict: false })),
+  transform(checksumAddress),
+);
 
 export const Base64URL = pipe(string(), regex(/^[\w-]+$/));
 
@@ -27,6 +33,7 @@ export const CreateCardParameters = object({
 
 /* eslint-disable @typescript-eslint/no-redeclare */
 export type Address = InferOutput<typeof Address>;
+export type AddressLax = InferOutput<typeof Address>;
 export type Base64URL = InferOutput<typeof Base64URL>;
 export type Hash = InferOutput<typeof Hash>;
 export type Hex = InferOutput<typeof Hex>;

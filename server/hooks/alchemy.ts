@@ -1,5 +1,5 @@
 import chain, { auditorAbi, auditorAddress, marketAbi, wethAddress } from "@exactly/common/generated/chain";
-import { Address } from "@exactly/common/types";
+import { AddressLax } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import createDebug from "debug";
@@ -43,7 +43,7 @@ app.post(
         network: v.literal(chain.id === optimism.id ? "OPT_MAINNET" : "OPT_SEPOLIA"),
         activity: v.array(
           v.intersect([
-            v.object({ fromAddress: Address, toAddress: Address }),
+            v.object({ fromAddress: AddressLax, toAddress: AddressLax }),
             v.variant("category", [
               v.object({
                 category: v.picklist(["external", "internal"]),
@@ -54,7 +54,7 @@ app.post(
               v.object({
                 category: v.picklist(["token", "erc20", "erc721", "erc1155"]),
                 asset: v.string(),
-                rawContract: v.object({ address: Address }),
+                rawContract: v.object({ address: AddressLax }),
                 value: v.optional(v.number()),
               }),
             ]),
@@ -87,7 +87,7 @@ app.post(
     await Promise.all(
       transfers.map(async ({ toAddress: account, rawContract }) => {
         if (!accounts[account]) return;
-        const asset = rawContract.address ? getAddress(rawContract.address) : wethAddress;
+        const asset = rawContract.address ?? wethAddress;
         await redis.hgetall(`${String(chain.id)}:${asset}`).then(async (found) => {
           if (found.market && isAddress(found.market) && !Number.isNaN(Number(found.index))) {
             return { address: found.market, index: Number(found.index) };
