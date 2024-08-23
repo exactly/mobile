@@ -11,6 +11,7 @@ interface IExaAccount {
   function borrow(IMarket market, uint256 amount) external;
   function borrowAtMaturity(IMarket market, uint256 maturity, uint256 amount, uint256 maxAmount) external;
   function withdraw(IMarket market, uint256 amount) external;
+  function withdrawToCollector(IMarket market, uint256 amount) external;
 }
 
 error BorrowLimitExceeded();

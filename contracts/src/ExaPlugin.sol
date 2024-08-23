@@ -138,6 +138,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     );
   }
 
+  function withdrawToCollector(IMarket market, uint256 amount) external onlyMarket(market) {
+    // slither-disable-next-line unused-return -- unneeded
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(market), 0, abi.encodeCall(market.withdraw, (amount, collector, msg.sender))
+    );
+  }
+
   function setCollector(address collector_) public onlyRole(DEFAULT_ADMIN_ROLE) {
     if (collector_ == address(0)) revert ZeroAddress();
     collector = collector_;
@@ -197,6 +204,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         return "";
       }
 
+      if (receiver == collector) return "";
+
       Proposal memory proposal = proposals[owner];
 
       if (proposal.amount == 0) revert NoProposal();
@@ -226,7 +235,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](7);
+    manifest.executionFunctions = new bytes4[](8);
     manifest.executionFunctions[0] = this.propose.selector;
     manifest.executionFunctions[1] = this.enterMarket.selector;
     manifest.executionFunctions[2] = this.approve.selector;
@@ -234,6 +243,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.executionFunctions[4] = this.borrow.selector;
     manifest.executionFunctions[5] = this.borrowAtMaturity.selector;
     manifest.executionFunctions[6] = this.withdraw.selector;
+    manifest.executionFunctions[7] = this.withdrawToCollector.selector;
 
     ManifestFunction memory keeperUserOpValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -276,7 +286,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](7);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](8);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
@@ -305,7 +315,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       executionSelector: IExaAccount.withdraw.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-
+    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.withdrawToCollector.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    
     ManifestFunction memory proposedValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
       functionId: uint8(FunctionId.PRE_EXEC_VALIDATION_PROPOSED),

@@ -484,6 +484,17 @@ contract ExaPluginTest is Test {
     account.withdraw(market, 100 ether);
   }
 
+  function testWithdrawToCollector() external {
+    uint256 amount = 100 ether;
+    vm.startPrank(keeper);
+    account.approve(market, amount);
+    account.deposit(market, amount);
+
+    uint256 prevBalance = asset.balanceOf(collector);
+    account.withdrawToCollector(market, amount);
+    assertEq(asset.balanceOf(collector), prevBalance + amount);
+  }
+
   function testKeeperUserOp() external {
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, 69, address(this))));
