@@ -14,7 +14,7 @@
     "instrument.cjs"
   ],
   "engines": {
-    "node": ">=22.6.0"
+    "node": ">=22.7.0"
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.19.0",
