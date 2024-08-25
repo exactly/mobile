@@ -7,7 +7,7 @@ import chain, {
 } from "@exactly/common/generated/chain";
 import { Address, Hash } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setContext } from "@sentry/node";
+import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
 import createDebug from "debug";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
@@ -80,10 +80,11 @@ app.post(
     },
   ),
   async (c) => {
-    const { activity } = c.req.valid("json").event;
-    const transfers = activity.filter(
-      ({ category, value }) => category !== "erc721" && category !== "erc1155" && value,
-    );
+    setContext("alchemy", await c.req.json());
+    getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.activity");
+    const transfers = c.req
+      .valid("json")
+      .event.activity.filter(({ category, value }) => category !== "erc721" && category !== "erc1155" && value);
     const accounts = await database.query.credentials
       .findMany({
         columns: { account: true, publicKey: true, factory: true },
@@ -132,33 +133,48 @@ app.post(
       }),
     );
     await Promise.all(
-      [...pokes.entries()].map(async ([account, { publicKey, factory, markets }]) => {
-        if (!(await publicClient.getCode({ address: account }))) {
-          const hash = await keeper.writeContract({
-            address: factory,
-            functionName: "createAccount",
-            args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
-            abi: exaAccountFactoryAbi,
-          });
-          const receipt = await publicClient.waitForTransactionReceipt({ hash });
-          if (receipt.status !== "success") {
-            captureException(new Error("tx reverted"));
+      [...pokes.entries()].map(([account, { publicKey, factory, markets }]) =>
+        startSpan({ name: "account activity", op: "exa.activity", attributes: { account } }, async () => {
+          if (
+            !(await publicClient.getCode({ address: account })) &&
+            !(await startSpan({ name: "create account", op: "exa.account", attributes: { account } }, async () => {
+              const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
+                keeper.writeContract({
+                  address: factory,
+                  functionName: "createAccount",
+                  args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
+                  abi: exaAccountFactoryAbi,
+                }),
+              );
+              setContext("tx", { hash });
+              const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+                publicClient.waitForTransactionReceipt({ hash }),
+              );
+              setContext("tx", receipt);
+              return receipt.status === "success";
+            }))
+          ) {
+            captureException(new Error("account deployment reverted"));
             return;
           }
-        }
-        await Promise.all(
-          [...markets].map(async (market) => {
-            const hash = await keeper.writeContract({
-              address: account,
-              functionName: "enterMarket",
-              args: [market],
-              abi: [{ type: "function", name: "enterMarket", inputs: [{ type: "address" }] }],
-            });
-            const receipt = await publicClient.waitForTransactionReceipt({ hash });
-            if (receipt.status !== "success") captureException(new Error("tx reverted"));
-          }),
-        );
-      }),
+          await Promise.all(
+            [...markets].map(async (market) => {
+              await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
+                const hash = await keeper.writeContract({
+                  address: account,
+                  functionName: "enterMarket",
+                  args: [market],
+                  abi: [{ type: "function", name: "enterMarket", inputs: [{ type: "address" }] }],
+                });
+                setContext("tx", { hash });
+                const receipt = await publicClient.waitForTransactionReceipt({ hash });
+                setContext("tx", receipt);
+                if (receipt.status !== "success") captureException(new Error("tx reverted"));
+              });
+            }),
+          );
+        }),
+      ),
     );
     return c.json({});
   },
