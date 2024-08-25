@@ -2,7 +2,6 @@ import chain, {
   auditorAbi,
   auditorAddress,
   exaAccountFactoryAbi,
-  exaAccountFactoryAddress,
   marketAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
@@ -87,13 +86,18 @@ app.post(
     );
     const accounts = await database.query.credentials
       .findMany({
-        columns: { account: true, publicKey: true },
+        columns: { account: true, publicKey: true, factory: true },
         where: inArray(credentials.account, [...new Set(transfers.map(({ toAddress }) => toAddress))]),
       })
       .then((result) =>
-        Object.fromEntries(result.map(({ account, publicKey }) => [getAddress(account), publicKey] as const)),
+        Object.fromEntries(
+          result.map(
+            ({ account, publicKey, factory }) =>
+              [getAddress(account), { publicKey, factory: getAddress(factory) }] as const,
+          ),
+        ),
       );
-    const pokes = new Map<Address, { publicKey: Uint8Array; markets: Set<Address> }>();
+    const pokes = new Map<Address, { publicKey: Uint8Array; factory: Address; markets: Set<Address> }>();
     await Promise.all(
       transfers.map(async ({ toAddress: account, rawContract }) => {
         if (!accounts[account]) return;
@@ -121,14 +125,17 @@ app.post(
         if (!market) return;
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if (pokes.has(account)) pokes.get(account)!.markets.add(market.address);
-        else pokes.set(account, { publicKey: accounts[account], markets: new Set([market.address]) });
+        else {
+          const { publicKey, factory } = accounts[account];
+          pokes.set(account, { publicKey, factory, markets: new Set([market.address]) });
+        }
       }),
     );
     await Promise.all(
-      [...pokes.entries()].map(async ([account, { publicKey, markets }]) => {
+      [...pokes.entries()].map(async ([account, { publicKey, factory, markets }]) => {
         if (!(await publicClient.getCode({ address: account }))) {
           const hash = await keeper.writeContract({
-            address: exaAccountFactoryAddress,
+            address: factory,
             functionName: "createAccount",
             args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
             abi: exaAccountFactoryAbi,
