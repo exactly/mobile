@@ -11,7 +11,25 @@ export default styled(Input, {
     borderColor: "$borderBrandStrong",
   },
   focusVisibleStyle: {
+    outlineWidth: 0,
     borderColor: "$borderBrandStrong",
     outlineColor: "$borderBrandStrong",
+  },
+  variants: {
+    neutral: {
+      true: {
+        backgroundColor: "transparent",
+        borderColor: "$borderNeutralSoft",
+        placeholderTextColor: "$uiNeutralSecondary",
+        focusStyle: {
+          borderColor: "$borderBrandStrong",
+        },
+        focusVisibleStyle: {
+          outlineWidth: 0,
+          borderColor: "$borderBrandStrong",
+          outlineColor: "$borderBrandStrong",
+        },
+      },
+    },
   },
 });
