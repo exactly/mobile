@@ -10,6 +10,7 @@ import { useAccount } from "wagmi";
 import OptimismImage from "../../assets/images/optimism.svg";
 import handleError from "../../utils/handleError";
 import shortenAddress from "../../utils/shortenAddress";
+import symbolToIcon from "../../utils/symbolToIcon";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -22,26 +23,7 @@ function about() {
   router.push("../add-funds/add-crypto-about");
 }
 
-const supportedAssets = [
-  {
-    image: "https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=024",
-    apr: 0.5,
-    name: "Bitcoin",
-    symbol: "BTC",
-  },
-  {
-    image: "https://cryptologos.cc/logos/wrapped-bitcoin-wbtc-logo.png?v=024",
-    apr: 0.45,
-    name: "Wrapped Bitcoin",
-    symbol: "wBTC",
-  },
-  {
-    image: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png?v=024",
-    apr: 0.3,
-    name: "USD Coin",
-    symbol: "USDC",
-  },
-];
+const supportedAssets = [{ image: symbolToIcon.USDC }];
 
 export default function AddCrypto() {
   const { canGoBack } = router;
@@ -119,21 +101,20 @@ export default function AddCrypto() {
                 </Text>
               </View>
               {supportedAssets.map((asset, index) => {
-                const { image, apr, name, symbol } = asset;
                 return (
                   <View key={index} flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
                     <View flexDirection="row" alignItems="center" gap={ms(10)}>
-                      <Image src={image} alt={`${symbol} logo`} width={ms(32)} height={ms(32)} />
+                      <Image src={asset.image} alt="Logo" width={ms(32)} height={ms(32)} />
                       <Text fontSize={ms(18)} fontWeight="bold">
-                        {symbol}
+                        USDC
                       </Text>
                       <Text fontSize={ms(13)} color="$uiNeutralSecondary">
-                        {name}
+                        USD Coin
                       </Text>
                     </View>
                     <View>
                       <Text textAlign="right" fontSize={ms(18)} color="$uiBrandPrimary" fontWeight="bold">
-                        {apr}%
+                        0%
                       </Text>
                     </View>
                   </View>

@@ -6,7 +6,6 @@ import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
 import AddCryptoButton from "./AddCryptoButton";
-import AddFiatButton from "./AddFiatButton";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -38,9 +37,8 @@ export default function AddFunds() {
         <ScrollView flex={1}>
           <View flex={1} gap={ms(20)}>
             <AddCryptoButton />
-            <AddFiatButton />
             <View flex={1}>
-              <Text color="$uiNeutralPlaceholder">
+              <Text color="$uiNeutralPlaceholder" fontSize={ms(13)}>
                 Assets are added to your balance as collateral to increase your credit limit. You can change collateral
                 preferences in your account.{" "}
                 <Text color="$uiBrandSecondary" fontSize={ms(13)} fontWeight="bold">
