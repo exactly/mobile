@@ -7,7 +7,6 @@ import { deserialize, serialize } from "wagmi";
 import handleError from "./handleError";
 
 export const persister = createAsyncStoragePersister({ serialize, deserialize, storage: AsyncStorage });
-
 const queryClient = new QueryClient();
 
 if (typeof window !== "undefined") {

@@ -29,7 +29,6 @@ export default function Success() {
             </Text>
           </View>
         </View>
-
         <View>
           <View flexDirection="row" alignSelf="stretch">
             <ActionButton

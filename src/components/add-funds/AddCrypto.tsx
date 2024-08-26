@@ -8,9 +8,9 @@ import { ScrollView, Image } from "tamagui";
 import { useAccount } from "wagmi";
 
 import OptimismImage from "../../assets/images/optimism.svg";
+import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
 import shortenAddress from "../../utils/shortenAddress";
-import symbolToIcon from "../../utils/symbolToIcon";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -23,7 +23,7 @@ function about() {
   router.push("../add-funds/add-crypto-about");
 }
 
-const supportedAssets = [{ image: symbolToIcon.USDC }];
+const supportedAssets = [{ image: assetLogos.USDC }];
 
 export default function AddCrypto() {
   const { canGoBack } = router;
