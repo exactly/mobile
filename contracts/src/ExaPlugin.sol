@@ -187,7 +187,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   {
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION_PROPOSED)) {
       IMarket target = IMarket(address(bytes20(callData[16:36])));
-      if (!isMarket(target)) return "";
+      if (!_isMarket(target)) return "";
 
       bytes4 selector = bytes4(callData[132:136]);
       uint256 assets;
@@ -340,17 +340,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     metadata.author = AUTHOR;
   }
 
-  function checkIsMarket(IMarket market) public view {
-    if (!isMarket(market)) revert NotMarket();
+  function _checkIsMarket(IMarket market) public view {
+    if (!_isMarket(market)) revert NotMarket();
   }
 
-  function isMarket(IMarket market) internal view returns (bool isMarket_) {
+  function _isMarket(IMarket market) internal view returns (bool isMarket_) {
     // slither-disable-next-line unused-return -- unneeded
     (,,, isMarket_,) = AUDITOR.markets(market);
   }
 
   modifier onlyMarket(IMarket market) {
-    checkIsMarket(market);
+    _checkIsMarket(market);
     _;
   }
 
