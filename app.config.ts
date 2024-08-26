@@ -62,7 +62,7 @@ export default {
         largeIcons: ["src/assets/notifications_default_large.png"],
       } as OneSignalPluginProps,
     ],
-    ["expo-camera", { cameraPermission: "Allow Exactly to access your camera" }],
+    ["expo-camera", { cameraPermission: "Exactly needs your permission to scan QR codes." }],
   ],
   experiments: { typedRoutes: true },
   extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
