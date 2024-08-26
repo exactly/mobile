@@ -37,6 +37,7 @@ import {
   IExaAccount,
   IMarket,
   NoProposal,
+  Proposed,
   Timelocked,
   Unauthorized,
   WrongAmount,
@@ -463,6 +464,19 @@ contract ExaPluginTest is Test {
   function testPoke() external {
     vm.startPrank(keeper);
     account.poke(market);
+  }
+
+  function testProposeEmitsProposed() external {
+    uint256 amount = 1;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit Proposed(market, amount, receiver, address(account));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
+
+    vm.stopPrank();
   }
 
   function testKeeperUserOp() external {

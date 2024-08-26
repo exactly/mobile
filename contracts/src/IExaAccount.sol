@@ -12,6 +12,8 @@ interface IExaAccount {
   function withdraw(IMarket market, uint256 amount) external;
 }
 
+event Proposed(IMarket market, uint256 amount, address receiver, address creator);
+
 struct Proposal {
   uint256 amount;
   IMarket market;
