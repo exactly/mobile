@@ -30,9 +30,9 @@ import {
   IMarket,
   IPriceFeed,
   NoProposal,
-  NotAuthorized,
   NotMarket,
   Timelocked,
+  Unauthorized,
   WrongAmount,
   WrongMarket,
   WrongReceiver,
@@ -167,12 +167,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   /// @inheritdoc BasePlugin
   function runtimeValidationFunction(uint8 functionId, address sender, uint256, bytes calldata) external view override {
     if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_SELF)) {
-      if (msg.sender != sender) revert NotAuthorized();
+      if (msg.sender != sender) revert Unauthorized();
       return;
     }
 
     if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_KEEPER)) {
-      if (!hasRole(KEEPER_ROLE, sender)) revert NotAuthorized();
+      if (!hasRole(KEEPER_ROLE, sender)) revert Unauthorized();
       return;
     }
     revert NotImplemented(msg.sig, functionId);

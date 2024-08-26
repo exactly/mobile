@@ -37,8 +37,8 @@ import {
   IExaAccount,
   IMarket,
   NoProposal,
-  NotAuthorized,
   Timelocked,
+  Unauthorized,
   WrongAmount,
   WrongMarket,
   WrongReceiver
@@ -202,7 +202,7 @@ contract ExaPluginTest is Test {
         UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
         exaPlugin,
         FunctionId.RUNTIME_VALIDATION_KEEPER,
-        abi.encodeWithSelector(NotAuthorized.selector)
+        abi.encodeWithSelector(Unauthorized.selector)
       )
     );
     account.borrowAtMaturity(market, FixedLib.INTERVAL, 10 ether, 100 ether);
@@ -424,7 +424,7 @@ contract ExaPluginTest is Test {
         UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
         exaPlugin,
         FunctionId.RUNTIME_VALIDATION_KEEPER,
-        abi.encodeWithSelector(NotAuthorized.selector)
+        abi.encodeWithSelector(Unauthorized.selector)
       )
     );
     account.withdraw(market, 100 ether);

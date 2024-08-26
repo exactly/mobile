@@ -14,10 +14,10 @@ interface IExaAccount {
 }
 
 error BorrowLimitExceeded();
-error NotAuthorized();
-error NotMarket();
 error NoProposal();
+error NotMarket();
 error Timelocked();
+error Unauthorized();
 error WrongAmount();
 error WrongMarket();
 error WrongReceiver();
