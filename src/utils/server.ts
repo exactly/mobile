@@ -27,7 +27,7 @@ export async function verifyRegistration({
 }
 
 export function getCard() {
-  return auth<string>("/card");
+  return auth<{ url: string; lastFour: string }>("/card");
 }
 
 export function kyc(inquiryId?: string) {

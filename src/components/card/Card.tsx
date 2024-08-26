@@ -1,5 +1,6 @@
 import { ArrowRight, Eye, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
+import { differenceInSeconds } from "date-fns";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -7,6 +8,7 @@ import { ScrollView, Switch, styled, Spinner } from "tamagui";
 
 import CardDetails from "./CardDetails";
 import SpendingLimitButton from "./SpendingLimitButton";
+import ExaCard from "../../assets/images/card.svg";
 import handleError from "../../utils/handleError";
 import { getCard } from "../../utils/server";
 import InfoCard from "../home/InfoCard";
@@ -28,16 +30,17 @@ const StyledAction = styled(View, {
 
 export default function Card() {
   const {
-    data: uri,
+    data: card,
     isLoading,
-    error,
-    refetch,
-  } = useQuery({ queryKey: ["card"], queryFn: getCard, enabled: false, staleTime: 60_000 });
-
-  function reveal() {
-    refetch().catch(handleError);
-  }
-
+    error: fetchCardError,
+    refetch: reveal,
+    dataUpdatedAt,
+  } = useQuery({
+    queryKey: ["card"],
+    queryFn: getCard,
+    enabled: false,
+    staleTime: 60_000,
+  });
   return (
     <SafeView fullScreen tab>
       <ScrollView>
@@ -51,19 +54,39 @@ export default function Card() {
                 <Info color="$uiNeutralPrimary" />
               </Pressable>
             </View>
-
             {isLoading && <Spinner color="$interactiveBaseBrandDefault" />}
-            {!isLoading && uri && <CardDetails uri={uri} />}
-
-            {error && (
+            {card && differenceInSeconds(Date.now(), dataUpdatedAt) < 60 && <CardDetails uri={card.url} />}
+            <View borderRadius="$r3" overflow="hidden">
+              <ExaCard />
+              <View
+                position="absolute"
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="center"
+                gap="$s1"
+                bottom={ms(10)}
+                left={ms(10)}
+              >
+                <Text emphasized callout verticalAlign="center" paddingTop={ms(3)}>
+                  **** **** ****
+                </Text>
+                <Text emphasized callout paddingTop={card?.lastFour ? 0 : ms(3)}>
+                  {card?.lastFour ?? "****"}
+                </Text>
+              </View>
+            </View>
+            {fetchCardError && (
               <Text color="$uiErrorPrimary" fontWeight="bold">
-                {error.message}
+                {fetchCardError.message}
               </Text>
             )}
-
             <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
               <StyledAction>
-                <Pressable onPress={reveal}>
+                <Pressable
+                  onPress={() => {
+                    reveal().catch(handleError);
+                  }}
+                >
                   <View gap={ms(10)}>
                     <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                     <Text fontSize={ms(15)}>Details</Text>
@@ -73,7 +96,6 @@ export default function Card() {
                   </View>
                 </Pressable>
               </StyledAction>
-
               <StyledAction>
                 <Pressable>
                   <View gap={ms(10)}>
@@ -93,7 +115,6 @@ export default function Card() {
                 </Pressable>
               </StyledAction>
             </View>
-
             <InfoCard
               title="Spending limits"
               renderAction={
@@ -112,7 +133,6 @@ export default function Card() {
                 <SpendingLimitButton title="Weekly" limit={3000} />
                 <SpendingLimitButton title="Monthly" limit={5000} />
               </View>
-
               <View borderTopWidth={1} borderTopColor="$borderNeutralSeparator" paddingTop={ms(20)}>
                 <Pressable>
                   <View flexDirection="row" justifyContent="space-between" alignItems="center" gap={ms(10)}>
