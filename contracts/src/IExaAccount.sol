@@ -12,6 +12,13 @@ interface IExaAccount {
   function withdraw(IMarket market, uint256 amount) external;
 }
 
+struct Proposal {
+  uint256 amount;
+  IMarket market;
+  address receiver;
+  uint256 timestamp;
+}
+
 error BorrowLimitExceeded();
 error Expired();
 error NoProposal();

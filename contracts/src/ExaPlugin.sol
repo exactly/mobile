@@ -31,6 +31,7 @@ import {
   IMarket,
   NoProposal,
   NotMarket,
+  Proposal,
   Timelocked,
   Unauthorized,
   WrongAmount,
@@ -366,13 +367,6 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   function supportsInterface(bytes4 interfaceId) public view override(AccessControl, BasePlugin) returns (bool) {
     return interfaceId == type(IExaAccount).interfaceId || super.supportsInterface(interfaceId);
   }
-}
-
-struct Proposal {
-  uint256 amount;
-  IMarket market;
-  address receiver;
-  uint256 timestamp;
 }
 
 enum FunctionId {
