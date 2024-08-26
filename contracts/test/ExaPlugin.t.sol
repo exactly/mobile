@@ -32,7 +32,7 @@ import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
 import { ExaPlugin, FunctionId } from "../src/ExaPlugin.sol";
 import {
-  BorrowLimitExceeded,
+  Expired,
   IAuditor,
   IExaAccount,
   IMarket,
@@ -47,6 +47,7 @@ import {
 // TODO use mock asset with price != 1
 // TODO use price feed for that asset with 8 decimals
 // TODO add the debt manager to the plugin so we can roll fixed to floating
+// solhint-disable-next-line max-states-count
 contract ExaPluginTest is Test {
   using OwnersLib for address[];
   using ECDSA for bytes32;
@@ -55,11 +56,14 @@ contract ExaPluginTest is Test {
   uint256 internal ownerKey;
   address internal keeper;
   uint256 internal keeperKey;
+  address internal issuer;
+  uint256 internal issuerKey;
   address[] internal owners;
   address payable internal collector;
   ExaAccount internal account;
   IEntryPoint internal entryPoint;
   ExaPlugin internal exaPlugin;
+  bytes32 internal domainSeparator;
 
   Auditor internal auditor;
   IMarket internal market;
@@ -102,8 +106,10 @@ contract ExaPluginTest is Test {
     owners[0] = owner;
     (keeper, keeperKey) = makeAddrAndKey("keeper");
     vm.label(keeper, "keeper");
+    (issuer, issuerKey) = makeAddrAndKey("issuer");
+    vm.label(issuer, "issuer");
 
-    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), collector);
+    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), marketUSDC, issuer, collector);
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
@@ -117,83 +123,55 @@ contract ExaPluginTest is Test {
 
     asset.mint(address(account), 10_000e18);
     usdc.mint(address(account), 100_000e6);
-  }
 
-  function testBorrowSuccess() external {
-    vm.startPrank(keeper);
-    account.poke(market);
-
-    uint256 prevBalance = asset.balanceOf(collector);
-    uint256 borrowAmount = 10 ether;
-    account.borrow(market, borrowAmount);
-    assertEq(asset.balanceOf(collector), prevBalance + borrowAmount);
-  }
-
-  function testBorrowLimitExceeded() external {
-    vm.startPrank(keeper);
-    account.poke(market);
-
-    account.borrow(market, 200 ether);
-
-    vm.expectRevert(BorrowLimitExceeded.selector);
-    account.borrow(market, 1 ether);
-  }
-
-  function testBorrowCrossMarketSuccess() external {
-    address bob = address(0x420);
-    vm.startPrank(bob);
-    usdc.mint(bob, 10_000e6);
-    usdc.approve(address(marketUSDC), 10_000e6);
-    marketUSDC.deposit(10_000e6, bob);
-
-    vm.startPrank(keeper);
-    account.poke(market);
-
-    uint256 balance = usdc.balanceOf(collector);
-    account.borrow(marketUSDC, 1000e6);
-    assertEq(usdc.balanceOf(collector), balance + 1000e6);
-  }
-
-  function testBorrowCrossMarketLimitExceeded() external {
-    address bob = address(0x420);
+    address bob = address(0xb0b);
     vm.startPrank(bob);
     usdc.mint(bob, 10_000e6);
     usdc.approve(address(marketUSDC), 10_000e6);
     marketUSDC.deposit(10_000e6, bob);
     vm.stopPrank();
 
-    vm.startPrank(keeper);
-    account.poke(market);
-
-    account.borrow(marketUSDC, 1000e6);
-
-    vm.expectRevert(BorrowLimitExceeded.selector);
-    account.borrow(marketUSDC, 1e6);
+    domainSeparator = exaPlugin.DOMAIN_SEPARATOR();
   }
 
-  function testBorrowAtMaturitySuccess() external {
+  function testCollectCreditSuccess() external {
     vm.startPrank(keeper);
     account.poke(market);
+    uint256 prevBalance = usdc.balanceOf(collector);
 
-    uint256 prevBalance = asset.balanceOf(collector);
-    uint256 borrowAmount = 10 ether;
-    account.borrowAtMaturity(market, FixedLib.INTERVAL, borrowAmount, 100 ether);
-    assertEq(asset.balanceOf(collector), prevBalance + borrowAmount);
-    vm.stopPrank();
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+    assertEq(usdc.balanceOf(collector), prevBalance + 100e6);
   }
 
-  function testBorrowAtMaturityLimitExceeded() external {
+  function testCollectCreditTimelocked() external {
     vm.startPrank(keeper);
-    account.poke(market);
+    account.poke(marketUSDC);
 
-    account.borrowAtMaturity(market, FixedLib.INTERVAL, 200 ether, 210 ether);
-
-    vm.expectRevert(BorrowLimitExceeded.selector);
-    account.borrowAtMaturity(market, FixedLib.INTERVAL, 1 ether, 1.1 ether);
-    vm.stopPrank();
+    vm.expectRevert(Timelocked.selector);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
   }
 
-  function testBorrowAtMaturityAsNotKeeper() external {
+  function testCollectCreditExpired() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+
+    skip(1 days);
+    uint256 timestamp = block.timestamp - exaPlugin.OPERATION_EXPIRY() - 1;
+    vm.expectRevert(Expired.selector);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, timestamp, _issuerOp(100e6, timestamp));
+  }
+
+  function testCollectCreditReplay() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+
+    bytes memory signature = _issuerOp(100e6, block.timestamp);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, signature);
+    vm.expectRevert(Expired.selector);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, signature);
+  }
+
+  function testCollectCreditAsNotKeeper() external {
     vm.prank(keeper);
     account.poke(market);
 
@@ -205,7 +183,59 @@ contract ExaPluginTest is Test {
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
-    account.borrowAtMaturity(market, FixedLib.INTERVAL, 10 ether, 100 ether);
+    account.collectCredit(FixedLib.INTERVAL, 1, block.timestamp, _issuerOp(1, block.timestamp));
+  }
+
+  function testCollectDebitSuccess() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+
+    uint256 prevBalance = usdc.balanceOf(collector);
+    account.collectDebit(100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+    assertEq(usdc.balanceOf(collector), prevBalance + 100e6);
+  }
+
+  function testCollectDebitTimelocked() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+
+    vm.expectRevert(Timelocked.selector);
+    account.collectDebit(100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
+  }
+
+  function testCollectDebitExpired() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+
+    skip(1 days);
+    uint256 timestamp = block.timestamp - exaPlugin.OPERATION_EXPIRY() - 1;
+    vm.expectRevert(Expired.selector);
+    account.collectDebit(100e6, timestamp, _issuerOp(100e6, timestamp));
+  }
+
+  function testCollectDebitReplay() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+
+    bytes memory signature = _issuerOp(100e6, block.timestamp);
+    account.collectDebit(100e6, block.timestamp, signature);
+    vm.expectRevert(Expired.selector);
+    account.collectDebit(100e6, block.timestamp, signature);
+  }
+
+  function testCollectDebitAsNotKeeper() external {
+    vm.prank(keeper);
+    account.poke(market);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
   }
 
   function testWithdrawSuccess() external {
@@ -430,17 +460,6 @@ contract ExaPluginTest is Test {
     account.withdraw(market, 100 ether);
   }
 
-  function testWithdrawToCollector() external {
-    uint256 amount = 100 ether;
-    vm.startPrank(keeper);
-    account.poke(market);
-
-    uint256 prevBalance = asset.balanceOf(collector);
-    account.withdrawToCollector(market, amount);
-    vm.stopPrank();
-    assertEq(asset.balanceOf(collector), prevBalance + amount);
-  }
-
   function testPoke() external {
     vm.startPrank(keeper);
     account.poke(market);
@@ -448,20 +467,30 @@ contract ExaPluginTest is Test {
 
   function testKeeperUserOp() external {
     vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, 69, address(this))));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, 69, address(this))));
     skip(exaPlugin.PROPOSAL_DELAY());
 
     UserOperation[] memory ops = new UserOperation[](4);
-    ops[0] = _op(abi.encodeCall(IExaAccount.poke, (market)), keeperKey);
-    ops[1] = _op(abi.encodeCall(IExaAccount.withdraw, (market, 69)), keeperKey, 1);
-    ops[2] = _op(abi.encodeCall(IExaAccount.borrow, (market, 69)), keeperKey, 2);
-    ops[3] = _op(abi.encodeCall(IExaAccount.borrowAtMaturity, (market, FixedLib.INTERVAL, 69, 420)), keeperKey, 3);
+    ops[0] = _op(abi.encodeCall(IExaAccount.poke, (marketUSDC)), keeperKey);
+    ops[1] = _op(abi.encodeCall(IExaAccount.withdraw, (marketUSDC, 69)), keeperKey, 1);
+    ops[2] = _op(
+      abi.encodeCall(
+        IExaAccount.collectCredit, (FixedLib.INTERVAL, 69, block.timestamp, _issuerOp(69, block.timestamp))
+      ),
+      keeperKey,
+      2
+    );
+    ops[3] = _op(
+      abi.encodeCall(IExaAccount.collectDebit, (69, block.timestamp - 1, _issuerOp(69, block.timestamp - 1))),
+      keeperKey,
+      3
+    );
 
     entryPoint.handleOps(ops, payable(this));
 
-    assertEq(market.balanceOf(address(account)), 10_000e18 - 69);
-    assertEq(asset.balanceOf(address(this)), 69);
-    assertEq(asset.balanceOf(collector), 69 + 69);
+    assertEq(marketUSDC.balanceOf(address(account)), 100_000e6 - 69 - 69);
+    assertEq(usdc.balanceOf(address(this)), 69);
+    assertEq(usdc.balanceOf(collector), 69 + 69);
   }
 
   function _op(bytes memory callData, uint256 privateKey) internal view returns (UserOperation memory op) {
@@ -491,6 +520,23 @@ contract ExaPluginTest is Test {
       paymasterAndData: "",
       signature: ""
     });
+  }
+
+  function _issuerOp(uint256 amount, uint256 timestamp) internal view returns (bytes memory signature) {
+    return _sign(
+      issuerKey,
+      keccak256(
+        abi.encodePacked(
+          "\x19\x01",
+          domainSeparator,
+          keccak256(
+            abi.encode(
+              keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
+            )
+          )
+        )
+      )
+    );
   }
 
   function _sign(uint256 privateKey, bytes32 digest) internal pure returns (bytes memory) {

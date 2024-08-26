@@ -16,7 +16,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin } from "../src/ExaPlugin.sol";
-import { IAuditor } from "../src/IExaAccount.sol";
+import { IAuditor, IMarket } from "../src/IExaAccount.sol";
 
 // solhint-disable func-name-mixedcase
 contract ExaAccountFactoryTest is Test {
@@ -29,7 +29,7 @@ contract ExaAccountFactoryTest is Test {
 
   function setUp() external {
     ownerPlugin = new WebauthnOwnerPlugin();
-    exaPlugin = new ExaPlugin(IAuditor(address(0)), address(this));
+    exaPlugin = new ExaPlugin(IAuditor(address(0)), IMarket(address(this)), address(this), address(this));
 
     IEntryPoint entryPoint = IEntryPoint(address(new EntryPoint()));
     factory = new ExaAccountFactory(

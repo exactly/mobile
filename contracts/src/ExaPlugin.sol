@@ -20,15 +20,15 @@ import { SIG_VALIDATION_FAILED, SIG_VALIDATION_PASSED } from "modular-account-li
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
 import {
-  BorrowLimitExceeded,
+  Expired,
   IAuditor,
   IExaAccount,
   IMarket,
-  IPriceFeed,
   NoProposal,
   NotMarket,
   Timelocked,
@@ -41,12 +41,11 @@ import {
 
 /// @title Exa Plugin
 /// @author Exactly
-contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
+contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   using FixedPointMathLib for uint256;
   using SafeCastLib for int256;
   using ECDSA for bytes32;
 
-  // metadata used by the pluginMetadata() method down below
   string public constant NAME = "Exa Plugin";
   string public constant VERSION = "0.0.1";
   string public constant AUTHOR = "Exactly";
@@ -54,18 +53,22 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
   IAuditor public immutable AUDITOR;
+  IMarket public immutable EXA_USDC;
   uint256 public immutable INTERVAL = 30 days;
   uint256 public immutable PROPOSAL_DELAY = 5 minutes;
+  uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
+  address public issuer;
   address public collector;
-  mapping(address account => uint256 limit) public borrowLimits;
-  mapping(address account => mapping(uint256 timestamp => uint256 baseAmount)) public borrows;
+  mapping(address account => bytes32 hash) public issuerOperations;
   mapping(address account => Proposal lastProposal) public proposals;
 
-  constructor(IAuditor auditor_, address collector_) {
-    AUDITOR = auditor_;
+  constructor(IAuditor auditor, IMarket exaUSDC, address issuer_, address collector_) {
+    AUDITOR = auditor;
+    EXA_USDC = exaUSDC;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    setIssuer(issuer_);
     setCollector(collector_);
   }
 
@@ -73,41 +76,25 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     proposals[msg.sender] = Proposal({ amount: amount, market: market, timestamp: block.timestamp, receiver: receiver });
   }
 
-  function borrow(IMarket market, uint256 amount) external {
-    // slither-disable-next-line unused-return -- unneeded
-    (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
-
-    // slither-disable-next-line weak-prng -- not prng
-    uint256 newAmount = borrows[msg.sender][block.timestamp % INTERVAL]
-      + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
-
-    if (newAmount > borrowLimits[msg.sender]) revert BorrowLimitExceeded();
-
-    // slither-disable-next-line weak-prng -- not prng
-    borrows[msg.sender][block.timestamp % INTERVAL] = newAmount;
-
+  function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature)
+    external
+    onlyIssuer(amount, timestamp, signature)
+  {
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.borrow, (amount, collector, msg.sender))
+      address(EXA_USDC),
+      0,
+      abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, type(uint256).max, collector, msg.sender)) // TODO slippage control
     );
   }
 
-  function borrowAtMaturity(IMarket market, uint256 maturity, uint256 amount, uint256 maxAmount) external {
-    {
-      // slither-disable-next-line unused-return -- unneeded
-      (, uint8 decimals,,, IPriceFeed priceFeed) = AUDITOR.markets(market);
-      // slither-disable-next-line weak-prng -- not prng
-      uint256 newAmount = borrows[msg.sender][block.timestamp % INTERVAL]
-        + amount.mulDiv(priceFeed.latestAnswer().toUint256(), 10 ** decimals);
-
-      if (newAmount > borrowLimits[msg.sender]) revert BorrowLimitExceeded();
-
-      // slither-disable-next-line weak-prng -- not prng
-      borrows[msg.sender][block.timestamp % INTERVAL] = newAmount;
-    }
+  function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature)
+    external
+    onlyIssuer(amount, timestamp, signature)
+  {
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.borrowAtMaturity, (maturity, amount, maxAmount, collector, msg.sender))
+      address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender))
     );
   }
 
@@ -122,7 +109,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     );
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.deposit, (assets, msg.sender))
+      address(market), 0, abi.encodeCall(IERC4626.deposit, (assets, msg.sender))
     );
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
@@ -137,11 +124,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     );
   }
 
-  function withdrawToCollector(IMarket market, uint256 amount) external onlyMarket(market) {
-    // slither-disable-next-line unused-return -- unneeded
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.withdraw, (amount, collector, msg.sender))
-    );
+  function setIssuer(address issuer_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    if (issuer_ == address(0)) revert ZeroAddress();
+    issuer = issuer_;
   }
 
   function setCollector(address collector_) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -229,32 +214,29 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   /// @inheritdoc BasePlugin
-  function onInstall(bytes calldata) external override {
-    borrowLimits[msg.sender] = 1000e18;
-  }
+  function onInstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](6);
+    manifest.executionFunctions = new bytes4[](5);
     manifest.executionFunctions[0] = this.propose.selector;
-    manifest.executionFunctions[1] = this.borrow.selector;
-    manifest.executionFunctions[2] = this.borrowAtMaturity.selector;
+    manifest.executionFunctions[1] = this.collectCredit.selector;
+    manifest.executionFunctions[2] = this.collectDebit.selector;
     manifest.executionFunctions[3] = this.poke.selector;
     manifest.executionFunctions[4] = this.withdraw.selector;
-    manifest.executionFunctions[5] = this.withdrawToCollector.selector;
 
     ManifestFunction memory keeperUserOpValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
       functionId: uint8(FunctionId.USER_OP_VALIDATION_KEEPER),
       dependencyIndex: 0
     });
-    manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](5);
+    manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](4);
     manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.borrow.selector,
+      executionSelector: IExaAccount.collectCredit.selector,
       associatedFunction: keeperUserOpValidationFunction
     });
     manifest.userOpValidationFunctions[1] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.borrowAtMaturity.selector,
+      executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperUserOpValidationFunction
     });
     manifest.userOpValidationFunctions[2] = ManifestAssociatedFunction({
@@ -263,10 +245,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     });
     manifest.userOpValidationFunctions[3] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.withdraw.selector,
-      associatedFunction: keeperUserOpValidationFunction
-    });
-    manifest.userOpValidationFunctions[4] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.withdrawToCollector.selector,
       associatedFunction: keeperUserOpValidationFunction
     });
 
@@ -280,17 +258,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](6);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](5);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.borrow.selector,
+      executionSelector: IExaAccount.collectCredit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.borrowAtMaturity.selector,
+      executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
@@ -299,10 +277,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     });
     manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.withdraw.selector,
-      associatedFunction: keeperRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.withdrawToCollector.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
 
@@ -344,6 +318,26 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (!_isMarket(market)) revert NotMarket();
   }
 
+  function _checkIssuer(uint256 amount, uint256 timestamp, bytes calldata signature) internal {
+    if (block.timestamp < timestamp) revert Timelocked();
+    if (block.timestamp > timestamp + OPERATION_EXPIRY) revert Expired();
+
+    bytes32 hash = keccak256(abi.encode(amount, timestamp));
+    if (issuerOperations[msg.sender] == hash) revert Expired();
+
+    if (
+      _hashTypedData(
+        keccak256(
+          abi.encode(
+            keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), msg.sender, amount, timestamp
+          )
+        )
+      ).recoverCalldata(signature) != issuer
+    ) revert Unauthorized();
+
+    issuerOperations[msg.sender] = hash;
+  }
+
   function _isMarket(IMarket market) internal view returns (bool isMarket_) {
     // slither-disable-next-line unused-return -- unneeded
     (,,, isMarket_,) = AUDITOR.markets(market);
@@ -352,6 +346,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   modifier onlyMarket(IMarket market) {
     _checkIsMarket(market);
     _;
+  }
+
+  modifier onlyIssuer(uint256 amount, uint256 timestamp, bytes calldata signature) {
+    _checkIssuer(amount, timestamp, signature);
+    _;
+  }
+
+  // solhint-disable-next-line func-name-mixedcase
+  function DOMAIN_SEPARATOR() public view returns (bytes32) {
+    return _domainSeparator();
+  }
+
+  function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
+    name = NAME;
+    version = VERSION;
   }
 
   function supportsInterface(bytes4 interfaceId) public view override(AccessControl, BasePlugin) returns (bool) {

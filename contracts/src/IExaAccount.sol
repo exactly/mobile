@@ -6,14 +6,14 @@ import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.s
 interface IExaAccount {
   function propose(IMarket market, uint256 amount, address receiver) external;
 
-  function borrow(IMarket market, uint256 amount) external;
-  function borrowAtMaturity(IMarket market, uint256 maturity, uint256 amount, uint256 maxAmount) external;
+  function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature) external;
+  function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external;
   function poke(IMarket market) external;
   function withdraw(IMarket market, uint256 amount) external;
-  function withdrawToCollector(IMarket market, uint256 amount) external;
 }
 
 error BorrowLimitExceeded();
+error Expired();
 error NoProposal();
 error NotMarket();
 error Timelocked();
