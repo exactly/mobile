@@ -92,14 +92,21 @@ app.post(
         captureException(new Error("bad cryptomate"));
         return c.text("bad request", 400);
       }
-      if (debug.enabled) debug(JSON.stringify(result.output));
+      if (debug.enabled) {
+        c.req
+          .text()
+          .then(debug)
+          .catch((error: unknown) => {
+            captureException(error);
+          });
+      }
     },
   ),
   async (c) => {
     const payload = c.req.valid("json");
     setTag("cryptomate.event", payload.event_type);
     setTag("cryptomate.status", payload.status);
-    setContext("cryptomate", payload);
+    setContext("cryptomate", await c.req.json());
     const [credential] = await database
       .select({ id: credentials.id, account: credentials.account })
       .from(cards)

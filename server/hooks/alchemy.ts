@@ -76,7 +76,14 @@ app.post(
         captureException(new Error("bad alchemy"));
         return c.text("bad request", 400);
       }
-      if (debug.enabled) debug(JSON.stringify(result.output));
+      if (debug.enabled) {
+        c.req
+          .text()
+          .then(debug)
+          .catch((error: unknown) => {
+            captureException(error);
+          });
+      }
     },
   ),
   async (c) => {
