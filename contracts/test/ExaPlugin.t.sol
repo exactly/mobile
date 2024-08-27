@@ -9,7 +9,7 @@ import { FixedLib, Market } from "@exactly/protocol/Market.sol";
 import { MockBalancerVault } from "@exactly/protocol/mocks/MockBalancerVault.sol";
 import { MockInterestRateModel } from "@exactly/protocol/mocks/MockInterestRateModel.sol";
 import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
-import { DebtManager, IBalancerVault, IPermit2 } from "@exactly/protocol/periphery/DebtManager.sol";
+import { DebtManager, IBalancerVault as IBalancerVaultDM, IPermit2 } from "@exactly/protocol/periphery/DebtManager.sol";
 
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
@@ -30,7 +30,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
-import { ExaPlugin, FunctionId } from "../src/ExaPlugin.sol";
+import { ExaPlugin, FunctionId, IBalancerVault } from "../src/ExaPlugin.sol";
 import {
   Expired,
   IAuditor,
@@ -95,8 +95,14 @@ contract ExaPluginTest is Test {
 
     IBalancerVault balancer = IBalancerVault(address(new MockBalancerVault()));
     asset.mint(address(balancer), 1_000_000e18);
-    debtManager =
-      DebtManager(address(new ERC1967Proxy(address(new DebtManager(auditor, IPermit2(address(0)), balancer)), "")));
+    usdc.mint(address(balancer), 1_000_000e6);
+    debtManager = DebtManager(
+      address(
+        new ERC1967Proxy(
+          address(new DebtManager(auditor, IPermit2(address(0)), IBalancerVaultDM(address(balancer)))), ""
+        )
+      )
+    );
     debtManager.initialize();
     vm.label(address(debtManager), "DebtManager");
 
@@ -110,7 +116,7 @@ contract ExaPluginTest is Test {
     (issuer, issuerKey) = makeAddrAndKey("issuer");
     vm.label(issuer, "issuer");
 
-    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), marketUSDC, issuer, collector);
+    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), marketUSDC, balancer, issuer, collector);
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
@@ -507,6 +513,16 @@ contract ExaPluginTest is Test {
     assertEq(marketUSDC.balanceOf(address(account)), 100_000e6 - 69 - 69);
     assertEq(usdc.balanceOf(address(this)), 69);
     assertEq(usdc.balanceOf(collector), 69 + 69);
+  }
+
+  function test_repay() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+    vm.stopPrank();
+
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
   }
 
   // solhint-enable func-name-mixedcase

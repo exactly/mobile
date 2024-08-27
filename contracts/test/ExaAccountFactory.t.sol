@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
 
 import { Test } from "forge-std/Test.sol";
 
@@ -8,6 +8,9 @@ import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
 import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
 
+import { ERC20 } from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { ERC4626 } from "openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol";
+
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
 import { MAX_OWNERS } from "webauthn-owner-plugin/IWebauthnOwnerPlugin.sol";
@@ -15,7 +18,7 @@ import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin } from "../src/ExaPlugin.sol";
+import { ExaPlugin, IBalancerVault } from "../src/ExaPlugin.sol";
 import { IAuditor, IMarket } from "../src/IExaAccount.sol";
 
 contract ExaAccountFactoryTest is Test {
@@ -28,7 +31,13 @@ contract ExaAccountFactoryTest is Test {
 
   function setUp() external {
     ownerPlugin = new WebauthnOwnerPlugin();
-    exaPlugin = new ExaPlugin(IAuditor(address(0)), IMarket(address(this)), address(this), address(this));
+    exaPlugin = new ExaPlugin(
+      IAuditor(address(0)),
+      IMarket(address(new MockERC4626(new MockERC20()))),
+      IBalancerVault(address(this)),
+      address(this),
+      address(this)
+    );
 
     IEntryPoint entryPoint = IEntryPoint(address(new EntryPoint()));
     factory = new ExaAccountFactory(
@@ -74,4 +83,12 @@ contract ExaAccountFactoryTest is Test {
   function _sorted(address[] memory owners) internal pure returns (address[] memory) {
     return owners;
   }
+}
+
+contract MockERC4626 is ERC4626 {
+  constructor(ERC20 token) ERC20("", "") ERC4626(token) { }
+}
+
+contract MockERC20 is ERC20 {
+  constructor() ERC20("", "") { }
 }

@@ -5,6 +5,9 @@ import { AccessControl } from "openzeppelin-contracts/contracts/access/AccessCon
 import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 
+import { SafeERC20 } from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Address } from "openzeppelin-contracts/contracts/utils/Address.sol";
+
 import {
   ManifestAssociatedFunction,
   ManifestAssociatedFunctionType,
@@ -26,6 +29,7 @@ import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
 import {
   Expired,
+  FixedPosition,
   IAuditor,
   IExaAccount,
   IMarket,
@@ -46,6 +50,8 @@ import {
 contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   using FixedPointMathLib for uint256;
   using SafeCastLib for int256;
+  using SafeERC20 for IERC20;
+  using Address for address;
   using ECDSA for bytes32;
 
   string public constant NAME = "Exa Plugin";
@@ -56,6 +62,7 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
 
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
+  IBalancerVault public immutable BALANCER_VAULT;
   uint256 public immutable INTERVAL = 30 days;
   uint256 public immutable PROPOSAL_DELAY = 5 minutes;
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
@@ -65,18 +72,40 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   mapping(address account => bytes32 hash) public issuerOperations;
   mapping(address account => Proposal lastProposal) public proposals;
 
-  constructor(IAuditor auditor, IMarket exaUSDC, address issuer_, address collector_) {
+  constructor(IAuditor auditor, IMarket exaUSDC, IBalancerVault balancerVault, address issuer_, address collector_) {
     AUDITOR = auditor;
     EXA_USDC = exaUSDC;
+    BALANCER_VAULT = balancerVault;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setIssuer(issuer_);
     setCollector(collector_);
+
+    IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
   }
 
   function propose(IMarket market, uint256 amount, address receiver) external onlyMarket(market) {
     proposals[msg.sender] = Proposal({ amount: amount, market: market, timestamp: block.timestamp, receiver: receiver });
     emit Proposed(market, amount, receiver, msg.sender);
+  }
+
+  function repay(uint256 maturity) external {
+    IERC20[] memory tokens = new IERC20[](1);
+    tokens[0] = IERC20(EXA_USDC.asset());
+
+    uint256[] memory amounts = new uint256[](1);
+    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, msg.sender);
+    amounts[0] = position.principal + position.fee;
+
+    bytes[] memory calls = new bytes[](2);
+    calls[0] = abi.encodeCall(IMarket.repayAtMaturity, (maturity, amounts[0], type(uint256).max, msg.sender)); // TODO slippage control
+    calls[1] = abi.encodeCall(IERC4626.withdraw, (amounts[0], address(BALANCER_VAULT), msg.sender));
+
+    // slither-disable-next-line unused-return -- unneeded
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amounts[0])))
+    );
+    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, abi.encode(EXA_USDC, calls));
   }
 
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature)
@@ -158,9 +187,12 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
       if (msg.sender != sender) revert Unauthorized();
       return;
     }
-
     if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_KEEPER)) {
       if (!hasRole(KEEPER_ROLE, sender)) revert Unauthorized();
+      return;
+    }
+    if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_BALANCER)) {
+      if (msg.sender != address(BALANCER_VAULT)) revert Unauthorized();
       return;
     }
     revert NotImplemented(msg.sig, functionId);
@@ -221,12 +253,14 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](5);
+    manifest.executionFunctions = new bytes4[](7);
     manifest.executionFunctions[0] = this.propose.selector;
-    manifest.executionFunctions[1] = this.collectCredit.selector;
-    manifest.executionFunctions[2] = this.collectDebit.selector;
-    manifest.executionFunctions[3] = this.poke.selector;
-    manifest.executionFunctions[4] = this.withdraw.selector;
+    manifest.executionFunctions[1] = this.repay.selector;
+    manifest.executionFunctions[2] = this.collectCredit.selector;
+    manifest.executionFunctions[3] = this.collectDebit.selector;
+    manifest.executionFunctions[4] = this.poke.selector;
+    manifest.executionFunctions[5] = this.withdraw.selector;
+    manifest.executionFunctions[6] = this.receiveFlashLoan.selector;
 
     ManifestFunction memory keeperUserOpValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -261,26 +295,39 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](5);
+    ManifestFunction memory balancerRuntimeValidationFunction = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.SELF,
+      functionId: uint8(FunctionId.RUNTIME_VALIDATION_BALANCER),
+      dependencyIndex: 0
+    });
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](7);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.repay.selector,
+      associatedFunction: selfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectCredit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.withdraw.selector,
       associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
+      executionSelector: this.receiveFlashLoan.selector,
+      associatedFunction: balancerRuntimeValidationFunction
     });
 
     ManifestFunction memory proposedValidationFunction = ManifestFunction({
@@ -317,7 +364,18 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
     metadata.author = AUTHOR;
   }
 
-  function _checkIsMarket(IMarket market) public view {
+  function receiveFlashLoan(IERC20[] memory, uint256[] memory, uint256[] memory, bytes memory userData) external {
+    assert(msg.sender == address(BALANCER_VAULT)); // TODO check call hash
+
+    (IMarket market, bytes[] memory calls) = abi.decode(userData, (IMarket, bytes[]));
+    _checkMarket(market);
+    for (uint256 i = 0; i < calls.length; ++i) {
+      // slither-disable-next-line unused-return -- unneeded
+      address(market).functionCall(calls[i]);
+    }
+  }
+
+  function _checkMarket(IMarket market) public view {
     if (!_isMarket(market)) revert NotMarket();
   }
 
@@ -347,7 +405,7 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   }
 
   modifier onlyMarket(IMarket market) {
-    _checkIsMarket(market);
+    _checkMarket(market);
     _;
   }
 
@@ -374,8 +432,14 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
 enum FunctionId {
   RUNTIME_VALIDATION_SELF,
   RUNTIME_VALIDATION_KEEPER,
+  RUNTIME_VALIDATION_BALANCER,
   USER_OP_VALIDATION_KEEPER,
   PRE_EXEC_VALIDATION_PROPOSED
 }
 
 error ZeroAddress();
+
+interface IBalancerVault {
+  function flashLoan(address recipient, IERC20[] memory tokens, uint256[] memory amounts, bytes memory userData)
+    external;
+}

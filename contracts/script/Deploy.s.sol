@@ -7,7 +7,7 @@ import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factor
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin, IAuditor, IMarket } from "../src/ExaPlugin.sol";
+import { ExaPlugin, IAuditor, IBalancerVault, IMarket } from "../src/ExaPlugin.sol";
 
 import { BaseScript, stdJson } from "./Base.s.sol";
 
@@ -20,6 +20,7 @@ contract DeployScript is BaseScript {
   WebauthnOwnerPlugin public ownerPlugin;
   IAuditor public auditor;
   IMarket public exaUSDC;
+  IBalancerVault public balancerVault;
 
   function setUp() external {
     ownerPlugin = WebauthnOwnerPlugin(
@@ -31,6 +32,7 @@ contract DeployScript is BaseScript {
     );
     auditor = IAuditor(protocol("Auditor"));
     exaUSDC = IMarket(protocol("MarketUSDC"));
+    balancerVault = IBalancerVault(protocol("BalancerVault"));
   }
 
   function run() external {
@@ -38,7 +40,9 @@ contract DeployScript is BaseScript {
 
     vm.startBroadcast(msg.sender);
 
-    exaPlugin = new ExaPlugin(auditor, exaUSDC, vm.envAddress("ISSUER_ADDRESS"), vm.envAddress("COLLECTOR_ADDRESS"));
+    exaPlugin = new ExaPlugin(
+      auditor, exaUSDC, balancerVault, vm.envAddress("ISSUER_ADDRESS"), vm.envAddress("COLLECTOR_ADDRESS")
+    );
     factory = new ExaAccountFactory(msg.sender, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 
     factory.addStake{ value: 0.1 ether }(1 days, 0.1 ether);
