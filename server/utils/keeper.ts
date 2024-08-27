@@ -16,7 +16,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 if (!chain.rpcUrls.alchemy?.http[0]) throw new Error("missing alchemy rpc url");
 
-const privateKey = parse(Hash, process.env.KEEPER_PRIVATE_KEY, { message: "invalid private key" });
+const privateKey = parse(Hash, process.env.KEEPER_PRIVATE_KEY, { message: "invalid keeper private key" });
 const account = privateKeyToAccount(privateKey, { nonceManager });
 
 export const address = account.address;
