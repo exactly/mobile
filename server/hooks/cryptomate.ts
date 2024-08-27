@@ -1,4 +1,4 @@
-import chain, { iExaAccountAbi as exaAccountAbi, exaPluginAddress, usdcAddress } from "@exactly/common/generated/chain";
+import chain, { exaPluginAbi, exaPluginAddress, usdcAddress } from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -112,7 +112,7 @@ app.post(
     const transaction = {
       from: keeperAddress,
       to: payload.data.metadata.account,
-      data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
+      data: encodeFunctionData({ abi: exaPluginAbi, ...call }),
     } as const;
 
     switch (payload.event_type) {

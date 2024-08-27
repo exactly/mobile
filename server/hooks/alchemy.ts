@@ -2,7 +2,7 @@ import chain, {
   auditorAbi,
   auditorAddress,
   exaAccountFactoryAbi,
-  iExaAccountAbi as exaAccountAbi,
+  exaPluginAbi,
   marketAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
@@ -172,7 +172,7 @@ app.post(
                   address: account,
                   functionName: "poke",
                   args: [market],
-                  abi: exaAccountAbi,
+                  abi: exaPluginAbi,
                 });
                 setContext("tx", { hash });
                 const receipt = await publicClient.waitForTransactionReceipt({ hash });

@@ -57,7 +57,7 @@ export default defineConfig([
       }),
       foundry({
         project: "contracts",
-        include: ["ExaAccountFactory.sol/ExaAccountFactory.json", "IExaAccount.sol/IExaAccount.json"],
+        include: ["ExaAccountFactory.sol/ExaAccountFactory.json", "ExaPlugin.sol/ExaPlugin.json"],
       }),
       chain(),
     ],
