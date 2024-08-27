@@ -18,7 +18,6 @@ import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin } from "../src/ExaPlugin.sol";
 import { IAuditor, IMarket } from "../src/IExaAccount.sol";
 
-// solhint-disable func-name-mixedcase
 contract ExaAccountFactoryTest is Test {
   using FixedPointMathLib for uint256;
   using OwnersLib for address[];
@@ -36,6 +35,8 @@ contract ExaAccountFactoryTest is Test {
       address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(entryPoint)), entryPoint
     );
   }
+
+  // solhint-disable func-name-mixedcase
 
   function testFuzz_createAccount_EOAOwners(uint256 salt, address[MAX_OWNERS - 1] calldata rawOwners) external {
     // bound length
@@ -67,6 +68,8 @@ contract ExaAccountFactoryTest is Test {
       ownerPlugin.isOwnerOf(account, owners[i]);
     }
   }
+
+  // solhint-enable func-name-mixedcase
 
   function _sorted(address[] memory owners) internal pure returns (address[] memory) {
     return owners;

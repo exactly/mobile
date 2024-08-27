@@ -135,16 +135,18 @@ contract ExaPluginTest is Test {
     domainSeparator = exaPlugin.DOMAIN_SEPARATOR();
   }
 
-  function testCollectCreditSuccess() external {
+  // solhint-disable func-name-mixedcase
+
+  function test_collectCredit_collects() external {
     vm.startPrank(keeper);
     account.poke(market);
-    uint256 prevBalance = usdc.balanceOf(collector);
+    assertEq(usdc.balanceOf(collector), 0);
 
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-    assertEq(usdc.balanceOf(collector), prevBalance + 100e6);
+    assertEq(usdc.balanceOf(collector), 100e6);
   }
 
-  function testCollectCreditTimelocked() external {
+  function test_collectCredit_reverts_whenTimelocked() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
@@ -152,7 +154,7 @@ contract ExaPluginTest is Test {
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
   }
 
-  function testCollectCreditExpired() external {
+  function test_collectCredit_reverts_whenExpired() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
@@ -162,7 +164,7 @@ contract ExaPluginTest is Test {
     account.collectCredit(FixedLib.INTERVAL, 100e6, timestamp, _issuerOp(100e6, timestamp));
   }
 
-  function testCollectCreditReplay() external {
+  function test_collectCredit_reverts_whenReplay() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
@@ -172,7 +174,7 @@ contract ExaPluginTest is Test {
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, signature);
   }
 
-  function testCollectCreditAsNotKeeper() external {
+  function test_collectCredit_reverts_asNotKeeper() external {
     vm.prank(keeper);
     account.poke(market);
 
@@ -187,16 +189,16 @@ contract ExaPluginTest is Test {
     account.collectCredit(FixedLib.INTERVAL, 1, block.timestamp, _issuerOp(1, block.timestamp));
   }
 
-  function testCollectDebitSuccess() external {
+  function test_collectDebit_collects() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
-    uint256 prevBalance = usdc.balanceOf(collector);
+    assertEq(usdc.balanceOf(collector), 0);
     account.collectDebit(100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-    assertEq(usdc.balanceOf(collector), prevBalance + 100e6);
+    assertEq(usdc.balanceOf(collector), 100e6);
   }
 
-  function testCollectDebitTimelocked() external {
+  function test_collectDebit_reverts_whenTimelocked() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
@@ -204,7 +206,7 @@ contract ExaPluginTest is Test {
     account.collectDebit(100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
   }
 
-  function testCollectDebitExpired() external {
+  function test_collectDebit_reverts_whenExpired() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
@@ -214,7 +216,7 @@ contract ExaPluginTest is Test {
     account.collectDebit(100e6, timestamp, _issuerOp(100e6, timestamp));
   }
 
-  function testCollectDebitReplay() external {
+  function test_collectDebit_reverts_whenReplay() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
@@ -224,7 +226,7 @@ contract ExaPluginTest is Test {
     account.collectDebit(100e6, block.timestamp, signature);
   }
 
-  function testCollectDebitAsNotKeeper() external {
+  function test_collectDebit_reverts_asNotKeeper() external {
     vm.prank(keeper);
     account.poke(market);
 
@@ -239,7 +241,7 @@ contract ExaPluginTest is Test {
     account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
   }
 
-  function testWithdrawSuccess() external {
+  function test_withdraw_transfersAsset_asOwner() external {
     uint256 amount = 100 ether;
     address receiver = address(0x420);
     vm.prank(keeper);
@@ -250,13 +252,13 @@ contract ExaPluginTest is Test {
 
     skip(exaPlugin.PROPOSAL_DELAY());
 
-    uint256 prevBalance = asset.balanceOf(receiver);
+    assertEq(asset.balanceOf(receiver), 0);
     vm.prank(owner);
     account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, receiver, address(account))));
-    assertEq(asset.balanceOf(receiver), prevBalance + amount, "receiver balance doesn't match");
+    assertEq(asset.balanceOf(receiver), amount, "receiver balance doesn't match");
   }
 
-  function testWithdrawSuccessKeeper() external {
+  function test_withdraw_transfersAsset_asKeeper() external {
     uint256 amount = 100 ether;
     vm.prank(keeper);
     account.poke(market);
@@ -266,13 +268,13 @@ contract ExaPluginTest is Test {
 
     skip(exaPlugin.PROPOSAL_DELAY());
 
-    uint256 prevBalance = asset.balanceOf(address(account));
+    assertEq(asset.balanceOf(address(account)), 0);
     vm.prank(keeper);
     account.withdraw(market, amount);
-    assertEq(asset.balanceOf(address(account)), prevBalance + amount);
+    assertEq(asset.balanceOf(address(account)), amount);
   }
 
-  function testWithdrawNoProposal() external {
+  function test_withdraw_reverts_whenNoProposal() external {
     uint256 amount = 1;
 
     vm.prank(keeper);
@@ -291,7 +293,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawNoProposalKeeper() external {
+  function test_withdraw_reverts_whenNoProposalKeeper() external {
     uint256 amount = 100 ether;
     vm.startPrank(keeper);
     account.poke(market);
@@ -308,7 +310,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawTimelocked() external {
+  function test_withdraw_reverts_whenTimelocked() external {
     uint256 amount = 1;
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
@@ -326,7 +328,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawTimelockedKeeper() external {
+  function test_withdraw_reverts_whenTimelockedKeeper() external {
     uint256 amount = 1;
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
@@ -344,7 +346,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawWrongAmount() external {
+  function test_withdraw_reverts_whenWrongAmount() external {
     uint256 amount = 1;
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
@@ -365,7 +367,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawWrongAmountKeeper() external {
+  function test_withdraw_reverts_whenWrongAmountKeeper() external {
     uint256 amount = 1;
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
@@ -384,7 +386,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawWrongMarket() external {
+  function test_withdraw_reverts_whenWrongMarket() external {
     uint256 amount = 1;
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, amount, address(account))));
@@ -404,7 +406,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawWrongMarketKeeper() external {
+  function test_withdraw_reverts_whenWrongMarketKeeper() external {
     uint256 amount = 1;
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, amount, address(account))));
@@ -424,7 +426,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawWrongReceiver() external {
+  function test_withdraw_reverts_whenWrongReceiver() external {
     uint256 amount = 1;
     address receiver = address(0x420);
     vm.prank(owner);
@@ -446,7 +448,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testWithdrawNotKeeper() external {
+  function test_withdraw_reverts_whenNotKeeper() external {
     vm.prank(keeper);
     account.poke(market);
 
@@ -461,12 +463,12 @@ contract ExaPluginTest is Test {
     account.withdraw(market, 100 ether);
   }
 
-  function testPoke() external {
+  function test_poke() external {
     vm.startPrank(keeper);
     account.poke(market);
   }
 
-  function testProposeEmitsProposed() external {
+  function test_propose_emits_proposed() external {
     uint256 amount = 1;
     address receiver = address(0x420);
 
@@ -479,7 +481,7 @@ contract ExaPluginTest is Test {
     vm.stopPrank();
   }
 
-  function testKeeperUserOp() external {
+  function test_keeper_userOp() external {
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, 69, address(this))));
     skip(exaPlugin.PROPOSAL_DELAY());
@@ -506,6 +508,8 @@ contract ExaPluginTest is Test {
     assertEq(usdc.balanceOf(address(this)), 69);
     assertEq(usdc.balanceOf(collector), 69 + 69);
   }
+
+  // solhint-enable func-name-mixedcase
 
   function _op(bytes memory callData, uint256 privateKey) internal view returns (UserOperation memory op) {
     op = _op(callData, privateKey, 0);
