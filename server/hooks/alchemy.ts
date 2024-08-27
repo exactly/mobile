@@ -2,6 +2,7 @@ import chain, {
   auditorAbi,
   auditorAddress,
   exaAccountFactoryAbi,
+  iExaAccountAbi as exaAccountAbi,
   marketAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
@@ -169,9 +170,9 @@ app.post(
               await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
                 const hash = await keeper.writeContract({
                   address: account,
-                  functionName: "enterMarket",
+                  functionName: "poke",
                   args: [market],
-                  abi: [{ type: "function", name: "enterMarket", inputs: [{ type: "address" }] }],
+                  abi: exaAccountAbi,
                 });
                 setContext("tx", { hash });
                 const receipt = await publicClient.waitForTransactionReceipt({ hash });
