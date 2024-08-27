@@ -14,7 +14,15 @@ import {
 import createDebug from "debug";
 import { Hono } from "hono";
 import * as v from "valibot";
-import { decodeEventLog, encodeEventTopics, encodeFunctionData, erc20Abi, nonceManager, padHex } from "viem";
+import {
+  decodeErrorResult,
+  decodeEventLog,
+  encodeEventTopics,
+  encodeFunctionData,
+  erc20Abi,
+  nonceManager,
+  padHex,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import database, { transactions } from "../database/index";
@@ -119,9 +127,18 @@ app.post(
       case "AUTHORIZATION":
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
         try {
-          const transfers = usdcTransfersToCollector(
-            await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () => publicClient.traceCall(transaction)),
+          const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
+            publicClient.traceCall(transaction),
           );
+          if (trace.output) {
+            let error: string = trace.output;
+            try {
+              error = decodeErrorResult({ data: trace.output, abi: exaPluginAbi }).errorName;
+            } catch {} // eslint-disable-line no-empty
+            captureException(new Error(error));
+            return c.json({ response_code: "69" });
+          }
+          const transfers = usdcTransfersToCollector(trace);
           if (transfers.length !== 1) return c.json({ response_code: "51" });
           const [{ topics, data }] = transfers as [TransferLog];
           const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
