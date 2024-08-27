@@ -25,7 +25,7 @@ contract DeployScript is BaseScript {
     ownerPlugin = WebauthnOwnerPlugin(
       vm.readFile(
         string.concat(
-          "../node_modules/webauthn-owner-plugin/broadcast/Plugin.s.sol/", block.chainid.toString(), "/run-latest.json"
+          "node_modules/webauthn-owner-plugin/broadcast/Plugin.s.sol/", block.chainid.toString(), "/run-latest.json"
         )
       ).readAddress(".transactions[0].contractAddress")
     );
