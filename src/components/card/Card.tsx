@@ -67,10 +67,10 @@ export default function Card() {
                 bottom={ms(10)}
                 left={ms(10)}
               >
-                <Text emphasized callout verticalAlign="center" paddingTop={ms(3)}>
+                <Text color="white" emphasized callout verticalAlign="center" paddingTop={ms(3)}>
                   **** **** ****
                 </Text>
-                <Text emphasized callout paddingTop={card?.lastFour ? 0 : ms(3)}>
+                <Text color="white" emphasized callout paddingTop={card?.lastFour ? 0 : ms(3)}>
                   {card?.lastFour ?? "****"}
                 </Text>
               </View>
