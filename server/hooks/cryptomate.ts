@@ -3,7 +3,7 @@ import chain, {
   marketUSDCAddress,
   usdcAddress,
 } from "@exactly/common/generated/chain";
-import { Hex } from "@exactly/common/types";
+import { Address, Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import {
   captureException,
@@ -16,7 +16,6 @@ import {
   withScope,
 } from "@sentry/node";
 import createDebug from "debug";
-import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as v from "valibot";
 import {
@@ -27,12 +26,11 @@ import {
   encodeFunctionData,
   erc20Abi,
   type Hash,
-  isAddress,
   nonceManager,
   padHex,
 } from "viem";
 
-import database, { cards, credentials, transactions } from "../database/index";
+import database, { transactions } from "../database/index";
 import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 
@@ -83,6 +81,7 @@ app.post(
             mcc_category: v.string(),
             mcc_code: v.string(),
           }),
+          metadata: v.looseObject({ account: Address }),
         }),
       }),
     ]),
@@ -107,24 +106,14 @@ app.post(
     setTag("cryptomate.event", payload.event_type);
     setTag("cryptomate.status", payload.status);
     setContext("cryptomate", await c.req.json());
-    const [credential] = await database
-      .select({ id: credentials.id, account: credentials.account })
-      .from(cards)
-      .leftJoin(credentials, eq(cards.credentialId, credentials.id))
-      .where(eq(cards.id, payload.data.card_id))
-      .limit(1);
-    if (!credential?.id || !credential.account || !isAddress(credential.account, { strict: false })) {
-      return c.json({ response_code: "05" }, 404);
-    }
-
-    setUser({ id: credential.account, username: credential.id });
+    setUser({ id: payload.data.metadata.account });
     const call = {
       functionName: "borrow",
       args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
     } as const;
     const transaction = {
       from: keeperAddress,
-      to: credential.account,
+      to: payload.data.metadata.account,
       data: encodeFunctionData({ abi: exaAccountAbi, ...call }),
     } as const;
 
