@@ -1,9 +1,5 @@
-import chain, {
-  iExaAccountAbi as exaAccountAbi,
-  marketUSDCAddress,
-  usdcAddress,
-} from "@exactly/common/generated/chain";
-import { Address, Hex } from "@exactly/common/types";
+import chain, { iExaAccountAbi as exaAccountAbi, exaPluginAddress, usdcAddress } from "@exactly/common/generated/chain";
+import { Address, Hash, Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import {
   captureException,
@@ -18,7 +14,8 @@ import {
 import createDebug from "debug";
 import { Hono } from "hono";
 import * as v from "valibot";
-import { decodeEventLog, encodeEventTopics, encodeFunctionData, erc20Abi, type Hash, nonceManager, padHex } from "viem";
+import { decodeEventLog, encodeEventTopics, encodeFunctionData, erc20Abi, nonceManager, padHex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 import database, { transactions } from "../database/index";
 import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
@@ -26,6 +23,9 @@ import publicClient, { type CallFrame } from "../utils/publicClient";
 
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
 if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
+
+const MIN_INTERVAL = 24 * 3600;
+const MATURITY_INTERVAL = 4 * 7 * 24 * 3600;
 
 const debug = createDebug("exa:cryptomate");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
@@ -72,6 +72,7 @@ app.post(
             mcc_code: v.string(),
           }),
           metadata: v.looseObject({ account: Address }),
+          signature: Hex,
         }),
       }),
     ]),
@@ -97,9 +98,16 @@ app.post(
     setTag("cryptomate.status", payload.status);
     setContext("cryptomate", await c.req.json());
     setUser({ id: payload.data.metadata.account });
+    const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
+    const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
     const call = {
-      functionName: "borrow",
-      args: [marketUSDCAddress, BigInt(payload.data.amount * 1e6)],
+      functionName: "collectCredit",
+      args: [
+        BigInt(nextMaturity - timestamp < MIN_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
+        BigInt(payload.data.amount * 1e6),
+        BigInt(timestamp),
+        await signIssuerOp({ account: payload.data.metadata.account, amount: payload.data.amount, timestamp }), // TODO replace with payload signature
+      ],
     } as const;
     const transaction = {
       from: keeperAddress,
@@ -185,4 +193,21 @@ interface TransferLog {
   topics: [Hash, Hash, Hash];
   data: Hex;
   position: Hex;
+}
+
+// TODO remove code below
+const issuer = privateKeyToAccount(v.parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
+function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: number; timestamp: number }) {
+  return issuer.signTypedData({
+    domain: { chainId: chain.id, name: "Exa Plugin", version: "0.0.1", verifyingContract: exaPluginAddress },
+    types: {
+      Operation: [
+        { name: "account", type: "address" },
+        { name: "amount", type: "uint256" },
+        { name: "timestamp", type: "uint40" },
+      ],
+    },
+    primaryType: "Operation",
+    message: { account, amount: BigInt(amount * 1e6), timestamp },
+  });
 }
