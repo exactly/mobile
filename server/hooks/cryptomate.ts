@@ -18,17 +18,7 @@ import {
 import createDebug from "debug";
 import { Hono } from "hono";
 import * as v from "valibot";
-import {
-  BaseError,
-  ContractFunctionRevertedError,
-  decodeEventLog,
-  encodeEventTopics,
-  encodeFunctionData,
-  erc20Abi,
-  type Hash,
-  nonceManager,
-  padHex,
-} from "viem";
+import { decodeEventLog, encodeEventTopics, encodeFunctionData, erc20Abi, type Hash, nonceManager, padHex } from "viem";
 
 import database, { transactions } from "../database/index";
 import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
@@ -130,15 +120,6 @@ app.post(
           if (args.value !== call.args[1]) return c.json({ response_code: "51" });
           return c.json({ response_code: "00" });
         } catch (error: unknown) {
-          if (error instanceof BaseError && error.cause instanceof ContractFunctionRevertedError) {
-            switch (error.cause.data?.errorName) {
-              case "InsufficientAccountLiquidity":
-                return c.json({ response_code: "51" });
-              default:
-                captureException(error);
-                return c.json({ response_code: "05" });
-            }
-          }
           captureException(error);
           return c.json({ response_code: "05" });
         }
