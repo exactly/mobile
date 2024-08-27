@@ -14,12 +14,7 @@ export default function PasskeyUtils() {
     data: passkey,
     isLoading,
     error,
-    refetch,
   } = useQuery<Passkey>({ queryKey: ["passkey"], enabled: false, staleTime: 1 });
-
-  function getPasskey() {
-    refetch().catch(handleError);
-  }
 
   function copy() {
     if (!passkey?.credentialId) return;
@@ -44,9 +39,6 @@ export default function PasskeyUtils() {
         </View>
       )}
       <View flexDirection="row" gap={ms(10)}>
-        <Button contained onPress={getPasskey} padding={ms(10)} flex={1}>
-          Refresh
-        </Button>
         {passkey?.credentialId && (
           <Button outlined onPress={copy} padding={ms(10)} flex={1}>
             Copy

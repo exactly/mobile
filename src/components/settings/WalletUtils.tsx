@@ -3,14 +3,12 @@ import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
 
+import alchemyConnector from "../../utils/alchemyConnector";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 
 export default function WalletUtils() {
-  const {
-    connect,
-    connectors: [connector],
-  } = useConnect();
+  const { connect } = useConnect();
   const { isConnected } = useAccount();
   if (isConnected) return;
   return (
@@ -23,7 +21,7 @@ export default function WalletUtils() {
         <Button
           contained
           onPress={() => {
-            if (connector) connect({ connector });
+            connect({ connector: alchemyConnector });
           }}
           padding={ms(10)}
           flex={1}

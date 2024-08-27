@@ -6,6 +6,7 @@ import { ms } from "react-native-size-matters";
 import { Image, styled } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
 
+import alchemyConnector from "../../utils/alchemyConnector";
 import shortenAddress from "../../utils/shortenAddress";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -29,10 +30,7 @@ function settings() {
 
 export default function ProfileHeader() {
   const { address } = useAccount();
-  const {
-    connect,
-    connectors: [connector],
-  } = useConnect();
+  const { connect } = useConnect();
   const { isConnected } = useAccount();
   return (
     <View padded>
@@ -41,7 +39,7 @@ export default function ProfileHeader() {
           <View
             position="relative"
             onPress={() => {
-              if (connector) connect({ connector });
+              connect({ connector: alchemyConnector });
             }}
           >
             {isConnected && <OnlineIndicator />}

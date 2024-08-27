@@ -12,6 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import type { SvgProps } from "react-native-svg";
+import { useConnect } from "wagmi";
 
 import ListItem from "./ListItem";
 import Pagination from "./Pagination";
@@ -23,6 +24,7 @@ import exaCardBlob from "../../assets/images/exa-card-blob.svg";
 import exaCard from "../../assets/images/exa-card.svg";
 import qrCodeBlob from "../../assets/images/qr-code-blob.svg";
 import qrCode from "../../assets/images/qr-code.svg";
+import alchemyConnector from "../../utils/alchemyConnector";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import { getPasskey } from "../../utils/server";
@@ -63,13 +65,9 @@ const pages: [Page, ...Page[]] = [
   },
 ];
 
-async function handleRecovery() {
-  queryClient.setQueryData(["passkey"], await getPasskey());
-  router.push("/onboarding/success");
-}
-
 export default function Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { connect } = useConnect();
 
   const flatListReference = useRef<Animated.FlatList<Page>>(null);
   const x = useSharedValue(0);
@@ -107,6 +105,12 @@ export default function Carousel() {
       viewPosition: 0.5,
     });
   }, [activeIndex]);
+
+  const handleRecovery = useCallback(async () => {
+    queryClient.setQueryData(["passkey"], await getPasskey());
+    connect({ connector: alchemyConnector });
+    router.push("/onboarding/success");
+  }, [connect]);
 
   useEffect(() => {
     const timer = setInterval(() => {

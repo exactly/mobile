@@ -9,6 +9,7 @@ import { useConnect } from "wagmi";
 
 import PasskeysBlob from "../../assets/images/passkeys-blob.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
+import alchemyConnector from "../../utils/alchemyConnector";
 import createPasskey from "../../utils/createPasskey";
 import handleError from "../../utils/handleError";
 import ActionButton from "../shared/ActionButton";
@@ -39,20 +40,16 @@ export default function Passkeys() {
     },
   });
 
-  const {
-    connect,
-    isPending: isConnecting,
-    connectors: [connector],
-  } = useConnect();
+  const { connect, isPending: isConnecting } = useConnect();
 
   const { data } = useQuery<Passkey>({ queryKey: ["passkey"] });
 
   useEffect(() => {
-    if (isSuccess && data?.credentialId && connector) {
-      connect({ connector });
+    if (isSuccess && data?.credentialId) {
+      connect({ connector: alchemyConnector });
       router.replace("../success");
     }
-  }, [connect, connector, data, isSuccess]);
+  }, [connect, data, isSuccess]);
 
   return (
     <SafeView fullScreen backgroundColor="$backgroundSoft">
