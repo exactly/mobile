@@ -24,10 +24,10 @@ import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
 import redis from "../utils/redis";
 
-if (!process.env.ALCHEMY_SIGNING_KEY) throw new Error("missing alchemy signing key");
-const signingKey = process.env.ALCHEMY_SIGNING_KEY;
+if (!process.env.ALCHEMY_ACTIVITY_KEY) throw new Error("missing alchemy activity key");
+const signingKey = process.env.ALCHEMY_ACTIVITY_KEY;
 
-const debug = createDebug("exa:alchemy");
+const debug = createDebug("exa:activity");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
 const app = new Hono();

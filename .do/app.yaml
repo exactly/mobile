@@ -45,10 +45,10 @@ services:
       - key: NODE_ENV
         scope: RUN_TIME
         value: production
-      - key: ALCHEMY_SIGNING_KEY
+      - key: ALCHEMY_ACTIVITY_KEY
         scope: RUN_TIME
         type: SECRET
-      - key: ALCHEMY_WEBHOOK_ID
+      - key: ALCHEMY_ACTIVITY_ID
         scope: RUN_TIME
       - key: ALCHEMY_WEBHOOKS_KEY
         scope: RUN_TIME

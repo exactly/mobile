@@ -12,7 +12,7 @@ import registration from "./api/auth/registration";
 import card from "./api/card";
 import kyc from "./api/kyc";
 import passkey from "./api/passkey";
-import alchemy from "./hooks/alchemy";
+import activity from "./hooks/activity";
 import cryptomate from "./hooks/cryptomate";
 import androidFingerprint from "./utils/android/fingerprint";
 import appOrigin from "./utils/appOrigin";
@@ -28,7 +28,7 @@ app.route("/api/card", card);
 app.route("/api/kyc", kyc);
 app.route("/api/passkey", passkey);
 
-app.route("/hooks/alchemy", alchemy);
+app.route("/hooks/activity", activity);
 app.route("/hooks/cryptomate", cryptomate);
 
 app.use("/.well-known/*", serveStatic());

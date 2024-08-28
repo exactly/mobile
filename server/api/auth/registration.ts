@@ -18,9 +18,9 @@ import decodePublicKey from "../../utils/decodePublicKey";
 import deriveAddress from "../../utils/deriveAddress";
 import redis from "../../utils/redis";
 
-if (!process.env.ALCHEMY_WEBHOOK_ID) throw new Error("missing alchemy webhook id");
+if (!process.env.ALCHEMY_ACTIVITY_ID) throw new Error("missing alchemy activity id");
 if (!process.env.ALCHEMY_WEBHOOKS_KEY) throw new Error("missing alchemy webhooks key");
-const webhookId = process.env.ALCHEMY_WEBHOOK_ID;
+const webhookId = process.env.ALCHEMY_ACTIVITY_ID;
 const webhooksKey = process.env.ALCHEMY_WEBHOOKS_KEY;
 
 const app = new Hono();
