@@ -36,7 +36,13 @@ export default defineConfig([
       { name: "Market", abi: marketWETH.abi },
       { name: "Previewer", abi: previewer.abi },
     ],
-    plugins: [react()],
+    plugins: [
+      foundry({
+        project: "contracts",
+        include: ["IPluginManager.sol/IPluginManager.json", "IAccountLoupe.sol/IAccountLoupe.json"],
+      }),
+      react(),
+    ],
   },
   {
     out: "common/generated/chain.ts",
