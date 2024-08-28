@@ -7,18 +7,16 @@ import chain, {
   wethAddress,
 } from "@exactly/common/generated/chain";
 import { Address, Hash } from "@exactly/common/types";
-import { vValidator } from "@hono/valibot-validator";
 import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
 import createDebug from "debug";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
-import { validator } from "hono/validator";
-import { createHmac } from "node:crypto";
 import * as v from "valibot";
 import { BaseError, bytesToBigInt, ContractFunctionRevertedError, getAddress } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
+import { headerValidator, jsonValidator } from "../utils/alchemy";
 import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
@@ -34,18 +32,8 @@ const app = new Hono();
 
 app.post(
   "/",
-  validator("header", async ({ "x-alchemy-signature": signature }, c) => {
-    if (
-      signature !==
-      createHmac("sha256", signingKey)
-        .update(Buffer.from(await c.req.arrayBuffer()))
-        .digest("hex")
-    ) {
-      return c.text("unauthorized", 401);
-    }
-  }),
-  vValidator(
-    "json",
+  headerValidator(signingKey),
+  jsonValidator(
     v.object({
       type: v.literal("ADDRESS_ACTIVITY"),
       event: v.object({
@@ -71,21 +59,7 @@ app.post(
         ),
       }),
     }),
-    (result, c) => {
-      if (!result.success) {
-        setContext("validation", result);
-        captureException(new Error("bad alchemy"));
-        return c.text("bad request", 400);
-      }
-      if (debug.enabled) {
-        c.req
-          .text()
-          .then(debug)
-          .catch((error: unknown) => {
-            captureException(error);
-          });
-      }
-    },
+    debug,
   ),
   async (c) => {
     setContext("alchemy", await c.req.json());
