@@ -21,6 +21,7 @@ import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
 import redis from "../utils/redis";
+import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.ALCHEMY_ACTIVITY_KEY) throw new Error("missing alchemy activity key");
 const signingKey = process.env.ALCHEMY_ACTIVITY_KEY;
@@ -126,6 +127,7 @@ app.post(
                   functionName: "createAccount",
                   args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
                   abi: exaAccountFactoryAbi,
+                  ...transactionOptions,
                 }),
               );
               setContext("tx", { hash });
@@ -143,11 +145,19 @@ app.post(
             [...markets].map(async (market) => {
               await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
                 try {
+                  await publicClient.simulateContract({
+                    account: keeper.account,
+                    address: account,
+                    functionName: "poke",
+                    args: [market],
+                    abi: exaPluginAbi,
+                  });
                   const hash = await keeper.writeContract({
                     address: account,
                     functionName: "poke",
                     args: [market],
                     abi: exaPluginAbi,
+                    ...transactionOptions,
                   });
                   setContext("tx", { hash });
                   const receipt = await publicClient.waitForTransactionReceipt({ hash });
