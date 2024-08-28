@@ -252,6 +252,9 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   function onInstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
+  function onUninstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
+
+  /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
     manifest.executionFunctions = new bytes4[](7);
     manifest.executionFunctions[0] = this.propose.selector;

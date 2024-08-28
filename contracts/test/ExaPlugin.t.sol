@@ -64,6 +64,7 @@ contract ExaPluginTest is Test {
   ExaAccount internal account;
   IEntryPoint internal entryPoint;
   ExaPlugin internal exaPlugin;
+  WebauthnOwnerPlugin internal ownerPlugin;
   bytes32 internal domainSeparator;
 
   Auditor internal auditor;
@@ -119,7 +120,7 @@ contract ExaPluginTest is Test {
     exaPlugin = new ExaPlugin(IAuditor(address(auditor)), marketUSDC, balancer, issuer, collector);
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
-    WebauthnOwnerPlugin ownerPlugin = new WebauthnOwnerPlugin();
+    ownerPlugin = new WebauthnOwnerPlugin();
     ExaAccountFactory factory = new ExaAccountFactory(
       address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(entryPoint)), entryPoint
     );
@@ -545,6 +546,14 @@ contract ExaPluginTest is Test {
 
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
+  }
+
+  function test_onUninstall_uninstalls() external {
+    vm.startPrank(owner);
+    account.uninstallPlugin(address(exaPlugin), "", "");
+    address[] memory plugins = account.getInstalledPlugins();
+    assertEq(plugins.length, 1);
+    assertEq(plugins[0], address(ownerPlugin));
   }
 
   // solhint-enable func-name-mixedcase
