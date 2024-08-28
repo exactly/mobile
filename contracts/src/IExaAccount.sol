@@ -13,7 +13,7 @@ interface IExaAccount {
   function withdraw(IMarket market, uint256 amount) external;
 }
 
-event Proposed(IMarket market, uint256 amount, address receiver, address creator);
+event Proposed(address indexed account, IMarket indexed market, address indexed receiver, uint256 amount);
 
 struct FixedPosition {
   uint256 principal;

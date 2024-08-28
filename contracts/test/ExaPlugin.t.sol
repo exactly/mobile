@@ -496,14 +496,14 @@ contract ExaPluginTest is Test {
     account.poke(market);
   }
 
-  function test_propose_emits_proposed() external {
+  function test_propose_emitsProposed() external {
     uint256 amount = 1;
     address receiver = address(0x420);
 
     vm.startPrank(owner);
 
     vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit Proposed(market, amount, receiver, address(account));
+    emit Proposed(address(account), market, receiver, amount);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
 
     vm.stopPrank();
