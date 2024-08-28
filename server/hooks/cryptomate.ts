@@ -28,6 +28,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import database, { transactions } from "../database/index";
 import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
+import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
 if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
@@ -157,15 +158,7 @@ app.post(
         setContext("tx", { nonce });
         const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
           publicClient.sendRawTransaction({
-            serializedTransaction: signTransactionSync({
-              ...transaction,
-              nonce,
-              type: "eip1559",
-              chainId: chain.id,
-              maxFeePerGas: 1_000_000n,
-              maxPriorityFeePerGas: 1_000_000n,
-              gas: 2_000_000n,
-            }),
+            serializedTransaction: signTransactionSync({ ...transaction, ...transactionOptions, nonce }),
           }),
         );
         setContext("tx", { hash });
