@@ -39,7 +39,11 @@ export default defineConfig([
     plugins: [
       foundry({
         project: "contracts",
-        include: ["IPluginManager.sol/IPluginManager.json", "IAccountLoupe.sol/IAccountLoupe.json"],
+        include: [
+          "ExaPlugin.sol/ExaPlugin.json",
+          "IAccountLoupe.sol/IAccountLoupe.json",
+          "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
+        ],
       }),
       react(),
     ],
