@@ -140,7 +140,7 @@ app.post(
         }
       }),
     );
-    await Promise.all(
+    Promise.allSettled(
       [...pokes.entries()].map(([account, { publicKey, factory, markets }]) =>
         startSpan({ name: "account activity", op: "exa.activity", attributes: { account } }, async () => {
           if (
@@ -165,7 +165,7 @@ app.post(
             captureException(new Error("account deployment reverted"));
             return;
           }
-          await Promise.all(
+          await Promise.allSettled(
             [...markets].map(async (market) => {
               await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
                 try {
@@ -194,7 +194,7 @@ app.post(
           );
         }),
       ),
-    );
+    ).catch((error: unknown) => captureException(error));
     return c.json({});
   },
 );
