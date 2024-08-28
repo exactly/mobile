@@ -380,8 +380,8 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   }
 
   function _checkIssuer(uint256 amount, uint256 timestamp, bytes calldata signature) internal {
-    if (block.timestamp < timestamp) revert Timelocked();
-    if (block.timestamp > timestamp + OPERATION_EXPIRY) revert Expired();
+    if (timestamp > block.timestamp + 1 minutes) revert Timelocked();
+    if (timestamp + OPERATION_EXPIRY < block.timestamp) revert Expired();
 
     bytes32 hash = keccak256(abi.encode(amount, timestamp));
     if (issuerOperations[msg.sender] == hash) revert Expired();

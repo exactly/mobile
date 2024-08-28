@@ -152,12 +152,23 @@ contract ExaPluginTest is Test {
     assertEq(usdc.balanceOf(collector), 100e6);
   }
 
+  function test_collectCredit_toleratesTimeDrift() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+    assertEq(usdc.balanceOf(collector), 0);
+
+    uint256 timestamp = block.timestamp + 1 minutes;
+    account.collectCredit(FixedLib.INTERVAL, 100e6, timestamp, _issuerOp(100e6, timestamp));
+    assertEq(usdc.balanceOf(collector), 100e6);
+  }
+
   function test_collectCredit_reverts_whenTimelocked() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
+    uint256 timestamp = block.timestamp + 1 minutes + 1;
     vm.expectRevert(Timelocked.selector);
-    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
+    account.collectCredit(FixedLib.INTERVAL, 100e6, timestamp, _issuerOp(100e6, timestamp));
   }
 
   function test_collectCredit_reverts_whenExpired() external {
@@ -204,12 +215,23 @@ contract ExaPluginTest is Test {
     assertEq(usdc.balanceOf(collector), 100e6);
   }
 
+  function test_collectDebit_toleratesTimeDrift() external {
+    vm.startPrank(keeper);
+    account.poke(marketUSDC);
+    assertEq(usdc.balanceOf(collector), 0);
+
+    uint256 timestamp = block.timestamp + 1 minutes;
+    account.collectDebit(100e6, timestamp, _issuerOp(100e6, timestamp));
+    assertEq(usdc.balanceOf(collector), 100e6);
+  }
+
   function test_collectDebit_reverts_whenTimelocked() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
 
+    uint256 timestamp = block.timestamp + 1 minutes + 1;
     vm.expectRevert(Timelocked.selector);
-    account.collectDebit(100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
+    account.collectDebit(100e6, timestamp, _issuerOp(100e6, timestamp));
   }
 
   function test_collectDebit_reverts_whenExpired() external {
