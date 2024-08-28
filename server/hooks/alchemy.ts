@@ -15,7 +15,7 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { createHmac } from "node:crypto";
 import * as v from "valibot";
-import { bytesToBigInt, getAddress } from "viem";
+import { BaseError, bytesToBigInt, ContractFunctionRevertedError, getAddress } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
@@ -168,16 +168,27 @@ app.post(
           await Promise.all(
             [...markets].map(async (market) => {
               await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
-                const hash = await keeper.writeContract({
-                  address: account,
-                  functionName: "poke",
-                  args: [market],
-                  abi: exaPluginAbi,
-                });
-                setContext("tx", { hash });
-                const receipt = await publicClient.waitForTransactionReceipt({ hash });
-                setContext("tx", receipt);
-                if (receipt.status !== "success") captureException(new Error("tx reverted"));
+                try {
+                  const hash = await keeper.writeContract({
+                    address: account,
+                    functionName: "poke",
+                    args: [market],
+                    abi: exaPluginAbi,
+                  });
+                  setContext("tx", { hash });
+                  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+                  setContext("tx", receipt);
+                  if (receipt.status !== "success") captureException(new Error("tx reverted"));
+                } catch (error: unknown) {
+                  if (
+                    error instanceof BaseError &&
+                    error.cause instanceof ContractFunctionRevertedError &&
+                    error.cause.data?.errorName === "ZeroAmount"
+                  ) {
+                    return;
+                  }
+                  captureException(error);
+                }
               });
             }),
           );
