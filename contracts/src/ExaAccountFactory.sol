@@ -47,6 +47,10 @@ contract ExaAccountFactory is WebauthnModularAccountFactory {
     bytes[] memory initBytes = new bytes[](2);
     initBytes[0] = owners;
 
+    emit ExaAccountInitialized(address(account));
+
     account.initialize(plugins, abi.encode(manifestHashes, initBytes));
   }
 }
+
+event ExaAccountInitialized(address indexed account);

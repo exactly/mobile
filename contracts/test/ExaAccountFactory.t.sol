@@ -17,7 +17,7 @@ import { MAX_OWNERS } from "webauthn-owner-plugin/IWebauthnOwnerPlugin.sol";
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
-import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
+import { ExaAccountFactory, ExaAccountInitialized } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin, IBalancerVault } from "../src/ExaPlugin.sol";
 import { IAuditor, IMarket } from "../src/IExaAccount.sol";
 
@@ -67,6 +67,9 @@ contract ExaAccountFactoryTest is Test {
     for (uint256 i = 0; i < owners.length - 1; ++i) {
       vm.assume(owners[i] != owners[i + 1]); // unique
     }
+
+    vm.expectEmit(true, true, true, true, address(factory));
+    emit ExaAccountInitialized(factory.getAddress(salt, owners.toPublicKeys()));
 
     address account = factory.createAccount(salt, owners.toPublicKeys());
 
