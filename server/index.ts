@@ -13,6 +13,7 @@ import card from "./api/card";
 import kyc from "./api/kyc";
 import passkey from "./api/passkey";
 import activity from "./hooks/activity";
+import block from "./hooks/block";
 import cryptomate from "./hooks/cryptomate";
 import androidFingerprint from "./utils/android/fingerprint";
 import appOrigin from "./utils/appOrigin";
@@ -29,6 +30,7 @@ app.route("/api/kyc", kyc);
 app.route("/api/passkey", passkey);
 
 app.route("/hooks/activity", activity);
+app.route("/hooks/block", block);
 app.route("/hooks/cryptomate", cryptomate);
 
 app.use("/.well-known/*", serveStatic());

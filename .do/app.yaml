@@ -50,6 +50,9 @@ services:
         type: SECRET
       - key: ALCHEMY_ACTIVITY_ID
         scope: RUN_TIME
+      - key: ALCHEMY_BLOCK_KEY
+        scope: RUN_TIME
+        type: SECRET
       - key: ALCHEMY_WEBHOOKS_KEY
         scope: RUN_TIME
         type: SECRET
