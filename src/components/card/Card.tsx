@@ -1,8 +1,8 @@
 import { ArrowRight, Eye, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
-import { differenceInSeconds } from "date-fns";
 import React from "react";
-import { Pressable } from "react-native";
+import { Platform, Pressable } from "react-native";
+import { Inquiry } from "react-native-persona";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Switch, styled, Spinner } from "tamagui";
 
@@ -10,7 +10,9 @@ import CardDetails from "./CardDetails";
 import SpendingLimitButton from "./SpendingLimitButton";
 import ExaCard from "../../assets/images/card.svg";
 import handleError from "../../utils/handleError";
-import { getCard } from "../../utils/server";
+import { environment, templateId } from "../../utils/persona";
+import queryClient from "../../utils/queryClient";
+import { getCard, kyc, kycStatus } from "../../utils/server";
 import InfoCard from "../home/InfoCard";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -29,18 +31,54 @@ const StyledAction = styled(View, {
 });
 
 export default function Card() {
+  const { data: hasKYC, isLoading: isLoadingKYC } = useQuery({
+    queryKey: ["kycStatus"],
+    queryFn: kycStatus,
+  });
+
   const {
     data: card,
-    isLoading,
-    error: fetchCardError,
-    refetch: reveal,
-    dataUpdatedAt,
+    isLoading: isLoadingCard,
+    error: cardError,
   } = useQuery({
     queryKey: ["card"],
     queryFn: getCard,
     enabled: false,
     staleTime: 60_000,
   });
+
+  const {
+    data: oneTimeLink,
+    isLoading: isLoadingOTL,
+    error: OTLError,
+  } = useQuery({
+    queryKey: ["personaOTL"],
+    enabled: Platform.OS === "web",
+    queryFn: () => kyc(),
+  });
+
+  function handleReveal() {
+    if (hasKYC) {
+      getCard().catch(handleError);
+      return;
+    }
+    if (Platform.OS === "web") {
+      if (isLoadingOTL || !oneTimeLink) return;
+      window.open(oneTimeLink);
+      queryClient.setQueryData(["personaOTL"], undefined);
+    } else {
+      Inquiry.fromTemplate(templateId)
+        .environment(environment)
+        .onComplete((inquiryId) => {
+          if (!inquiryId) throw new Error("no inquiry id");
+          kyc(inquiryId).catch(handleError);
+        })
+        .onError(handleError)
+        .build()
+        .start();
+    }
+  }
+
   return (
     <SafeView fullScreen tab>
       <ScrollView>
@@ -54,8 +92,11 @@ export default function Card() {
                 <Info color="$uiNeutralPrimary" />
               </Pressable>
             </View>
-            {isLoading && <Spinner color="$interactiveBaseBrandDefault" />}
-            {card && differenceInSeconds(Date.now(), dataUpdatedAt) < 60 && <CardDetails uri={card.url} />}
+
+            {(isLoadingCard || isLoadingKYC || isLoadingOTL) && <Spinner color="$interactiveBaseBrandDefault" />}
+
+            {card && <CardDetails uri={card.url} />}
+
             <View>
               <View width="100%" height={ms(202)} borderRadius="$r3" overflow="hidden">
                 <ExaCard width="100%" height="100%" />
@@ -77,18 +118,14 @@ export default function Card() {
                 </Text>
               </View>
             </View>
-            {fetchCardError && (
+            {(cardError ?? OTLError) && (
               <Text color="$uiErrorPrimary" fontWeight="bold">
-                {fetchCardError.message}
+                {cardError ? cardError.message : OTLError ? OTLError.message : "Error"}
               </Text>
             )}
             <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
               <StyledAction>
-                <Pressable
-                  onPress={() => {
-                    reveal().catch(handleError);
-                  }}
-                >
+                <Pressable onPress={handleReveal}>
                   <View gap={ms(10)}>
                     <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                     <Text fontSize={ms(15)}>Details</Text>
