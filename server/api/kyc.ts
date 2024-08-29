@@ -36,21 +36,26 @@ app.post(
       where: eq(credentials.id, credentialId),
     });
     if (!credential) return c.text("credential not found", 404);
-    const { inquiryId } = c.req.valid("json");
-    if (!credential.kycId) {
-      const { kycId, result } = await (inquiryId
-        ? getInquiry(inquiryId).then(({ data }) => {
-            return { kycId: inquiryId, result: data.attributes.status === "approved" };
-          })
-        : createInquiry().then(async ({ data }) => {
-            const { meta } = await generateOTL(data.id);
-            return { kycId: data.id, result: meta["one-time-link"] };
-          }));
-      if (!kycId) return c.text("kyc not found", 404);
-      if (!result) return c.text("kyc not approved", 403);
-      await database.update(credentials).set({ kycId }).where(eq(credentials.id, credentialId));
-      return c.json(result);
+    if (credential.kycId) {
+      const { data } = await getInquiry(credential.kycId);
+      if (data.attributes.status !== "approved") {
+        const { meta } = await generateOTL(credential.kycId);
+        return c.json(meta["one-time-link"]);
+      }
     }
+    const { inquiryId } = c.req.valid("json");
+    const { kycId, result } = await (inquiryId
+      ? getInquiry(inquiryId).then(({ data }) => {
+          return { kycId: inquiryId, result: data.attributes.status === "approved" };
+        })
+      : createInquiry().then(async ({ data }) => {
+          const { meta } = await generateOTL(data.id);
+          return { kycId: data.id, result: meta["one-time-link"] };
+        }));
+    if (!kycId) return c.text("invalid kyc id", 403);
+    if (!result) return c.text("kyc not approved", 403);
+    await database.update(credentials).set({ kycId }).where(eq(credentials.id, credentialId));
+    return c.json(result);
   },
 );
 
