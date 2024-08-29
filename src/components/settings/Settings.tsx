@@ -9,7 +9,6 @@ import { useAccount } from "wagmi";
 
 import ContractUtils from "./ContractUtils";
 import PasskeyUtils from "./PasskeyUtils";
-import PersonaUtils from "./PersonaUtils";
 import WalletUtils from "./WalletUtils";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -51,7 +50,6 @@ export default function Settings() {
               <Button contained onPress={startOnboarding}>
                 Start Onboarding
               </Button>
-              <PersonaUtils />
               <WalletUtils />
               <PasskeyUtils />
               <ContractUtils />
