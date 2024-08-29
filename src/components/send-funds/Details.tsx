@@ -6,11 +6,10 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack, Avatar } from "tamagui";
-import type { Address } from "viem";
 import { optimism } from "viem/chains";
 import { useAccount } from "wagmi";
 
-import queryClient from "../../utils/queryClient";
+import queryClient, { type Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
@@ -22,11 +21,7 @@ interface DetailsProperties {
 
 export default function Details({ hash }: DetailsProperties) {
   const { chainId } = useAccount();
-  const { data } = useQuery<{
-    receiver?: Address;
-    market?: Address;
-    amount: bigint;
-  }>({ queryKey: ["withdrawal"] });
+  const { data } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   return (
     <View padded gap="$s4">
       <XStack justifyContent="space-between" alignItems="center">

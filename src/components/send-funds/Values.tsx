@@ -8,7 +8,7 @@ import View from "../shared/View";
 
 interface ValuesProperties {
   amount: bigint;
-  assetName: string;
+  assetName?: string;
   usdValue: bigint;
 }
 

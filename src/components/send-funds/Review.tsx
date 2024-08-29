@@ -5,29 +5,28 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, XStack, YStack, Image } from "tamagui";
-import type { Address } from "viem";
 
 import assetLogos from "../../utils/assetLogos";
+import type { Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 interface ReviewProperties {
-  assetName: string;
-  amount: bigint;
-  usdValue: bigint;
   canSend: boolean;
+  details: { assetName?: string; amount: bigint; usdValue: bigint };
   isFirstSend: boolean;
   onSend: () => void;
 }
 
-export default function Review({ amount, usdValue, assetName, canSend, isFirstSend, onSend }: ReviewProperties) {
-  const { data } = useQuery<{
-    receiver?: Address;
-    market?: Address;
-    amount: bigint;
-  }>({ queryKey: ["withdrawal"] });
+export default function Review({
+  details: { amount, usdValue, assetName },
+  canSend,
+  isFirstSend,
+  onSend,
+}: ReviewProperties) {
+  const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { canGoBack } = router;
   return (
     <>
@@ -70,7 +69,7 @@ export default function Review({ amount, usdValue, assetName, canSend, isFirstSe
               <Image backgroundColor="$backgroundBrand" width={ms(40)} height={ms(40)} borderRadius="$r_0" />
               <YStack>
                 <Text title color="$uiNeutralPrimary">
-                  {shortenAddress(data?.receiver ?? "", 5, 5)}
+                  {shortenAddress(withdraw?.receiver ?? "", 5, 5)}
                 </Text>
                 {isFirstSend && (
                   <Text subHeadline color="$uiNeutralSecondary">
@@ -88,7 +87,7 @@ export default function Review({ amount, usdValue, assetName, canSend, isFirstSe
             iconAfter={<ArrowRight color={canSend ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"} />}
             onPress={onSend}
           >
-            Hold to send
+            Send
           </Button>
         </View>
         <View padded alignItems="center">

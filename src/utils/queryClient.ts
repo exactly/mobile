@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { persistQueryClientRestore, persistQueryClientSubscribe } from "@tanstack/query-persist-client-core";
 import { QueryClient } from "@tanstack/react-query";
+import type { Address } from "viem";
 import { deserialize, serialize } from "wagmi";
 
 import handleError from "./handleError";
@@ -25,3 +26,9 @@ queryClient.setQueryDefaults(["passkey"], {
 queryClient.setQueryDefaults(["auth"], { retry: false, staleTime: 24 * 60 * 60_000, gcTime: 24 * 60 * 60_000 });
 
 export default queryClient;
+
+export interface Withdraw {
+  receiver?: Address;
+  market?: Address;
+  amount: bigint;
+}

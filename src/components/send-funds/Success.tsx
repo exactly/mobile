@@ -9,13 +9,11 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 interface SuccessProperties {
-  assetName: string;
-  amount: bigint;
-  usdValue: bigint;
+  details: { assetName?: string; amount: bigint; usdValue: bigint };
   hash?: string;
 }
 
-export default function Success({ assetName, amount, usdValue, hash }: SuccessProperties) {
+export default function Success({ details: { assetName, amount, usdValue }, hash }: SuccessProperties) {
   return (
     <View>
       <ScrollView>

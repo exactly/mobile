@@ -15,7 +15,7 @@ import { useAccount } from "wagmi";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
-import queryClient from "../../utils/queryClient";
+import queryClient, { type Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -23,13 +23,9 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function AssetSelection() {
-  const { data } = useQuery<{
-    receiver?: Address;
-    market?: Address;
-    amount: bigint;
-  }>({ queryKey: ["withdrawal"] });
-  const { address } = useAccount();
   const { canGoBack } = router;
+  const { address } = useAccount();
+  const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
 
   const { data: markets } = useReadPreviewerExactly({
     address: previewerAddress,
@@ -38,8 +34,7 @@ export default function AssetSelection() {
   });
 
   const { Field, Subscribe, handleSubmit } = useForm<{ market: string }, ValibotValidator>({
-    defaultValues: { market: data?.market ?? "" },
-    defaultState: { isValid: false },
+    defaultValues: { market: withdraw?.market ?? "" },
     onSubmit: ({ value: { market } }) => {
       queryClient.setQueryData<{ receiver?: Address; market?: Address; amount: bigint }>(["withdrawal"], (old) => {
         return old ? { ...old, market: market as Address } : { market: market as Address, amount: 0n };
@@ -77,7 +72,7 @@ export default function AssetSelection() {
         </View>
         <ScrollView flex={1}>
           <View flex={1} gap="$s5">
-            {data?.receiver && (
+            {withdraw?.receiver && (
               <XStack
                 alignItems="center"
                 backgroundColor="$backgroundBrandSoft"
@@ -92,7 +87,7 @@ export default function AssetSelection() {
                     To:
                   </Text>
                   <Text emphasized callout color="$uiNeutralPrimary">
-                    {shortenAddress(data.receiver, 7, 7)}
+                    {shortenAddress(withdraw.receiver, 7, 7)}
                   </Text>
                 </XStack>
               </XStack>

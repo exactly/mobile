@@ -8,13 +8,11 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 interface PendingProperties {
-  assetName: string;
-  amount: bigint;
-  usdValue: bigint;
+  details: { assetName?: string; amount: bigint; usdValue: bigint };
   hash?: string;
 }
 
-export default function Pending({ assetName, amount, usdValue, hash }: PendingProperties) {
+export default function Pending({ details: { assetName, amount, usdValue }, hash }: PendingProperties) {
   return (
     <View>
       <ScrollView>

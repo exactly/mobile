@@ -5,14 +5,14 @@ import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Pressable } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ButtonIcon, ScrollView, XStack, YStack } from "tamagui";
 import * as v from "valibot";
 import { isAddress, type Address } from "viem";
 
 import handleError from "../../utils/handleError";
-import queryClient from "../../utils/queryClient";
+import queryClient, { type Withdraw } from "../../utils/queryClient";
 import Button from "../shared/Button";
 import Input from "../shared/Input";
 import SafeView from "../shared/SafeView";
@@ -22,14 +22,11 @@ import View from "../shared/View";
 export default function AddressSelection() {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<"front" | "back">("back");
+  const { canGoBack } = router;
   const [permission, requestPermission] = useCameraPermissions();
-  const { data } = useQuery<{
-    receiver?: Address;
-    market?: Address;
-    amount: bigint;
-  }>({ queryKey: ["withdrawal"] });
+  const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { Field, Subscribe, handleSubmit, setFieldValue } = useForm<{ receiver: string }, ValibotValidator>({
-    defaultValues: { receiver: data?.receiver ?? "" },
+    defaultValues: { receiver: withdraw?.receiver ?? "" },
     onSubmit: ({ value: { receiver } }) => {
       queryClient.setQueryData<{ receiver?: Address; market?: Address; amount: bigint }>(["withdrawal"], (old) => {
         return old
@@ -39,7 +36,6 @@ export default function AddressSelection() {
       router.push("/send-funds/asset");
     },
   });
-  const { canGoBack } = router;
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>
@@ -96,11 +92,11 @@ export default function AddressSelection() {
                       borderBottomLeftRadius={0}
                       borderLeftWidth={0}
                       onPress={() => {
+                        if (permission?.granted) setCameraOn(!cameraOn);
                         if (!permission?.granted) {
-                          setCameraOn(false);
-                          return;
+                          requestPermission().catch(handleError);
+                          setCameraOn(true);
                         }
-                        setCameraOn(!cameraOn);
                       }}
                     >
                       <ButtonIcon>
@@ -116,20 +112,16 @@ export default function AddressSelection() {
                 </YStack>
               )}
             </Field>
-
             {permission && permission.granted && cameraOn && (
               <View minHeight={ms(300)}>
                 <CameraView
-                  barcodeScannerSettings={{
-                    barcodeTypes: ["qr"],
-                  }}
+                  barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
                   onBarcodeScanned={({ data: value }) => {
                     setFieldValue("receiver", value);
                     setCameraOn(false);
                   }}
                   facing={cameraFacing}
-                  // eslint-disable-next-line react-native/no-inline-styles
-                  style={{ flex: 1 }}
+                  style={styles.cameraView}
                   autofocus="on"
                 >
                   <Button
@@ -148,23 +140,6 @@ export default function AddressSelection() {
                 </CameraView>
               </View>
             )}
-
-            {!permission?.granted && (
-              <View gap="$s5">
-                <Text textAlign="center" emphasized footnote color="$uiNeutralSecondary">
-                  We need your permission to show the camera.
-                </Text>
-                <Button
-                  outlined
-                  onPress={() => {
-                    requestPermission().catch(handleError);
-                  }}
-                >
-                  Grant permission
-                </Button>
-              </View>
-            )}
-
             <Subscribe selector={({ canSubmit }) => canSubmit}>
               {(canSubmit) => {
                 return (
@@ -191,3 +166,5 @@ export default function AddressSelection() {
     </SafeView>
   );
 }
+
+const styles = StyleSheet.create({ cameraView: { flex: 1 } });

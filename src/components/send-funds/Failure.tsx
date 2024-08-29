@@ -10,14 +10,12 @@ import Values from "./Values";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface ErrorProperties {
-  assetName: string;
-  amount: bigint;
-  usdValue: bigint;
+interface FailureProperties {
+  details: { assetName?: string; amount: bigint; usdValue: bigint };
   hash?: string;
 }
 
-export default function Error({ assetName, amount, usdValue, hash }: ErrorProperties) {
+export default function Failure({ details: { assetName, amount, usdValue }, hash }: FailureProperties) {
   return (
     <View>
       <ScrollView>

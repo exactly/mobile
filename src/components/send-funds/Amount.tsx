@@ -1,21 +1,19 @@
-import { previewerAddress } from "@exactly/common/generated/chain";
 import { ArrowLeft, ArrowRight, Coins, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-adapter";
 import { router } from "expo-router";
-import React, { useMemo } from "react";
+import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack, YStack } from "tamagui";
 import * as v from "valibot";
-import { zeroAddress, type Address } from "viem";
-import { useAccount } from "wagmi";
+import type { Address } from "viem";
 
-import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
-import queryClient from "../../utils/queryClient";
+import queryClient, { type Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
+import useMarket from "../../utils/useMarket";
 import AmountSelector from "../shared/AmountSelector";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -23,19 +21,9 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Amount() {
-  const { data } = useQuery<{
-    receiver?: Address;
-    market?: Address;
-    amount: bigint;
-  }>({ queryKey: ["withdrawal"] });
+  const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { canGoBack } = router;
-
-  const { address } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
+  const marketAccount = useMarket(withdraw?.market);
 
   const {
     Field,
@@ -43,22 +31,18 @@ export default function Amount() {
     handleSubmit,
     state: { errors },
   } = useForm<{ amount: bigint }, ValibotValidator>({
-    defaultValues: { amount: data?.amount ?? 0n },
-    defaultState: { isValid: false },
+    defaultValues: { amount: withdraw?.amount ?? 0n },
     onSubmit: ({ value: { amount } }) => {
       queryClient.setQueryData<{ receiver?: Address; market?: Address; amount: bigint }>(["withdrawal"], (old) => {
         return old ? { ...old, amount } : { amount };
       });
-      router.push("/send-funds/review");
+      router.push("/send-funds/withdraw");
     },
   });
 
-  const assetMarket = useMemo(() => markets?.find(({ market }) => market === data?.market), [markets, data]);
-
-  let available = 0n;
-  if (assetMarket) {
-    available = (assetMarket.maxBorrowAssets * 10n ** 18n) / BigInt(10 ** assetMarket.decimals);
-  }
+  const available = marketAccount
+    ? (marketAccount.maxBorrowAssets * 10n ** 18n) / BigInt(10 ** marketAccount.decimals)
+    : 0n;
 
   return (
     <SafeView fullScreen>
@@ -82,7 +66,7 @@ export default function Amount() {
         <ScrollView flex={1}>
           <View flex={1} gap="$s5">
             <View gap="$s3">
-              {data?.receiver && (
+              {withdraw?.receiver && (
                 <XStack
                   alignItems="center"
                   backgroundColor="$backgroundBrandSoft"
@@ -97,13 +81,13 @@ export default function Amount() {
                       To:
                     </Text>
                     <Text emphasized callout color="$uiNeutralPrimary">
-                      {shortenAddress(data.receiver, 7, 7)}
+                      {shortenAddress(withdraw.receiver, 7, 7)}
                     </Text>
                   </XStack>
                 </XStack>
               )}
 
-              {assetMarket && (
+              {marketAccount && (
                 <XStack
                   alignItems="center"
                   backgroundColor="$backgroundBrandSoft"
@@ -122,7 +106,7 @@ export default function Amount() {
                       {(Number(available) / 1e18).toLocaleString(undefined, {
                         currency: "USD",
                       })}{" "}
-                      {assetMarket.assetName}
+                      {marketAccount.assetName}
                     </Text>
                   </XStack>
                 </XStack>
