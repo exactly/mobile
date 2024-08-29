@@ -8,7 +8,7 @@ import TransactionError from "./Error";
 import Pending from "./Pending";
 import Review from "./Review";
 import Success from "./Success";
-import { useReadPreviewerExactly, useSimulateMarketWithdraw } from "../../generated/contracts";
+import { useReadPreviewerExactly, useSimulateExaPluginPropose } from "../../generated/contracts";
 import SafeView from "../shared/SafeView";
 import View from "../shared/View";
 
@@ -27,9 +27,9 @@ export default function Withdraw() {
 
   const assetMarket = useMemo(() => markets?.find(({ market }) => market === data?.market), [markets, data]);
 
-  const { data: withdrawSimulation } = useSimulateMarketWithdraw({
-    address: assetMarket?.market,
-    args: [data?.amount ?? 0n, data?.receiver ?? zeroAddress, address ?? zeroAddress],
+  const { data: proposeSimulation } = useSimulateExaPluginPropose({
+    address,
+    args: [assetMarket?.market ?? zeroAddress, data?.amount ?? 0n, data?.receiver ?? zeroAddress],
     query: { enabled: !!data && !!markets && !!address && !!assetMarket },
   });
 
@@ -43,9 +43,9 @@ export default function Withdraw() {
   }
 
   const handleSubmit = useCallback(() => {
-    if (!withdrawSimulation) throw new Error("no withdraw simulation");
-    writeContract(withdrawSimulation.request);
-  }, [writeContract, withdrawSimulation]);
+    if (!proposeSimulation) throw new Error("no propose simulation");
+    writeContract(proposeSimulation.request);
+  }, [writeContract, proposeSimulation]);
 
   return (
     <SafeView fullScreen>
@@ -55,7 +55,7 @@ export default function Withdraw() {
             assetName={assetMarket?.assetName ?? ""}
             amount={amount}
             usdValue={usdValue}
-            canSend={!!withdrawSimulation}
+            canSend={!!proposeSimulation}
             onSend={handleSubmit}
             isFirstSend // TODO grab from recent contacts
           />
