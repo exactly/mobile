@@ -56,8 +56,10 @@ export default function Card() {
             </View>
             {isLoading && <Spinner color="$interactiveBaseBrandDefault" />}
             {card && differenceInSeconds(Date.now(), dataUpdatedAt) < 60 && <CardDetails uri={card.url} />}
-            <View borderRadius="$r3" overflow="hidden">
-              <ExaCard />
+            <View>
+              <View width="100%" height={ms(202)} borderRadius="$r3" overflow="hidden">
+                <ExaCard width="100%" height="100%" />
+              </View>
               <View
                 position="absolute"
                 flexDirection="row"
