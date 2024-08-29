@@ -145,22 +145,28 @@ app.post(
             [...markets].map(async (market) => {
               await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
                 try {
-                  await publicClient.simulateContract({
-                    account: keeper.account,
-                    address: account,
-                    functionName: "poke",
-                    args: [market],
-                    abi: exaPluginAbi,
-                  });
-                  const hash = await keeper.writeContract({
-                    address: account,
-                    functionName: "poke",
-                    args: [market],
-                    abi: exaPluginAbi,
-                    ...transactionOptions,
-                  });
+                  await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                    publicClient.simulateContract({
+                      account: keeper.account,
+                      address: account,
+                      functionName: "poke",
+                      args: [market],
+                      abi: exaPluginAbi,
+                    }),
+                  );
+                  const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+                    keeper.writeContract({
+                      address: account,
+                      functionName: "poke",
+                      args: [market],
+                      abi: exaPluginAbi,
+                      ...transactionOptions,
+                    }),
+                  );
                   setContext("tx", { hash });
-                  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+                  const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+                    publicClient.waitForTransactionReceipt({ hash }),
+                  );
                   setContext("tx", receipt);
                   if (receipt.status !== "success") captureException(new Error("tx reverted"));
                 } catch (error: unknown) {
