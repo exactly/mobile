@@ -15,14 +15,16 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
     [navigation],
   );
   return (
-    <SafeView paddingTop={0} backgroundColor="$backgroundSoft">
+    <SafeView flexDirection="row" width="100%" paddingTop={0} backgroundColor="$backgroundSoft" justifyContent="center">
       <ToggleGroup
         borderRadius={0}
         borderTopColor="$borderNeutralSoft"
         borderTopWidth={1}
         type="single"
         unstyled
-        justifyContent="center"
+        justifyContent="space-evenly"
+        flexDirection="row"
+        flex={1}
       >
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key] ?? { options: undefined };
@@ -41,7 +43,6 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
               padding={ms(10)}
               role="button"
               value="center"
-              flex={1}
             >
               <ButtonIcon>
                 {icon?.({
