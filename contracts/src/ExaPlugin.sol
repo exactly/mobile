@@ -60,6 +60,8 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
   IBalancerVault public immutable BALANCER_VAULT;
+  IVelodromeFactory public immutable VELODROME_FACTORY;
+
   uint256 public immutable INTERVAL = 30 days;
   uint256 public immutable PROPOSAL_DELAY = 5 minutes;
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
@@ -69,10 +71,18 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   mapping(address account => bytes32 hash) public issuerOperations;
   mapping(address account => Proposal lastProposal) public proposals;
 
-  constructor(IAuditor auditor, IMarket exaUSDC, IBalancerVault balancerVault, address issuer_, address collector_) {
+  constructor(
+    IAuditor auditor,
+    IMarket exaUSDC,
+    IBalancerVault balancerVault,
+    IVelodromeFactory velodromeFactory,
+    address issuer_,
+    address collector_
+  ) {
     AUDITOR = auditor;
     EXA_USDC = exaUSDC;
     BALANCER_VAULT = balancerVault;
+    VELODROME_FACTORY = velodromeFactory;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setIssuer(issuer_);
@@ -103,6 +113,28 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
       address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amounts[0])))
     );
     BALANCER_VAULT.flashLoan(address(this), tokens, amounts, abi.encode(EXA_USDC, calls));
+  }
+
+  function crossRepay(uint256 maturity, IMarket collateral) external {
+    address asset = collateral.asset();
+    address usdc = EXA_USDC.asset();
+    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, msg.sender);
+    uint256 maxRepay = position.principal + position.fee;
+    address pool = VELODROME_FACTORY.getPool(asset, EXA_USDC.asset(), false);
+    uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
+    uint256 withdrawAmount = getAmountIn(VELODROME_FACTORY.getPool(usdc, asset, false), maxRepay, usdc > asset, swapFee); // TODO slippage control
+    // slither-disable-next-line unused-return -- unneeded
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), withdrawAmount))
+    );
+    IVelodromePool(pool).swap(
+      usdc < asset ? maxRepay : 0,
+      usdc > asset ? maxRepay : 0,
+      address(this),
+      abi.encode(
+        VelodromeCallbackData({ borrower: msg.sender, collateral: collateral, maturity: maturity, fee: swapFee })
+      )
+    );
   }
 
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature)
@@ -196,6 +228,10 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
       if (msg.sender != address(BALANCER_VAULT)) revert Unauthorized();
       return;
     }
+    if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_VELODROME)) {
+      if (!VELODROME_FACTORY.isPool(msg.sender)) revert Unauthorized();
+      return;
+    }
     revert NotImplemented(msg.sig, functionId);
   }
 
@@ -257,14 +293,16 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](7);
+    manifest.executionFunctions = new bytes4[](9);
     manifest.executionFunctions[0] = this.propose.selector;
     manifest.executionFunctions[1] = this.repay.selector;
-    manifest.executionFunctions[2] = this.collectCredit.selector;
-    manifest.executionFunctions[3] = this.collectDebit.selector;
-    manifest.executionFunctions[4] = this.poke.selector;
-    manifest.executionFunctions[5] = this.withdraw.selector;
-    manifest.executionFunctions[6] = this.receiveFlashLoan.selector;
+    manifest.executionFunctions[2] = this.crossRepay.selector;
+    manifest.executionFunctions[3] = this.collectCredit.selector;
+    manifest.executionFunctions[4] = this.collectDebit.selector;
+    manifest.executionFunctions[5] = this.poke.selector;
+    manifest.executionFunctions[6] = this.withdraw.selector;
+    manifest.executionFunctions[7] = this.receiveFlashLoan.selector;
+    manifest.executionFunctions[8] = this.hook.selector;
 
     ManifestFunction memory keeperUserOpValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -304,7 +342,12 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_BALANCER),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](7);
+    ManifestFunction memory velodromeRuntimeValidationFunction = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.SELF,
+      functionId: uint8(FunctionId.RUNTIME_VALIDATION_VELODROME),
+      dependencyIndex: 0
+    });
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](9);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
@@ -314,24 +357,32 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.crossRepay.selector,
+      associatedFunction: selfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectCredit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.withdraw.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
       executionSelector: this.receiveFlashLoan.selector,
       associatedFunction: balancerRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
+      executionSelector: this.hook.selector,
+      associatedFunction: velodromeRuntimeValidationFunction
     });
 
     ManifestFunction memory proposedValidationFunction = ManifestFunction({
@@ -377,6 +428,36 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
       // slither-disable-next-line unused-return -- unneeded
       address(market).functionCall(calls[i]);
     }
+  }
+
+  function hook(address sender, uint256 amount0Out, uint256 amount1Out, bytes calldata data) external {
+    if (sender != address(this)) revert Unauthorized();
+
+    VelodromeCallbackData memory v = abi.decode(data, (VelodromeCallbackData));
+    address usdc = EXA_USDC.asset();
+    address asset = v.collateral.asset();
+    if (msg.sender != VELODROME_FACTORY.getPool(usdc, asset, false)) revert Unauthorized();
+
+    uint256 maxRepay = amount0Out == 0 ? amount1Out : amount0Out;
+    // slither-disable-next-line unused-return -- unneeded
+    IERC20(usdc).approve(address(EXA_USDC), maxRepay);
+    // slither-disable-next-line unused-return -- unneeded
+    EXA_USDC.repayAtMaturity(v.maturity, maxRepay, maxRepay, v.borrower); // TODO slippage control
+
+    uint256 amount = getAmountIn(msg.sender, maxRepay, amount0Out == 0, v.fee);
+    // slither-disable-next-line unused-return -- unneeded
+    v.collateral.withdraw(amount, address(this), v.borrower);
+    IERC20(asset).safeTransfer(msg.sender, amount);
+  }
+
+  function getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
+    // slither-disable-next-line unused-return -- unneeded
+    (uint256 reserve0, uint256 reserve1,) = IVelodromePool(pool).getReserves();
+    return (
+      isToken0
+        ? (reserve0 * amountOut * 10_000) / ((reserve1 - amountOut) * (10_000 - fee))
+        : (reserve1 * amountOut * 10_000) / ((reserve0 - amountOut) * (10_000 - fee))
+    ) + 1;
   }
 
   function _checkMarket(IMarket market) public view {
@@ -437,6 +518,7 @@ enum FunctionId {
   RUNTIME_VALIDATION_SELF,
   RUNTIME_VALIDATION_KEEPER,
   RUNTIME_VALIDATION_BALANCER,
+  RUNTIME_VALIDATION_VELODROME,
   USER_OP_VALIDATION_KEEPER,
   PRE_EXEC_VALIDATION_PROPOSED
 }
@@ -446,4 +528,22 @@ error ZeroAddress();
 interface IBalancerVault {
   function flashLoan(address recipient, IERC20[] memory tokens, uint256[] memory amounts, bytes memory userData)
     external;
+}
+
+interface IVelodromeFactory {
+  function getFee(address pool, bool stable) external view returns (uint24);
+  function getPool(address tokenA, address tokenB, bool stable) external view returns (address);
+  function isPool(address pool) external view returns (bool);
+}
+
+struct VelodromeCallbackData {
+  address borrower;
+  uint24 fee;
+  uint256 maturity;
+  IMarket collateral;
+}
+
+interface IVelodromePool {
+  function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
+  function getReserves() external view returns (uint256 reserve0, uint256 reserve1, uint256 blockTimestampLast);
 }

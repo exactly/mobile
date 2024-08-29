@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
 
-import { Test } from "forge-std/Test.sol";
+import { ForkTest } from "./Fork.t.sol";
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
@@ -30,7 +30,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
-import { ExaPlugin, FunctionId, IBalancerVault } from "../src/ExaPlugin.sol";
+import { ExaPlugin, FunctionId, IBalancerVault, IVelodromeFactory } from "../src/ExaPlugin.sol";
 import {
   Expired,
   IAuditor,
@@ -46,7 +46,7 @@ import {
 // TODO use price feed for that asset with 8 decimals
 // TODO add the debt manager to the plugin so we can roll fixed to floating
 // solhint-disable-next-line max-states-count
-contract ExaPluginTest is Test {
+contract ExaPluginTest is ForkTest {
   using OwnersLib for address[];
   using ECDSA for bytes32;
 
@@ -104,6 +104,8 @@ contract ExaPluginTest is Test {
     debtManager.initialize();
     vm.label(address(debtManager), "DebtManager");
 
+    IVelodromeFactory velodromeFactory = IVelodromeFactory(address(0x123)); // HACK mock VelodromePoolFactory
+
     entryPoint = IEntryPoint(address(new EntryPoint()));
     collector = payable(makeAddr("collector"));
     (owner, ownerKey) = makeAddrAndKey("owner");
@@ -114,7 +116,7 @@ contract ExaPluginTest is Test {
     (issuer, issuerKey) = makeAddrAndKey("issuer");
     vm.label(issuer, "issuer");
 
-    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), marketUSDC, balancer, issuer, collector);
+    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), marketUSDC, balancer, velodromeFactory, issuer, collector);
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     ownerPlugin = new WebauthnOwnerPlugin();
@@ -470,7 +472,7 @@ contract ExaPluginTest is Test {
     assertEq(usdc.balanceOf(collector), 69 + 69);
   }
 
-  function test_repay() external {
+  function test_repay_repays() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
@@ -478,6 +480,47 @@ contract ExaPluginTest is Test {
 
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
+  }
+
+  function test_crossRepay_repays() external {
+    vm.createSelectFork("optimism", 124_672_500);
+    usdc = MockERC20(protocol("USDC"));
+    asset = MockERC20(protocol("WETH"));
+    market = IMarket(protocol("MarketWETH"));
+    marketUSDC = IMarket(protocol("MarketUSDC"));
+
+    exaPlugin = new ExaPlugin(
+      IAuditor(protocol("Auditor")),
+      marketUSDC,
+      IBalancerVault(protocol("BalancerVault")),
+      IVelodromeFactory(protocol("VelodromePoolFactory")),
+      issuer,
+      collector
+    );
+    domainSeparator = exaPlugin.DOMAIN_SEPARATOR();
+    exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
+
+    ownerPlugin = new WebauthnOwnerPlugin();
+    ExaAccountFactory factory = new ExaAccountFactory(
+      address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(entryPoint)), entryPoint
+    );
+
+    account = ExaAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
+    vm.deal(address(account), 10_000 ether);
+    vm.label(address(account), "op-account");
+
+    deal(address(usdc), address(account), 100_000e6);
+
+    deal(address(asset), address(account), 10e18);
+
+    uint256 maturity = block.timestamp + FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
+
+    vm.startPrank(keeper);
+    account.poke(market);
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    vm.startPrank(address(account));
+    account.crossRepay(maturity, market);
   }
 
   function test_onUninstall_uninstalls() external {

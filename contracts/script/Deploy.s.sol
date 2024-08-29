@@ -7,7 +7,7 @@ import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factor
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin, IAuditor, IBalancerVault, IMarket } from "../src/ExaPlugin.sol";
+import { ExaPlugin, IAuditor, IBalancerVault, IMarket, IVelodromeFactory } from "../src/ExaPlugin.sol";
 
 import { BaseScript, stdJson } from "./Base.s.sol";
 
@@ -21,6 +21,7 @@ contract DeployScript is BaseScript {
   IAuditor public auditor;
   IMarket public exaUSDC;
   IBalancerVault public balancerVault;
+  IVelodromeFactory public velodromeFactory;
 
   function setUp() external {
     ownerPlugin = WebauthnOwnerPlugin(
@@ -33,6 +34,7 @@ contract DeployScript is BaseScript {
     auditor = IAuditor(protocol("Auditor"));
     exaUSDC = IMarket(protocol("MarketUSDC"));
     balancerVault = IBalancerVault(protocol("BalancerVault"));
+    velodromeFactory = IVelodromeFactory(protocol("VelodromePoolFactory"));
   }
 
   function run() external {
@@ -41,7 +43,12 @@ contract DeployScript is BaseScript {
     vm.startBroadcast(msg.sender);
 
     exaPlugin = new ExaPlugin(
-      auditor, exaUSDC, balancerVault, vm.envAddress("ISSUER_ADDRESS"), vm.envAddress("COLLECTOR_ADDRESS")
+      auditor,
+      exaUSDC,
+      balancerVault,
+      velodromeFactory,
+      vm.envAddress("ISSUER_ADDRESS"),
+      vm.envAddress("COLLECTOR_ADDRESS")
     );
     factory = new ExaAccountFactory(msg.sender, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 

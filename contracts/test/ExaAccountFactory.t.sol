@@ -18,7 +18,7 @@ import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory, ExaAccountInitialized } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin, IBalancerVault } from "../src/ExaPlugin.sol";
+import { ExaPlugin, IBalancerVault, IVelodromeFactory } from "../src/ExaPlugin.sol";
 import { IAuditor, IMarket } from "../src/IExaAccount.sol";
 
 contract ExaAccountFactoryTest is Test {
@@ -35,6 +35,7 @@ contract ExaAccountFactoryTest is Test {
       IAuditor(address(0)),
       IMarket(address(new MockERC4626(new MockERC20()))),
       IBalancerVault(address(this)),
+      IVelodromeFactory(address(this)),
       address(this),
       address(this)
     );
