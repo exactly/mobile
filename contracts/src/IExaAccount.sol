@@ -13,7 +13,9 @@ interface IExaAccount {
   function withdraw() external;
 }
 
-event Proposed(address indexed account, IMarket indexed market, address indexed receiver, uint256 amount);
+event Proposed(
+  address indexed account, IMarket indexed market, address indexed receiver, uint256 amount, uint256 unlock
+);
 
 struct FixedPosition {
   uint256 principal;

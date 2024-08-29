@@ -438,10 +438,8 @@ contract ExaPluginTest is Test {
     vm.startPrank(owner);
 
     vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit Proposed(address(account), market, receiver, amount);
+    emit Proposed(address(account), market, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
-
-    vm.stopPrank();
   }
 
   function test_keeper_userOp() external {

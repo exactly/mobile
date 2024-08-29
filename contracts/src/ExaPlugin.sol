@@ -83,7 +83,7 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
 
   function propose(IMarket market, uint256 amount, address receiver) external onlyMarket(market) {
     proposals[msg.sender] = Proposal({ amount: amount, market: market, timestamp: block.timestamp, receiver: receiver });
-    emit Proposed(msg.sender, market, receiver, amount);
+    emit Proposed(msg.sender, market, receiver, amount, block.timestamp + PROPOSAL_DELAY);
   }
 
   function repay(uint256 maturity) external {
