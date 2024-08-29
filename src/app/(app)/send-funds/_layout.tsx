@@ -8,7 +8,7 @@ export default function AddFundsLayout() {
       <Stack.Screen name="asset" />
       <Stack.Screen name="amount" />
       <Stack.Screen
-        name="review"
+        name="withdraw"
         options={{
           presentation: "modal",
         }}
