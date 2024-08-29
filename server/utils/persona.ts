@@ -21,7 +21,7 @@ export function createInquiry() {
 }
 
 export function generateOTL(inquiryId: string) {
-  return request(GenerateOTLResponse, `/inquiries/${inquiryId}/one-time-links`, undefined, "POST");
+  return request(GenerateOTLResponse, `/inquiries/${inquiryId}/generate-one-time-link`, undefined, "POST");
 }
 
 async function request<TInput, TOutput, TIssue extends BaseIssue<unknown>>(
