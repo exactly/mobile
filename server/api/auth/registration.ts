@@ -7,7 +7,7 @@ import { generateRegistrationOptions, verifyRegistrationResponse } from "@simple
 import { cose, generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
-import { any, array, literal, looseObject, nullish, object, picklist, pipe, transform } from "valibot";
+import { any, array, literal, looseObject, nullish, object, picklist } from "valibot";
 import type { Hex } from "viem";
 
 import database, { credentials } from "../../database";
@@ -58,9 +58,9 @@ app.post(
       response: looseObject({
         clientDataJSON: Base64URL,
         attestationObject: Base64URL,
-        transports: pipe(
-          nullish(array(picklist(["ble", "cable", "hybrid", "internal", "nfc", "smart-card", "usb"]))),
-          transform((transports) => transports ?? undefined),
+        transports: nullish(
+          array(picklist(["ble", "cable", "hybrid", "internal", "nfc", "smart-card", "usb"])),
+          undefined, // eslint-disable-line unicorn/no-useless-undefined -- replace null with undefined
         ),
       }),
       clientExtensionResults: any(),
