@@ -39,10 +39,7 @@ import {
   NoProposal,
   Proposed,
   Timelocked,
-  Unauthorized,
-  WrongAmount,
-  WrongMarket,
-  WrongReceiver
+  Unauthorized
 } from "../src/IExaAccount.sol";
 
 // TODO use mock asset with price != 1
@@ -299,17 +296,16 @@ contract ExaPluginTest is Test {
 
     assertEq(asset.balanceOf(address(account)), 0);
     vm.prank(keeper);
-    account.withdraw(market, amount);
+    account.withdraw();
     assertEq(asset.balanceOf(address(account)), amount);
   }
 
   function test_withdraw_reverts_whenNoProposal() external {
     uint256 amount = 1;
-
     vm.prank(keeper);
     account.poke(market);
 
-    vm.startPrank(owner);
+    vm.prank(owner);
     vm.expectRevert(
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
@@ -319,32 +315,21 @@ contract ExaPluginTest is Test {
       )
     );
     account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
-    vm.stopPrank();
   }
 
   function test_withdraw_reverts_whenNoProposalKeeper() external {
-    uint256 amount = 100 ether;
     vm.startPrank(keeper);
     account.poke(market);
 
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(NoProposal.selector)
-      )
-    );
-    account.withdraw(market, amount + 1);
-    vm.stopPrank();
+    vm.expectRevert(NoProposal.selector);
+    account.withdraw();
   }
 
   function test_withdraw_reverts_whenTimelocked() external {
     uint256 amount = 1;
-    vm.prank(owner);
+    vm.startPrank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
 
-    vm.startPrank(owner);
     vm.expectRevert(
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
@@ -354,7 +339,6 @@ contract ExaPluginTest is Test {
       )
     );
     account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
-    vm.stopPrank();
   }
 
   function test_withdraw_reverts_whenTimelockedKeeper() external {
@@ -362,7 +346,7 @@ contract ExaPluginTest is Test {
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
 
-    vm.startPrank(keeper);
+    vm.prank(keeper);
     vm.expectRevert(
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
@@ -371,110 +355,60 @@ contract ExaPluginTest is Test {
         abi.encodePacked(Timelocked.selector)
       )
     );
-    account.withdraw(market, amount);
-    vm.stopPrank();
+    account.withdraw();
   }
 
   function test_withdraw_reverts_whenWrongAmount() external {
     uint256 amount = 1;
-    vm.prank(owner);
+    vm.startPrank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
     skip(exaPlugin.PROPOSAL_DELAY());
 
-    vm.startPrank(owner);
     vm.expectRevert(
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
         FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(WrongAmount.selector)
+        abi.encodePacked(NoProposal.selector)
       )
     );
     account.execute(
       address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount + 1, address(account), address(account)))
     );
-    vm.stopPrank();
-  }
-
-  function test_withdraw_reverts_whenWrongAmountKeeper() external {
-    uint256 amount = 1;
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    vm.startPrank(keeper);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(WrongAmount.selector)
-      )
-    );
-    account.withdraw(market, amount + 1);
-    vm.stopPrank();
   }
 
   function test_withdraw_reverts_whenWrongMarket() external {
     uint256 amount = 1;
-    vm.prank(owner);
+    vm.startPrank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, amount, address(account))));
 
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    vm.startPrank(owner);
     vm.expectRevert(
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
         FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(WrongMarket.selector)
+        abi.encodePacked(NoProposal.selector)
       )
     );
     account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
-    vm.stopPrank();
-  }
-
-  function test_withdraw_reverts_whenWrongMarketKeeper() external {
-    uint256 amount = 1;
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, amount, address(account))));
-
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    vm.startPrank(keeper);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(WrongMarket.selector)
-      )
-    );
-    account.withdraw(market, amount);
-    vm.stopPrank();
   }
 
   function test_withdraw_reverts_whenWrongReceiver() external {
     uint256 amount = 1;
     address receiver = address(0x420);
-    vm.prank(owner);
+    vm.startPrank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
-
     skip(exaPlugin.PROPOSAL_DELAY());
 
-    address random = address(0x123);
-    vm.startPrank(owner);
     vm.expectRevert(
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
         FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(WrongReceiver.selector)
+        abi.encodePacked(NoProposal.selector)
       )
     );
-    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, random, address(account))));
-    vm.stopPrank();
+    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(0x123), address(account))));
   }
 
   function test_withdraw_reverts_whenNotKeeper() external {
@@ -489,7 +423,7 @@ contract ExaPluginTest is Test {
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
-    account.withdraw(market, 100 ether);
+    account.withdraw();
   }
 
   function test_poke() external {
@@ -517,7 +451,7 @@ contract ExaPluginTest is Test {
 
     UserOperation[] memory ops = new UserOperation[](4);
     ops[0] = _op(abi.encodeCall(IExaAccount.poke, (marketUSDC)), keeperKey);
-    ops[1] = _op(abi.encodeCall(IExaAccount.withdraw, (marketUSDC, 69)), keeperKey, 1);
+    ops[1] = _op(abi.encodeCall(IExaAccount.withdraw, ()), keeperKey, 1);
     ops[2] = _op(
       abi.encodeCall(
         IExaAccount.collectCredit, (FixedLib.INTERVAL, 69, block.timestamp, _issuerOp(69, block.timestamp))

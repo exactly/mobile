@@ -10,7 +10,7 @@ interface IExaAccount {
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature) external;
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external;
   function poke(IMarket market) external;
-  function withdraw(IMarket market, uint256 amount) external;
+  function withdraw() external;
 }
 
 event Proposed(address indexed account, IMarket indexed market, address indexed receiver, uint256 amount);
@@ -33,9 +33,6 @@ error NoProposal();
 error NotMarket();
 error Timelocked();
 error Unauthorized();
-error WrongAmount();
-error WrongMarket();
-error WrongReceiver();
 error ZeroAmount();
 
 interface IAuditor {

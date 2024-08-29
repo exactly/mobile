@@ -39,9 +39,6 @@ import {
   Proposed,
   Timelocked,
   Unauthorized,
-  WrongAmount,
-  WrongMarket,
-  WrongReceiver,
   ZeroAmount
 } from "./IExaAccount.sol";
 
@@ -149,10 +146,14 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
     );
   }
 
-  function withdraw(IMarket market, uint256 amount) external onlyMarket(market) {
+  function withdraw() external {
+    Proposal storage proposal = proposals[msg.sender];
+    address market = address(proposal.market);
+    if (market == address(0)) revert NoProposal();
+
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(market.withdraw, (amount, proposals[msg.sender].receiver, msg.sender))
+      market, 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, proposal.receiver, msg.sender))
     );
   }
 
@@ -229,10 +230,10 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
 
       // slither-disable-next-line incorrect-equality -- unsigned zero check
       if (proposal.amount == 0) revert NoProposal();
+      if (proposal.amount < assets) revert NoProposal();
+      if (proposal.market != target) revert NoProposal();
+      if (proposal.receiver != receiver) revert NoProposal();
       if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
-      if (proposal.amount < assets) revert WrongAmount();
-      if (proposal.market != target) revert WrongMarket();
-      if (proposal.receiver != receiver) revert WrongReceiver();
       return abi.encode(assets);
     }
     revert NotImplemented(msg.sig, functionId);
