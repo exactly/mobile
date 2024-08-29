@@ -1,12 +1,16 @@
 import { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain";
 import { Hash, Hex } from "@exactly/common/types";
-import { getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext } from "@sentry/node";
+import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
 import createDebug from "debug";
 import { Hono } from "hono";
+import { setTimeout } from "node:timers/promises";
 import * as v from "valibot";
 import { decodeEventLog } from "viem";
 
 import { headerValidator, jsonValidator } from "../utils/alchemy";
+import keeper from "../utils/keeper";
+import publicClient from "../utils/publicClient";
+import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.ALCHEMY_BLOCK_KEY) throw new Error("missing alchemy block key");
 const signingKey = process.env.ALCHEMY_BLOCK_KEY;
@@ -39,7 +43,50 @@ app.post(
     if (logs.length === 0) return c.json({});
     setContext("alchemy", await c.req.json());
     getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
-    logs.map(({ topics, data }) => decodeEventLog({ topics, data, abi: exaPluginAbi }));
+    const events = logs.map(({ topics, data }) => decodeEventLog({ topics, data, abi: exaPluginAbi }));
+    Promise.allSettled(
+      events.map((event) => {
+        switch (event.eventName) {
+          case "Proposed": {
+            const { account, market, receiver, amount, unlock } = event.args;
+            // TODO use message queue
+            return setTimeout(Number(unlock) * 1000 - Date.now()).then(() =>
+              startSpan(
+                {
+                  name: "exa.withdraw",
+                  op: "exa.withdraw",
+                  attributes: { account, market, receiver, amount: String(amount), unlock: Number(unlock) },
+                },
+                async () => {
+                  await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                    publicClient.simulateContract({
+                      account: keeper.account,
+                      address: account,
+                      functionName: "withdraw",
+                      abi: exaPluginAbi,
+                    }),
+                  );
+                  const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+                    keeper.writeContract({
+                      address: account,
+                      functionName: "withdraw",
+                      abi: exaPluginAbi,
+                      ...transactionOptions,
+                    }),
+                  );
+                  setContext("tx", { hash });
+                  const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+                    publicClient.waitForTransactionReceipt({ hash }),
+                  );
+                  setContext("tx", receipt);
+                  if (receipt.status !== "success") captureException(new Error("tx reverted"));
+                },
+              ),
+            );
+          }
+        }
+      }),
+    ).catch((error: unknown) => captureException(error));
     return c.json({});
   },
 );
