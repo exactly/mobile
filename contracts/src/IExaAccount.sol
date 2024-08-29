@@ -29,11 +29,11 @@ struct Proposal {
 
 error BorrowLimitExceeded();
 error Expired();
+error NoBalance();
 error NoProposal();
 error NotMarket();
 error Timelocked();
 error Unauthorized();
-error ZeroAmount();
 
 interface IAuditor {
   function markets(IMarket market)

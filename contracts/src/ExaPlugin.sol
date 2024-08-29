@@ -33,13 +33,13 @@ import {
   IAuditor,
   IExaAccount,
   IMarket,
+  NoBalance,
   NoProposal,
   NotMarket,
   Proposal,
   Proposed,
   Timelocked,
-  Unauthorized,
-  ZeroAmount
+  Unauthorized
 } from "./IExaAccount.sol";
 
 /// @title Exa Plugin
@@ -128,17 +128,17 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   }
 
   function poke(IMarket market) external onlyMarket(market) {
-    uint256 assets = IERC20(market.asset()).balanceOf(msg.sender);
+    uint256 balance = IERC20(market.asset()).balanceOf(msg.sender);
     // slither-disable-next-line incorrect-equality -- unsigned zero check
-    if (assets == 0) revert ZeroAmount();
+    if (balance == 0) revert NoBalance();
 
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market.asset()), 0, abi.encodeCall(IERC20.approve, (address(market), assets))
+      address(market.asset()), 0, abi.encodeCall(IERC20.approve, (address(market), balance))
     );
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(IERC4626.deposit, (assets, msg.sender))
+      address(market), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender))
     );
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
