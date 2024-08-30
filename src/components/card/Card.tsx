@@ -28,7 +28,7 @@ const StyledAction = styled(View, {
   backgroundColor: "$backgroundSoft",
   borderColor: "$borderNeutralSoft",
   justifyContent: "space-between",
-  flexBasis: "50%",
+  width: "100%",
 });
 
 export default function Card() {
@@ -98,11 +98,9 @@ export default function Card() {
               </Pressable>
             </View>
 
-            <View alignItems="center" gap="$s5">
+            <View alignItems="center" gap="$s5" width="100%">
               {(isLoadingCard || isLoadingKYC || isLoadingOTL) && <Spinner color="$interactiveBaseBrandDefault" />}
-
               {card && <CardDetails uri={card.url} />}
-
               <View
                 borderRadius="$r3"
                 overflow="hidden"
@@ -129,14 +127,12 @@ export default function Card() {
                   </Text>
                 </View>
               </View>
-
               {(cardError ?? OTLError) && (
                 <Text color="$uiErrorPrimary" fontWeight="bold">
                   {cardError ? cardError.message : OTLError ? OTLError.message : "Error"}
                 </Text>
               )}
-
-              <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
+              <View flexDirection="row" justifyContent="space-between" width="100%" gap="$s4">
                 <StyledAction>
                   <Pressable onPress={handleReveal}>
                     <View gap={ms(10)}>
@@ -168,7 +164,6 @@ export default function Card() {
                 </StyledAction>
               </View>
             </View>
-
             <View>
               <InfoCard
                 title="Spending limits"
