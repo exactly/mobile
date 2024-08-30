@@ -24,14 +24,14 @@ export default function CardDetails({ uri }: { uri: string }) {
         <iframe src={uri} style={style} frameBorder={0} marginHeight={0} marginWidth={0} />
       ) : (
         <StyledWebView
+          flex={1}
+          source={{ uri }}
           onMessage={(event) => {
             setWebViewHeight(Number(event.nativeEvent.data));
           }}
-          height={webViewHeight + 10}
-          backgroundColor="transparent"
-          flex={1}
+          height={webViewHeight + 20}
+          backgroundColor="white"
           scrollEnabled={false}
-          source={{ uri }}
           startInLoadingState
           renderLoading={() => <Spinner color="$interactiveBaseBrandDefault" />}
           injectedJavaScript="window.ReactNativeWebView.postMessage(document.body.scrollHeight)"
