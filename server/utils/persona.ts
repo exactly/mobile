@@ -14,9 +14,15 @@ export function getInquiry(inquiryId: string) {
   return request(GetInquiryResponse, `/inquiries/${inquiryId}`);
 }
 
-export function createInquiry() {
+export function createInquiry(referenceId: string) {
   return request(CreateInquiryResponse, "/inquiries", {
-    data: { attributes: { "inquiry-template-id": templateId, "redirect-uri": appOrigin } },
+    data: {
+      attributes: {
+        "inquiry-template-id": templateId,
+        "redirect-uri": appOrigin,
+        meta: { "auto-create-account-reference-id": referenceId },
+      },
+    },
   });
 }
 
@@ -48,6 +54,7 @@ const GetInquiryResponse = object({
     type: literal("inquiry"),
     attributes: object({
       status: string(),
+      "reference-id": nullable(string()),
       "name-first": string(),
       "name-middle": nullable(string()),
       "name-last": string(),
