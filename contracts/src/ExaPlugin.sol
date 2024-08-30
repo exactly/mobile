@@ -18,8 +18,6 @@ import {
 } from "modular-account-libs/interfaces/IPlugin.sol";
 import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
 import { IStandardExecutor } from "modular-account-libs/interfaces/IStandardExecutor.sol";
-import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
-import { SIG_VALIDATION_FAILED, SIG_VALIDATION_PASSED } from "modular-account-libs/libraries/Constants.sol";
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
@@ -187,21 +185,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   /// @inheritdoc BasePlugin
-  function userOpValidationFunction(uint8 functionId, UserOperation calldata userOp, bytes32 userOpHash)
-    external
-    view
-    override
-    returns (uint256)
-  {
-    if (functionId == uint8(FunctionId.USER_OP_VALIDATION_KEEPER)) {
-      address signer = userOpHash.toEthSignedMessageHash().tryRecoverCalldata(userOp.signature);
-      if (signer != address(0) && hasRole(KEEPER_ROLE, signer)) return SIG_VALIDATION_PASSED;
-      return SIG_VALIDATION_FAILED;
-    }
-    revert NotImplemented(msg.sig, functionId);
-  }
-
-  /// @inheritdoc BasePlugin
   function runtimeValidationFunction(uint8 functionId, address sender, uint256, bytes calldata) external view override {
     if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_SELF)) {
       if (msg.sender != sender) revert Unauthorized();
@@ -290,29 +273,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.executionFunctions[6] = this.withdraw.selector;
     manifest.executionFunctions[7] = this.receiveFlashLoan.selector;
     manifest.executionFunctions[8] = this.hook.selector;
-
-    ManifestFunction memory keeperUserOpValidationFunction = ManifestFunction({
-      functionType: ManifestAssociatedFunctionType.SELF,
-      functionId: uint8(FunctionId.USER_OP_VALIDATION_KEEPER),
-      dependencyIndex: 0
-    });
-    manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](4);
-    manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectCredit.selector,
-      associatedFunction: keeperUserOpValidationFunction
-    });
-    manifest.userOpValidationFunctions[1] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectDebit.selector,
-      associatedFunction: keeperUserOpValidationFunction
-    });
-    manifest.userOpValidationFunctions[2] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.poke.selector,
-      associatedFunction: keeperUserOpValidationFunction
-    });
-    manifest.userOpValidationFunctions[3] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.withdraw.selector,
-      associatedFunction: keeperUserOpValidationFunction
-    });
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -470,7 +430,6 @@ enum FunctionId {
   RUNTIME_VALIDATION_KEEPER,
   RUNTIME_VALIDATION_BALANCER,
   RUNTIME_VALIDATION_VELODROME,
-  USER_OP_VALIDATION_KEEPER,
   PRE_EXEC_VALIDATION_PROPOSED
 }
 

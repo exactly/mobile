@@ -447,34 +447,6 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
   }
 
-  function test_keeper_userOp() external {
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, 69, address(this))));
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    UserOperation[] memory ops = new UserOperation[](4);
-    ops[0] = _op(abi.encodeCall(IExaAccount.poke, (marketUSDC)), keeperKey);
-    ops[1] = _op(abi.encodeCall(IExaAccount.withdraw, ()), keeperKey, 1);
-    ops[2] = _op(
-      abi.encodeCall(
-        IExaAccount.collectCredit, (FixedLib.INTERVAL, 69, block.timestamp, _issuerOp(69, block.timestamp))
-      ),
-      keeperKey,
-      2
-    );
-    ops[3] = _op(
-      abi.encodeCall(IExaAccount.collectDebit, (69, block.timestamp - 1, _issuerOp(69, block.timestamp - 1))),
-      keeperKey,
-      3
-    );
-
-    entryPoint.handleOps(ops, payable(this));
-
-    assertEq(marketUSDC.balanceOf(address(account)), 100_000e6 - 69 - 69);
-    assertEq(usdc.balanceOf(address(this)), 69);
-    assertEq(usdc.balanceOf(collector), 69 + 69);
-  }
-
   function test_repay_repays() external {
     vm.startPrank(keeper);
     account.poke(marketUSDC);
