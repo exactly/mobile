@@ -101,15 +101,23 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 positionAssets;
     uint256[] memory amounts = new uint256[](1);
     (positionAssets, amounts[0]) = _previewRepay(maturity);
-
-    bytes[] memory calls = new bytes[](2);
-    calls[0] = abi.encodeCall(IMarket.repayAtMaturity, (maturity, positionAssets, amounts[0], msg.sender));
-    calls[1] = abi.encodeCall(IERC4626.withdraw, (amounts[0], address(BALANCER_VAULT), msg.sender));
-
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amounts[0])))
     );
-    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, abi.encode(EXA_USDC, calls));
+
+    BALANCER_VAULT.flashLoan(
+      address(this),
+      tokens,
+      amounts,
+      abi.encode(
+        BalancerCallbackData({
+          maturity: maturity,
+          borrower: msg.sender,
+          positionAssets: positionAssets,
+          maxRepay: amounts[0]
+        })
+      )
+    );
   }
 
   function crossRepay(uint256 maturity, IMarket collateral) external {
@@ -368,14 +376,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     metadata.author = AUTHOR;
   }
 
-  function receiveFlashLoan(IERC20[] memory, uint256[] memory, uint256[] memory, bytes memory userData) external {
+  function receiveFlashLoan(IERC20[] memory, uint256[] memory, uint256[] memory, bytes memory data) external {
     assert(msg.sender == address(BALANCER_VAULT)); // TODO check call hash
 
-    (IMarket market, bytes[] memory calls) = abi.decode(userData, (IMarket, bytes[]));
-    _checkMarket(market);
-    for (uint256 i = 0; i < calls.length; ++i) {
-      address(market).functionCall(calls[i]);
-    }
+    BalancerCallbackData memory b = abi.decode(data, (BalancerCallbackData));
+
+    uint256 actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower);
+    assert(actualRepay == b.maxRepay);
+    EXA_USDC.withdraw(b.maxRepay, address(BALANCER_VAULT), b.borrower);
   }
 
   function hook(address sender, uint256 amount0Out, uint256 amount1Out, bytes calldata data) external {
@@ -454,14 +462,20 @@ enum FunctionId {
 error ZeroAddress();
 
 interface IBalancerVault {
-  function flashLoan(address recipient, IERC20[] memory tokens, uint256[] memory amounts, bytes memory userData)
-    external;
+  function flashLoan(address recipient, IERC20[] memory tokens, uint256[] memory amounts, bytes memory data) external;
 }
 
 interface IVelodromeFactory {
   function getFee(address pool, bool stable) external view returns (uint24);
   function getPool(address tokenA, address tokenB, bool stable) external view returns (address);
   function isPool(address pool) external view returns (bool);
+}
+
+struct BalancerCallbackData {
+  uint256 maturity;
+  address borrower;
+  uint256 positionAssets;
+  uint256 maxRepay;
 }
 
 struct VelodromeCallbackData {
