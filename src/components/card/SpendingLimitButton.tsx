@@ -16,7 +16,6 @@ export default function SpendingLimitButton({ title, limit }: SpendingLimitButto
       flexDirection="row"
       flex={1}
       backgroundColor="$backgroundBrandSoft"
-      width="100%"
       borderRadius="$r3"
       height={ms(46)}
       alignItems="center"
@@ -32,8 +31,8 @@ export default function SpendingLimitButton({ title, limit }: SpendingLimitButto
         opacity={0.1}
       />
 
-      <View flexDirection="row" justifyContent="space-between" flex={1}>
-        <View flexDirection="row" gap={ms(5)} alignItems="center" padding={ms(10)}>
+      <View flexDirection="row" justifyContent="space-between" flex={1} padding="$s3">
+        <View flexDirection="row" gap={ms(5)} alignItems="center">
           <Text fontSize={ms(15)}>{title}</Text>
         </View>
         <View flexDirection="row" justifyContent="space-around" alignItems="center" gap={ms(5)}>
