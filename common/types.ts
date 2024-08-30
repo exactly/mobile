@@ -1,7 +1,19 @@
-import { type InferOutput, custom, email, number, object, pipe, regex, string, transform } from "valibot";
-import { type Hash as ViemHash, type Hex as ViemHex, getAddress, isHash, isHex } from "viem";
+import { type InferOutput, check, custom, email, number, object, pipe, regex, string, transform } from "valibot";
+import {
+  type Address as ViemAddress,
+  checksumAddress,
+  type Hash as ViemHash,
+  type Hex as ViemHex,
+  isAddress,
+  isHash,
+  isHex,
+} from "viem";
 
-export const Address = pipe(string(), transform(getAddress));
+export const Address = pipe(
+  string(),
+  check((input) => isAddress(input, { strict: false })),
+  transform((input) => checksumAddress(input as ViemAddress)),
+);
 
 export const Base64URL = pipe(string(), regex(/^[\w-]+$/));
 
