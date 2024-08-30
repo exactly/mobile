@@ -2,7 +2,8 @@ import { previewerAddress } from "@exactly/common/generated/chain";
 import { Minus } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
-import { Image, View } from "tamagui";
+import { SvgUri } from "react-native-svg";
+import { View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -38,14 +39,7 @@ export default function AssetList() {
         >
           <View flexDirection="row" alignItems="center" paddingVertical={vs(10)} flex={1}>
             <View flexDirection="row" gap={ms(10)} flex={1} alignItems="center">
-              <Image
-                source={{
-                  uri: assetLogos[symbol as keyof typeof assetLogos],
-                }}
-                width={ms(32)}
-                height={ms(32)}
-                borderRadius="$r_0"
-              />
+              <SvgUri uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
               <View gap={ms(5)}>
                 <Text fontSize={ms(15)} fontWeight="bold">
                   {symbol}

@@ -1,6 +1,7 @@
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { XStack, Image } from "tamagui";
+import { SvgUri } from "react-native-svg";
+import { XStack } from "tamagui";
 
 import assetLogos from "../../utils/assetLogos";
 import Text from "../shared/Text";
@@ -17,14 +18,7 @@ export default function Values({ amount, assetName, usdValue }: ValuesProperties
     <View alignItems="center" justifyContent="center">
       <View alignItems="center" gap="$s3_5">
         <XStack alignItems="center" gap="$s3">
-          <Image
-            source={{
-              uri: assetLogos[assetName as keyof typeof assetLogos],
-            }}
-            width={ms(32)}
-            height={ms(32)}
-            borderRadius="$r_0"
-          />
+          <SvgUri uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
           <Text title color="$uiNeutralPrimary">
             {(Number(amount) / 1e18).toString()} {assetName}
           </Text>

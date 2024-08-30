@@ -8,7 +8,8 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms, vs } from "react-native-size-matters";
-import { Avatar, Image, ScrollView, ToggleGroup, XStack, YStack } from "tamagui";
+import { SvgUri } from "react-native-svg";
+import { Avatar, ScrollView, ToggleGroup, XStack, YStack } from "tamagui";
 import { parse } from "valibot";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -128,13 +129,10 @@ export default function AssetSelection() {
                               paddingVertical={vs(10)}
                             >
                               <View flexDirection="row" gap={ms(10)} alignItems="center">
-                                <Image
-                                  source={{
-                                    uri: assetLogos[symbol as keyof typeof assetLogos],
-                                  }}
+                                <SvgUri
+                                  uri={assetLogos[symbol as keyof typeof assetLogos]}
                                   width={ms(32)}
                                   height={ms(32)}
-                                  borderRadius="$r_0"
                                 />
                                 <View gap="$s2" alignItems="flex-start">
                                   <Text fontSize={ms(15)} fontWeight="bold">

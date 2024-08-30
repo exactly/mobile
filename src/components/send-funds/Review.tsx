@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
+import { SvgUri } from "react-native-svg";
 import { ScrollView, XStack, YStack, Image } from "tamagui";
 
 import assetLogos from "../../utils/assetLogos";
@@ -42,12 +43,7 @@ export default function Review({
               Sending
             </Text>
             <XStack alignItems="center" gap="$s3">
-              <Image
-                source={{ uri: assetLogos[assetName as keyof typeof assetLogos] }}
-                width={ms(40)}
-                height={ms(40)}
-                borderRadius="$r_0"
-              />
+              <SvgUri uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
               <YStack>
                 <Text title color="$uiNeutralPrimary">
                   {(Number(amount) / 1e18).toString()}
