@@ -105,7 +105,8 @@ app.post(
     const payload = c.req.valid("json");
     setTag("cryptomate.event", payload.event_type);
     setTag("cryptomate.status", payload.status);
-    setContext("cryptomate", await c.req.json());
+    const jsonBody = await c.req.json(); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+    setContext("cryptomate", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
     setUser({ id: payload.data.metadata.account });
     const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
     const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
@@ -166,7 +167,7 @@ app.post(
           startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash })),
           database
             .insert(transactions)
-            .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload }]),
+            .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]),
         ]);
         setContext("tx", receipt);
         if (receipt.status !== "success") {
