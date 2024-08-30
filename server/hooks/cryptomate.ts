@@ -63,9 +63,9 @@ app.post(
         operation_id: v.string(),
         data: v.looseObject({
           card_id: v.string(),
-          amount: v.number(),
-          currency_number: v.literal(840),
-          currency_code: v.literal("USD"),
+          bill_amount: v.number(),
+          bill_currency_number: v.literal(840),
+          bill_currency_code: v.literal("USD"),
           exchange_rate: v.nullable(v.number()),
           channel: v.picklist(["ECOMMERCE", "POS", "ATM", "Visa Direct"]),
           created_at: v.pipe(v.string(), v.isoTimestamp()),
@@ -113,9 +113,9 @@ app.post(
       functionName: "collectCredit",
       args: [
         BigInt(nextMaturity - timestamp < MIN_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
-        BigInt(payload.data.amount * 1e6),
+        BigInt(payload.data.bill_amount * 1e6),
         BigInt(timestamp),
-        await signIssuerOp({ account: payload.data.metadata.account, amount: payload.data.amount, timestamp }), // TODO replace with payload signature
+        await signIssuerOp({ account: payload.data.metadata.account, amount: payload.data.bill_amount, timestamp }), // TODO replace with payload signature
       ],
     } as const;
     const transaction = {
