@@ -1,4 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
+import { Address } from "@exactly/common/types";
 import { ArrowLeft, ArrowRight, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
@@ -8,8 +9,8 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms, vs } from "react-native-size-matters";
 import { Avatar, Image, ScrollView, ToggleGroup, XStack, YStack } from "tamagui";
-import * as v from "valibot";
-import { isAddress, zeroAddress, type Address } from "viem";
+import { parse } from "valibot";
+import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../../generated/contracts";
@@ -34,10 +35,11 @@ export default function AssetSelection() {
   });
 
   const { Field, Subscribe, handleSubmit } = useForm<{ market: string }, ValibotValidator>({
-    defaultValues: { market: withdraw?.market ?? "" },
-    onSubmit: ({ value: { market } }) => {
-      queryClient.setQueryData<{ receiver?: Address; market?: Address; amount: bigint }>(["withdrawal"], (old) => {
-        return old ? { ...old, market: market as Address } : { market: market as Address, amount: 0n };
+    defaultValues: withdraw?.market && { market: withdraw.market },
+    onSubmit: ({ value }) => {
+      const market = parse(Address, value.market);
+      queryClient.setQueryData<Withdraw>(["withdrawal"], (old) => {
+        return old ? { ...old, market } : { market, amount: 0n };
       });
       router.push("/send-funds/amount");
     },
@@ -93,17 +95,7 @@ export default function AssetSelection() {
               </XStack>
             )}
             {positions && positions.length > 0 ? (
-              <Field
-                name="market"
-                validatorAdapter={valibotValidator()}
-                validators={{
-                  onChange: v.pipe(
-                    v.string(),
-                    v.nonEmpty("empty address"),
-                    v.check((value) => isAddress(value), "invalid address"),
-                  ),
-                }}
-              >
+              <Field name="market" validatorAdapter={valibotValidator()} validators={{ onChange: Address }}>
                 {({ state: { value, meta }, handleChange }) => (
                   <YStack gap="$s2">
                     <ToggleGroup

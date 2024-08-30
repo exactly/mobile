@@ -1,3 +1,4 @@
+import { Address } from "@exactly/common/types";
 import { ArrowLeft, ArrowRight, QrCode, SwitchCamera } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
@@ -8,8 +9,7 @@ import React, { useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ButtonIcon, ScrollView, XStack, YStack } from "tamagui";
-import * as v from "valibot";
-import { isAddress, type Address } from "viem";
+import { parse } from "valibot";
 
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
@@ -26,13 +26,12 @@ export default function AddressSelection() {
   const [permission, requestPermission] = useCameraPermissions();
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { Field, Subscribe, handleSubmit, setFieldValue } = useForm<{ receiver: string }, ValibotValidator>({
-    defaultValues: { receiver: withdraw?.receiver ?? "" },
-    onSubmit: ({ value: { receiver } }) => {
-      queryClient.setQueryData<{ receiver?: Address; market?: Address; amount: bigint }>(["withdrawal"], (old) => {
-        return old
-          ? { ...old, receiver: receiver as Address }
-          : { receiver: receiver as Address, market: undefined, amount: 0n };
-      });
+    defaultValues: withdraw?.receiver && { receiver: withdraw.receiver },
+    onSubmit: ({ value }) => {
+      const receiver = parse(Address, value.receiver);
+      queryClient.setQueryData<Withdraw>(["withdrawal"], (old) =>
+        old ? { ...old, receiver } : { receiver, market: undefined, amount: 0n },
+      );
       router.push("/send-funds/asset");
     },
   });
@@ -44,11 +43,7 @@ export default function AddressSelection() {
             {canGoBack() && (
               <Pressable
                 onPress={() => {
-                  queryClient.setQueryData(["withdrawal"], {
-                    receiver: undefined,
-                    market: undefined,
-                    amount: 0n,
-                  });
+                  queryClient.setQueryData(["withdrawal"], { receiver: undefined, market: undefined, amount: 0n });
                   router.back();
                 }}
               >
@@ -62,16 +57,7 @@ export default function AddressSelection() {
         </View>
         <ScrollView flex={1}>
           <YStack gap="$s5">
-            <Field
-              name="receiver"
-              validatorAdapter={valibotValidator()}
-              validators={{
-                onChange: v.pipe(
-                  v.string(),
-                  v.check((value) => isAddress(value), "invalid address"),
-                ),
-              }}
-            >
+            <Field name="receiver" validatorAdapter={valibotValidator()} validators={{ onChange: Address }}>
               {({ state: { value, meta }, handleChange }) => (
                 <YStack gap="$s2">
                   <XStack flexDirection="row">

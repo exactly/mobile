@@ -8,7 +8,6 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack, YStack } from "tamagui";
 import * as v from "valibot";
-import type { Address } from "viem";
 
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
@@ -33,9 +32,7 @@ export default function Amount() {
   } = useForm<{ amount: bigint }, ValibotValidator>({
     defaultValues: { amount: withdraw?.amount ?? 0n },
     onSubmit: ({ value: { amount } }) => {
-      queryClient.setQueryData<{ receiver?: Address; market?: Address; amount: bigint }>(["withdrawal"], (old) => {
-        return old ? { ...old, amount } : { amount };
-      });
+      queryClient.setQueryData<Withdraw>(["withdrawal"], (old) => (old ? { ...old, amount } : { amount }));
       router.push("/send-funds/withdraw");
     },
   });
