@@ -101,18 +101,16 @@ export default function Card() {
 
             {card && <CardDetails uri={card.url} />}
 
-            <View>
-              <View width="100%" height={ms(202)} borderRadius="$r3" overflow="hidden">
-                <ExaCard width="100%" height="100%" />
-              </View>
+            <View borderRadius="$r3" overflow="hidden" maxHeight={220} aspectRatio={1536 / 969} alignSelf="center">
+              <ExaCard width="100%" height="100%" />
               <View
                 position="absolute"
                 flexDirection="row"
                 alignItems="center"
                 justifyContent="center"
                 gap="$s1"
-                bottom={ms(10)}
-                left={ms(10)}
+                bottom={10}
+                left={10}
               >
                 <Text color="white" emphasized callout verticalAlign="center" paddingTop={ms(3)}>
                   **** **** ****
@@ -122,6 +120,7 @@ export default function Card() {
                 </Text>
               </View>
             </View>
+
             {(cardError ?? OTLError) && (
               <Text color="$uiErrorPrimary" fontWeight="bold">
                 {cardError ? cardError.message : OTLError ? OTLError.message : "Error"}
