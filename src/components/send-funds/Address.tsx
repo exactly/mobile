@@ -100,7 +100,7 @@ export default function AddressSelection() {
                       }}
                     >
                       <ButtonIcon>
-                        <QrCode size={ms(32)} />
+                        <QrCode size={ms(32)} color="$interactiveOnBaseBrandSoft" />
                       </ButtonIcon>
                     </Button>
                   </XStack>
