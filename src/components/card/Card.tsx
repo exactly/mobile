@@ -42,6 +42,7 @@ export default function Card() {
     data: card,
     isLoading: isLoadingCard,
     error: cardError,
+    refetch: fetchCard,
   } = useQuery({
     queryKey: ["card"],
     queryFn: getCard,
@@ -62,7 +63,7 @@ export default function Card() {
   function handleReveal() {
     if (!passkey) return;
     if (hasKYC) {
-      getCard().catch(handleError);
+      fetchCard().catch(handleError);
       return;
     }
     if (Platform.OS === "web") {
