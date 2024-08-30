@@ -16,7 +16,7 @@ const [
   usdc,
   weth,
   {
-    transactions: [exaPlugin, factory],
+    transactions: [, exaPlugin, factory],
   },
 ] = await Promise.all([
   import(`@exactly/protocol/deployments/${network}/Auditor.json`) as Promise<Deployment>,
@@ -72,6 +72,10 @@ export default defineConfig([
       chain(),
     ],
   },
+  {
+    out: "server/generated/contracts.ts",
+    plugins: [foundry({ project: "contracts", include: ["IssuerChecker.sol/IssuerChecker.json"] })],
+  },
 ]);
 
 function addresses(contracts: Record<string, string>): Plugin {
@@ -100,5 +104,5 @@ interface ContractTransaction {
   contractAddress: string;
 }
 interface DeployBroadcast {
-  transactions: [ContractTransaction, ContractTransaction];
+  transactions: [ContractTransaction, ContractTransaction, ContractTransaction];
 }
