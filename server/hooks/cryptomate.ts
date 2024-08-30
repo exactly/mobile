@@ -1,4 +1,4 @@
-import chain, { exaPluginAbi, exaPluginAddress, usdcAddress } from "@exactly/common/generated/chain";
+import chain, { exaPluginAbi, usdcAddress } from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -26,6 +26,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 
 import database, { transactions } from "../database/index";
+import { issuerCheckerAddress } from "../generated/contracts";
 import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 import transactionOptions from "../utils/transactionOptions";
@@ -197,7 +198,7 @@ interface TransferLog {
 const issuer = privateKeyToAccount(v.parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
 function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: number; timestamp: number }) {
   return issuer.signTypedData({
-    domain: { chainId: chain.id, name: "Exa Plugin", version: "0.0.1", verifyingContract: exaPluginAddress },
+    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
     types: {
       Operation: [
         { name: "account", type: "address" },
