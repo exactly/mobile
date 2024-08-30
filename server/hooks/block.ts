@@ -50,7 +50,7 @@ app.post(
           case "Proposed": {
             const { account, market, receiver, amount, unlock } = event.args;
             // TODO use message queue
-            return setTimeout(Number(unlock) * 1000 - Date.now()).then(() =>
+            return setTimeout((Number(unlock) + 10) * 1000 - Date.now()).then(() =>
               startSpan(
                 {
                   name: "exa.withdraw",
