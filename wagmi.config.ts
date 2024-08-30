@@ -16,7 +16,7 @@ const [
   usdc,
   weth,
   {
-    transactions: [, exaPlugin, factory],
+    transactions: [issuerChecker, exaPlugin, factory],
   },
 ] = await Promise.all([
   import(`@exactly/protocol/deployments/${network}/Auditor.json`) as Promise<Deployment>,
@@ -74,7 +74,10 @@ export default defineConfig([
   },
   {
     out: "server/generated/contracts.ts",
-    plugins: [foundry({ project: "contracts", include: ["IssuerChecker.sol/IssuerChecker.json"] })],
+    plugins: [
+      addresses({ issuerChecker: issuerChecker.contractAddress }),
+      foundry({ project: "contracts", include: ["IssuerChecker.sol/IssuerChecker.json"] }),
+    ],
   },
 ]);
 
