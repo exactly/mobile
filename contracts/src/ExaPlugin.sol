@@ -384,8 +384,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (actualRepay < maxRepay) IERC20(usdc).safeTransfer(v.borrower, maxRepay - actualRepay);
 
     uint256 amount = _getAmountIn(msg.sender, maxRepay, amount0Out == 0, v.fee);
-    v.collateral.withdraw(amount, address(this), v.borrower);
-    IERC20(asset).safeTransfer(msg.sender, amount);
+    v.collateral.withdraw(amount, msg.sender, v.borrower);
   }
 
   function _getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
