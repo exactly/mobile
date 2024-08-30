@@ -107,7 +107,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     calls[0] = abi.encodeCall(IMarket.repayAtMaturity, (maturity, amounts[0], type(uint256).max, msg.sender)); // TODO slippage control
     calls[1] = abi.encodeCall(IERC4626.withdraw, (amounts[0], address(BALANCER_VAULT), msg.sender));
 
-    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amounts[0])))
     );
@@ -123,7 +122,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
     uint256 withdrawAmount =
       _getAmountIn(VELODROME_FACTORY.getPool(usdc, asset, false), maxRepay, usdc > asset, swapFee); // TODO slippage control
-    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), withdrawAmount))
     );
@@ -141,7 +139,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     external
     onlyIssuer(amount, timestamp, signature)
   {
-    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC),
       0,
@@ -153,7 +150,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     external
     onlyIssuer(amount, timestamp, signature)
   {
-    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender))
     );
@@ -164,15 +160,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (balance == 0) revert NoBalance();
 
-    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market.asset()), 0, abi.encodeCall(IERC20.approve, (address(market), balance))
     );
-    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender))
     );
-    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market))
     );
@@ -183,7 +176,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     address market = address(proposal.market);
     if (market == address(0)) revert NoProposal();
 
-    // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       market, 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, proposal.receiver, msg.sender))
     );
@@ -420,7 +412,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     (IMarket market, bytes[] memory calls) = abi.decode(userData, (IMarket, bytes[]));
     _checkMarket(market);
     for (uint256 i = 0; i < calls.length; ++i) {
-      // slither-disable-next-line unused-return -- unneeded
       address(market).functionCall(calls[i]);
     }
   }
@@ -434,19 +425,15 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (msg.sender != VELODROME_FACTORY.getPool(usdc, asset, false)) revert Unauthorized();
 
     uint256 maxRepay = amount0Out == 0 ? amount1Out : amount0Out;
-    // slither-disable-next-line unused-return -- unneeded
     IERC20(usdc).approve(address(EXA_USDC), maxRepay);
-    // slither-disable-next-line unused-return -- unneeded
     EXA_USDC.repayAtMaturity(v.maturity, maxRepay, maxRepay, v.borrower); // TODO slippage control
 
     uint256 amount = _getAmountIn(msg.sender, maxRepay, amount0Out == 0, v.fee);
-    // slither-disable-next-line unused-return -- unneeded
     v.collateral.withdraw(amount, address(this), v.borrower);
     IERC20(asset).safeTransfer(msg.sender, amount);
   }
 
   function _getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
-    // slither-disable-next-line unused-return -- unneeded
     (uint256 reserve0, uint256 reserve1,) = IVelodromePool(pool).getReserves();
     return (
       isToken0
@@ -460,7 +447,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function _isMarket(IMarket market) internal view returns (bool isMarket_) {
-    // slither-disable-next-line unused-return -- unneeded
     (,,, isMarket_,) = AUDITOR.markets(market);
   }
 
