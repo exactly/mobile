@@ -19,7 +19,7 @@ const style = {
 export default function CardDetails({ uri }: { uri: string }) {
   const [webViewHeight, setWebViewHeight] = useState(0);
   return (
-    <View>
+    <View height={210} width="100%">
       {Platform.OS === "web" ? (
         <iframe src={uri} style={style} frameBorder={0} marginHeight={0} marginWidth={0} />
       ) : (
