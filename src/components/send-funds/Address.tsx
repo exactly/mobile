@@ -65,6 +65,7 @@ export default function AddressSelection() {
                       neutral
                       flex={1}
                       placeholder="ENS, Name, Address"
+                      borderColor="$uiNeutralTertiary"
                       borderRightColor="transparent"
                       borderTopRightRadius={0}
                       borderBottomRightRadius={0}
