@@ -25,6 +25,7 @@ import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
 import {
+  FixedPool,
   FixedPosition,
   IAuditor,
   IExaAccount,
@@ -98,11 +99,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     tokens[0] = IERC20(EXA_USDC.asset());
 
     uint256[] memory amounts = new uint256[](1);
-    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, msg.sender);
-    amounts[0] = position.principal + position.fee;
+    amounts[0] = _previewRepay(maturity);
 
     bytes[] memory calls = new bytes[](2);
-    calls[0] = abi.encodeCall(IMarket.repayAtMaturity, (maturity, amounts[0], type(uint256).max, msg.sender)); // TODO slippage control
+    calls[0] = abi.encodeCall(IMarket.repayAtMaturity, (maturity, amounts[0], amounts[0], msg.sender));
     calls[1] = abi.encodeCall(IERC4626.withdraw, (amounts[0], address(BALANCER_VAULT), msg.sender));
 
     IPluginExecutor(msg.sender).executeFromPluginExternal(
@@ -114,23 +114,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   function crossRepay(uint256 maturity, IMarket collateral) external {
     address asset = collateral.asset();
     address usdc = EXA_USDC.asset();
-    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, msg.sender);
-    uint256 maxRepay = position.principal + position.fee;
-    address pool = VELODROME_FACTORY.getPool(asset, EXA_USDC.asset(), false);
+    address pool = VELODROME_FACTORY.getPool(asset, usdc, false);
+    uint256 assets = _previewRepay(maturity);
     uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
-    uint256 withdrawAmount =
-      _getAmountIn(VELODROME_FACTORY.getPool(usdc, asset, false), maxRepay, usdc > asset, swapFee); // TODO slippage control
+    uint256 withdrawAmount = _getAmountIn(pool, assets, usdc > asset, swapFee);
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), withdrawAmount))
     );
-    IVelodromePool(pool).swap(
-      usdc < asset ? maxRepay : 0,
-      usdc > asset ? maxRepay : 0,
-      address(this),
-      abi.encode(
-        VelodromeCallbackData({ borrower: msg.sender, collateral: collateral, maturity: maturity, fee: swapFee })
-      )
+    bytes memory data = abi.encode(
+      VelodromeCallbackData({ borrower: msg.sender, collateral: collateral, maturity: maturity, fee: swapFee })
     );
+    IVelodromePool(pool).swap(usdc < asset ? assets : 0, usdc > asset ? assets : 0, address(this), data);
   }
 
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature)
@@ -386,7 +380,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     uint256 maxRepay = amount0Out == 0 ? amount1Out : amount0Out;
     IERC20(usdc).approve(address(EXA_USDC), maxRepay);
-    EXA_USDC.repayAtMaturity(v.maturity, maxRepay, maxRepay, v.borrower); // TODO slippage control
+    uint256 actualRepay = EXA_USDC.repayAtMaturity(v.maturity, maxRepay, maxRepay, v.borrower);
+    if (actualRepay < maxRepay) IERC20(usdc).safeTransfer(v.borrower, maxRepay - actualRepay);
 
     uint256 amount = _getAmountIn(msg.sender, maxRepay, amount0Out == 0, v.fee);
     v.collateral.withdraw(amount, address(this), v.borrower);
@@ -400,6 +395,29 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         ? (reserve0 * amountOut * 10_000) / ((reserve1 - amountOut) * (10_000 - fee))
         : (reserve1 * amountOut * 10_000) / ((reserve0 - amountOut) * (10_000 - fee))
     ) + 1;
+  }
+
+  function _previewRepay(uint256 maturity) internal view returns (uint256 assets) {
+    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, msg.sender);
+    uint256 positionAssets = position.principal + position.fee;
+    assets = block.timestamp < maturity
+      ? positionAssets - _fixedDepositYield(EXA_USDC, maturity, position.principal)
+      : positionAssets + positionAssets.mulWad((block.timestamp - maturity) * EXA_USDC.penaltyRate());
+  }
+
+  function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256 yield) {
+    FixedPool memory pool = market.fixedPools(maturity);
+    if (maturity > pool.lastAccrual) {
+      pool.unassignedEarnings -=
+        pool.unassignedEarnings.mulDiv(block.timestamp - pool.lastAccrual, maturity - pool.lastAccrual);
+    }
+    uint256 backupFee = 0;
+    uint256 backupSupplied = pool.borrowed - pool.borrowed < pool.supplied ? pool.borrowed : pool.supplied;
+    if (backupSupplied != 0) {
+      yield = pool.unassignedEarnings.mulDiv(assets < backupSupplied ? assets : backupSupplied, backupSupplied);
+      backupFee = yield.mulWad(market.backupFeeRate());
+      yield -= backupFee;
+    }
   }
 
   function _checkMarket(IMarket market) internal view {

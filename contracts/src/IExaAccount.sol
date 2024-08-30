@@ -18,6 +18,13 @@ event Proposed(
   address indexed account, IMarket indexed market, address indexed receiver, uint256 amount, uint256 unlock
 );
 
+struct FixedPool {
+  uint256 borrowed;
+  uint256 supplied;
+  uint256 unassignedEarnings;
+  uint256 lastAccrual;
+}
+
 struct FixedPosition {
   uint256 principal;
   uint256 fee;
@@ -47,11 +54,14 @@ interface IAuditor {
 }
 
 interface IMarket is IERC4626 {
+  function backupFeeRate() external view returns (uint256);
   function borrow(uint256 assets, address receiver, address borrower) external returns (uint256 borrowShares);
   function borrowAtMaturity(uint256 maturity, uint256 assets, uint256 maxAssets, address receiver, address borrower)
     external
     returns (uint256 assetsOwed);
   function fixedBorrowPositions(uint256 maturity, address borrower) external view returns (FixedPosition memory);
+  function fixedPools(uint256 maturity) external view returns (FixedPool memory);
+  function penaltyRate() external view returns (uint256);
   function repayAtMaturity(uint256 maturity, uint256 positionAssets, uint256 maxAssets, address borrower)
     external
     returns (uint256 actualRepayAssets);

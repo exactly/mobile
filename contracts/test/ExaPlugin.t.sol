@@ -495,8 +495,14 @@ contract ExaPluginTest is ForkTest {
     account.poke(market);
     account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
 
+    uint256 prevCollateral = market.balanceOf(address(account));
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0);
+
     vm.startPrank(address(account));
     account.crossRepay(maturity, market);
+
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    assertGt(prevCollateral, market.balanceOf(address(account)), "collateral didn't decrease");
   }
 
   function test_onUninstall_uninstalls() external {
