@@ -7,7 +7,7 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack, YStack } from "tamagui";
-import * as v from "valibot";
+import { bigint, check, pipe } from "valibot";
 
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
@@ -114,10 +114,10 @@ export default function Amount() {
               name="amount"
               validatorAdapter={valibotValidator()}
               validators={{
-                onChange: v.pipe(
-                  v.bigint(),
-                  v.check((value) => value > 0n, "invalid amount"),
-                  v.check((value) => value <= available, "invalid amount"),
+                onChange: pipe(
+                  bigint(),
+                  check((value) => value > 0n, "invalid amount"),
+                  check((value) => value <= available, "invalid amount"),
                 ),
               }}
             >

@@ -4,7 +4,7 @@ import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
 import { styled } from "tamagui";
-import * as v from "valibot";
+import { nonEmpty, pipe, string } from "valibot";
 
 import Input from "./Input";
 import View from "./View";
@@ -70,7 +70,7 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
       <Field
         name="assetInput"
         validatorAdapter={valibotValidator()}
-        validators={{ onChange: v.pipe(v.string(), v.nonEmpty("empty amount")) }}
+        validators={{ onChange: pipe(string(), nonEmpty("empty amount")) }}
       >
         {({ state: { value } }) => (
           <AmountInput
@@ -84,7 +84,7 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
       <Field
         name="usdInput"
         validatorAdapter={valibotValidator()}
-        validators={{ onChange: v.pipe(v.string(), v.nonEmpty("empty amount")) }}
+        validators={{ onChange: pipe(string(), nonEmpty("empty amount")) }}
       >
         {({ state: { value } }) => (
           <AmountInput placeholder="0 USD" inputMode="numeric" value={value} onChangeText={handleUSDChange} />
