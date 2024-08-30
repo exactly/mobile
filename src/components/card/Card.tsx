@@ -1,3 +1,4 @@
+import type { Passkey } from "@exactly/common/types";
 import { ArrowRight, Eye, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
@@ -31,6 +32,7 @@ const StyledAction = styled(View, {
 });
 
 export default function Card() {
+  const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
   const { data: hasKYC, isLoading: isLoadingKYC } = useQuery({
     queryKey: ["kycStatus"],
     queryFn: kycStatus,
@@ -58,6 +60,7 @@ export default function Card() {
   });
 
   function handleReveal() {
+    if (!passkey) return;
     if (hasKYC) {
       getCard().catch(handleError);
       return;
@@ -69,6 +72,7 @@ export default function Card() {
     } else {
       Inquiry.fromTemplate(templateId)
         .environment(environment)
+        .referenceId(passkey.credentialId)
         .onComplete((inquiryId) => {
           if (!inquiryId) throw new Error("no inquiry id");
           kyc(inquiryId).catch(handleError);
