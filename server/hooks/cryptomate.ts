@@ -58,29 +58,16 @@ app.post(
         v.object({ event_type: v.literal("REFUND"), status: v.literal("SUCCESS") }),
         v.object({ event_type: v.literal("REVERSAL"), status: v.literal("SUCCESS") }),
       ]),
-      v.looseObject({
+      v.object({
         product: v.literal("CARDS"),
         operation_id: v.string(),
-        data: v.looseObject({
+        data: v.object({
           card_id: v.string(),
           bill_amount: v.number(),
           bill_currency_number: v.literal(840),
           bill_currency_code: v.literal("USD"),
-          exchange_rate: v.nullable(v.number()),
-          channel: v.picklist(["ECOMMERCE", "POS", "ATM", "Visa Direct"]),
           created_at: v.pipe(v.string(), v.isoTimestamp()),
-          fees: v.looseObject({ atm_fees: v.number(), fx_fees: v.number() }),
-          merchant_data: v.looseObject({
-            id: v.string(),
-            name: v.string(),
-            city: v.string(),
-            post_code: v.nullable(v.string()),
-            state: v.nullable(v.string()),
-            country: v.string(),
-            mcc_category: v.string(),
-            mcc_code: v.string(),
-          }),
-          metadata: v.looseObject({ account: Address }),
+          metadata: v.object({ account: Address }),
           signature: Hex,
         }),
       }),
