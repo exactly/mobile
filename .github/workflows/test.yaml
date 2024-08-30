@@ -8,6 +8,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
+      OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
       EXPO_PUBLIC_ALCHEMY_API_KEY: test
       EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID: test
     steps:
