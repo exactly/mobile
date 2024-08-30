@@ -455,6 +455,7 @@ contract ExaPluginTest is ForkTest {
 
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
 
   function test_crossRepay_repays() external {
