@@ -173,7 +173,7 @@ app.post(
                   if (
                     error instanceof BaseError &&
                     error.cause instanceof ContractFunctionRevertedError &&
-                    error.cause.data?.errorName === "ZeroAmount"
+                    error.cause.data?.errorName === "NoBalance"
                   ) {
                     return;
                   }
