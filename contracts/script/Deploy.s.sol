@@ -8,6 +8,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin, IAuditor, IBalancerVault, IMarket, IVelodromeFactory } from "../src/ExaPlugin.sol";
+import { IssuerChecker } from "../src/IssuerChecker.sol";
 
 import { BaseScript, stdJson } from "./Base.s.sol";
 
@@ -17,6 +18,7 @@ contract DeployScript is BaseScript {
 
   ExaAccountFactory public factory;
   ExaPlugin public exaPlugin;
+  IssuerChecker public issuerChecker;
   WebauthnOwnerPlugin public ownerPlugin;
   IAuditor public auditor;
   IMarket public exaUSDC;
@@ -42,13 +44,10 @@ contract DeployScript is BaseScript {
 
     vm.startBroadcast(msg.sender);
 
+    issuerChecker = new IssuerChecker(vm.envAddress("ISSUER_ADDRESS"));
+
     exaPlugin = new ExaPlugin(
-      auditor,
-      exaUSDC,
-      balancerVault,
-      velodromeFactory,
-      vm.envAddress("ISSUER_ADDRESS"),
-      vm.envAddress("COLLECTOR_ADDRESS")
+      auditor, exaUSDC, balancerVault, velodromeFactory, issuerChecker, vm.envAddress("COLLECTOR_ADDRESS")
     );
     factory = new ExaAccountFactory(msg.sender, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 

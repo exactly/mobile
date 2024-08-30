@@ -20,6 +20,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 import { ExaAccountFactory, ExaAccountInitialized } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin, IBalancerVault, IVelodromeFactory } from "../src/ExaPlugin.sol";
 import { IAuditor, IMarket } from "../src/IExaAccount.sol";
+import { IssuerChecker } from "../src/IssuerChecker.sol";
 
 contract ExaAccountFactoryTest is Test {
   using FixedPointMathLib for uint256;
@@ -36,7 +37,7 @@ contract ExaAccountFactoryTest is Test {
       IMarket(address(new MockERC4626(new MockERC20()))),
       IBalancerVault(address(this)),
       IVelodromeFactory(address(this)),
-      address(this),
+      IssuerChecker(address(this)),
       address(this)
     );
 

@@ -23,12 +23,10 @@ import { SIG_VALIDATION_FAILED, SIG_VALIDATION_PASSED } from "modular-account-li
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
-import { EIP712 } from "solady/utils/EIP712.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
 import {
-  Expired,
   FixedPosition,
   IAuditor,
   IExaAccount,
@@ -41,10 +39,11 @@ import {
   Timelocked,
   Unauthorized
 } from "./IExaAccount.sol";
+import { IssuerChecker } from "./IssuerChecker.sol";
 
 /// @title Exa Plugin
 /// @author Exactly
-contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
+contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   using FixedPointMathLib for uint256;
   using SafeCastLib for int256;
   using SafeERC20 for IERC20;
@@ -61,12 +60,12 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   IMarket public immutable EXA_USDC;
   IBalancerVault public immutable BALANCER_VAULT;
   IVelodromeFactory public immutable VELODROME_FACTORY;
+  IssuerChecker public immutable ISSUER_CHECKER;
 
   uint256 public immutable INTERVAL = 30 days;
   uint256 public immutable PROPOSAL_DELAY = 5 minutes;
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
-  address public issuer;
   address public collector;
   mapping(address account => bytes32 hash) public issuerOperations;
   mapping(address account => Proposal lastProposal) public proposals;
@@ -76,16 +75,16 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
     IMarket exaUSDC,
     IBalancerVault balancerVault,
     IVelodromeFactory velodromeFactory,
-    address issuer_,
+    IssuerChecker issuerChecker,
     address collector_
   ) {
     AUDITOR = auditor;
     EXA_USDC = exaUSDC;
     BALANCER_VAULT = balancerVault;
     VELODROME_FACTORY = velodromeFactory;
+    ISSUER_CHECKER = issuerChecker;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    setIssuer(issuer_);
     setCollector(collector_);
 
     IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
@@ -187,11 +186,6 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       market, 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, proposal.receiver, msg.sender))
     );
-  }
-
-  function setIssuer(address issuer_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    if (issuer_ == address(0)) revert ZeroAddress();
-    issuer = issuer_;
   }
 
   function setCollector(address collector_) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -464,26 +458,6 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
     if (!_isMarket(market)) revert NotMarket();
   }
 
-  function _checkIssuer(uint256 amount, uint256 timestamp, bytes calldata signature) internal {
-    if (timestamp > block.timestamp + 1 minutes) revert Timelocked();
-    if (timestamp + OPERATION_EXPIRY < block.timestamp) revert Expired();
-
-    bytes32 hash = keccak256(abi.encode(amount, timestamp));
-    if (issuerOperations[msg.sender] == hash) revert Expired();
-
-    if (
-      _hashTypedData(
-        keccak256(
-          abi.encode(
-            keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), msg.sender, amount, timestamp
-          )
-        )
-      ).recoverCalldata(signature) != issuer
-    ) revert Unauthorized();
-
-    issuerOperations[msg.sender] = hash;
-  }
-
   function _isMarket(IMarket market) internal view returns (bool isMarket_) {
     // slither-disable-next-line unused-return -- unneeded
     (,,, isMarket_,) = AUDITOR.markets(market);
@@ -495,18 +469,8 @@ contract ExaPlugin is AccessControl, BasePlugin, EIP712, IExaAccount {
   }
 
   modifier onlyIssuer(uint256 amount, uint256 timestamp, bytes calldata signature) {
-    _checkIssuer(amount, timestamp, signature);
+    ISSUER_CHECKER.checkIssuer(msg.sender, amount, timestamp, signature);
     _;
-  }
-
-  // solhint-disable-next-line func-name-mixedcase
-  function DOMAIN_SEPARATOR() public view returns (bytes32) {
-    return _domainSeparator();
-  }
-
-  function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
-    name = NAME;
-    version = VERSION;
   }
 
   function supportsInterface(bytes4 interfaceId) public view override(AccessControl, BasePlugin) returns (bool) {

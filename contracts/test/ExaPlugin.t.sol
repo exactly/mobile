@@ -41,6 +41,7 @@ import {
   Timelocked,
   Unauthorized
 } from "../src/IExaAccount.sol";
+import { IssuerChecker } from "../src/IssuerChecker.sol";
 
 // TODO use mock asset with price != 1
 // TODO use price feed for that asset with 8 decimals
@@ -62,6 +63,7 @@ contract ExaPluginTest is ForkTest {
   IEntryPoint internal entryPoint;
   ExaPlugin internal exaPlugin;
   WebauthnOwnerPlugin internal ownerPlugin;
+  IssuerChecker internal issuerChecker;
   bytes32 internal domainSeparator;
 
   Auditor internal auditor;
@@ -112,11 +114,12 @@ contract ExaPluginTest is ForkTest {
     owners = new address[](1);
     owners[0] = owner;
     (keeper, keeperKey) = makeAddrAndKey("keeper");
-    vm.label(keeper, "keeper");
     (issuer, issuerKey) = makeAddrAndKey("issuer");
-    vm.label(issuer, "issuer");
 
-    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), marketUSDC, balancer, velodromeFactory, issuer, collector);
+    issuerChecker = new IssuerChecker(issuer);
+
+    exaPlugin =
+      new ExaPlugin(IAuditor(address(auditor)), marketUSDC, balancer, velodromeFactory, issuerChecker, collector);
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     ownerPlugin = new WebauthnOwnerPlugin();
@@ -138,7 +141,7 @@ contract ExaPluginTest is ForkTest {
     marketUSDC.deposit(10_000e6, bob);
     vm.stopPrank();
 
-    domainSeparator = exaPlugin.DOMAIN_SEPARATOR();
+    domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
   }
 
   // solhint-disable func-name-mixedcase
@@ -489,15 +492,16 @@ contract ExaPluginTest is ForkTest {
     market = IMarket(protocol("MarketWETH"));
     marketUSDC = IMarket(protocol("MarketUSDC"));
 
+    issuerChecker = new IssuerChecker(issuer);
+    domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
     exaPlugin = new ExaPlugin(
       IAuditor(protocol("Auditor")),
       marketUSDC,
       IBalancerVault(protocol("BalancerVault")),
       IVelodromeFactory(protocol("VelodromePoolFactory")),
-      issuer,
+      issuerChecker,
       collector
     );
-    domainSeparator = exaPlugin.DOMAIN_SEPARATOR();
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     ownerPlugin = new WebauthnOwnerPlugin();
