@@ -121,7 +121,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 maxRepay = position.principal + position.fee;
     address pool = VELODROME_FACTORY.getPool(asset, EXA_USDC.asset(), false);
     uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
-    uint256 withdrawAmount = getAmountIn(VELODROME_FACTORY.getPool(usdc, asset, false), maxRepay, usdc > asset, swapFee); // TODO slippage control
+    uint256 withdrawAmount =
+      _getAmountIn(VELODROME_FACTORY.getPool(usdc, asset, false), maxRepay, usdc > asset, swapFee); // TODO slippage control
     // slither-disable-next-line unused-return -- unneeded
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), withdrawAmount))
@@ -438,13 +439,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     // slither-disable-next-line unused-return -- unneeded
     EXA_USDC.repayAtMaturity(v.maturity, maxRepay, maxRepay, v.borrower); // TODO slippage control
 
-    uint256 amount = getAmountIn(msg.sender, maxRepay, amount0Out == 0, v.fee);
+    uint256 amount = _getAmountIn(msg.sender, maxRepay, amount0Out == 0, v.fee);
     // slither-disable-next-line unused-return -- unneeded
     v.collateral.withdraw(amount, address(this), v.borrower);
     IERC20(asset).safeTransfer(msg.sender, amount);
   }
 
-  function getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
+  function _getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
     // slither-disable-next-line unused-return -- unneeded
     (uint256 reserve0, uint256 reserve1,) = IVelodromePool(pool).getReserves();
     return (
@@ -454,7 +455,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     ) + 1;
   }
 
-  function _checkMarket(IMarket market) public view {
+  function _checkMarket(IMarket market) internal view {
     if (!_isMarket(market)) revert NotMarket();
   }
 
