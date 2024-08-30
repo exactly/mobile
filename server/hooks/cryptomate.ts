@@ -12,6 +12,7 @@ import {
   withScope,
 } from "@sentry/node";
 import createDebug from "debug";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import * as v from "valibot";
 import {
@@ -20,12 +21,13 @@ import {
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
+  getAddress,
   nonceManager,
   padHex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-import database, { transactions } from "../database/index";
+import database, { cards, credentials, transactions } from "../database/index";
 import { issuerCheckerAddress } from "../generated/contracts";
 import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
@@ -68,7 +70,7 @@ app.post(
           bill_currency_number: v.literal(840),
           bill_currency_code: v.literal("USD"),
           created_at: v.pipe(v.string(), v.isoTimestamp()),
-          metadata: v.object({ account: Address }),
+          metadata: v.nullish(v.object({ account: Address })),
           signature: Hex,
         }),
       }),
@@ -95,7 +97,21 @@ app.post(
     setTag("cryptomate.status", payload.status);
     const jsonBody = await c.req.json(); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     setContext("cryptomate", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
-    setUser({ id: payload.data.metadata.account });
+    const account =
+      payload.data.metadata?.account ??
+      getAddress(
+        await database
+          .select({ id: credentials.id, account: credentials.account })
+          .from(cards)
+          .leftJoin(credentials, eq(cards.credentialId, credentials.id))
+          .where(eq(cards.id, payload.data.card_id))
+          .limit(1)
+          .then(([credential]) => {
+            if (!credential?.account) throw new Error("missing credential");
+            return credential.account;
+          }),
+      );
+    setUser({ id: account });
     const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
     const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
     const call = {
@@ -104,12 +120,12 @@ app.post(
         BigInt(nextMaturity - timestamp < MIN_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
         BigInt(payload.data.bill_amount * 1e6),
         BigInt(timestamp),
-        await signIssuerOp({ account: payload.data.metadata.account, amount: payload.data.bill_amount, timestamp }), // TODO replace with payload signature
+        await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }), // TODO replace with payload signature
       ],
     } as const;
     const transaction = {
       from: keeperAddress,
-      to: payload.data.metadata.account,
+      to: account,
       data: encodeFunctionData({ abi: exaPluginAbi, ...call }),
     } as const;
 
