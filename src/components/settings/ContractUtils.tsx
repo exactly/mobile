@@ -11,6 +11,7 @@ import React, { useCallback, useState } from "react";
 import { ms } from "react-native-size-matters";
 import { View, Spinner } from "tamagui";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, maxUint256, zeroAddress } from "viem";
+import { optimism } from "viem/chains";
 import { useAccount, useWriteContract } from "wagmi";
 
 import {
@@ -34,7 +35,7 @@ function copyHash(hash: string | undefined) {
 
 export default function ContractUtils() {
   const [borrowAmount, setBorrowAmount] = useState<number>(0);
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
 
   const { data: markets } = useReadPreviewerExactly({
     address: previewerAddress,
@@ -64,7 +65,7 @@ export default function ContractUtils() {
     query: { enabled: !!address && !!installedPlugins },
   });
 
-  const { writeContract: borrow, data: borrowHash, isPending: isBorrowing, error: borrowError } = useWriteContract();
+  const { writeContract: borrow, data: borrowHash, isPending: isBorrowing } = useWriteContract();
 
   const borrowUSDC = useCallback(() => {
     if (!borrowUSDCSimulation) throw new Error("no borrow simulation");
@@ -73,8 +74,8 @@ export default function ContractUtils() {
 
   const {
     data: updatePluginHash,
-    mutateAsync: upgradePlugin,
-    isPending,
+    mutateAsync: updatePlugin,
+    isPending: isUpdating,
   } = useMutation({
     mutationFn: async () => {
       if (!accountClient) throw new Error("no account client");
@@ -114,12 +115,7 @@ export default function ContractUtils() {
       <Text fontSize={ms(16)} subHeadline fontWeight="bold">
         Exactly
       </Text>
-      {(isBorrowing || isPending) && <Spinner color="$interactiveBaseBrandDefault" />}
-      {borrowError && (
-        <Text color="$uiErrorPrimary" fontWeight="bold">
-          {borrowError.message}
-        </Text>
-      )}
+      {(isBorrowing || isUpdating) && <Spinner color="$interactiveBaseBrandDefault" />}
       {updatePluginHash && (
         <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
           <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
@@ -127,12 +123,11 @@ export default function ContractUtils() {
           </Text>
         </View>
       )}
-
       <View flexDirection="row" gap="$s4">
         <Button
           contained
           onPress={() => {
-            upgradePlugin().catch(handleError);
+            updatePlugin().catch(handleError);
           }}
           padding={ms(10)}
           disabled={!uninstallPluginSimulation || exaPluginAddress === installedPlugins?.[0]}
@@ -154,47 +149,49 @@ export default function ContractUtils() {
           </Button>
         )}
       </View>
-      <View gap="$s4">
-        <Text fontSize={ms(16)}>Borrow</Text>
-        <Input
-          inputMode="numeric"
-          value={borrowAmount.toString()}
-          onChange={(event) => {
-            setBorrowAmount(Number(event.nativeEvent.text));
-          }}
-        />
-        {borrowHash && (
-          <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
-            <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
-              {borrowHash}
-            </Text>
-          </View>
-        )}
-        <View flexDirection="row" gap="$s4">
-          <Button
-            contained
-            onPress={borrowUSDC}
-            disabled={floatingUSDCDeposit === 0n || !borrowUSDCSimulation}
-            padding={ms(10)}
-            flex={1}
-          >
-            Borrow USDC
-          </Button>
+      {chainId !== optimism.id && (
+        <View gap="$s4">
+          <Text fontSize={ms(16)}>Borrow</Text>
+          <Input
+            inputMode="numeric"
+            value={borrowAmount.toString()}
+            onChange={(event) => {
+              setBorrowAmount(Number(event.nativeEvent.text));
+            }}
+          />
           {borrowHash && (
+            <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+              <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+                {borrowHash}
+              </Text>
+            </View>
+          )}
+          <View flexDirection="row" gap="$s4">
             <Button
-              outlined
-              borderRadius="$r2"
-              onPress={() => {
-                copyHash(borrowHash);
-              }}
+              contained
+              onPress={borrowUSDC}
+              disabled={floatingUSDCDeposit === 0n || !borrowUSDCSimulation}
               padding={ms(10)}
               flex={1}
             >
-              Copy
+              Borrow USDC
             </Button>
-          )}
+            {borrowHash && (
+              <Button
+                outlined
+                borderRadius="$r2"
+                onPress={() => {
+                  copyHash(borrowHash);
+                }}
+                padding={ms(10)}
+                flex={1}
+              >
+                Copy
+              </Button>
+            )}
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 }

@@ -4,13 +4,9 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
-import { optimism } from "viem/chains";
-import { useAccount } from "wagmi";
 
 import ContractUtils from "./ContractUtils";
 import PasskeyUtils from "./PasskeyUtils";
-import WalletUtils from "./WalletUtils";
-import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -19,13 +15,8 @@ function back() {
   router.back();
 }
 
-function startOnboarding() {
-  router.push("/onboarding");
-}
-
 export default function Settings() {
   const { canGoBack } = useRouter();
-  const { chainId } = useAccount();
   return (
     <SafeView fullScreen tab>
       <View fullScreen padded gap={ms(20)}>
@@ -42,19 +33,10 @@ export default function Settings() {
           </Text>
         </View>
         <ScrollView flex={1}>
-          {chainId !== optimism.id && (
-            <View gap={ms(10)}>
-              <Text fontSize={ms(16)} fontWeight="bold">
-                Onboarding
-              </Text>
-              <Button contained onPress={startOnboarding}>
-                Start Onboarding
-              </Button>
-              <WalletUtils />
-              <PasskeyUtils />
-              <ContractUtils />
-            </View>
-          )}
+          <View gap={ms(10)}>
+            <PasskeyUtils />
+            <ContractUtils />
+          </View>
         </ScrollView>
       </View>
     </SafeView>
