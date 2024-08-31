@@ -1,6 +1,6 @@
 import type { Passkey } from "@exactly/common/types";
 import { ArrowRight, Eye, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Platform, Pressable } from "react-native";
 import { Inquiry } from "react-native-persona";
@@ -37,19 +37,17 @@ export default function Card() {
     queryKey: ["kycStatus"],
     queryFn: kycStatus,
   });
-
   const {
     data: card,
     isLoading: isLoadingCard,
     error: cardError,
-    refetch: fetchCard,
+    refetch: refetchCard,
   } = useQuery({
     queryKey: ["card"],
     queryFn: getCard,
     enabled: false,
     staleTime: 60_000,
   });
-
   const {
     data: oneTimeLink,
     isLoading: isLoadingOTL,
@@ -60,29 +58,40 @@ export default function Card() {
     queryFn: () => kyc(),
   });
 
-  function handleReveal() {
-    if (!passkey) return;
-    if (hasKYC) {
-      fetchCard().catch(handleError);
-      return;
-    }
-    if (Platform.OS === "web") {
-      if (isLoadingOTL || !oneTimeLink) return;
-      window.open(oneTimeLink);
-      queryClient.setQueryData(["personaOTL"], undefined);
-    } else {
-      Inquiry.fromTemplate(templateId)
-        .environment(environment)
-        .referenceId(passkey.credentialId)
-        .onComplete((inquiryId) => {
-          if (!inquiryId) throw new Error("no inquiry id");
-          kyc(inquiryId).catch(handleError);
-        })
-        .onError(handleError)
-        .build()
-        .start();
-    }
-  }
+  const { mutateAsync: saveKYC } = useMutation({
+    mutationKey: ["saveKYC"],
+    mutationFn: kyc,
+    onSuccess: () => {
+      queryClient.setQueryData(["kycStatus"], true);
+    },
+  });
+
+  const { mutateAsync: revealCard } = useMutation({
+    mutationKey: ["revealCard"],
+    mutationFn: async function handleReveal() {
+      if (!passkey) return;
+      if (hasKYC) {
+        await refetchCard();
+        return;
+      }
+      if (Platform.OS === "web") {
+        if (isLoadingOTL || !oneTimeLink) return;
+        window.open(oneTimeLink);
+        queryClient.setQueryData(["personaOTL"], undefined);
+      } else {
+        Inquiry.fromTemplate(templateId)
+          .environment(environment)
+          .referenceId(passkey.credentialId)
+          .onComplete((inquiryId) => {
+            if (!inquiryId) throw new Error("no inquiry id");
+            saveKYC(inquiryId).catch(handleError);
+          })
+          .onError(handleError)
+          .build()
+          .start();
+      }
+    },
+  });
 
   return (
     <SafeView fullScreen tab>
@@ -134,7 +143,11 @@ export default function Card() {
               )}
               <View flexDirection="row" justifyContent="space-between" width="100%" gap="$s4">
                 <StyledAction>
-                  <Pressable onPress={handleReveal}>
+                  <Pressable
+                    onPress={() => {
+                      revealCard().catch(handleError);
+                    }}
+                  >
                     <View gap={ms(10)}>
                       <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                       <Text fontSize={ms(15)}>Details</Text>
