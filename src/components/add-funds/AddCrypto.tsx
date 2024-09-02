@@ -1,8 +1,8 @@
-import { ArrowLeft, Files, Info, QrCode, Share } from "@tamagui/lucide-icons";
+import { ArrowLeft, Files, Info, QrCode, Share as ShareIcon } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
-import React from "react";
-import { Alert, Pressable } from "react-native";
+import React, { useCallback } from "react";
+import { Alert, Pressable, Share } from "react-native";
 import { ms } from "react-native-size-matters";
 import { SvgUri } from "react-native-svg";
 import { ScrollView } from "tamagui";
@@ -34,6 +34,11 @@ export default function AddCrypto() {
     setStringAsync(address).catch(handleError);
     Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
   }
+
+  const share = useCallback(async () => {
+    if (!address) return;
+    await Share.share({ message: address, title: "Share Optimism (OP) address" });
+  }, [address]);
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>
@@ -79,10 +84,17 @@ export default function AddCrypto() {
                 </View>
                 <View gap={ms(10)} flexDirection="row">
                   <QrCode size={ms(24)} color="$interactiveBaseBrandDefault" />
-                  <Pressable onPress={copy}>
+                  <Pressable onPress={copy} hitSlop={ms(15)}>
                     <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
                   </Pressable>
-                  <Share size={ms(24)} color="$interactiveBaseBrandDefault" />
+                  <Pressable
+                    onPress={() => {
+                      share().catch(handleError);
+                    }}
+                    hitSlop={ms(15)}
+                  >
+                    <ShareIcon size={ms(24)} color="$interactiveBaseBrandDefault" />
+                  </Pressable>
                 </View>
               </View>
             </View>
