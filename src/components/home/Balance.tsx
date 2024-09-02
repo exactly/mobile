@@ -7,7 +7,6 @@ import { View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import AssetChange from "./AssetChange";
 import AssetList from "./AssetList";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
@@ -66,7 +65,6 @@ export default function Balance() {
             </View>
           </View>
         </Pressable>
-        <AssetChange />
       </View>
       {isOpen && <AssetList />}
     </View>
