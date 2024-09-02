@@ -1,4 +1,4 @@
-import { BellRing, EyeOff, Settings } from "@tamagui/lucide-icons";
+import { Settings } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
@@ -61,9 +61,7 @@ export default function ProfileHeader() {
           )}
         </View>
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
-          <EyeOff color="$uiNeutralPrimary" />
-          <BellRing color="$uiNeutralPrimary" />
-          <Pressable onPress={settings}>
+          <Pressable onPress={settings} hitSlop={ms(15)}>
             <Settings color="$uiNeutralPrimary" />
           </Pressable>
         </View>
