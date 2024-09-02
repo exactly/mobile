@@ -5,12 +5,15 @@ import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../generated/contracts";
 
-export default function useMarket(address?: Address) {
+export default function useMarketAccount(address?: Address) {
   const { address: account } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({
-    account,
+  const { data: markets, queryKey } = useReadPreviewerExactly({
     address: previewerAddress,
     args: [account ?? zeroAddress],
   });
-  return useMemo(() => address && markets?.find(({ market }) => market === address), [markets, address]);
+  return {
+    account,
+    market: useMemo(() => address && markets?.find(({ asset }) => asset === address), [address, markets]),
+    queryKey,
+  };
 }

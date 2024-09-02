@@ -9,7 +9,7 @@ import { nonEmpty, pipe, string } from "valibot";
 import Input from "./Input";
 import View from "./View";
 import type { Withdraw } from "../../utils/queryClient";
-import useMarket from "../../utils/useMarket";
+import useMarketAccount from "../../utils/useMarketAccount";
 
 interface AmountSelectorProperties {
   onChange: (value: bigint) => void;
@@ -27,30 +27,30 @@ const AmountInput = styled(Input, {
 
 export default function AmountSelector({ onChange }: AmountSelectorProperties) {
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
-  const marketAccount = useMarket(withdraw?.market);
+  const { market } = useMarketAccount(withdraw?.market);
   const { Field, setFieldValue } = useForm<{ assetInput: string; usdInput: string }, ValibotValidator>({
     defaultValues: { assetInput: "", usdInput: "" },
   });
 
   const handleAssetChange = useCallback(
     (text: string) => {
-      if (!marketAccount) return;
+      if (!market) return;
       setFieldValue("assetInput", text);
       const floatInput = Number(text);
       if (Number.isNaN(floatInput)) {
         setFieldValue("usdInput", "");
         return;
       }
-      const input = BigInt(Math.floor(floatInput * 10 ** marketAccount.decimals));
-      const usdInput = (input * marketAccount.usdPrice) / BigInt(10 ** marketAccount.decimals);
+      const input = BigInt(Math.floor(floatInput * 10 ** market.decimals));
+      const usdInput = (input * market.usdPrice) / BigInt(10 ** market.decimals);
       setFieldValue("usdInput", (Number(usdInput) / 1e18).toString());
       onChange(input);
     },
-    [marketAccount, onChange, setFieldValue],
+    [market, setFieldValue, onChange],
   );
   const handleUSDChange = useCallback(
     (text: string) => {
-      if (!marketAccount) return;
+      if (!market) return;
       setFieldValue("usdInput", text);
       const floatInput = Number(text);
       if (Number.isNaN(floatInput)) {
@@ -58,11 +58,11 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
         return;
       }
       const input = BigInt(Math.floor(Number(floatInput * 1e18)));
-      const assetInput = (input * BigInt(10 ** marketAccount.decimals)) / marketAccount.usdPrice;
-      setFieldValue("assetInput", (Number(assetInput) / 10 ** marketAccount.decimals).toString());
+      const assetInput = (input * BigInt(10 ** market.decimals)) / market.usdPrice;
+      setFieldValue("assetInput", (Number(assetInput) / 10 ** market.decimals).toString());
       onChange(assetInput);
     },
-    [marketAccount, onChange, setFieldValue],
+    [market, setFieldValue, onChange],
   );
 
   return (
@@ -75,7 +75,7 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
         {({ state: { value } }) => (
           <AmountInput
             inputMode="numeric"
-            placeholder={`0 ${marketAccount?.assetName ?? ""}`}
+            placeholder={`0 ${market?.assetName ?? ""}`}
             value={value}
             onChangeText={handleAssetChange}
           />

@@ -12,7 +12,7 @@ import { bigint, check, pipe } from "valibot";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
-import useMarket from "../../utils/useMarket";
+import useMarketAccount from "../../utils/useMarketAccount";
 import AmountSelector from "../shared/AmountSelector";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -22,7 +22,7 @@ import View from "../shared/View";
 export default function Amount() {
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { canGoBack } = router;
-  const marketAccount = useMarket(withdraw?.market);
+  const { market } = useMarketAccount(withdraw?.market);
 
   const {
     Field,
@@ -37,9 +37,7 @@ export default function Amount() {
     },
   });
 
-  const available = marketAccount
-    ? (marketAccount.maxBorrowAssets * 10n ** 18n) / BigInt(10 ** marketAccount.decimals)
-    : 0n;
+  const available = market ? (market.maxBorrowAssets * 10n ** 18n) / BigInt(10 ** market.decimals) : 0n;
 
   return (
     <SafeView fullScreen>
@@ -84,7 +82,7 @@ export default function Amount() {
                 </XStack>
               )}
 
-              {marketAccount && (
+              {market && (
                 <XStack
                   alignItems="center"
                   backgroundColor="$backgroundBrandSoft"
@@ -103,7 +101,7 @@ export default function Amount() {
                       {(Number(available) / 1e18).toLocaleString(undefined, {
                         currency: "USD",
                       })}{" "}
-                      {marketAccount.assetName}
+                      {market.assetName}
                     </Text>
                   </XStack>
                 </XStack>

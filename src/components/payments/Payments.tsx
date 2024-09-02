@@ -1,32 +1,23 @@
-import { previewerAddress, usdcAddress } from "@exactly/common/generated/chain";
+import { usdcAddress } from "@exactly/common/generated/chain";
 import { Info } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
-import { zeroAddress } from "viem";
-import { useAccount } from "wagmi";
 
 import NextPayment from "./NextPayment";
 import UpcomingPayments from "./UpcomingPayments";
-import { useReadPreviewerExactly } from "../../generated/contracts";
+import useMarketAccount from "../../utils/useMarketAccount";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Payments() {
-  const { address } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
+  const { market } = useMarketAccount(usdcAddress);
   let usdDue = 0n;
-  if (markets) {
-    const usdcMarket = markets.find((market) => market.asset === usdcAddress);
-    if (!usdcMarket) return;
-    for (const { position } of usdcMarket.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {
-      usdDue += ((position.principal + position.fee) * usdcMarket.usdPrice) / 10n ** BigInt(usdcMarket.decimals);
+  if (market) {
+    for (const { position } of market.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {
+      usdDue += ((position.principal + position.fee) * market.usdPrice) / 10n ** BigInt(market.decimals);
     }
   }
   return (

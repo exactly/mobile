@@ -1,31 +1,26 @@
-import { previewerAddress, usdcAddress } from "@exactly/common/generated/chain";
+import { usdcAddress } from "@exactly/common/generated/chain";
 import { Coins, FileText } from "@tamagui/lucide-icons";
 import { formatDistanceToNow, intlFormat } from "date-fns";
-import React from "react";
+import React, { useCallback } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { Spinner } from "tamagui";
+import { useWriteContract } from "wagmi";
 
-import { useReadPreviewerExactly } from "../../generated/contracts";
+import { useSimulateExaPluginRepay } from "../../generated/contracts";
 import WAD from "../../utils/WAD";
+import handleError from "../../utils/handleError";
+import queryClient from "../../utils/queryClient";
+import useMarketAccount from "../../utils/useMarketAccount";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function NextPayment() {
-  const { address } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
-
+  const { account, market, queryKey } = useMarketAccount(usdcAddress);
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
-  if (markets) {
-    const usdcMarket = markets.find((market) => market.asset === usdcAddress);
-    if (!usdcMarket) return;
-    const { fixedBorrowPositions, usdPrice, decimals } = usdcMarket;
+  if (market) {
+    const { fixedBorrowPositions, usdPrice, decimals } = market;
     for (const { maturity, previewValue, position } of fixedBorrowPositions) {
       if (!previewValue) continue;
       const preview = (previewValue * usdPrice) / 10n ** BigInt(decimals);
