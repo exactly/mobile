@@ -1,7 +1,7 @@
 import type { Passkey } from "@exactly/common/types";
-import { ArrowRight, Eye, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
+import { ArrowRight, Eye, EyeOff, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import React from "react";
+import React, { useState } from "react";
 import { Platform, Pressable } from "react-native";
 import { Inquiry } from "react-native-persona";
 import { ms } from "react-native-size-matters";
@@ -32,6 +32,7 @@ const StyledAction = styled(View, {
 });
 
 export default function Card() {
+  const [detailsShown, setDetailsShown] = useState(false);
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
   const { data: hasKYC, isLoading: isLoadingKYC } = useQuery({
     queryKey: ["kycStatus"],
@@ -109,33 +110,38 @@ export default function Card() {
 
             <View alignItems="center" gap="$s5" width="100%">
               {(isLoadingCard || isLoadingKYC || isLoadingOTL) && <Spinner color="$interactiveBaseBrandDefault" />}
-              {card && <CardDetails uri={card.url} />}
-              <View
-                borderRadius="$r3"
-                overflow="hidden"
-                maxHeight={220}
-                width="100%"
-                aspectRatio={1536 / 969}
-                alignSelf="center"
-              >
-                <ExaCard width="100%" height="100%" />
+
+              {card && detailsShown && <CardDetails uri={card.url} />}
+
+              {!detailsShown && (
                 <View
-                  position="absolute"
-                  flexDirection="row"
-                  alignItems="center"
-                  justifyContent="center"
-                  gap="$s1"
-                  bottom={10}
-                  left={10}
+                  borderRadius="$r3"
+                  overflow="hidden"
+                  maxHeight={220}
+                  width="100%"
+                  aspectRatio={1536 / 969}
+                  alignSelf="center"
                 >
-                  <Text color="white" emphasized callout verticalAlign="center" paddingTop={ms(3)}>
-                    **** **** ****
-                  </Text>
-                  <Text color="white" emphasized callout paddingTop={card?.lastFour ? 0 : ms(3)}>
-                    {card?.lastFour ?? "****"}
-                  </Text>
+                  <ExaCard width="100%" height="100%" />
+                  <View
+                    position="absolute"
+                    flexDirection="row"
+                    alignItems="center"
+                    justifyContent="center"
+                    gap="$s1"
+                    bottom={10}
+                    left={10}
+                  >
+                    <Text color="white" emphasized callout verticalAlign="center" paddingTop={ms(3)}>
+                      **** **** ****
+                    </Text>
+                    <Text color="white" emphasized callout paddingTop={card?.lastFour ? 0 : ms(3)}>
+                      {card?.lastFour ?? "****"}
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              )}
+
               {(cardError ?? OTLError) && (
                 <Text color="$uiErrorPrimary" fontWeight="bold">
                   {cardError ? cardError.message : OTLError ? OTLError.message : "Error"}
@@ -145,14 +151,19 @@ export default function Card() {
                 <StyledAction>
                   <Pressable
                     onPress={() => {
+                      setDetailsShown(!detailsShown);
                       revealCard().catch(handleError);
                     }}
                   >
                     <View gap={ms(10)}>
-                      <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
+                      {detailsShown ? (
+                        <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
+                      ) : (
+                        <EyeOff size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
+                      )}
                       <Text fontSize={ms(15)}>Details</Text>
                       <Text color="$interactiveBaseBrandDefault" fontSize={ms(15)} fontWeight="bold">
-                        Reveal
+                        {detailsShown ? "Hide" : "Reveal"}
                       </Text>
                     </View>
                   </Pressable>
