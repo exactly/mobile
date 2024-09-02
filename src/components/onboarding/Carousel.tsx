@@ -55,7 +55,7 @@ const pages: [Page, ...Page[]] = [
   {
     backgroundImage: earningsBlob,
     image: earnings,
-    title: "Maximize earnings, effortlessly.",
+    title: "Maximize earnings, effortlessly",
   },
   {
     backgroundImage: qrCodeBlob,

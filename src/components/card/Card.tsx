@@ -101,7 +101,7 @@ export default function Card() {
           <View gap="$s5" flex={1}>
             <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
               <Text fontSize={ms(20)} fontWeight="bold">
-                My Cards
+                My Card
               </Text>
               <Pressable>
                 <Info color="$uiNeutralPrimary" />
