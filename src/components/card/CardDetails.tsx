@@ -33,7 +33,11 @@ export default function CardDetails({ uri }: { uri: string }) {
           backgroundColor="white"
           scrollEnabled={false}
           startInLoadingState
-          renderLoading={() => <Spinner color="$interactiveBaseBrandDefault" />}
+          renderLoading={() => (
+            <View position="absolute" top={0} left={0} right={0} bottom={0} alignItems="center" justifyContent="center">
+              <Spinner color="$interactiveBaseBrandDefault" />
+            </View>
+          )}
           injectedJavaScript="window.ReactNativeWebView.postMessage(document.body.scrollHeight)"
         />
       )}
