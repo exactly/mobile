@@ -43,6 +43,7 @@ export default function Balance() {
       </View>
       <View gap="$s3_5">
         <Pressable
+          disabled={usdBalance === 0n}
           onPress={() => {
             setIsOpen(!isOpen);
           }}
@@ -56,13 +57,15 @@ export default function Balance() {
                 })}
               </Text>
             </View>
-            <View>
-              {isOpen ? (
-                <ChevronUp size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
-              ) : (
-                <ChevronDown size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
-              )}
-            </View>
+            {usdBalance > 0n && (
+              <View>
+                {isOpen ? (
+                  <ChevronUp size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
+                ) : (
+                  <ChevronDown size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
+                )}
+              </View>
+            )}
           </View>
         </Pressable>
       </View>
