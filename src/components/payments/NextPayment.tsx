@@ -31,9 +31,28 @@ export default function NextPayment() {
       });
     }
   }
-
   const maturity = usdDue.keys().next().value as bigint | undefined;
   const duePayment = usdDue.get(maturity ?? 0n);
+
+  const { data: repaySimulation } = useSimulateExaPluginRepay({
+    address: account,
+    args: [maturity ?? 0n],
+    query: { enabled: !!market && !!account },
+  });
+
+  const { writeContract: repay, isPending: isRepaying } = useWriteContract({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey }).catch(handleError);
+      },
+    },
+  });
+
+  const handleRepay = useCallback(() => {
+    if (!repaySimulation) throw new Error("no repay simulation");
+    repay(repaySimulation.request);
+  }, [repay, repaySimulation]);
+
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s5">
       {maturity ? (
@@ -99,7 +118,21 @@ export default function NextPayment() {
                 alignItems="center"
                 paddingVertical={ms(10)}
               >
-                <Button contained main spaced halfWidth iconAfter={<Coins color="$interactiveOnBaseBrandDefault" />}>
+                <Button
+                  onPress={handleRepay}
+                  contained
+                  disabled={!repaySimulation || isRepaying}
+                  main
+                  spaced
+                  halfWidth
+                  iconAfter={
+                    isRepaying ? (
+                      <Spinner color="$interactiveOnDisabled" />
+                    ) : (
+                      <Coins color={repaySimulation ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"} />
+                    )
+                  }
+                >
                   Pay
                 </Button>
               </View>
