@@ -1,5 +1,4 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import { ChevronRight } from "@tamagui/lucide-icons";
 import { intlFormat } from "date-fns";
 import React from "react";
 import { zeroAddress } from "viem";
@@ -68,9 +67,6 @@ function ListItem({ maturity, amount }: Payment) {
               currency: "USD",
             })}
           </Text>
-        </View>
-        <View>
-          <ChevronRight size={24} color="$iconBrandDefault" />
         </View>
       </View>
     </View>

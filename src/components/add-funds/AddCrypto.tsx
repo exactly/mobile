@@ -1,4 +1,4 @@
-import { ArrowLeft, Files, Info, QrCode, Share as ShareIcon } from "@tamagui/lucide-icons";
+import { ArrowLeft, Files, Info, Share as ShareIcon } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React, { useCallback } from "react";
@@ -83,7 +83,6 @@ export default function AddCrypto() {
                   )}
                 </View>
                 <View gap={ms(10)} flexDirection="row">
-                  <QrCode size={ms(24)} color="$interactiveBaseBrandDefault" />
                   <Pressable onPress={copy} hitSlop={ms(15)}>
                     <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
                   </Pressable>
@@ -109,9 +108,6 @@ export default function AddCrypto() {
                 <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
                   Supported Assets
                 </Text>
-                <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
-                  APR
-                </Text>
               </View>
               {supportedAssets.map((asset, index) => {
                 return (
@@ -123,11 +119,6 @@ export default function AddCrypto() {
                       </Text>
                       <Text fontSize={ms(13)} color="$uiNeutralSecondary">
                         USD Coin
-                      </Text>
-                    </View>
-                    <View>
-                      <Text textAlign="right" fontSize={ms(18)} color="$uiBrandPrimary" fontWeight="bold">
-                        0%
                       </Text>
                     </View>
                   </View>

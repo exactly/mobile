@@ -1,5 +1,5 @@
 import type { Passkey } from "@exactly/common/types";
-import { ArrowRight, Eye, EyeOff, Info, Plus, Snowflake } from "@tamagui/lucide-icons";
+import { Eye, EyeOff, Info, Snowflake } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Platform, Pressable } from "react-native";
@@ -189,31 +189,11 @@ export default function Card() {
               </View>
             </View>
             <View>
-              <InfoCard
-                title="Spending limits"
-                renderAction={
-                  <Pressable>
-                    <View flexDirection="row" gap={2} alignItems="center">
-                      <Text color="$interactiveBaseBrandDefault" fontSize={14} lineHeight={18} fontWeight="bold">
-                        Increase limits
-                      </Text>
-                      <Plus size={14} color="$interactiveBaseBrandDefault" fontWeight="bold" />
-                    </View>
-                  </Pressable>
-                }
-              >
+              <InfoCard title="Spending limits">
                 <View gap="$s4">
                   <SpendingLimitButton title="Daily" limit={1000} />
                   <SpendingLimitButton title="Weekly" limit={3000} />
                   <SpendingLimitButton title="Monthly" limit={5000} />
-                </View>
-                <View borderTopWidth={1} borderTopColor="$borderNeutralSeparator" paddingTop={ms(20)}>
-                  <Pressable>
-                    <View flexDirection="row" justifyContent="space-between" alignItems="center" gap={ms(10)}>
-                      <Text color="$uiNeutralSecondary">Learn more about spending limits.</Text>
-                      <ArrowRight size={14} color="$iconSecondary" />
-                    </View>
-                  </Pressable>
                 </View>
               </InfoCard>
             </View>

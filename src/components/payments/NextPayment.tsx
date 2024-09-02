@@ -1,8 +1,7 @@
 import { usdcAddress } from "@exactly/common/generated/chain";
-import { Coins, FileText } from "@tamagui/lucide-icons";
+import { Coins } from "@tamagui/lucide-icons";
 import { formatDistanceToNow, intlFormat } from "date-fns";
 import React, { useCallback } from "react";
-import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Spinner } from "tamagui";
 import { useWriteContract } from "wagmi";
@@ -64,14 +63,6 @@ export default function NextPayment() {
               <Text emphasized headline>
                 Due in {formatDistanceToNow(Number(maturity) * 1000)}
               </Text>
-              <Pressable>
-                <View flexDirection="row" gap="$s2" alignItems="center">
-                  <Text emphasized footnote color="$interactiveTextBrandDefault">
-                    Statement
-                  </Text>
-                  <FileText size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
-                </View>
-              </Pressable>
             </View>
             <Text footnote color="$uiNeutralSecondary">
               {intlFormat(new Date(Number(maturity) * 1000), { dateStyle: "medium" }).toUpperCase()}
