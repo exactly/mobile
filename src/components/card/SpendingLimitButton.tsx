@@ -36,7 +36,7 @@ export default function SpendingLimitButton({ title, limit }: SpendingLimitButto
           <Text fontSize={ms(15)}>{title}</Text>
         </View>
         <View flexDirection="row" justifyContent="space-around" alignItems="center" gap={ms(5)}>
-          <Text color="$uiBrandSecondary" fontSize={ms(15)}>
+          <Text sensitive color="$uiBrandSecondary" fontSize={ms(15)}>
             {limit.toLocaleString(undefined, {
               style: "currency",
               currency: "USD",

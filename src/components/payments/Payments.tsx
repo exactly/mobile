@@ -35,7 +35,14 @@ export default function Payments() {
           <View gap="$s8">
             <View gap="$s6">
               <View flexDirection="column" justifyContent="center" alignItems="center">
-                <Text textAlign="center" fontFamily="$mono" fontSize={ms(40)} fontWeight="bold" overflow="hidden">
+                <Text
+                  sensitive
+                  textAlign="center"
+                  fontFamily="$mono"
+                  fontSize={ms(40)}
+                  fontWeight="bold"
+                  overflow="hidden"
+                >
                   {(Number(usdDue) / 1e18).toLocaleString(undefined, { style: "currency", currency: "USD" })}
                 </Text>
               </View>

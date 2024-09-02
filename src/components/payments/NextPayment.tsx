@@ -12,11 +12,13 @@ import WAD from "../../utils/WAD";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
+import usePrivateText from "../../utils/usePrivateText";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function NextPayment() {
+  const { hidden } = usePrivateText();
   const { account, market, queryKey } = useMarketAccount(usdcAddress);
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (market) {
@@ -78,7 +80,14 @@ export default function NextPayment() {
           {duePayment && (
             <View gap="$s5">
               <View flexDirection="column" justifyContent="center" alignItems="center">
-                <Text textAlign="center" fontFamily="$mono" fontSize={ms(40)} fontWeight="bold" overflow="hidden">
+                <Text
+                  sensitive
+                  textAlign="center"
+                  fontFamily="$mono"
+                  fontSize={ms(40)}
+                  fontWeight="bold"
+                  overflow="hidden"
+                >
                   {(Number(duePayment.previewValue) / 1e18).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
@@ -86,29 +95,31 @@ export default function NextPayment() {
                 </Text>
               </View>
               <View flexDirection="row" gap="$s3" justifyContent="center">
-                <Text subHeadline strikeThrough color="$uiNeutralSecondary">
+                <Text sensitive subHeadline strikeThrough color="$uiNeutralSecondary">
                   {(Number(duePayment.position) / 1e18).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
                   })}
                 </Text>
-                <Text
-                  pill
-                  caption2
-                  padding="$s2"
-                  backgroundColor="$interactiveBaseSuccessSoftDefault"
-                  color="$uiSuccessSecondary"
-                >
-                  {(Number(WAD - (duePayment.previewValue * WAD) / duePayment.position) / 1e18).toLocaleString(
-                    undefined,
-                    {
-                      style: "percent",
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  )}{" "}
-                  OFF
-                </Text>
+                {!hidden && (
+                  <Text
+                    pill
+                    caption2
+                    padding="$s2"
+                    backgroundColor="$interactiveBaseSuccessSoftDefault"
+                    color="$uiSuccessSecondary"
+                  >
+                    {(Number(WAD - (duePayment.previewValue * WAD) / duePayment.position) / 1e18).toLocaleString(
+                      undefined,
+                      {
+                        style: "percent",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      },
+                    )}{" "}
+                    OFF
+                  </Text>
+                )}
               </View>
               <View
                 flexDirection="row"

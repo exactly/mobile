@@ -51,14 +51,14 @@ export default function AssetList() {
             </View>
             <View gap={ms(5)} flex={1}>
               <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
+                <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
                   {(Number(usdValue) / 1e18).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
                   })}
                 </Text>
               </View>
-              <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+              <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
                 {Number(floatingDepositAssets / BigInt(10 ** decimals)).toLocaleString()} {symbol}
               </Text>
             </View>

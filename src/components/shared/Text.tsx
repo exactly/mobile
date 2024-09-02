@@ -1,7 +1,10 @@
+import React from "react";
 import { ms } from "react-native-size-matters";
-import { Text, styled } from "tamagui";
+import { Text as TamaguiText, styled } from "tamagui";
 
-export default styled(Text, {
+import usePrivateText from "../../utils/usePrivateText";
+
+const StyledText = styled(TamaguiText, {
   color: "$uiNeutralPrimary",
   variants: {
     emphasized: {
@@ -104,3 +107,12 @@ export default styled(Text, {
     },
   } as const,
 });
+
+interface TextProperties extends React.ComponentPropsWithoutRef<typeof StyledText> {
+  sensitive?: boolean;
+}
+
+export default function Text({ children, sensitive, ...rest }: TextProperties) {
+  const { hidden } = usePrivateText();
+  return <StyledText {...rest}>{sensitive && hidden ? "***" : children}</StyledText>;
+}

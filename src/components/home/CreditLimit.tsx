@@ -39,7 +39,7 @@ export default function CreditLimit() {
         </Pressable>
       }
     >
-      <Text color="$uiNeutralPrimary" fontFamily="$mono" fontSize={ms(30)}>
+      <Text sensitive color="$uiNeutralPrimary" fontFamily="$mono" fontSize={ms(30)}>
         {(Number(creditLimit) / 1e18).toLocaleString(undefined, {
           style: "currency",
           currency: "USD",

@@ -49,8 +49,15 @@ export default function Balance() {
           }}
         >
           <View flexDirection="row" justifyContent="center" alignItems="center" gap="$s3_5">
-            <View flexDirection="row" maxWidth="100%">
-              <Text textAlign="center" fontFamily="$mono" fontSize={ms(40)} fontWeight="bold" overflow="hidden">
+            <View flexDirection="row" maxWidth="100%" alignItems="center">
+              <Text
+                sensitive
+                textAlign="center"
+                fontFamily="$mono"
+                fontSize={ms(40)}
+                fontWeight="bold"
+                overflow="hidden"
+              >
                 {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
                   style: "currency",
                   currency: "USD",
@@ -58,7 +65,7 @@ export default function Balance() {
               </Text>
             </View>
             {usdBalance > 0n && (
-              <View>
+              <View flexDirection="row">
                 {isOpen ? (
                   <ChevronUp size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
                 ) : (

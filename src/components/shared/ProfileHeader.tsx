@@ -1,4 +1,4 @@
-import { Settings } from "@tamagui/lucide-icons";
+import { Eye, EyeOff, Settings } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
@@ -8,6 +8,7 @@ import { useAccount, useConnect } from "wagmi";
 
 import alchemyConnector from "../../utils/alchemyConnector";
 import shortenAddress from "../../utils/shortenAddress";
+import usePrivateText from "../../utils/usePrivateText";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
@@ -32,6 +33,7 @@ export default function ProfileHeader() {
   const { address } = useAccount();
   const { connect } = useConnect();
   const { isConnected } = useAccount();
+  const { hidden, toggle } = usePrivateText();
   return (
     <View padded>
       <View display="flex" flexDirection="row" justifyContent="space-between">
@@ -61,6 +63,9 @@ export default function ProfileHeader() {
           )}
         </View>
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
+          <Pressable onPress={toggle} hitSlop={ms(15)}>
+            {hidden ? <EyeOff color="$uiNeutralPrimary" /> : <Eye color="$uiNeutralPrimary" />}
+          </Pressable>
           <Pressable onPress={settings} hitSlop={ms(15)}>
             <Settings color="$uiNeutralPrimary" />
           </Pressable>

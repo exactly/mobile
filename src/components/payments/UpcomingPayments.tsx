@@ -41,7 +41,6 @@ export default function UpcomingPayments() {
           Next payments
         </Text>
       </View>
-
       {payments.length > 0 ? (
         payments.map(([maturity, amount], index) => <ListItem key={index} maturity={maturity} amount={amount} />)
       ) : (
@@ -63,7 +62,7 @@ function ListItem({ maturity, amount }: Payment) {
       </View>
       <View flexDirection="row" alignItems="center" gap="$s2">
         <View>
-          <Text>
+          <Text sensitive>
             {(Number(amount) / 1e18).toLocaleString(undefined, {
               style: "currency",
               currency: "USD",
