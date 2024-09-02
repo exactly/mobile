@@ -130,7 +130,7 @@ app.post(
                   ...transactionOptions,
                 }),
               );
-              setContext("tx", { hash });
+              setContext("tx", { transactionHash: hash });
               const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
                 publicClient.waitForTransactionReceipt({ hash }),
               );
@@ -163,7 +163,7 @@ app.post(
                       ...transactionOptions,
                     }),
                   );
-                  setContext("tx", { hash });
+                  setContext("tx", { transactionHash: hash });
                   const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
                     publicClient.waitForTransactionReceipt({ hash }),
                   );

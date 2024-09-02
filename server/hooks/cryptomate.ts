@@ -166,7 +166,7 @@ app.post(
             serializedTransaction: signTransactionSync({ ...transaction, ...transactionOptions, nonce }),
           }),
         );
-        setContext("tx", { hash });
+        setContext("tx", { transactionHash: hash });
         const [receipt] = await Promise.all([
           startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash })),
           database
