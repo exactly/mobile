@@ -168,6 +168,7 @@
         "expo-build-properties",
         "expo-clipboard",
         "expo-constants",
+        "expo-dev-client",
         "expo-font",
         "expo-linking",
         "expo-router",
