@@ -30,6 +30,14 @@ struct FixedPosition {
   uint256 fee;
 }
 
+struct MarketData {
+  uint128 adjustFactor;
+  uint8 decimals;
+  uint8 index;
+  bool isListed;
+  IPriceFeed priceFeed;
+}
+
 struct Proposal {
   uint256 amount;
   IMarket market;
@@ -39,6 +47,7 @@ struct Proposal {
 
 error BorrowLimitExceeded();
 error Expired();
+error InsufficientLiquidity();
 error NoBalance();
 error NoProposal();
 error NotMarket();
@@ -46,14 +55,22 @@ error Timelocked();
 error Unauthorized();
 
 interface IAuditor {
-  function markets(IMarket market)
-    external
-    view
-    returns (uint128 adjustFactor, uint8 decimals, uint8 index, bool isListed, IPriceFeed priceFeed);
+  function accountMarkets(address account) external view returns (uint256);
+  function allMarkets() external view returns (IMarket[] memory);
+  function assetPrice(IPriceFeed priceFeed) external view returns (uint256);
   function enterMarket(IMarket market) external;
+  function marketList(uint256 index) external view returns (IMarket);
+  function markets(IMarket market) external view returns (MarketData memory);
+
+  struct AccountLiquidity {
+    uint256 balance;
+    uint256 borrowBalance;
+    uint256 price;
+  }
 }
 
 interface IMarket is IERC4626 {
+  function accountSnapshot(address account) external view returns (uint256, uint256);
   function backupFeeRate() external view returns (uint256);
   function borrow(uint256 assets, address receiver, address borrower) external returns (uint256 borrowShares);
   function borrowAtMaturity(uint256 maturity, uint256 assets, uint256 maxAssets, address receiver, address borrower)
@@ -69,5 +86,6 @@ interface IMarket is IERC4626 {
 }
 
 interface IPriceFeed {
+  function decimals() external view returns (uint8);
   function latestAnswer() external view returns (int256);
 }

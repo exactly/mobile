@@ -29,6 +29,8 @@ import {
   IAuditor,
   IExaAccount,
   IMarket,
+  InsufficientLiquidity,
+  MarketData,
   NoBalance,
   NoProposal,
   NotMarket,
@@ -151,6 +153,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       0,
       abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, type(uint256).max, collector, msg.sender)) // TODO slippage control
     );
+    _checkLiquidity(msg.sender);
   }
 
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature)
@@ -160,6 +163,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender))
     );
+    _checkLiquidity(msg.sender);
   }
 
   function poke(IMarket market) external onlyMarket(market) {
@@ -395,6 +399,32 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     v.collateralMarket.withdraw(v.collateralAssets, msg.sender, v.borrower);
   }
 
+  function _checkLiquidity(address account) internal view {
+    IMarket withdrawMarket = proposals[account].market;
+    uint256 marketMap = AUDITOR.accountMarkets(account);
+    uint256 sumCollateral = 0;
+    uint256 sumDebtPlusEffects = 0;
+    for (uint256 i = 0; i < AUDITOR.allMarkets().length; ++i) {
+      IMarket market = AUDITOR.marketList(i);
+      if ((marketMap & (1 << i)) != 0) {
+        MarketData memory md = AUDITOR.markets(market);
+        uint256 price = uint256(md.priceFeed.latestAnswer());
+        (uint256 balance, uint256 borrowBalance) = market.accountSnapshot(account);
+
+        if (market == withdrawMarket) {
+          uint256 amount = proposals[account].amount;
+          if (balance < amount) revert InsufficientLiquidity();
+          balance -= amount;
+        }
+        sumCollateral += balance.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
+        sumDebtPlusEffects += borrowBalance.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
+      }
+      if ((1 << i) > marketMap) break;
+    }
+
+    if (sumCollateral < sumDebtPlusEffects) revert InsufficientLiquidity();
+  }
+
   function _getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
     (uint256 reserve0, uint256 reserve1,) = IVelodromePool(pool).getReserves();
     return (
@@ -431,8 +461,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (!_isMarket(market)) revert NotMarket();
   }
 
-  function _isMarket(IMarket market) internal view returns (bool isMarket_) {
-    (,,, isMarket_,) = AUDITOR.markets(market);
+  function _isMarket(IMarket market) internal view returns (bool) {
+    return AUDITOR.markets(market).isListed;
   }
 
   modifier onlyMarket(IMarket market) {
