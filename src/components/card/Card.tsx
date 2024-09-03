@@ -113,6 +113,32 @@ export default function Card() {
 
               {card && detailsShown && <CardDetails uri={card.url} />}
 
+              {detailsShown && (
+                <View
+                  borderWidth={1}
+                  borderRadius="$r3"
+                  flexDirection="row"
+                  backgroundColor="$backgroundSoft"
+                  borderColor="$borderSuccessSoft"
+                  width="100%"
+                >
+                  <View
+                    padding="$s3"
+                    backgroundColor="$interactiveBaseSuccessSoftDefault"
+                    justifyContent="center"
+                    alignItems="center"
+                    flex={1}
+                  >
+                    <Info size={ms(24)} color="$interactiveOnBaseSuccessSoft" />
+                  </View>
+                  <View flex={6} padding="$s3">
+                    <Text fontSize={ms(15)} color="$uiSuccessPrimary">
+                      Manually add your card to Apple Pay & Google Pay to make contactless payments
+                    </Text>
+                  </View>
+                </View>
+              )}
+
               {!detailsShown && (
                 <View
                   borderRadius="$r3"
