@@ -22,14 +22,13 @@ import {
   encodeFunctionData,
   erc20Abi,
   getAddress,
-  nonceManager,
   padHex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, credentials, transactions } from "../database/index";
 import { issuerCheckerAddress } from "../generated/contracts";
-import { address as keeperAddress, signTransactionSync } from "../utils/keeper";
+import keeper from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 import transactionOptions from "../utils/transactionOptions";
 
@@ -131,7 +130,7 @@ app.post(
       ],
     } as const;
     const transaction = {
-      from: keeperAddress,
+      from: keeper.account.address,
       to: account,
       data: encodeFunctionData({ abi: exaPluginAbi, ...call }),
     } as const;
@@ -167,34 +166,46 @@ app.post(
           captureException(error);
           return c.json({ response_code: "05" });
         }
-      case "CLEARING": {
+      case "CLEARING":
         if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
-        const nonce = await startSpan({ name: "tx.nonce", op: "tx.nonce" }, () =>
-          nonceManager.consume({ address: keeperAddress, chainId: chain.id, client: publicClient }),
-        );
-        setContext("tx", { nonce });
-        const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-          publicClient.sendRawTransaction({
-            serializedTransaction: signTransactionSync({ ...transaction, ...transactionOptions, nonce }),
-          }),
-        );
-        setContext("tx", { transactionHash: hash });
-        const [receipt] = await Promise.all([
-          startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash })),
-          database
-            .insert(transactions)
-            .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]),
-        ]);
-        setContext("tx", receipt);
-        if (receipt.status !== "success") {
-          withScope((scope) => {
-            scope.setLevel("fatal");
-            captureException(new Error("tx reverted"));
-          });
-        }
+        await startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
+          try {
+            const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+              publicClient.simulateContract({
+                account: keeper.account,
+                address: account,
+                abi: exaPluginAbi,
+                ...transactionOptions,
+                ...call,
+              }),
+            );
+            setContext("tx", request);
+            const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+              keeper.writeContract(request),
+            );
+            setContext("tx", { transactionHash: hash });
+            const [receipt] = await Promise.all([
+              startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash })),
+              database
+                .insert(transactions)
+                .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]),
+            ]);
+            setContext("tx", receipt);
+            if (receipt.status !== "success") {
+              withScope((scope) => {
+                scope.setLevel("fatal");
+                captureException(new Error("tx reverted"));
+              });
+            }
+          } catch (error: unknown) {
+            withScope((scope) => {
+              scope.setLevel("fatal");
+              captureException(error);
+            });
+          }
+        });
         return c.json({});
-      }
       default:
         return c.json({});
     }
