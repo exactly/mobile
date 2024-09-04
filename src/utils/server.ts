@@ -42,6 +42,10 @@ export function getPasskey() {
   return auth<Passkey>("/passkey");
 }
 
+export function getActivity() {
+  return auth<Transaction[]>("/activity");
+}
+
 async function auth<T = unknown>(url: `/${string}`, body?: unknown, method?: "GET" | "POST") {
   try {
     parse(Auth, queryClient.getQueryData(["auth"]));
@@ -81,3 +85,17 @@ const Auth = pipe(
   number(),
   check((expires) => Date.now() < expires),
 );
+
+interface Transaction {
+  id: string;
+  amount: number;
+  currency: string | null;
+  merchant: {
+    name: string;
+    city: string | null;
+    country: string | null;
+    state: string | null;
+  };
+  timestamp: Date;
+  usdAmount: number;
+}

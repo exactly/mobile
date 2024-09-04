@@ -1,50 +1,18 @@
-import { Check, ChevronDown, ChevronUp, FileText, Info, Search } from "@tamagui/lucide-icons";
-import React, { useState } from "react";
+import { ArrowUpFromLine, FileText } from "@tamagui/lucide-icons";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import React from "react";
 import { FlatList, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { Adapt, Select, Separator, Sheet, XStack, YStack } from "tamagui";
+import { Separator, Spinner } from "tamagui";
 
-import type { ActivityItem } from "./ListItem";
+import { getActivity } from "../../utils/server";
 import SafeView from "../shared/SafeView";
-import Input from "../shared/TamaguiInput";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-const items: ActivityItem[] = [
-  {
-    id: "1",
-    title: "Exactly",
-    description: "Debt repay",
-    logo: "https://example.com/logos/staking.png",
-    date: Date.now().toString(),
-    asset: {
-      name: "ETH",
-      amount: 1_200_000_000_000_000_000n,
-      usdValue: 1_800_000_000_000_000_000_000n,
-    },
-  },
-  {
-    id: "2",
-    title: "Exactly",
-    description: "UNI deposit",
-    date: Date.now().toString(),
-    logo: "https://example.com/logos/uniswap.png",
-    asset: {
-      name: "UNI",
-      amount: 50_000_000_000_000_000_000n,
-      usdValue: 25_000_000_000_000_000_000n,
-    },
-  },
-];
-
-const periods = [
-  { name: "Daily", value: "daily" },
-  { name: "Weekly", value: "weekly" },
-];
-
 export default function Activity() {
-  const [searchValue, setSearchValue] = useState("");
-  const [period, setPeriod] = useState("daily");
+  const { data: activity, isLoading } = useQuery({ queryKey: ["activity"], queryFn: getActivity });
   return (
     <SafeView fullScreen tab>
       <View fullScreen>
@@ -57,134 +25,78 @@ export default function Activity() {
               <FileText color="$uiNeutralPrimary" />
             </Pressable>
           </View>
-          <View flexDirection="row" gap="$s3" alignItems="center">
-            <XStack flexDirection="row" alignItems="center" gap="$s2">
-              <Input minHeight={ms(40)} flex={1}>
-                <Input.Input
-                  value={searchValue}
-                  onChangeText={setSearchValue}
-                  placeholder="Search by keyword or Tx ID"
-                />
-                <Input.Icon>
-                  <Search color="$iconBrandDefault" size={ms(20)} />
-                </Input.Icon>
-              </Input>
-
-              <View>
-                <Select value={period} onValueChange={setPeriod} disablePreventBodyScroll>
-                  <Select.Trigger
-                    backgroundColor="$interactiveBaseBrandSoftDefault"
-                    borderColor="transparent"
-                    color="$interactiveOnBaseBrandSoft"
-                    iconAfter={ChevronDown}
-                    padding="$s3"
-                    size={ms(20)}
-                  >
-                    <Select.Value color="$interactiveOnBaseBrandSoft" />
-                  </Select.Trigger>
-
-                  <Adapt when="sm" platform="touch">
-                    <Sheet modal dismissOnOverlayPress dismissOnSnapToBottom>
-                      <Sheet.Frame backgroundColor="$uiNeutralTertiary" padding="$s5">
-                        <Sheet.ScrollView>
-                          <Adapt.Contents />
-                        </Sheet.ScrollView>
-                      </Sheet.Frame>
-                    </Sheet>
-                  </Adapt>
-
-                  <Select.Content zIndex={200_000}>
-                    <Select.ScrollUpButton
-                      alignItems="center"
-                      justifyContent="center"
-                      position="relative"
-                      width="100%"
-                      height="$3"
-                    >
-                      <YStack zIndex={10}>
-                        <ChevronUp size={20} />
-                      </YStack>
-                    </Select.ScrollUpButton>
-                    <Select.Viewport>
-                      <Select.Group>
-                        {/* eslint-disable-next-line react-native/no-raw-text */}
-                        <Select.Label color="$uiNeutralSecondary">Period</Select.Label>
-                        <Separator borderColor="$uiNeutralSecondary" opacity={0.1} />
-                        {periods.map((item, index) => {
-                          return (
-                            <Select.Item index={index} key={item.name} value={item.value}>
-                              <Select.ItemText color="$uiNeutralPrimary">{item.name}</Select.ItemText>
-                              <Select.ItemIndicator marginLeft="auto">
-                                <Check size={ms(20)} color="$uiNeutralPrimary" />
-                              </Select.ItemIndicator>
-                            </Select.Item>
-                          );
-                        })}
-                      </Select.Group>
-                    </Select.Viewport>
-                    <Select.ScrollDownButton
-                      alignItems="center"
-                      justifyContent="center"
-                      position="relative"
-                      width="100%"
-                      height="$3"
-                    >
-                      <YStack zIndex={10}>
-                        <ChevronDown size={ms(20)} />
-                      </YStack>
-                    </Select.ScrollDownButton>
-                  </Select.Content>
-                </Select>
-              </View>
-            </XStack>
-          </View>
         </View>
-        <View padded gap="$s5">
-          <FlatList
-            data={items}
-            ItemSeparatorComponent={() => <Separator margin="$s3" borderColor="transparent" />}
-            renderItem={({ item: { id, title, description, asset } }) => {
-              return (
-                <View key={id} flexDirection="row" gap={ms(16)} alignItems="center">
+        <View gap="$s5" flex={1}>
+          {isLoading ? (
+            <View padded justifyContent="center" alignItems="center">
+              <Spinner color="$interactiveBaseBrandDefault" />
+            </View>
+          ) : (
+            <FlatList
+              ListEmptyComponent={
+                <View borderRadius="$r3" backgroundColor="$uiNeutralTertiary" padding="$s3_5" alignSelf="center">
+                  <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
+                    There is no activity yet.
+                  </Text>
+                </View>
+              }
+              data={activity}
+              ItemSeparatorComponent={() => <Separator margin="$s3" borderColor="transparent" />}
+              renderItem={({ item, index }) => {
+                const { amount, currency, id, merchant, timestamp, usdAmount } = item;
+                return (
                   <View
-                    width={ms(40)}
-                    height={ms(40)}
-                    backgroundColor="$backgroundBrandMild"
-                    borderRadius="$r3"
-                    justifyContent="center"
+                    key={id}
+                    flexDirection="row"
+                    gap={ms(16)}
                     alignItems="center"
+                    paddingHorizontal="$s5"
+                    paddingTop={index === 0 ? "$s4" : 0}
+                    paddingBottom={index + 1 === activity?.length ? "$s4" : 0}
                   >
-                    <Info color="$iconBrandDefault" />
-                  </View>
-                  <View flex={1} gap="$s2">
-                    <View flexDirection="row" justifyContent="space-between" alignItems="center">
-                      <View gap="$s2">
-                        <Text subHeadline color="$uiNeutralPrimary">
-                          {title}
-                        </Text>
-                        <Text caption color="$uiNeutralSecondary">
-                          {description}
-                        </Text>
-                      </View>
-                      <View gap="$s2">
-                        <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                          <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
-                            {(Number(asset.usdValue) / 1e18).toLocaleString(undefined, {
-                              style: "currency",
-                              currency: "USD",
-                            })}
+                    <View
+                      width={ms(40)}
+                      height={ms(40)}
+                      backgroundColor="$backgroundBrandMild"
+                      borderRadius="$r3"
+                      justifyContent="center"
+                      alignItems="center"
+                    >
+                      <ArrowUpFromLine color="$iconBrandDefault" />
+                    </View>
+                    <View flex={1} gap="$s2">
+                      <View flexDirection="row" justifyContent="space-between" alignItems="flex-start">
+                        <View gap="$s2">
+                          <Text subHeadline color="$uiNeutralPrimary">
+                            {merchant.name}
+                          </Text>
+                          <Text caption color="$uiNeutralSecondary">
+                            {[merchant.city, merchant.state, merchant.country].filter(Boolean).join(", ")}
+                          </Text>
+                          <Text caption color="$uiNeutralSecondary">
+                            {format(timestamp, "dd/MM/yyyy", { locale: undefined })}
                           </Text>
                         </View>
-                        <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                          {(Number(asset.amount) / 1e18).toLocaleString()} {asset.name}
-                        </Text>
+                        <View gap="$s2">
+                          <View flexDirection="row" alignItems="center" justifyContent="flex-end">
+                            <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
+                              {Number(usdAmount).toLocaleString(undefined, {
+                                style: "currency",
+                                currency: "USD",
+                              })}
+                            </Text>
+                          </View>
+                          <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                            {Number(amount).toLocaleString()} {currency ?? "USD"}
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </View>
-                </View>
-              );
-            }}
-          />
+                );
+              }}
+            />
+          )}
         </View>
       </View>
     </SafeView>
