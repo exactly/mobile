@@ -1,7 +1,9 @@
 import { relations } from "drizzle-orm";
-import { customType, integer, jsonb, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core";
+import { customType, integer, jsonb, pgEnum, pgTable, text, uniqueIndex } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Uint8Array; driverData: string }>({ dataType: () => "bytea" });
+
+export const cardStatus = pgEnum("card_status", ["ACTIVE", "FROZEN", "DELETED"]);
 
 export const credentials = pgTable(
   "credentials",
@@ -22,6 +24,7 @@ export const cards = pgTable("cards", {
   credentialId: text("credential_id")
     .references(() => credentials.id)
     .notNull(),
+  status: cardStatus("status").notNull().default("ACTIVE"),
   lastFour: text("last_four").notNull(),
 });
 

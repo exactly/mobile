@@ -17,7 +17,7 @@ app.get("/", async (c) => {
   const credential = await database.query.credentials.findFirst({
     where: eq(credentials.id, credentialId),
     columns: { account: true, kycId: true },
-    with: { cards: { columns: { id: true, lastFour: true } } },
+    with: { cards: { columns: { id: true, lastFour: true }, where: eq(cards.status, "ACTIVE") } },
   });
   if (!credential) return c.text("credential not found", 401);
   if (!credential.kycId) return c.text("kyc required", 403);
