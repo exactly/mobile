@@ -24,18 +24,18 @@ export function jsonValidator<TInput, TOutput, TIssue extends BaseIssue<unknown>
   filter?: (result: TOutput) => boolean,
 ) {
   return vValidator("json", schema, (result, c) => {
-    if (!result.success) {
-      setContext("validation", result);
-      captureException(new Error("bad alchemy"));
-      return c.text("bad request", 400);
-    }
-    if (debug.enabled && (!filter || filter(result.output))) {
+    if (debug.enabled && (!result.success || !filter || filter(result.output))) {
       c.req
         .text()
         .then(debug)
         .catch((error: unknown) => {
           captureException(error);
         });
+    }
+    if (!result.success) {
+      setContext("validation", result);
+      captureException(new Error("bad alchemy"));
+      return c.text("bad request", 400);
     }
   });
 }

@@ -76,11 +76,6 @@ app.post(
       }),
     ]),
     (result, c) => {
-      if (!result.success) {
-        setContext("validation", result);
-        captureException(new Error("bad cryptomate"));
-        return c.text("bad request", 400);
-      }
       if (debug.enabled) {
         c.req
           .text()
@@ -88,6 +83,11 @@ app.post(
           .catch((error: unknown) => {
             captureException(error);
           });
+      }
+      if (!result.success) {
+        setContext("validation", result);
+        captureException(new Error("bad cryptomate"));
+        return c.text("bad request", 400);
       }
     },
   ),
