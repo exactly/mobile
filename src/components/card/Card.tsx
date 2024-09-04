@@ -67,11 +67,11 @@ export default function Card() {
     },
   });
 
-  const { mutateAsync: revealCard } = useMutation({
+  const { mutateAsync: revealCard, isPending: isRevealing } = useMutation({
     mutationKey: ["revealCard"],
     mutationFn: async function handleReveal() {
       if (!passkey) return;
-      if (hasKYC) {
+      if (hasKYC && !isRevealing) {
         await refetchCard();
         return;
       }
@@ -177,6 +177,7 @@ export default function Card() {
                 <StyledAction>
                   <Pressable
                     onPress={() => {
+                      if (isRevealing) return;
                       setDetailsShown(!detailsShown);
                       revealCard().catch(handleError);
                     }}
@@ -188,9 +189,13 @@ export default function Card() {
                         <EyeOff size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                       )}
                       <Text fontSize={ms(15)}>Details</Text>
-                      <Text color="$interactiveBaseBrandDefault" fontSize={ms(15)} fontWeight="bold">
-                        {detailsShown ? "Hide" : "Reveal"}
-                      </Text>
+                      {isRevealing ? (
+                        <Spinner color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
+                      ) : (
+                        <Text color="$interactiveBaseBrandDefault" fontSize={ms(15)} fontWeight="bold">
+                          {detailsShown ? "Hide" : "Reveal"}
+                        </Text>
+                      )}
                     </View>
                   </Pressable>
                 </StyledAction>
