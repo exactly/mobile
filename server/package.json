@@ -42,6 +42,7 @@
     "@sentry/cli": "^2.34.1",
     "@types/node": "^22.5.3",
     "@types/pg": "^8.11.8",
+    "@wagmi/core": "^2.13.4",
     "drizzle-kit": "^0.24.2",
     "pkgroll": "^2.4.2",
     "tsx": "^4.19.0",
