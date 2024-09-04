@@ -14,7 +14,7 @@
     "instrument.cjs"
   ],
   "engines": {
-    "node": ">=22.7.0"
+    "node": ">=22.8.0"
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.19.0",
@@ -23,24 +23,24 @@
     "@hono/valibot-validator": "^0.3.0",
     "@noble/curves": "*",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
-    "@sentry/node": "^8.27.0",
-    "@sentry/profiling-node": "^8.27.0",
+    "@sentry/node": "^8.28.0",
+    "@sentry/profiling-node": "^8.28.0",
     "@simplewebauthn/server": "^10.0.1",
     "@simplewebauthn/types": "^10.0.0",
     "@types/debug": "^4.1.12",
     "debug": "^4.3.6",
     "drizzle-orm": "^0.33.0",
-    "hono": "^4.5.9",
+    "hono": "^4.5.11",
     "ioredis": "^5.4.1",
     "libphonenumber-js": "^1.11.7",
     "pg": "^8.12.0",
-    "valibot": "^0.40.0",
-    "viem": "^2.21.0"
+    "valibot": "^0.41.0",
+    "viem": "^2.21.1"
   },
   "devDependencies": {
     "@exactly/common": "workspace:*",
     "@sentry/cli": "^2.34.1",
-    "@types/node": "^22.5.1",
+    "@types/node": "^22.5.3",
     "@types/pg": "^8.11.8",
     "drizzle-kit": "^0.24.2",
     "pkgroll": "^2.4.2",
