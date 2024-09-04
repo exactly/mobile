@@ -8,6 +8,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Switch, styled, Spinner } from "tamagui";
 
 import CardDetails from "./CardDetails";
+import ISO7810_ASPECT_RATIO from "./ISO7810_ASPECT_RATIO";
 import SpendingLimitButton from "./SpendingLimitButton";
 import ExaCard from "../../assets/images/card.svg";
 import handleError from "../../utils/handleError";
@@ -145,7 +146,7 @@ export default function Card() {
                   overflow="hidden"
                   maxHeight={220}
                   width="100%"
-                  aspectRatio={1536 / 969}
+                  aspectRatio={ISO7810_ASPECT_RATIO}
                   alignSelf="center"
                 >
                   <ExaCard width="100%" height="100%" />
