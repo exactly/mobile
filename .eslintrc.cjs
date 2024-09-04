@@ -42,7 +42,18 @@ module.exports = {
       rules: {
         "react-native/no-raw-text": [
           "error",
-          { skip: ["ActionButton", "Button", "Heading", "Link", "LinkButton", "SizableText", "SubmitButton"] },
+          {
+            skip: [
+              "ActionButton",
+              "Button",
+              "Heading",
+              "Link",
+              "LinkButton",
+              "SizableText",
+              "SubmitButton",
+              "Select.Label",
+            ],
+          },
         ],
         "unicorn/prefer-top-level-await": "off", // unsupported in react-native
       },
