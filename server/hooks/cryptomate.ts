@@ -42,6 +42,21 @@ const MATURITY_INTERVAL = 4 * 7 * 24 * 3600;
 const debug = createDebug("exa:cryptomate");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
+const OperationData = v.object({
+  card_id: v.string(),
+  bill_amount: v.number(),
+  bill_currency_number: v.literal(840),
+  bill_currency_code: v.literal("USD"),
+  created_at: v.pipe(v.string(), v.isoTimestamp()),
+  metadata: v.nullish(v.object({ account: v.nullish(Address) })),
+});
+
+const CollectData = v.object({
+  ...OperationData.entries,
+  metadata: v.object({ account: Address }),
+  signature: v.string(),
+});
+
 const app = new Hono();
 
 app.post(
@@ -55,25 +70,17 @@ app.post(
     "json",
     v.intersect([
       v.variant("event_type", [
-        v.object({ event_type: v.literal("AUTHORIZATION"), status: v.literal("PENDING") }),
-        v.object({ event_type: v.literal("CLEARING"), status: v.picklist(["PENDING", "SUCCESS", "FAILED"]) }),
+        v.object({ event_type: v.literal("AUTHORIZATION"), status: v.literal("PENDING"), data: CollectData }),
+        v.variant("status", [
+          v.object({ event_type: v.literal("CLEARING"), status: v.literal("PENDING"), data: CollectData }),
+          v.object({ event_type: v.literal("CLEARING"), status: v.literal("SUCCESS") }),
+          v.object({ event_type: v.literal("CLEARING"), status: v.literal("FAILED") }),
+        ]),
         v.object({ event_type: v.literal("DECLINED"), status: v.literal("FAILED") }),
         v.object({ event_type: v.literal("REFUND"), status: v.literal("SUCCESS") }),
         v.object({ event_type: v.literal("REVERSAL"), status: v.literal("SUCCESS") }),
       ]),
-      v.object({
-        product: v.literal("CARDS"),
-        operation_id: v.string(),
-        data: v.object({
-          card_id: v.string(),
-          bill_amount: v.number(),
-          bill_currency_number: v.literal(840),
-          bill_currency_code: v.literal("USD"),
-          created_at: v.pipe(v.string(), v.isoTimestamp()),
-          metadata: v.nullish(v.object({ account: Address })),
-          signature: Hex,
-        }),
-      }),
+      v.object({ product: v.literal("CARDS"), operation_id: v.string(), data: OperationData }),
     ]),
     (result, c) => {
       if (debug.enabled) {
