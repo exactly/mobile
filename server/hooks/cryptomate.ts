@@ -145,10 +145,16 @@ app.post(
             return c.json({ response_code: "69" });
           }
           const transfers = usdcTransfersToCollector(trace);
-          if (transfers.length !== 1) return c.json({ response_code: "51" });
+          if (transfers.length !== 1) {
+            debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "no collection");
+            return c.json({ response_code: "51" });
+          }
           const [{ topics, data }] = transfers as [TransferLog];
           const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
-          if (args.value !== call.args[1]) return c.json({ response_code: "51" });
+          if (args.value !== call.args[1]) {
+            debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "wrong amount");
+            return c.json({ response_code: "51" });
+          }
           return c.json({ response_code: "00" });
         } catch (error: unknown) {
           captureException(error);
