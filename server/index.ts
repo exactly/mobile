@@ -7,12 +7,13 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { trimTrailingSlash } from "hono/trailing-slash";
 
+import activity from "./api/activity";
 import authentication from "./api/auth/authentication";
 import registration from "./api/auth/registration";
 import card from "./api/card";
 import kyc from "./api/kyc";
 import passkey from "./api/passkey";
-import activity from "./hooks/activity";
+import activityHook from "./hooks/activity";
 import block from "./hooks/block";
 import cryptomate from "./hooks/cryptomate";
 import androidFingerprint from "./utils/android/fingerprint";
@@ -25,11 +26,12 @@ app.use(trimTrailingSlash());
 app.use("/api/*", cors({ origin: appOrigin, credentials: true }));
 app.route("/api/auth/authentication", authentication);
 app.route("/api/auth/registration", registration);
+app.route("/api/activity", activity);
 app.route("/api/card", card);
 app.route("/api/kyc", kyc);
 app.route("/api/passkey", passkey);
 
-app.route("/hooks/activity", activity);
+app.route("/hooks/activity", activityHook);
 app.route("/hooks/block", block);
 app.route("/hooks/cryptomate", cryptomate);
 
