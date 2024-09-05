@@ -121,14 +121,18 @@ app.post(
           if (
             !(await publicClient.getCode({ address: account })) &&
             !(await startSpan({ name: "create account", op: "exa.account", attributes: { account } }, async () => {
-              const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
-                keeper.writeContract({
+              const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                publicClient.simulateContract({
+                  account: keeper.account,
                   address: factory,
                   functionName: "createAccount",
                   args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
                   abi: exaAccountFactoryAbi,
                   ...transactionOptions,
                 }),
+              );
+              const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
+                keeper.writeContract(request),
               );
               setContext("tx", { transactionHash: hash });
               const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
@@ -145,7 +149,7 @@ app.post(
             [...markets].map(async (market) => {
               await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
                 try {
-                  await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                  const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
                     publicClient.simulateContract({
                       account: keeper.account,
                       address: account,
@@ -155,13 +159,7 @@ app.post(
                     }),
                   );
                   const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-                    keeper.writeContract({
-                      address: account,
-                      functionName: "poke",
-                      args: [market],
-                      abi: exaPluginAbi,
-                      ...transactionOptions,
-                    }),
+                    keeper.writeContract(request),
                   );
                   setContext("tx", { transactionHash: hash });
                   const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>

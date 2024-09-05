@@ -85,21 +85,17 @@ async function scheduleWithdraw({ account, market, receiver, amount, unlock }: v
         attributes: { account, market, receiver, amount: String(amount), unlock: Number(unlock) },
       },
       async () => {
-        await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+        const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
           publicClient.simulateContract({
             account: keeper.account,
             address: account,
             functionName: "withdraw",
             abi: exaPluginAbi,
+            ...transactionOptions,
           }),
         );
         const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-          keeper.writeContract({
-            address: account,
-            functionName: "withdraw",
-            abi: exaPluginAbi,
-            ...transactionOptions,
-          }),
+          keeper.writeContract(request),
         );
         setContext("tx", { transactionHash: hash });
         const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
