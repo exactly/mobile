@@ -131,14 +131,16 @@ app.post(
                   ...transactionOptions,
                 }),
               );
+              setContext("tx", request);
               const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
                 keeper.writeContract(request),
               );
               setContext("tx", { transactionHash: hash });
+              setContext("tx", { ...request, transactionHash: hash });
               const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
                 publicClient.waitForTransactionReceipt({ hash }),
               );
-              setContext("tx", receipt);
+              setContext("tx", { ...request, ...receipt });
               return receipt.status === "success";
             }))
           ) {
@@ -158,14 +160,15 @@ app.post(
                       abi: exaPluginAbi,
                     }),
                   );
+                  setContext("tx", request);
                   const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
                     keeper.writeContract(request),
                   );
-                  setContext("tx", { transactionHash: hash });
+                  setContext("tx", { ...request, transactionHash: hash });
                   const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
                     publicClient.waitForTransactionReceipt({ hash }),
                   );
-                  setContext("tx", receipt);
+                  setContext("tx", { ...request, ...receipt });
                   if (receipt.status !== "success") captureException(new Error("tx reverted"));
                 } catch (error: unknown) {
                   if (

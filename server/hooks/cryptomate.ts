@@ -186,13 +186,13 @@ app.post(
             const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
               keeper.writeContract(request),
             );
-            setContext("tx", { transactionHash: hash });
+            setContext("tx", { ...request, transactionHash: hash });
             await database
               .insert(transactions)
               .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]);
             startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
               .then((receipt) => {
-                setContext("tx", receipt);
+                setContext("tx", { ...request, ...receipt });
                 if (receipt.status !== "success") {
                   withScope((scope) => {
                     scope.setLevel("fatal");
