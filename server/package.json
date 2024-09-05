@@ -4,7 +4,9 @@
     "build": "pkgroll --sourcemap --src .",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject dist && sentry-cli sourcemaps upload -o exactly -p mobile dist",
     "db:push": "drizzle-kit push",
-    "test": "tsc",
+    "test": "concurrently 'npm:test:*' --group -c auto",
+    "test:ts": "tsc",
+    "test:vi": "vitest --run",
     "dev": "tsx --watch --env-file=.env --require=./instrument.cjs index.ts"
   },
   "bin": "./dist/index.cjs",

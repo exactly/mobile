@@ -21,7 +21,9 @@
     "hooks/**/*.ts",
     "middleware/**/*.ts",
     "utils/**/*.ts",
+    "test/**/*.ts",
     "index.ts",
-    "instrument.cjs"
+    "instrument.cjs",
+    "vitest.config.mts"
   ]
 }
