@@ -194,6 +194,7 @@ export default function Carousel() {
 
             <View flexDirection="row" justifyContent="center">
               <Pressable
+                hitSlop={ms(10)}
                 onPress={() => {
                   handleRecovery().catch(handleError);
                 }}
