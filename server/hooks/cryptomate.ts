@@ -183,19 +183,20 @@ app.post(
               keeper.writeContract(request),
             );
             setContext("tx", { transactionHash: hash });
-            const [receipt] = await Promise.all([
-              startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash })),
-              database
-                .insert(transactions)
-                .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]),
-            ]);
-            setContext("tx", receipt);
-            if (receipt.status !== "success") {
-              withScope((scope) => {
-                scope.setLevel("fatal");
-                captureException(new Error("tx reverted"));
-              });
-            }
+            await database
+              .insert(transactions)
+              .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]);
+            startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
+              .then((receipt) => {
+                setContext("tx", receipt);
+                if (receipt.status !== "success") {
+                  withScope((scope) => {
+                    scope.setLevel("fatal");
+                    captureException(new Error("tx reverted"));
+                  });
+                }
+              })
+              .catch((error: unknown) => captureException(error));
           } catch (error: unknown) {
             withScope((scope) => {
               scope.setLevel("fatal");
