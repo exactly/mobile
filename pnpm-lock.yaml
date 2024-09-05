@@ -453,6 +453,9 @@ importers:
       pg:
         specifier: ^8.12.0
         version: 8.12.0
+      redis-semaphore:
+        specifier: ^5.6.0
+        version: 5.6.0(ioredis@5.4.1)
       valibot:
         specifier: ^0.41.0
         version: 0.41.0(typescript@5.5.4)
@@ -7676,6 +7679,15 @@ packages:
   redis-parser@3.0.0:
     resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
     engines: {node: '>=4'}
+
+  redis-semaphore@5.6.0:
+    resolution: {integrity: sha512-HK0Bvt9BTyYoXg/SanwXVbgoDFQ2n4n08nExRM04JWIOz6VsU3mxmZ16jSgEc+7kFsYt7w9SMh6EF4MGZWLMeA==}
+    engines: {node: '>= 14.17.0'}
+    peerDependencies:
+      ioredis: ^4.1.0 || ^5
+    peerDependenciesMeta:
+      ioredis:
+        optional: true
 
   reflect.getprototypeof@1.0.6:
     resolution: {integrity: sha512-fmfw4XgoDke3kdI6h4xcUz1dG8uaiv5q9gcEwLS4Pnth2kxT+GZ7YehS1JTMGBQmtV7Y4GFGbs2re2NqhdozUg==}
@@ -17932,6 +17944,14 @@ snapshots:
   redis-parser@3.0.0:
     dependencies:
       redis-errors: 1.2.0
+
+  redis-semaphore@5.6.0(ioredis@5.4.1):
+    dependencies:
+      debug: 4.3.6
+    optionalDependencies:
+      ioredis: 5.4.1
+    transitivePeerDependencies:
+      - supports-color
 
   reflect.getprototypeof@1.0.6:
     dependencies:
