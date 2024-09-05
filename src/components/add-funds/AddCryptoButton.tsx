@@ -2,10 +2,12 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
+import { SvgUri } from "react-native-svg";
 import { View } from "tamagui";
 
 import CubeWithCircles from "../../assets/images/cube-with-circles.svg";
 import Optimism from "../../assets/images/optimism.svg";
+import assetLogos from "../../utils/assetLogos";
 import Text from "../shared/Text";
 
 function navigate() {
@@ -36,7 +38,7 @@ export default function AddCryptoButton() {
             </Text>
           </View>
         </View>
-        <View gap={ms(10)} flexDirection="row" justifyContent="space-between" alignItems="flex-start" width="100%">
+        <View gap="$s5" flexDirection="row" justifyContent="flex-start" alignItems="flex-start" width="100%">
           <View borderRadius="$r3" gap={ms(5)}>
             <Text fontSize={ms(13)} color="$uiNeutralSecondary" fontWeight="bold">
               Network
@@ -50,16 +52,8 @@ export default function AddCryptoButton() {
               Assets
             </Text>
             <View>
-              <Optimism width={ms(24)} height={ms(24)} color="$iconBrandDefault" />
+              <SvgUri uri={assetLogos.USDC} width={ms(24)} height={ms(24)} />
             </View>
-          </View>
-          <View borderRadius="$r3" gap={ms(5)}>
-            <Text fontSize={ms(13)} color="$uiNeutralSecondary" fontWeight="bold">
-              Fees
-            </Text>
-            <Text fontSize={ms(13)} fontWeight="bold">
-              $0.010 - $0.035
-            </Text>
           </View>
         </View>
       </View>
