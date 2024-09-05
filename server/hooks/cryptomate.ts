@@ -12,16 +12,20 @@ import {
   withScope,
 } from "@sentry/node";
 import createDebug from "debug";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
+import type { UnofficialStatusCode } from "hono/utils/http-status";
 import * as v from "valibot";
 import {
+  BaseError,
+  ContractFunctionRevertedError,
   decodeErrorResult,
   decodeEventLog,
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
   getAddress,
+  isHash,
   padHex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -167,7 +171,7 @@ app.post(
       case "CLEARING":
         if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
-        await startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
+        return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
           try {
             const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
               publicClient.simulateContract({
@@ -197,14 +201,30 @@ app.post(
                 }
               })
               .catch((error: unknown) => captureException(error));
+            return c.json({});
           } catch (error: unknown) {
+            if (
+              (error instanceof BaseError &&
+                error.cause instanceof ContractFunctionRevertedError &&
+                error.cause.data?.errorName === "Expired") ||
+              (error instanceof Error &&
+                error.message === 'duplicate key value violates unique constraint "transactions_pkey"')
+            ) {
+              const tx = await database.query.transactions.findFirst({
+                where: and(eq(transactions.id, payload.operation_id), eq(transactions.cardId, payload.data.card_id)),
+              });
+              if (tx && isHash(tx.hash)) {
+                const receipt = await publicClient.getTransactionReceipt({ hash: tx.hash }).catch(() => undefined);
+                if (receipt?.status === "success") return c.json({});
+              }
+            }
             withScope((scope) => {
               scope.setLevel("fatal");
               captureException(error);
             });
+            return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
           }
         });
-        return c.json({});
       default:
         return c.json({});
     }
