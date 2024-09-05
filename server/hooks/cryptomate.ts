@@ -15,6 +15,7 @@ import createDebug from "debug";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import type { UnofficialStatusCode } from "hono/utils/http-status";
+import { Mutex } from "redis-semaphore";
 import * as v from "valibot";
 import {
   BaseError,
@@ -34,6 +35,7 @@ import database, { cards, credentials, transactions } from "../database/index";
 import { issuerCheckerAbi, issuerCheckerAddress } from "../generated/contracts";
 import keeper from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
+import redis from "../utils/redis";
 import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
@@ -59,6 +61,13 @@ const CollectData = v.object({
   metadata: v.object({ account: Address }),
   signature: v.string(),
 });
+
+const mutexes = new Map<Address, Mutex>();
+function createMutex(account: Address) {
+  const mutex = new Mutex(redis, account, { acquireTimeout: 666 });
+  mutexes.set(account, mutex);
+  return mutex;
+}
 
 const app = new Hono();
 
@@ -136,15 +145,19 @@ app.post(
       to: account,
       data: encodeFunctionData({ abi: exaPluginAbi, ...call }),
     } as const;
+    let mutex = mutexes.get(account);
 
     switch (payload.event_type) {
       case "AUTHORIZATION":
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
+        if (!mutex) mutex = createMutex(account);
         try {
+          await mutex.acquire();
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
             publicClient.traceCall(transaction),
           );
           if (trace.output) {
+            mutex.release().catch((error: unknown) => captureException(error));
             let error: string = trace.output;
             try {
               error = decodeErrorResult({ data: trace.output, abi: [...exaPluginAbi, ...issuerCheckerAbi] }).errorName;
@@ -154,17 +167,20 @@ app.post(
           }
           const transfers = usdcTransfersToCollector(trace);
           if (transfers.length !== 1) {
+            mutex.release().catch((error: unknown) => captureException(error));
             debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "no collection");
             return c.json({ response_code: "51" });
           }
           const [{ topics, data }] = transfers as [TransferLog];
           const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
           if (args.value !== call.args[1]) {
+            mutex.release().catch((error: unknown) => captureException(error));
             debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "wrong amount");
             return c.json({ response_code: "51" });
           }
           return c.json({ response_code: "00" });
         } catch (error: unknown) {
+          mutex.release().catch((error_: unknown) => captureException(error_));
           captureException(error);
           return c.json({ response_code: "05" });
         }
@@ -172,6 +188,12 @@ app.post(
         if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
+          if (mutex) {
+            if (!mutex.isAcquired) return c.json("mutex not acquired", 500);
+          } else {
+            mutex = createMutex(account);
+            await mutex.acquire();
+          }
           try {
             const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
               publicClient.simulateContract({
@@ -193,7 +215,8 @@ app.post(
             startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
               .then((receipt) => {
                 setContext("tx", { ...request, ...receipt });
-                if (receipt.status !== "success") {
+                if (receipt.status === "success") mutex?.release().catch((error: unknown) => captureException(error));
+                else {
                   withScope((scope) => {
                     scope.setLevel("fatal");
                     captureException(new Error("tx reverted"));
@@ -215,7 +238,10 @@ app.post(
               });
               if (tx && isHash(tx.hash)) {
                 const receipt = await publicClient.getTransactionReceipt({ hash: tx.hash }).catch(() => undefined);
-                if (receipt?.status === "success") return c.json({});
+                if (receipt?.status === "success") {
+                  await mutex.release();
+                  return c.json({});
+                }
               }
             }
             withScope((scope) => {
