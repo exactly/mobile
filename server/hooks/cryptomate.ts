@@ -27,7 +27,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, credentials, transactions } from "../database/index";
-import { issuerCheckerAddress } from "../generated/contracts";
+import { issuerCheckerAbi, issuerCheckerAddress } from "../generated/contracts";
 import keeper from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 import transactionOptions from "../utils/transactionOptions";
@@ -145,7 +145,7 @@ app.post(
           if (trace.output) {
             let error: string = trace.output;
             try {
-              error = decodeErrorResult({ data: trace.output, abi: exaPluginAbi }).errorName;
+              error = decodeErrorResult({ data: trace.output, abi: [...exaPluginAbi, ...issuerCheckerAbi] }).errorName;
             } catch {} // eslint-disable-line no-empty
             captureException(new Error(error));
             return c.json({ response_code: "69" });
@@ -175,7 +175,7 @@ app.post(
               publicClient.simulateContract({
                 account: keeper.account,
                 address: account,
-                abi: exaPluginAbi,
+                abi: [...exaPluginAbi, ...issuerCheckerAbi],
                 ...transactionOptions,
                 ...call,
               }),
