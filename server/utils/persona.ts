@@ -20,8 +20,11 @@ export function createInquiry(referenceId: string) {
       attributes: {
         "inquiry-template-id": templateId,
         "redirect-uri": appOrigin,
-        meta: { "auto-create-account-reference-id": referenceId },
       },
+    },
+    meta: {
+      "auto-create-account": true,
+      "auto-create-account-reference-id": referenceId,
     },
   });
 }
