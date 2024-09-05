@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { Platform, Pressable } from "react-native";
 import { Inquiry } from "react-native-persona";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Switch, styled, Spinner } from "tamagui";
+import { ScrollView, Switch, styled, Spinner, XStack } from "tamagui";
 
 import CardDetails from "./CardDetails";
 import ISO7810_ASPECT_RATIO from "./ISO7810_ASPECT_RATIO";
@@ -34,27 +34,25 @@ const StyledAction = styled(View, {
 
 export default function Card() {
   const [detailsShown, setDetailsShown] = useState(false);
+
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
-  const { data: hasKYC, isLoading: isLoadingKYC } = useQuery({
+
+  const { data: hasKYC } = useQuery({
     queryKey: ["kycStatus"],
     queryFn: kycStatus,
   });
+
   const {
     data: card,
-    isLoading: isLoadingCard,
     error: cardError,
     refetch: refetchCard,
   } = useQuery({
     queryKey: ["card"],
     queryFn: getCard,
     enabled: false,
-    staleTime: 60_000,
   });
-  const {
-    data: oneTimeLink,
-    isLoading: isLoadingOTL,
-    error: OTLError,
-  } = useQuery({
+
+  const { error: OTLError, refetch: getOTL } = useQuery({
     queryKey: ["personaOTL"],
     enabled: Platform.OS === "web",
     queryFn: () => kyc(),
@@ -68,19 +66,20 @@ export default function Card() {
     },
   });
 
-  const { mutateAsync: revealCard, isPending: isRevealing } = useMutation({
+  const { mutateAsync: handleReveal, isPending: isRevealing } = useMutation({
     mutationKey: ["revealCard"],
     mutationFn: async function handleReveal() {
       if (!passkey) return;
-      if (hasKYC && !isRevealing) {
-        await refetchCard();
+      if (detailsShown) {
+        setDetailsShown(false);
         return;
       }
-      if (Platform.OS === "web") {
-        if (isLoadingOTL || !oneTimeLink) return;
-        window.open(oneTimeLink);
-        queryClient.setQueryData(["personaOTL"], undefined);
-      } else {
+      if (hasKYC && !isRevealing) {
+        await refetchCard();
+        setDetailsShown(true);
+        return;
+      }
+      if (Platform.OS !== "web") {
         Inquiry.fromTemplate(templateId)
           .environment(environment)
           .referenceId(passkey.credentialId)
@@ -91,6 +90,12 @@ export default function Card() {
           .onError(handleError)
           .build()
           .start();
+        return;
+      }
+      const { data } = await getOTL();
+      if (data?.otl) {
+        window.open(data.otl);
+        queryClient.setQueryData(["personaOTL"], undefined);
       }
     },
   });
@@ -108,23 +113,18 @@ export default function Card() {
                 <Info color="$uiNeutralPrimary" />
               </Pressable>
             </View>
-
             <View alignItems="center" gap="$s5" width="100%">
-              {(isLoadingCard || isLoadingKYC || isLoadingOTL) && <Spinner color="$interactiveBaseBrandDefault" />}
-
               {card && detailsShown && <CardDetails uri={card.url} />}
-
               {detailsShown && (
-                <View
+                <XStack
                   borderWidth={1}
                   borderRadius="$r3"
-                  flexDirection="row"
                   backgroundColor="$backgroundSoft"
                   borderColor="$borderSuccessSoft"
                   width="100%"
                 >
                   <View
-                    padding="$s3"
+                    padding="$s4"
                     backgroundColor="$interactiveBaseSuccessSoftDefault"
                     justifyContent="center"
                     alignItems="center"
@@ -132,14 +132,13 @@ export default function Card() {
                   >
                     <Info size={ms(24)} color="$interactiveOnBaseSuccessSoft" />
                   </View>
-                  <View flex={6} padding="$s3">
+                  <View flex={6} padding="$s4">
                     <Text fontSize={ms(15)} color="$uiSuccessPrimary">
                       Manually add your card to Apple Pay & Google Pay to make contactless payments
                     </Text>
                   </View>
-                </View>
+                </XStack>
               )}
-
               {!detailsShown && (
                 <View
                   borderRadius="$r3"
@@ -168,7 +167,6 @@ export default function Card() {
                   </View>
                 </View>
               )}
-
               {(cardError ?? OTLError) && (
                 <Text color="$uiErrorPrimary" fontWeight="bold">
                   {cardError ? cardError.message : OTLError ? OTLError.message : "Error"}
@@ -179,11 +177,11 @@ export default function Card() {
                   <Pressable
                     onPress={() => {
                       if (isRevealing) return;
-                      setDetailsShown(!detailsShown);
-                      revealCard().catch(handleError);
+                      handleReveal().catch(handleError);
                     }}
+                    disabled={isRevealing}
                   >
-                    <View gap={ms(10)}>
+                    <View gap="$s3_5">
                       {detailsShown ? (
                         <Eye size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                       ) : (
@@ -202,7 +200,7 @@ export default function Card() {
                 </StyledAction>
                 <StyledAction>
                   <Pressable>
-                    <View gap={ms(10)}>
+                    <View gap="$s3_5">
                       <Snowflake size={ms(24)} color="$interactiveDisabled" fontWeight="bold" />
                       <Text fontSize={ms(15)} color="$interactiveDisabled">
                         Freeze

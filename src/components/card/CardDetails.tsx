@@ -10,10 +10,10 @@ import View from "../shared/View";
 const StyledWebView = styled(WebView, {});
 
 const style = {
-  height: "100%",
-  minHeight: 212,
+  height: 220,
   borderRadius: ms(5),
   backgroundColor: "transparent",
+  aspectRatio: ISO7810_ASPECT_RATIO,
   padding: ms(5),
 };
 
@@ -28,7 +28,7 @@ export default function CardDetails({ uri }: { uri: string }) {
       alignSelf="center"
     >
       {Platform.OS === "web" ? (
-        <iframe src={uri} style={style} />
+        <iframe id="card-iframe" src={uri} style={style} />
       ) : (
         <StyledWebView
           source={{ uri }}
@@ -42,7 +42,6 @@ export default function CardDetails({ uri }: { uri: string }) {
           injectedJavaScript={`
           (function() {
             const cardData = document.querySelector('#card-data');
-            const pan = document.querySelector('#pan-p');
             if (cardData) {
               cardData.style.width = '100%';
               cardData.style.height = '100%';
@@ -52,7 +51,6 @@ export default function CardDetails({ uri }: { uri: string }) {
               cardData.style.padding = '10px';
               cardData.style.backgroundSize = 'cover';
               cardData.style.backgroundPosition = 'center';
-              cardData.style.frontFamily = "Helvetica";
             }
           })();`}
         />
