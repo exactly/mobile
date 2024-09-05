@@ -28,7 +28,7 @@ export default function Balance() {
     }
   }
   return (
-    <View display="flex" gap="$s4_5" justifyContent="center">
+    <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s8">
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
         <Text
           fontSize={ms(15)}
@@ -41,7 +41,7 @@ export default function Balance() {
           Balance
         </Text>
       </View>
-      <View gap="$s3_5">
+      <View gap="$s3_5" paddingVertical="$s3">
         <Pressable
           disabled={usdBalance === 0n}
           onPress={() => {
@@ -75,8 +75,8 @@ export default function Balance() {
             )}
           </View>
         </Pressable>
+        {isOpen && <AssetList />}
       </View>
-      {isOpen && <AssetList />}
     </View>
   );
 }

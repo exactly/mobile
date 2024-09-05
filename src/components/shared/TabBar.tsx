@@ -2,9 +2,10 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import type { NavigationRoute } from "@sentry/react-native/dist/js/tracing/reactnavigation";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
-import { ToggleGroup, ButtonIcon, Text } from "tamagui";
+import { ToggleGroup, ButtonIcon } from "tamagui";
 
 import SafeView from "./SafeView";
+import Text from "./Text";
 
 export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const onPress = useCallback(
@@ -35,23 +36,19 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
           return (
             <ToggleGroup.Item
               key={route.key}
-              backgroundColor="transparent"
               borderWidth={0}
               onPress={() => {
                 onPress(route, focused);
               }}
-              padding={ms(10)}
+              paddingTop="$s3"
               role="button"
               value="center"
+              backgroundColor="transparent"
             >
               <ButtonIcon>
-                {icon?.({
-                  focused,
-                  color: focused ? "$uiBrandPrimary" : "$uiNeutralSecondary",
-                  size: 24,
-                })}
+                {icon?.({ size: ms(24), focused, color: focused ? "$uiBrandSecondary" : "$uiNeutralSecondary" })}
               </ButtonIcon>
-              <Text textAlign="center" color={focused ? "$uiBrandPrimary" : "$uiNeutralSecondary"}>
+              <Text textAlign="center" color={focused ? "$uiBrandSecondary" : "$uiNeutralSecondary"}>
                 {label}
               </Text>
             </ToggleGroup.Item>

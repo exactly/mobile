@@ -1,21 +1,13 @@
 import { ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
-import { ms } from "react-native-size-matters";
-import { View } from "tamagui";
 
 import Button from "../shared/Button";
+import View from "../shared/View";
 
 export default function HomeActions() {
   return (
-    <View
-      flexDirection="row"
-      display="flex"
-      gap={ms(10)}
-      justifyContent="center"
-      alignItems="center"
-      paddingVertical={ms(10)}
-    >
+    <View flexDirection="row" display="flex" gap="$s4" justifyContent="center" alignItems="center">
       <Button
         contained
         main

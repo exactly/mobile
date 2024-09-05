@@ -35,7 +35,7 @@ export default function ProfileHeader() {
   const { isConnected } = useAccount();
   const { hidden, toggle } = usePrivateText();
   return (
-    <View padded>
+    <View padded backgroundColor="$backgroundSoft">
       <View display="flex" flexDirection="row" justifyContent="space-between">
         <View display="flex" flexDirection="row" alignItems="center" gap={8}>
           <View

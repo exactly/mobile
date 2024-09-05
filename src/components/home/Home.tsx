@@ -1,5 +1,4 @@
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
 import Balance from "./Balance";
@@ -13,11 +12,15 @@ export default function Home() {
   return (
     <SafeView fullScreen tab>
       <ProfileHeader />
-      <ScrollView>
-        <View gap={ms(20)} flex={1} padded>
-          <Balance />
-          <HomeActions />
-          <CreditLimit />
+      <ScrollView backgroundColor="$backgroundMild">
+        <View gap="$s4_5" flex={1}>
+          <View backgroundColor="$backgroundSoft" padded gap="$s8">
+            <Balance />
+            <HomeActions />
+          </View>
+          <View padded>
+            <CreditLimit />
+          </View>
         </View>
       </ScrollView>
     </SafeView>

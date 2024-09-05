@@ -41,11 +41,11 @@ export default styled(Button, {
         borderColor: "transparent",
         fontSize: ms(15),
         fontWeight: 700,
-        height: ms(64),
+        height: ms(68),
         padding: "$s4_5",
         borderRadius: "$r4",
         scaleIcon: 1.5,
-        maxHeight: ms(64),
+        maxHeight: ms(68),
       },
     },
     spaced: {
