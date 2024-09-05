@@ -58,17 +58,17 @@ export default wrap(function RootLayout() {
   return (
     <>
       <StatusBar translucent={false} />
-      <TamaguiProvider config={tamagui}>
-        <ThemeProvider>
-          <WagmiProvider config={wagmiConfig}>
-            <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+      <WagmiProvider config={wagmiConfig}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+          <TamaguiProvider config={tamagui}>
+            <ThemeProvider>
               <SafeAreaProvider>
                 <Slot />
               </SafeAreaProvider>
-            </PersistQueryClientProvider>
-          </WagmiProvider>
-        </ThemeProvider>
-      </TamaguiProvider>
+            </ThemeProvider>
+          </TamaguiProvider>
+        </PersistQueryClientProvider>
+      </WagmiProvider>
     </>
   );
 });

@@ -24,6 +24,14 @@ queryClient.setQueryDefaults(["passkey"], {
     throw new Error("don't refetch");
   },
 });
+queryClient.setQueryDefaults(["theme"], {
+  initialData: undefined,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  queryFn: () => {
+    throw new Error("don't refetch");
+  },
+});
 queryClient.setQueryDefaults(["auth"], { retry: false, staleTime: 24 * 60 * 60_000, gcTime: 24 * 60 * 60_000 });
 queryClient.setQueryDefaults(["withdrawal"], { structuralSharing: false });
 

@@ -17,16 +17,19 @@ export default {
   orientation: "portrait",
   assetBundlePatterns: ["**/*"],
   splash: { image: "src/assets/splash.png", resizeMode: "contain" },
+  userInterfaceStyle: "automatic",
   android: {
     package: "app.exactly",
     adaptiveIcon: { foregroundImage: "src/assets/adaptive-icon.png" },
     permissions: ["android.permission.CAMERA"],
+    userInterfaceStyle: "automatic",
   },
   ios: {
     bundleIdentifier: "app.exactly",
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
     supportsTablet: true,
     infoPlist: { NSCameraUsageDescription: "This app uses the camera to verify your identity." },
+    userInterfaceStyle: "automatic",
   },
   web: { output: "static", favicon: "src/assets/favicon.png" },
   plugins: [
