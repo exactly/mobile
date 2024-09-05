@@ -86,9 +86,7 @@ app.post(
         c.req
           .text()
           .then(debug)
-          .catch((error: unknown) => {
-            captureException(error);
-          });
+          .catch((error: unknown) => captureException(error));
       }
       if (!result.success) {
         setContext("validation", result);

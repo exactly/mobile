@@ -28,9 +28,7 @@ export function jsonValidator<TInput, TOutput, TIssue extends BaseIssue<unknown>
       c.req
         .text()
         .then(debug)
-        .catch((error: unknown) => {
-          captureException(error);
-        });
+        .catch((error: unknown) => captureException(error));
     }
     if (!result.success) {
       setContext("validation", result);
