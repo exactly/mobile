@@ -60,6 +60,10 @@ module.exports = {
       files: ["**/*.cjs"],
       rules: { "@typescript-eslint/no-require-imports": "off" },
     },
+    {
+      files: ["server/test/**"],
+      extends: ["plugin:@vitest/legacy-all"],
+    },
   ],
   ignorePatterns: [".expo/", "build/", "dist/", "expo-env.d.ts", "generated/", "public/", "server/drizzle/"],
 };
