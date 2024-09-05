@@ -69,9 +69,7 @@ function createMutex(account: Address) {
   return mutex;
 }
 
-const app = new Hono();
-
-app.post(
+export default new Hono().post(
   "/",
   vValidator(
     "header",
@@ -256,8 +254,6 @@ app.post(
     }
   },
 );
-
-export default app;
 
 const collectorTopic = padHex(v.parse(Hex, process.env.COLLECTOR_ADDRESS.toLowerCase()));
 const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
