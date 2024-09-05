@@ -31,8 +31,8 @@ app.get("/", async (c) => {
         columns: { account: true, kycId: true },
         with: { cards: { columns: { id: true, lastFour: true }, where: eq(cards.status, "ACTIVE") } },
       });
-      if (!credential) return c.text("credential not found", 401);
-      if (!credential.kycId) return c.text("kyc required", 403);
+      if (!credential) return c.json("credential not found", 401);
+      if (!credential.kycId) return c.json("kyc required", 403);
       if (credential.cards.length > 0) {
         return c.json({ url: await getPAN(credential.cards[0]!.id), lastFour: credential.cards[0]!.lastFour }); // eslint-disable-line @typescript-eslint/no-non-null-assertion
       }
