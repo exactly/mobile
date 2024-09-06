@@ -1,22 +1,49 @@
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/generated/chain";
-import { type CallParameters, createPublicClient, formatTransactionRequest, type Hash, type Hex, http } from "viem";
+import {
+  type BlockNumber,
+  type BlockTag,
+  type CallParameters,
+  createPublicClient,
+  formatTransactionRequest,
+  type Hash,
+  type Hex,
+  http,
+  rpcSchema,
+  type RpcTransactionRequest,
+} from "viem";
 
 if (!chain.rpcUrls.alchemy?.http[0]) throw new Error("missing alchemy rpc url");
 
 export default createPublicClient({
   chain,
+  rpcSchema: rpcSchema<
+    [
+      {
+        Method: "debug_traceCall";
+        Parameters:
+          | [transaction: RpcTransactionRequest]
+          | [transaction: RpcTransactionRequest, block: BlockNumber | BlockTag]
+          | [
+              transaction: RpcTransactionRequest,
+              block: BlockNumber | BlockTag,
+              (
+                | { tracer: "callTracer"; tracerConfig: { onlyTopCall?: boolean; withLog?: boolean } }
+                | { tracer: "prestateTracer"; tracerConfig: { diffMode?: boolean } }
+              ),
+            ];
+        ReturnType: CallFrame;
+      },
+    ]
+  >(),
   transport: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`),
 }).extend((client) => ({
-  traceCall: async ({ blockNumber, blockTag = "latest", ...call }: CallParameters): Promise<CallFrame> =>
+  traceCall: async ({ blockNumber, blockTag = "latest", ...call }: CallParameters) =>
     client.request({
-      // @ts-expect-error -- extending
       method: "debug_traceCall",
       params: [
         formatTransactionRequest(call),
-        // @ts-expect-error -- extending
         blockNumber ?? blockTag,
-        // @ts-expect-error -- extending
         { tracer: "callTracer", tracerConfig: { withLog: true } },
       ],
     }),
