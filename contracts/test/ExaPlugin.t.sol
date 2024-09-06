@@ -4,12 +4,7 @@ pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
 import { ForkTest } from "./Fork.t.sol";
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
-import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
-import { FixedLib, Market } from "@exactly/protocol/Market.sol";
-import { MockBalancerVault } from "@exactly/protocol/mocks/MockBalancerVault.sol";
-import { MockInterestRateModel } from "@exactly/protocol/mocks/MockInterestRateModel.sol";
-import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
-import { DebtManager, IBalancerVault as IBalancerVaultDM, IPermit2 } from "@exactly/protocol/periphery/DebtManager.sol";
+import { FixedLib } from "@exactly/protocol/Market.sol";
 
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
@@ -19,7 +14,6 @@ import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
 
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
-import { ERC1967Proxy } from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
@@ -42,6 +36,8 @@ import {
   Unauthorized
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
+
+import { DeployProtocol } from "./deploy/Protocol.s.sol";
 
 // TODO use mock asset with price != 1
 // TODO use price feed for that asset with 8 decimals
@@ -71,42 +67,16 @@ contract ExaPluginTest is ForkTest {
   IMarket internal exaUSDC;
   MockERC20 internal exa;
   MockERC20 internal usdc;
-  DebtManager internal debtManager;
 
   function setUp() external {
-    auditor = Auditor(address(new ERC1967Proxy(address(new Auditor(18)), "")));
-    auditor.initialize(Auditor.LiquidationIncentive(0.09e18, 0.01e18));
-    vm.label(address(auditor), "Auditor");
-    InterestRateModel irm = InterestRateModel(address(new MockInterestRateModel(0.1e18)));
-    // exa
-    exa = new MockERC20("Exactly Token", "EXA", 18);
-    vm.label(address(exa), "EXA");
-    exaEXA = IMarket(address(new ERC1967Proxy(address(new Market(exa, auditor)), "")));
-    Market(address(exaEXA)).initialize("EXA", 3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
-    vm.label(address(exaEXA), "exaEXA");
-    auditor.enableMarket(Market(address(exaEXA)), new MockPriceFeed(18, 5e18), 0.8e18);
-    // usdc
-    usdc = new MockERC20("USD Coin", "USDC", 6);
-    vm.label(address(usdc), "USDC");
-    exaUSDC = IMarket(address(new ERC1967Proxy(address(new Market(usdc, auditor)), "")));
-    Market(address(exaUSDC)).initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
-    vm.label(address(exaUSDC), "exaUSDC");
-    auditor.enableMarket(Market(address(exaUSDC)), new MockPriceFeed(18, 1e18), 0.9e18);
+    DeployProtocol p = new DeployProtocol();
+    p.run();
 
-    IBalancerVault balancer = IBalancerVault(address(new MockBalancerVault()));
-    exa.mint(address(balancer), 1_000_000e18);
-    usdc.mint(address(balancer), 1_000_000e6);
-    debtManager = DebtManager(
-      address(
-        new ERC1967Proxy(
-          address(new DebtManager(auditor, IPermit2(address(0)), IBalancerVaultDM(address(balancer)))), ""
-        )
-      )
-    );
-    debtManager.initialize();
-    vm.label(address(debtManager), "DebtManager");
-
-    IVelodromeFactory velodromeFactory = IVelodromeFactory(address(0x123)); // HACK mock VelodromePoolFactory
+    auditor = p.auditor();
+    exaEXA = IMarket(address(p.exaEXA()));
+    exaUSDC = IMarket(address(p.exaUSDC()));
+    exa = p.exa();
+    usdc = p.usdc();
 
     entryPoint = IEntryPoint(address(new EntryPoint()));
     collector = payable(makeAddr("collector"));
@@ -118,7 +88,8 @@ contract ExaPluginTest is ForkTest {
 
     issuerChecker = new IssuerChecker(issuer);
 
-    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), exaUSDC, balancer, velodromeFactory, issuerChecker, collector);
+    exaPlugin =
+      new ExaPlugin(IAuditor(address(auditor)), exaUSDC, p.balancer(), p.velodromeFactory(), issuerChecker, collector);
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     ownerPlugin = new WebauthnOwnerPlugin();
