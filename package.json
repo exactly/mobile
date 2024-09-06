@@ -79,7 +79,7 @@
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.4",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.4.0",
-    "@exactly/protocol": "github:exactly/protocol#5afd7b1",
+    "@exactly/protocol": "github:exactly/protocol#69697f9",
     "@expo/image-utils": "^0.5.1",
     "@react-navigation/bottom-tabs": "*",
     "@simplewebauthn/types": "^10.0.0",

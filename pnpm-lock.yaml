@@ -216,8 +216,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0(eslint@8.57.0)
       '@exactly/protocol':
-        specifier: github:exactly/protocol#5afd7b1
-        version: https://codeload.github.com/exactly/protocol/tar.gz/5afd7b1
+        specifier: github:exactly/protocol#69697f9
+        version: https://codeload.github.com/exactly/protocol/tar.gz/69697f9
       '@expo/image-utils':
         specifier: ^0.5.1
         version: 0.5.1
@@ -373,8 +373,8 @@ importers:
         version: webauthn-sol#v1.0.0@https://codeload.github.com/base-org/webauthn-sol/tar.gz/619f20ab0f074fef41066ee4ab24849a913263b2
     devDependencies:
       '@exactly/protocol':
-        specifier: exactly/protocol#5afd7b1
-        version: https://codeload.github.com/exactly/protocol/tar.gz/5afd7b1
+        specifier: exactly/protocol#69697f9
+        version: https://codeload.github.com/exactly/protocol/tar.gz/69697f9
       '@openzeppelin/contracts':
         specifier: ^5.0.2
         version: 5.0.2
@@ -1989,14 +1989,14 @@ packages:
   '@ethersproject/wordlists@5.7.0':
     resolution: {integrity: sha512-S2TFNJNfHWVHNE6cNDjbVlZ6MgE17MIxMbMg2zv3wn+3XSJGosL1m9ZVv3GXCf/2ymSsQ+hRI5IzoMJTG6aoVA==}
 
-  '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/5afd7b1':
-    resolution: {tarball: https://codeload.github.com/exactly/protocol/tar.gz/5afd7b1}
+  '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/69697f9':
+    resolution: {tarball: https://codeload.github.com/exactly/protocol/tar.gz/69697f9}
     version: 0.2.19
     engines: {node: '>=18'}
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.18.29':
     resolution: {integrity: sha512-X810C48Ss+67RdZU39YEO1khNYo1RmjouRV+vVe0QhMoTe8R6OA3t+XYEdwaNbJ5p/DJN7szfHfNmX2glpC7xg==}
@@ -10885,7 +10885,7 @@ snapshots:
       '@ethersproject/strings': 5.7.0
     optional: true
 
-  '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/5afd7b1':
+  '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/69697f9':
     dependencies:
       '@openzeppelin/contracts': 5.0.2
       '@openzeppelin/contracts-upgradeable': 5.0.2(@openzeppelin/contracts@5.0.2)
