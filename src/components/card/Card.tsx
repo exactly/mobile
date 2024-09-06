@@ -54,8 +54,8 @@ export default function Card() {
 
   const { error: OTLError, refetch: getOTL } = useQuery({
     queryKey: ["personaOTL"],
-    enabled: Platform.OS === "web",
     queryFn: () => kyc(),
+    enabled: false,
   });
 
   const { mutateAsync: saveKYC } = useMutation({
@@ -92,9 +92,9 @@ export default function Card() {
           .start();
         return;
       }
-      const { data } = await getOTL();
-      if (data?.otl) {
-        window.open(data.otl);
+      const { data: otl } = await getOTL();
+      if (otl) {
+        window.open(otl, "_self");
         queryClient.setQueryData(["personaOTL"], undefined);
       }
     },
