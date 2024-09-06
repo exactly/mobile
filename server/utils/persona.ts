@@ -16,16 +16,8 @@ export function getInquiry(inquiryId: string) {
 
 export function createInquiry(referenceId: string) {
   return request(CreateInquiryResponse, "/inquiries", {
-    data: {
-      attributes: {
-        "inquiry-template-id": templateId,
-        "redirect-uri": appOrigin,
-      },
-    },
-    meta: {
-      "auto-create-account": true,
-      "auto-create-account-reference-id": referenceId,
-    },
+    data: { attributes: { "inquiry-template-id": templateId, "redirect-uri": `${appOrigin}/card` } },
+    meta: { "auto-create-account": true, "auto-create-account-reference-id": referenceId },
   });
 }
 
