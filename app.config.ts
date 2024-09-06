@@ -9,7 +9,7 @@ import metadata from "./package.json";
 if (process.env.APP_DOMAIN) process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
 
 export default {
-  name: "exactly",
+  name: "Exa",
   slug: "exactly",
   scheme: "exactly",
   version: metadata.version,
