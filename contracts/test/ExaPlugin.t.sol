@@ -67,9 +67,9 @@ contract ExaPluginTest is ForkTest {
   bytes32 internal domainSeparator;
 
   Auditor internal auditor;
-  IMarket internal market;
-  IMarket internal marketUSDC;
-  MockERC20 internal asset;
+  IMarket internal exaEXA;
+  IMarket internal exaUSDC;
+  MockERC20 internal exa;
   MockERC20 internal usdc;
   DebtManager internal debtManager;
 
@@ -79,22 +79,22 @@ contract ExaPluginTest is ForkTest {
     vm.label(address(auditor), "Auditor");
     InterestRateModel irm = InterestRateModel(address(new MockInterestRateModel(0.1e18)));
     // exa
-    asset = new MockERC20("Exactly Token", "EXA", 18);
-    vm.label(address(asset), "EXA");
-    market = IMarket(address(new ERC1967Proxy(address(new Market(asset, auditor)), "")));
-    Market(address(market)).initialize("EXA", 3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
-    vm.label(address(market), "MarketEXA");
-    auditor.enableMarket(Market(address(market)), new MockPriceFeed(18, 5e18), 0.8e18);
+    exa = new MockERC20("Exactly Token", "EXA", 18);
+    vm.label(address(exa), "EXA");
+    exaEXA = IMarket(address(new ERC1967Proxy(address(new Market(exa, auditor)), "")));
+    Market(address(exaEXA)).initialize("EXA", 3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    vm.label(address(exaEXA), "exaEXA");
+    auditor.enableMarket(Market(address(exaEXA)), new MockPriceFeed(18, 5e18), 0.8e18);
     // usdc
     usdc = new MockERC20("USD Coin", "USDC", 6);
     vm.label(address(usdc), "USDC");
-    marketUSDC = IMarket(address(new ERC1967Proxy(address(new Market(usdc, auditor)), "")));
-    Market(address(marketUSDC)).initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
-    vm.label(address(marketUSDC), "MarketUSDC");
-    auditor.enableMarket(Market(address(marketUSDC)), new MockPriceFeed(18, 1e18), 0.9e18);
+    exaUSDC = IMarket(address(new ERC1967Proxy(address(new Market(usdc, auditor)), "")));
+    Market(address(exaUSDC)).initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    vm.label(address(exaUSDC), "exaUSDC");
+    auditor.enableMarket(Market(address(exaUSDC)), new MockPriceFeed(18, 1e18), 0.9e18);
 
     IBalancerVault balancer = IBalancerVault(address(new MockBalancerVault()));
-    asset.mint(address(balancer), 1_000_000e18);
+    exa.mint(address(balancer), 1_000_000e18);
     usdc.mint(address(balancer), 1_000_000e6);
     debtManager = DebtManager(
       address(
@@ -118,8 +118,7 @@ contract ExaPluginTest is ForkTest {
 
     issuerChecker = new IssuerChecker(issuer);
 
-    exaPlugin =
-      new ExaPlugin(IAuditor(address(auditor)), marketUSDC, balancer, velodromeFactory, issuerChecker, collector);
+    exaPlugin = new ExaPlugin(IAuditor(address(auditor)), exaUSDC, balancer, velodromeFactory, issuerChecker, collector);
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     ownerPlugin = new WebauthnOwnerPlugin();
@@ -131,14 +130,14 @@ contract ExaPluginTest is ForkTest {
     vm.deal(address(account), 10_000 ether);
     vm.label(address(account), "account");
 
-    asset.mint(address(account), 10_000e18);
+    exa.mint(address(account), 10_000e18);
     usdc.mint(address(account), 100_000e6);
 
     address bob = address(0xb0b);
     vm.startPrank(bob);
     usdc.mint(bob, 10_000e6);
-    usdc.approve(address(marketUSDC), 10_000e6);
-    marketUSDC.deposit(10_000e6, bob);
+    usdc.approve(address(exaUSDC), 10_000e6);
+    exaUSDC.deposit(10_000e6, bob);
     vm.stopPrank();
 
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
@@ -148,7 +147,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectCredit_collects() external {
     vm.startPrank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
     assertEq(usdc.balanceOf(collector), 0);
 
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
@@ -157,7 +156,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectCredit_toleratesTimeDrift() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
     assertEq(usdc.balanceOf(collector), 0);
 
     uint256 timestamp = block.timestamp + 1 minutes;
@@ -167,7 +166,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectCredit_reverts_whenTimelocked() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
 
     uint256 timestamp = block.timestamp + 1 minutes + 1;
     vm.expectRevert(Timelocked.selector);
@@ -176,7 +175,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectCredit_reverts_whenExpired() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
 
     skip(1 days);
     uint256 timestamp = block.timestamp - exaPlugin.OPERATION_EXPIRY() - 1;
@@ -186,7 +185,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectCredit_reverts_whenReplay() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
 
     bytes memory signature = _issuerOp(100e6, block.timestamp);
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, signature);
@@ -196,7 +195,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectCredit_reverts_asNotKeeper() external {
     vm.prank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -211,7 +210,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectDebit_collects() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
 
     assertEq(usdc.balanceOf(collector), 0);
     account.collectDebit(100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
@@ -220,7 +219,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectDebit_toleratesTimeDrift() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
     assertEq(usdc.balanceOf(collector), 0);
 
     uint256 timestamp = block.timestamp + 1 minutes;
@@ -230,7 +229,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectDebit_reverts_whenTimelocked() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
 
     uint256 timestamp = block.timestamp + 1 minutes + 1;
     vm.expectRevert(Timelocked.selector);
@@ -239,7 +238,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectDebit_reverts_whenExpired() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
 
     skip(1 days);
     uint256 timestamp = block.timestamp - exaPlugin.OPERATION_EXPIRY() - 1;
@@ -249,7 +248,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectDebit_reverts_whenReplay() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
 
     bytes memory signature = _issuerOp(100e6, block.timestamp);
     account.collectDebit(100e6, block.timestamp, signature);
@@ -259,7 +258,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_collectDebit_reverts_asNotKeeper() external {
     vm.prank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -276,39 +275,39 @@ contract ExaPluginTest is ForkTest {
     uint256 amount = 100 ether;
     address receiver = address(0x420);
     vm.prank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
 
     vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
 
     skip(exaPlugin.PROPOSAL_DELAY());
 
-    assertEq(asset.balanceOf(receiver), 0);
+    assertEq(exa.balanceOf(receiver), 0);
     vm.prank(owner);
-    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, receiver, address(account))));
-    assertEq(asset.balanceOf(receiver), amount, "receiver balance doesn't match");
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, receiver, address(account))));
+    assertEq(exa.balanceOf(receiver), amount, "receiver balance doesn't match");
   }
 
   function test_withdraw_transfersAsset_asKeeper() external {
     uint256 amount = 100 ether;
     vm.prank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
 
     vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
 
     skip(exaPlugin.PROPOSAL_DELAY());
 
-    assertEq(asset.balanceOf(address(account)), 0);
+    assertEq(exa.balanceOf(address(account)), 0);
     vm.prank(keeper);
     account.withdraw();
-    assertEq(asset.balanceOf(address(account)), amount);
+    assertEq(exa.balanceOf(address(account)), amount);
   }
 
   function test_withdraw_reverts_whenNoProposal() external {
     uint256 amount = 1;
     vm.prank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
 
     vm.prank(owner);
     vm.expectRevert(
@@ -319,12 +318,12 @@ contract ExaPluginTest is ForkTest {
         abi.encodePacked(NoProposal.selector)
       )
     );
-    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
   }
 
   function test_withdraw_reverts_whenNoProposalKeeper() external {
     vm.startPrank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
 
     vm.expectRevert(NoProposal.selector);
     account.withdraw();
@@ -333,7 +332,7 @@ contract ExaPluginTest is ForkTest {
   function test_withdraw_reverts_whenTimelocked() external {
     uint256 amount = 1;
     vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -343,13 +342,13 @@ contract ExaPluginTest is ForkTest {
         abi.encodePacked(Timelocked.selector)
       )
     );
-    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
   }
 
   function test_withdraw_reverts_whenTimelockedKeeper() external {
     uint256 amount = 1;
     vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
 
     vm.prank(keeper);
     vm.expectRevert(
@@ -366,7 +365,7 @@ contract ExaPluginTest is ForkTest {
   function test_withdraw_reverts_whenWrongAmount() external {
     uint256 amount = 1;
     vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, address(account))));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
     skip(exaPlugin.PROPOSAL_DELAY());
 
     vm.expectRevert(
@@ -378,14 +377,14 @@ contract ExaPluginTest is ForkTest {
       )
     );
     account.execute(
-      address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount + 1, address(account), address(account)))
+      address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount + 1, address(account), address(account)))
     );
   }
 
   function test_withdraw_reverts_whenWrongMarket() external {
     uint256 amount = 1;
     vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (marketUSDC, amount, address(account))));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, amount, address(account))));
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -395,14 +394,14 @@ contract ExaPluginTest is ForkTest {
         abi.encodePacked(NoProposal.selector)
       )
     );
-    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
   }
 
   function test_withdraw_reverts_whenWrongReceiver() external {
     uint256 amount = 1;
     address receiver = address(0x420);
     vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
     skip(exaPlugin.PROPOSAL_DELAY());
 
     vm.expectRevert(
@@ -413,12 +412,12 @@ contract ExaPluginTest is ForkTest {
         abi.encodePacked(NoProposal.selector)
       )
     );
-    account.execute(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(0x123), address(account))));
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(0x123), address(account))));
   }
 
   function test_withdraw_reverts_whenNotKeeper() external {
     vm.prank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -433,7 +432,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_poke() external {
     vm.startPrank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
   }
 
   function test_propose_emitsProposed() external {
@@ -443,13 +442,13 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(owner);
 
     vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit Proposed(address(account), market, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (market, amount, receiver)));
+    emit Proposed(address(account), exaEXA, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
   }
 
   function test_repay_repays() external {
     vm.startPrank(keeper);
-    account.poke(marketUSDC);
+    account.poke(exaUSDC);
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
     vm.stopPrank();
 
@@ -461,15 +460,15 @@ contract ExaPluginTest is ForkTest {
   function test_crossRepay_repays() external {
     vm.createSelectFork("optimism", 124_672_500);
     usdc = MockERC20(protocol("USDC"));
-    asset = MockERC20(protocol("WETH"));
-    market = IMarket(protocol("MarketWETH"));
-    marketUSDC = IMarket(protocol("MarketUSDC"));
+    exa = MockERC20(protocol("WETH"));
+    exaEXA = IMarket(protocol("MarketWETH"));
+    exaUSDC = IMarket(protocol("MarketUSDC"));
 
     issuerChecker = new IssuerChecker(issuer);
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
     exaPlugin = new ExaPlugin(
       IAuditor(protocol("Auditor")),
-      marketUSDC,
+      exaUSDC,
       IBalancerVault(protocol("BalancerVault")),
       IVelodromeFactory(protocol("VelodromePoolFactory")),
       issuerChecker,
@@ -488,22 +487,22 @@ contract ExaPluginTest is ForkTest {
 
     deal(address(usdc), address(account), 100_000e6);
 
-    deal(address(asset), address(account), 10e18);
+    deal(address(exa), address(account), 10e18);
 
     uint256 maturity = block.timestamp + FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
 
     vm.startPrank(keeper);
-    account.poke(market);
+    account.poke(exaEXA);
     account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
 
-    uint256 prevCollateral = market.balanceOf(address(account));
+    uint256 prevCollateral = exaEXA.balanceOf(address(account));
     assertEq(usdc.balanceOf(address(exaPlugin)), 0);
 
     vm.startPrank(address(account));
-    account.crossRepay(maturity, market);
+    account.crossRepay(maturity, exaEXA);
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    assertGt(prevCollateral, market.balanceOf(address(account)), "collateral didn't decrease");
+    assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
   }
 
   function test_onUninstall_uninstalls() external {
