@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@exactly/common": "workspace:*",
+    "@exactly/plugin": "workspace:*",
     "@sentry/cli": "^2.35.0",
     "@types/ioredis-mock": "^8.2.5",
     "@types/node": "^22.5.4",
@@ -50,9 +51,12 @@
     "@wagmi/core": "^2.13.4",
     "concurrently": "^8.2.2",
     "drizzle-kit": "^0.24.2",
+    "execa": "^9.3.1",
     "pkgroll": "^2.4.2",
+    "prool": "^0.0.16",
     "tsx": "^4.19.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "webauthn-owner-plugin": "exactly/webauthn-owner-plugin#42b67f8"
   }
 }
