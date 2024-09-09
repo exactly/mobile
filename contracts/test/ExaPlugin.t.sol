@@ -6,10 +6,7 @@ import { ForkTest } from "./Fork.t.sol";
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { FixedLib } from "@exactly/protocol/Market.sol";
 
-import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
-
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
-import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
 
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
 
@@ -37,6 +34,7 @@ import {
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 
+import { DeployAccount, ENTRYPOINT } from "./deploy/Account.s.sol";
 import { DeployProtocol } from "./deploy/Protocol.s.sol";
 
 // TODO use mock asset with price != 1
@@ -56,7 +54,6 @@ contract ExaPluginTest is ForkTest {
   address[] internal owners;
   address payable internal collector;
   ExaAccount internal account;
-  IEntryPoint internal entryPoint;
   ExaPlugin internal exaPlugin;
   WebauthnOwnerPlugin internal ownerPlugin;
   IssuerChecker internal issuerChecker;
@@ -69,6 +66,7 @@ contract ExaPluginTest is ForkTest {
   MockERC20 internal usdc;
 
   function setUp() external {
+    new DeployAccount().run();
     DeployProtocol p = new DeployProtocol();
     p.run();
 
@@ -78,7 +76,6 @@ contract ExaPluginTest is ForkTest {
     exa = p.exa();
     usdc = p.usdc();
 
-    entryPoint = IEntryPoint(address(new EntryPoint()));
     collector = payable(makeAddr("collector"));
     (owner, ownerKey) = makeAddrAndKey("owner");
     owners = new address[](1);
@@ -94,7 +91,7 @@ contract ExaPluginTest is ForkTest {
 
     ownerPlugin = new WebauthnOwnerPlugin();
     ExaAccountFactory factory = new ExaAccountFactory(
-      address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(entryPoint)), entryPoint
+      address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(ENTRYPOINT)), ENTRYPOINT
     );
 
     account = ExaAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
@@ -449,7 +446,7 @@ contract ExaPluginTest is ForkTest {
 
     ownerPlugin = new WebauthnOwnerPlugin();
     ExaAccountFactory factory = new ExaAccountFactory(
-      address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(entryPoint)), entryPoint
+      address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(ENTRYPOINT)), ENTRYPOINT
     );
 
     account = ExaAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
@@ -496,7 +493,7 @@ contract ExaPluginTest is ForkTest {
     returns (UserOperation memory op)
   {
     op = _unsignedOp(callData, index);
-    op.signature = _sign(privateKey, entryPoint.getUserOpHash(op).toEthSignedMessageHash());
+    op.signature = _sign(privateKey, ENTRYPOINT.getUserOpHash(op).toEthSignedMessageHash());
   }
 
   function _unsignedOp(bytes memory callData, uint256 index) internal view returns (UserOperation memory op) {
