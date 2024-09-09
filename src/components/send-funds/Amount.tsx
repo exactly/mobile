@@ -21,9 +21,8 @@ import View from "../shared/View";
 
 export default function Amount() {
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
-  const { canGoBack } = router;
   const { market } = useMarketAccount(withdraw?.market);
-
+  const { canGoBack } = router;
   const {
     Field,
     Subscribe,
@@ -36,9 +35,7 @@ export default function Amount() {
       router.push("/send-funds/withdraw");
     },
   });
-
   const available = market ? (market.maxBorrowAssets * 10n ** 18n) / BigInt(10 ** market.decimals) : 0n;
-
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>

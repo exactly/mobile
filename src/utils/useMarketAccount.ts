@@ -13,7 +13,7 @@ export default function useMarketAccount(address?: Address) {
   });
   return {
     account,
-    market: useMemo(() => address && markets?.find(({ asset }) => asset === address), [address, markets]),
+    market: useMemo(() => markets?.find(({ market }) => market === address), [address, markets]),
     queryKey,
   };
 }
