@@ -64,7 +64,7 @@ export default function AddressSelection() {
                     <Input
                       neutral
                       flex={1}
-                      placeholder="ENS, Name, Address"
+                      placeholder="Enter address"
                       borderColor="$uiNeutralTertiary"
                       borderRightColor="transparent"
                       borderTopRightRadius={0}

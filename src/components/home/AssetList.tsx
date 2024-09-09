@@ -1,5 +1,4 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import { Minus } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
 import { SvgUri } from "react-native-svg";
@@ -44,9 +43,6 @@ export default function AssetList() {
                 <Text fontSize={ms(15)} fontWeight="bold">
                   {symbol}
                 </Text>
-                <Text fontSize={ms(12)} color="$uiNeutralSecondary">
-                  0% APR
-                </Text>
               </View>
             </View>
             <View gap={ms(5)} flex={1}>
@@ -61,19 +57,6 @@ export default function AssetList() {
               <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
                 {Number(floatingDepositAssets / BigInt(10 ** decimals)).toLocaleString()} {symbol}
               </Text>
-            </View>
-            <View gap={ms(5)} flex={1} justifyContent="flex-end">
-              <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
-                  $0
-                </Text>
-              </View>
-              <View flexDirection="row" justifyContent="flex-end" alignItems="center" gap={ms(5)}>
-                <Minus size={ms(16)} color="$uiNeutralSecondary" />
-                <Text fontSize={ms(15)} color="$uiNeutralSecondary">
-                  0%
-                </Text>
-              </View>
             </View>
           </View>
         </View>
