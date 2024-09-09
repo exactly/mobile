@@ -13,7 +13,6 @@ import SpendingLimitButton from "./SpendingLimitButton";
 import ExaCard from "../../assets/images/card.svg";
 import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
-import queryClient from "../../utils/queryClient";
 import { getCard, kyc, kycStatus } from "../../utils/server";
 import InfoCard from "../home/InfoCard";
 import SafeView from "../shared/SafeView";
@@ -33,14 +32,8 @@ const StyledAction = styled(View, {
 });
 
 export default function Card() {
-  const [detailsShown, setDetailsShown] = useState(false);
-
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
-
-  const { data: hasKYC } = useQuery({
-    queryKey: ["kycStatus"],
-    queryFn: kycStatus,
-  });
+  const [detailsShown, setDetailsShown] = useState(false);
 
   const {
     data: card,
@@ -52,51 +45,39 @@ export default function Card() {
     enabled: false,
   });
 
-  const { error: OTLError, refetch: getOTL } = useQuery({
-    queryKey: ["personaOTL"],
-    queryFn: () => kyc(),
-    enabled: false,
-  });
-
-  const { mutateAsync: saveKYC } = useMutation({
-    mutationKey: ["saveKYC"],
-    mutationFn: kyc,
-    onSuccess: () => {
-      queryClient.setQueryData(["kycStatus"], true);
-    },
-  });
-
-  const { mutateAsync: handleReveal, isPending: isRevealing } = useMutation({
+  const {
+    mutateAsync: revealCard,
+    isPending: isRevealing,
+    error: revealError,
+  } = useMutation({
     mutationKey: ["revealCard"],
     mutationFn: async function handleReveal() {
-      if (!passkey) return;
+      if (!passkey || isRevealing) return;
       if (detailsShown) {
         setDetailsShown(false);
         return;
       }
-      if (hasKYC && !isRevealing) {
-        await refetchCard();
-        setDetailsShown(true);
-        return;
-      }
-      if (Platform.OS !== "web") {
-        Inquiry.fromTemplate(templateId)
-          .environment(environment)
-          .referenceId(passkey.credentialId)
-          .onComplete((inquiryId) => {
-            if (!inquiryId) throw new Error("no inquiry id");
-            saveKYC(inquiryId).catch(handleError);
-          })
-          .onError(handleError)
-          .build()
-          .start();
-        return;
-      }
-      const { data: otl } = await getOTL();
-      if (otl) {
+      try {
+        await kycStatus();
+      } catch {
+        if (Platform.OS !== "web") {
+          Inquiry.fromTemplate(templateId)
+            .environment(environment)
+            .referenceId(passkey.credentialId)
+            .onComplete((inquiryId) => {
+              if (!inquiryId) throw new Error("no inquiry id");
+              kyc(inquiryId).catch(handleError);
+            })
+            .onError(handleError)
+            .build()
+            .start();
+          return;
+        }
+        const otl = await kyc();
         window.open(otl, "_self");
-        queryClient.setQueryData(["personaOTL"], undefined);
       }
+      await refetchCard();
+      setDetailsShown(true);
     },
   });
 
@@ -167,9 +148,9 @@ export default function Card() {
                   </View>
                 </View>
               )}
-              {(cardError ?? OTLError) && (
+              {(cardError ?? revealError) && (
                 <Text color="$uiErrorPrimary" fontWeight="bold">
-                  {cardError ? cardError.message : OTLError ? OTLError.message : "Error"}
+                  {cardError ? cardError.message : revealError ? revealError.message : "Error"}
                 </Text>
               )}
               <View flexDirection="row" justifyContent="space-between" width="100%" gap="$s4">
@@ -177,7 +158,7 @@ export default function Card() {
                   <Pressable
                     onPress={() => {
                       if (isRevealing) return;
-                      handleReveal().catch(handleError);
+                      revealCard().catch(handleError);
                     }}
                     disabled={isRevealing}
                   >
