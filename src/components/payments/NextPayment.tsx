@@ -70,7 +70,32 @@ export default function NextPayment() {
           </View>
           {duePayment && (
             <View gap="$s5">
-              <View flexDirection="column" justifyContent="center" alignItems="center">
+              <View flexDirection="column" justifyContent="center" alignItems="center" gap="$s4">
+                {!hidden && (
+                  <Text
+                    pill
+                    caption2
+                    padding="$s2"
+                    backgroundColor="$interactiveBaseSuccessSoftDefault"
+                    color="$uiSuccessSecondary"
+                  >
+                    PAY NOW AND SAVE{" "}
+                    {(Number(WAD - (duePayment.previewValue * WAD) / duePayment.position) / 1e18).toLocaleString(
+                      undefined,
+                      {
+                        style: "percent",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      },
+                    )}{" "}
+                  </Text>
+                )}
+                <Text sensitive body strikeThrough color="$uiNeutralSecondary">
+                  {(Number(duePayment.position) / 1e18).toLocaleString(undefined, {
+                    style: "currency",
+                    currency: "USD",
+                  })}
+                </Text>
                 <Text
                   sensitive
                   textAlign="center"
@@ -84,33 +109,6 @@ export default function NextPayment() {
                     currency: "USD",
                   })}
                 </Text>
-              </View>
-              <View flexDirection="row" gap="$s3" justifyContent="center">
-                <Text sensitive subHeadline strikeThrough color="$uiNeutralSecondary">
-                  {(Number(duePayment.position) / 1e18).toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "USD",
-                  })}
-                </Text>
-                {!hidden && (
-                  <Text
-                    pill
-                    caption2
-                    padding="$s2"
-                    backgroundColor="$interactiveBaseSuccessSoftDefault"
-                    color="$uiSuccessSecondary"
-                  >
-                    {(Number(WAD - (duePayment.previewValue * WAD) / duePayment.position) / 1e18).toLocaleString(
-                      undefined,
-                      {
-                        style: "percent",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      },
-                    )}{" "}
-                    OFF
-                  </Text>
-                )}
               </View>
               <View
                 flexDirection="row"
