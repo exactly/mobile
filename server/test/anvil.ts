@@ -4,12 +4,13 @@ import { anvil } from "prool/instances";
 import { literal, null_, object, parse, tuple } from "valibot";
 import { createTestClient, http, padHex, publicActions, walletActions } from "viem";
 import { foundry } from "viem/chains";
+import type { GlobalSetupContext } from "vitest/node";
 
 export const client = createTestClient({ chain: foundry, mode: "anvil", transport: http() })
   .extend(publicActions)
   .extend(walletActions);
 
-export default async function setup() {
+export default async function setup({ provide }: GlobalSetupContext) {
   const instance = anvil({ codeSizeLimit: 42_000, blockBaseFeePerGas: 1n });
   await instance.start();
 
@@ -72,7 +73,34 @@ export default async function setup() {
   await $(shell)`forge script script/Deploy.s.sol
     --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
 
+  const [issuerChecker, exaPlugin, exaAccountFactory] = parse(
+    object({
+      transactions: tuple([
+        object({ contractName: literal("IssuerChecker"), contractAddress: Address }),
+        object({ contractName: literal("ExaPlugin"), contractAddress: Address }),
+        object({ contractName: literal("ExaAccountFactory"), contractAddress: Address }),
+      ]),
+    }),
+    await import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(foundry.id)}/run-latest.json`),
+  ).transactions;
+
+  provide("USDC", usdc.contractAddress);
+  provide("MarketUSDC", marketUSDC.contractAddress);
+  provide("IssuerChecker", issuerChecker.contractAddress);
+  provide("ExaPlugin", exaPlugin.contractAddress);
+  provide("ExaAccountFactory", exaAccountFactory.contractAddress);
+
   return async function teardown() {
     await instance.stop();
   };
+}
+
+declare module "vitest" {
+  export interface ProvidedContext {
+    ExaAccountFactory: Address;
+    ExaPlugin: Address;
+    IssuerChecker: Address;
+    MarketUSDC: Address;
+    USDC: Address;
+  }
 }
