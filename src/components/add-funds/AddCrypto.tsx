@@ -1,3 +1,4 @@
+import chain from "@exactly/common/generated/chain";
 import { ArrowLeft, Files, Info, Share as ShareIcon } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
@@ -34,7 +35,6 @@ export default function AddCrypto() {
     setStringAsync(address).catch(handleError);
     Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
   }
-
   const share = useCallback(async () => {
     if (!address) return;
     await Share.share({ message: address, title: "Share Optimism (OP) address" });
@@ -139,10 +139,7 @@ export default function AddCrypto() {
                 <View flexDirection="row" alignItems="center" gap={ms(10)} flexGrow={1} maxHeight={ms(32)}>
                   <OptimismImage height={ms(32)} width={ms(32)} />
                   <Text fontSize={ms(18)} fontWeight="bold">
-                    Optimism
-                  </Text>
-                  <Text fontSize={ms(13)} color="$uiNeutralSecondary">
-                    OP Mainnet
+                    {chain.name}
                   </Text>
                 </View>
               </View>
