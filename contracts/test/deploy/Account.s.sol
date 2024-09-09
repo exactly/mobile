@@ -22,6 +22,19 @@ contract DeployAccount is BaseScript {
     vm.startBroadcast();
     vm.etch(address(ENTRYPOINT), address(new EntryPoint()).code);
     vm.etch(ACCOUNT_IMPL, address(new UpgradeableModularAccount(ENTRYPOINT)).code);
+
+    if (block.chainid == getChain("anvil").chainId) {
+      try vm.activeFork() {
+        vm.rpc(
+          "anvil_setCode",
+          string.concat('["', address(ENTRYPOINT).toHexString(), '","', address(ENTRYPOINT).code.toHexString(), '"]') // solhint-disable-line quotes
+        );
+        vm.rpc(
+          "anvil_setCode",
+          string.concat('["', ACCOUNT_IMPL.toHexString(), '","', ACCOUNT_IMPL.code.toHexString(), '"]') // solhint-disable-line quotes
+        );
+      } catch { } // solhint-disable-line no-empty-blocks
+    }
     vm.stopBroadcast();
   }
 }
