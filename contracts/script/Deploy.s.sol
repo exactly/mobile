@@ -26,13 +26,17 @@ contract DeployScript is BaseScript {
   IVelodromeFactory public velodromeFactory;
 
   function setUp() external {
-    ownerPlugin = WebauthnOwnerPlugin(
-      vm.readFile(
-        string.concat(
-          "node_modules/webauthn-owner-plugin/broadcast/Plugin.s.sol/", block.chainid.toString(), "/run-latest.json"
-        )
-      ).readAddress(".transactions[0].contractAddress")
-    );
+    ownerPlugin = WebauthnOwnerPlugin(vm.envOr("OWNER_PLUGIN_ADDRESS", address(0)));
+    if (address(ownerPlugin) == address(0)) {
+      ownerPlugin = WebauthnOwnerPlugin(
+        vm.readFile(
+          string.concat(
+            "node_modules/webauthn-owner-plugin/broadcast/Plugin.s.sol/", block.chainid.toString(), "/run-latest.json"
+          )
+        ).readAddress(".transactions[0].contractAddress")
+      );
+    }
+    vm.label(address(ownerPlugin), "OwnerPlugin");
     auditor = IAuditor(protocol("Auditor"));
     exaUSDC = IMarket(protocol("MarketUSDC"));
     balancerVault = IBalancerVault(protocol("BalancerVault"));

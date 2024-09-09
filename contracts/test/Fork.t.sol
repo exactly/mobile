@@ -4,12 +4,18 @@ pragma solidity ^0.8.0;
 import { Test, stdError, stdJson } from "forge-std/Test.sol"; // solhint-disable-line no-unused-import
 import { Vm } from "forge-std/Vm.sol"; // solhint-disable-line no-unused-import
 
+import { LibString } from "solady/utils/LibString.sol";
+
 abstract contract ForkTest is Test {
+  using LibString for string;
   using stdJson for string;
 
   function protocol(string memory name) internal returns (address addr) {
-    addr = vm.readFile(string.concat("../node_modules/@exactly/protocol/deployments/", chain(), "/", name, ".json"))
-      .readAddress(".address");
+    addr = vm.envOr(string.concat("PROTOCOL_", name.upper(), "_ADDRESS"), address(0));
+    if (addr == address(0)) {
+      addr = vm.readFile(string.concat("../node_modules/@exactly/protocol/deployments/", chain(), "/", name, ".json"))
+        .readAddress(".address");
+    }
     vm.label(addr, name);
 
     address impl =
