@@ -63,6 +63,9 @@ module.exports = {
     {
       files: ["server/test/**"],
       extends: ["plugin:@vitest/legacy-all"],
+      rules: {
+        "@vitest/no-hooks": "off",
+      },
     },
   ],
   ignorePatterns: [".expo/", "build/", "dist/", "expo-env.d.ts", "generated/", "public/", "server/drizzle/"],
