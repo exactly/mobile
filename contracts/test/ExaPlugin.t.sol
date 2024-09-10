@@ -21,7 +21,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
-import { ExaPlugin, FunctionId, IBalancerVault, IVelodromeFactory } from "../src/ExaPlugin.sol";
+import { ExaPlugin, FunctionId } from "../src/ExaPlugin.sol";
 import {
   Expired,
   IAuditor,
@@ -426,37 +426,6 @@ contract ExaPluginTest is ForkTest {
   }
 
   function test_crossRepay_repays() external {
-    vm.createSelectFork("optimism", 124_672_500);
-    usdc = MockERC20(protocol("USDC"));
-    exa = MockERC20(protocol("WETH"));
-    exaEXA = IMarket(protocol("MarketWETH"));
-    exaUSDC = IMarket(protocol("MarketUSDC"));
-
-    issuerChecker = new IssuerChecker(issuer);
-    domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
-    exaPlugin = new ExaPlugin(
-      IAuditor(protocol("Auditor")),
-      exaUSDC,
-      IBalancerVault(protocol("BalancerVault")),
-      IVelodromeFactory(protocol("VelodromePoolFactory")),
-      issuerChecker,
-      collector
-    );
-    exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
-
-    ownerPlugin = new WebauthnOwnerPlugin();
-    ExaAccountFactory factory = new ExaAccountFactory(
-      address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(ENTRYPOINT)), ENTRYPOINT
-    );
-
-    account = ExaAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
-    vm.deal(address(account), 10_000 ether);
-    vm.label(address(account), "op-account");
-
-    deal(address(usdc), address(account), 100_000e6);
-
-    deal(address(exa), address(account), 10e18);
-
     uint256 maturity = block.timestamp + FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
 
     vm.startPrank(keeper);
