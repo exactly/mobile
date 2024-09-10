@@ -48,7 +48,7 @@
     "@types/ioredis-mock": "^8.2.5",
     "@types/node": "^22.5.4",
     "@types/pg": "^8.11.8",
-    "@wagmi/core": "^2.13.4",
+    "@wagmi/core": "^2.13.5",
     "concurrently": "^9.0.0",
     "drizzle-kit": "^0.24.2",
     "execa": "^9.3.1",
