@@ -3,6 +3,7 @@ import { $ } from "execa";
 import { anvil } from "prool/instances";
 import { literal, null_, object, parse, tuple } from "valibot";
 import { createTestClient, http, padHex, publicActions, walletActions } from "viem";
+import { privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
 import type { GlobalSetupContext } from "vitest/node";
 
@@ -20,7 +21,15 @@ export default async function setup({ provide }: GlobalSetupContext) {
     throw new Error("no anvil account");
   }
 
-  const shell = { cwd: "node_modules/@exactly/plugin", env: { OPTIMISM_ETHERSCAN_KEY: "" } as Record<string, string> };
+  const shell = {
+    cwd: "node_modules/@exactly/plugin",
+    env: {
+      OPTIMISM_ETHERSCAN_KEY: "",
+      COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
+      ISSUER_ADDRESS: privateKeyToAddress(padHex("0x420")),
+      KEEPER_ADDRESS: privateKeyToAddress(padHex("0x69")),
+    } as Record<string, string>,
+  };
 
   await $(shell)`forge script test/deploy/Account.s.sol --code-size-limit 42000
     --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
