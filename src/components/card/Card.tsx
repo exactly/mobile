@@ -1,5 +1,5 @@
 import type { Passkey } from "@exactly/common/types";
-import { Eye, EyeOff, Info, Snowflake } from "@tamagui/lucide-icons";
+import { Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Platform, Pressable } from "react-native";
@@ -13,6 +13,7 @@ import SpendingLimitButton from "./SpendingLimitButton";
 import ExaCard from "../../assets/images/card.svg";
 import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
+import queryClient from "../../utils/queryClient";
 import { getCard, kyc, kycStatus } from "../../utils/server";
 import InfoCard from "../home/InfoCard";
 import SafeView from "../shared/SafeView";
@@ -33,6 +34,7 @@ const StyledAction = styled(View, {
 
 export default function Card() {
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
+  const { data: alertShown } = useQuery({ queryKey: ["settings", "alertShown"] });
   const [detailsShown, setDetailsShown] = useState(false);
 
   const {
@@ -76,8 +78,9 @@ export default function Card() {
         const otl = await kyc();
         window.open(otl, "_self");
       }
-      await refetchCard();
-      setDetailsShown(true);
+
+      const { error } = await refetchCard();
+      setDetailsShown(!error);
     },
   });
 
@@ -95,8 +98,8 @@ export default function Card() {
               </Pressable>
             </View>
             <View alignItems="center" gap="$s5" width="100%">
-              {card && detailsShown && <CardDetails uri={card.url} />}
-              {detailsShown && (
+              {card && detailsShown && !cardError && <CardDetails uri={card.url} />}
+              {detailsShown && alertShown && (
                 <XStack
                   borderWidth={1}
                   borderRadius="$r3"
@@ -114,9 +117,29 @@ export default function Card() {
                     <Info size={ms(24)} color="$interactiveOnBaseSuccessSoft" />
                   </View>
                   <View flex={6} padding="$s4">
-                    <Text fontSize={ms(15)} color="$uiSuccessPrimary">
+                    <Text fontSize={ms(15)} color="$uiSuccessPrimary" paddingRight="$s4">
                       Manually add your card to Apple Pay & Google Pay to make contactless payments
                     </Text>
+                    <View
+                      position="absolute"
+                      right="$s3"
+                      top="$s3"
+                      backgroundColor="$interactiveBaseSuccessSoftDefault"
+                      borderRadius="$r_0"
+                      width={ms(24)}
+                      height={ms(24)}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <Pressable
+                        hitSlop={ms(10)}
+                        onPress={() => {
+                          queryClient.setQueryData(["settings", "alertShown"], false);
+                        }}
+                      >
+                        <X size={ms(18)} color="$interactiveOnBaseSuccessSoft" />
+                      </Pressable>
+                    </View>
                   </View>
                 </XStack>
               )}
