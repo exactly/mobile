@@ -109,7 +109,7 @@ app.post(
     }
 
     const expires = new Date(Date.now() + 24 * 60 * 60_000);
-    const account = deriveAddress(exaAccountFactoryAddress, credentialPublicKey);
+    const account = deriveAddress(exaAccountFactoryAddress, { x, y });
     await Promise.all([
       setSignedCookie(c, "credential_id", credentialID, authSecret, { domain, expires, httpOnly: true }),
       database.insert(credentials).values([

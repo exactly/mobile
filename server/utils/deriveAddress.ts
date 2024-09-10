@@ -1,6 +1,4 @@
-import { type Address, checksumAddress, encodeAbiParameters, encodePacked, keccak256, slice } from "viem";
-
-import decodePublicKey from "./decodePublicKey";
+import { type Address, checksumAddress, encodeAbiParameters, encodePacked, type Hash, keccak256, slice } from "viem";
 
 const accountImplementation = "0x0046000000000151008789797b54fdb500E2a61e";
 const initCodeHashERC1967 = keccak256(
@@ -14,8 +12,7 @@ const initCodeHashERC1967 = keccak256(
   ),
 );
 
-export default function deriveAddress(factory: Address, publicKey: Uint8Array) {
-  const { x, y } = decodePublicKey(publicKey);
+export default function deriveAddress(factory: Address, { x, y }: { x: Hash; y: Hash }) {
   return checksumAddress(
     slice(
       keccak256(
