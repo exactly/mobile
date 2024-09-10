@@ -34,9 +34,9 @@ export default function ProfileHeader() {
   const { address } = useAccount();
   const { connect } = useConnect();
   const { isConnected } = useAccount();
-  const { data: hidden } = useQuery<boolean>({ queryKey: ["privateText"] });
+  const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   function toggle() {
-    queryClient.setQueryData(["privateText"], !hidden);
+    queryClient.setQueryData(["settings", "sensitive"], !hidden);
   }
   return (
     <View padded backgroundColor="$backgroundSoft">

@@ -17,7 +17,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function NextPayment() {
-  const { data: hidden } = useQuery<boolean>({ queryKey: ["privateText"] });
+  const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   const { account, market, queryKey } = useMarketAccount(marketUSDCAddress);
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (market) {

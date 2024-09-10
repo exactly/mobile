@@ -24,7 +24,7 @@ queryClient.setQueryDefaults(["passkey"], {
     throw new Error("don't refetch");
   },
 });
-queryClient.setQueryDefaults(["theme"], {
+queryClient.setQueryDefaults(["settings", "theme"], {
   initialData: undefined,
   staleTime: Infinity,
   gcTime: Infinity,
@@ -32,7 +32,7 @@ queryClient.setQueryDefaults(["theme"], {
     throw new Error("don't refetch");
   },
 });
-queryClient.setQueryDefaults(["privateText"], {
+queryClient.setQueryDefaults(["settings", "sensitive"], {
   initialData: false,
   retry: false,
   staleTime: Infinity,

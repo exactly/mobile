@@ -37,7 +37,7 @@ const options: {
 export default function Theme() {
   const { canGoBack } = useRouter();
   const { setAppearance } = useContext(ThemeContext);
-  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["theme"] });
+  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
   return (
     <SafeView fullScreen tab>
       <View fullScreen padded gap="$s5">

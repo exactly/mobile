@@ -12,7 +12,7 @@ import View from "../shared/View";
 
 export default function Settings() {
   const { canGoBack } = useRouter();
-  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["theme"] });
+  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
   return (
     <SafeView fullScreen tab>
       <View fullScreen padded gap="$s5">

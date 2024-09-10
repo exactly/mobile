@@ -25,12 +25,12 @@ interface ThemeProviderProperties {
 
 export default function ThemeProvider({ children }: ThemeProviderProperties) {
   const appearance = useColorScheme();
-  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["theme"] });
+  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
   const [tamaguiTheme, setTamaguiTheme] = useState<ThemeName>(theme ?? appearance ?? "light");
 
   function setAppearance(value: ColorSchemeName) {
-    if (!value) queryClient.resetQueries({ queryKey: ["theme"] }).catch(handleError);
-    queryClient.setQueryData<ColorSchemeName>(["theme"], value);
+    if (!value) queryClient.resetQueries({ queryKey: ["settings", "theme"] }).catch(handleError);
+    queryClient.setQueryData<ColorSchemeName>(["settings", "theme"], value);
   }
 
   useEffect(() => {

@@ -112,6 +112,6 @@ interface TextProperties extends React.ComponentPropsWithoutRef<typeof StyledTex
 }
 
 export default function Text({ children, sensitive, ...rest }: TextProperties) {
-  const { data: hidden } = useQuery<boolean>({ queryKey: ["privateText"] });
+  const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   return <StyledText {...rest}>{sensitive && hidden ? "***" : children}</StyledText>;
 }
