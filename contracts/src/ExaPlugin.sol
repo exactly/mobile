@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import { AccessControl } from "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
-
 import { SafeERC20 } from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "openzeppelin-contracts/contracts/utils/Address.sol";
 
@@ -471,6 +470,11 @@ interface IVelodromeFactory {
   function isPool(address pool) external view returns (bool);
 }
 
+interface IVelodromePool {
+  function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
+  function getReserves() external view returns (uint256 reserve0, uint256 reserve1, uint256 blockTimestampLast);
+}
+
 struct BalancerCallbackData {
   uint256 maturity;
   address borrower;
@@ -485,9 +489,4 @@ struct VelodromeCallbackData {
   IMarket collateralMarket;
   uint256 collateralAssets;
   uint24 fee;
-}
-
-interface IVelodromePool {
-  function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
-  function getReserves() external view returns (uint256 reserve0, uint256 reserve1, uint256 blockTimestampLast);
 }
