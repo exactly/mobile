@@ -17,8 +17,8 @@ import { useAccount, useWriteContract } from "wagmi";
 import {
   upgradeableModularAccountAbi,
   useReadExaPluginPluginManifest,
-  useReadIAccountLoupeGetInstalledPlugins,
   useReadPreviewerExactly,
+  useReadUpgradeableModularAccountGetInstalledPlugins,
   useSimulateMarketBorrowAtMaturity,
   useSimulateUpgradeableModularAccountUninstallPlugin,
 } from "../../generated/contracts";
@@ -42,7 +42,7 @@ export default function ContractUtils() {
     account: address,
     args: [address ?? zeroAddress],
   });
-  const { data: installedPlugins } = useReadIAccountLoupeGetInstalledPlugins({
+  const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
   });
   const { data: pluginManifest } = useReadExaPluginPluginManifest({
