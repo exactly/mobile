@@ -32,7 +32,7 @@ export default function NextPayment() {
       });
     }
   }
-  const maturity = usdDue.keys().next().value as bigint | undefined;
+  const maturity = usdDue.keys().next().value;
   const duePayment = usdDue.get(maturity ?? 0n);
 
   const { data: repaySimulation } = useSimulateExaPluginRepay({
