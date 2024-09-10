@@ -79,13 +79,21 @@ export default async function setup({ provide }: GlobalSetupContext) {
   shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
   shell.env.PROTOCOL_VELODROMEPOOLFACTORY_ADDRESS = padHex("0x123", { size: 20 });
 
+  await $(shell)`forge script script/IssuerChecker.s.sol
+    --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+  const [issuerChecker] = parse(
+    object({
+      transactions: tuple([object({ contractName: literal("IssuerChecker"), contractAddress: Address })]),
+    }),
+    await import(`@exactly/plugin/broadcast/IssuerChecker.s.sol/${String(foundry.id)}/run-latest.json`),
+  ).transactions;
+  shell.env.ISSUER_CHECKER_ADDRESS = issuerChecker.contractAddress;
+
   await $(shell)`forge script script/Deploy.s.sol
     --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
-
-  const [issuerChecker, exaPlugin, exaAccountFactory] = parse(
+  const [exaPlugin, exaAccountFactory] = parse(
     object({
       transactions: tuple([
-        object({ contractName: literal("IssuerChecker"), contractAddress: Address }),
         object({ contractName: literal("ExaPlugin"), contractAddress: Address }),
         object({ contractName: literal("ExaAccountFactory"), contractAddress: Address }),
       ]),

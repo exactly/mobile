@@ -37,6 +37,13 @@ contract DeployScript is BaseScript {
       );
     }
     vm.label(address(ownerPlugin), "OwnerPlugin");
+    issuerChecker = IssuerChecker(vm.envOr("ISSUER_CHECKER_ADDRESS", address(0)));
+    if (address(issuerChecker) == address(0)) {
+      issuerChecker = IssuerChecker(
+        vm.readFile(string.concat("broadcast/IssuerChecker.s.sol/", block.chainid.toString(), "/run-latest.json"))
+          .readAddress(".transactions[0].contractAddress")
+      );
+    }
     auditor = IAuditor(protocol("Auditor"));
     exaUSDC = IMarket(protocol("MarketUSDC"));
     balancerVault = IBalancerVault(protocol("BalancerVault"));
@@ -47,8 +54,6 @@ contract DeployScript is BaseScript {
     assert(msg.sender != DEFAULT_SENDER);
 
     vm.startBroadcast(msg.sender);
-
-    issuerChecker = new IssuerChecker(vm.envAddress("ISSUER_ADDRESS"));
 
     exaPlugin = new ExaPlugin(
       auditor, exaUSDC, balancerVault, velodromeFactory, issuerChecker, vm.envAddress("COLLECTOR_ADDRESS")

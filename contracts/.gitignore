@@ -8,5 +8,8 @@ out/
 !/broadcast/Deploy.s.sol
 /broadcast/Deploy.s.sol/*/*
 !/broadcast/Deploy.s.sol/*/run-latest.json
+!/broadcast/IssuerChecker.s.sol
+/broadcast/IssuerChecker.s.sol/*/*
+!/broadcast/IssuerChecker.s.sol/*/run-latest.json
 
 .env

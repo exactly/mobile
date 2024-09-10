@@ -3,38 +3,65 @@ import { foundry, react } from "@wagmi/cli/plugins";
 import { type Abi, getAddress } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
-const chainId = Number(process.env.CHAIN_ID ?? "11155420");
-
-const network = { [optimism.id]: "optimism", [optimismSepolia.id]: "op-sepolia" }[chainId];
-if (!network) throw new Error("unknown chain id");
+const chainId = Number(process.env.CHAIN_ID ?? String(optimismSepolia.id));
 
 const [
-  auditor,
-  marketUSDC,
-  marketWETH,
-  previewer,
-  usdc,
-  weth,
+  { default: auditor },
+  { default: marketUSDC },
+  { default: marketWETH },
+  { default: previewer },
+  { default: usdc },
+  { default: weth },
   {
-    transactions: [issuerChecker, exaPlugin, factory],
+    default: {
+      transactions: [exaPlugin, factory],
+    },
   },
-] = await Promise.all([
-  import(`@exactly/protocol/deployments/${network}/Auditor.json`) as Promise<Deployment>,
-  import(`@exactly/protocol/deployments/${network}/MarketUSDC.json`) as Promise<Deployment>,
-  import(`@exactly/protocol/deployments/${network}/MarketWETH.json`) as Promise<Deployment>,
-  import(`@exactly/protocol/deployments/${network}/Previewer.json`) as Promise<Deployment>,
-  import(`@exactly/protocol/deployments/${network}/USDC.json`) as Promise<Deployment>,
-  import(`@exactly/protocol/deployments/${network}/WETH.json`) as Promise<Deployment>,
-  import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(chainId)}/run-latest.json`) as Promise<DeployBroadcast>,
-]);
+  {
+    default: {
+      transactions: [issuerChecker],
+    },
+  },
+] = await Promise.all(
+  (() => {
+    switch (chainId) {
+      case optimism.id:
+        return [
+          import("@exactly/protocol/deployments/optimism/Auditor.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/optimism/MarketUSDC.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/optimism/MarketWETH.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/optimism/Previewer.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/optimism/USDC.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/optimism/WETH.json", { with: { type: "json" } }),
+          import("@exactly/plugin/broadcast/Deploy.s.sol/10/run-latest.json", { with: { type: "json" } }),
+          import("@exactly/plugin/broadcast/IssuerChecker.s.sol/10/run-latest.json", { with: { type: "json" } }),
+        ];
+      case optimismSepolia.id:
+        return [
+          import("@exactly/protocol/deployments/op-sepolia/Auditor.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/op-sepolia/MarketUSDC.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/op-sepolia/MarketWETH.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/op-sepolia/Previewer.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/op-sepolia/USDC.json", { with: { type: "json" } }),
+          import("@exactly/protocol/deployments/op-sepolia/WETH.json", { with: { type: "json" } }),
+          import("@exactly/plugin/broadcast/Deploy.s.sol/11155420/run-latest.json", { with: { type: "json" } }),
+          import("@exactly/plugin/broadcast/IssuerChecker.s.sol/11155420/run-latest.json", { with: { type: "json" } }),
+        ];
+      default:
+        throw new Error("unknown chain");
+    }
+  })(),
+);
+
+if (!exaPlugin || !factory || !issuerChecker) throw new Error("missing contracts");
 
 export default defineConfig([
   {
     out: "src/generated/contracts.ts",
     contracts: [
-      { name: "Auditor", abi: auditor.abi },
-      { name: "Market", abi: marketWETH.abi },
-      { name: "Previewer", abi: previewer.abi },
+      { name: "Auditor", abi: auditor.abi as Abi },
+      { name: "Market", abi: marketWETH.abi as Abi },
+      { name: "Previewer", abi: previewer.abi as Abi },
     ],
     plugins: [
       foundry({
@@ -47,8 +74,8 @@ export default defineConfig([
   {
     out: "common/generated/chain.ts",
     contracts: [
-      { name: "Auditor", abi: auditor.abi },
-      { name: "Market", abi: marketWETH.abi },
+      { name: "Auditor", abi: auditor.abi as Abi },
+      { name: "Market", abi: marketWETH.abi as Abi },
     ],
     plugins: [
       addresses({
@@ -94,18 +121,6 @@ function addresses(contracts: Record<string, string>): Plugin {
 
 function chain(): Plugin {
   const importName = { [optimism.id]: "optimism", [optimismSepolia.id]: "optimismSepolia" }[chainId];
-  if (!importName) throw new Error("unknown chain id");
+  if (!importName) throw new Error("unknown chain");
   return { name: "Chain", run: () => ({ content: `export { ${importName} as default } from "@alchemy/aa-core"` }) };
-}
-
-interface Deployment {
-  address: string;
-  abi: Abi;
-}
-interface ContractTransaction {
-  contractName: string;
-  contractAddress: string;
-}
-interface DeployBroadcast {
-  transactions: [ContractTransaction, ContractTransaction, ContractTransaction];
 }
