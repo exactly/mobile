@@ -1,4 +1,4 @@
-import { usdcAddress } from "@exactly/common/generated/chain";
+import { marketUSDCAddress } from "@exactly/common/generated/chain";
 import { Info } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
@@ -13,7 +13,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Payments() {
-  const { market } = useMarketAccount(usdcAddress);
+  const { market } = useMarketAccount(marketUSDCAddress);
   let usdDue = 0n;
   if (market) {
     for (const { position } of market.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {

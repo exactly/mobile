@@ -1,4 +1,4 @@
-import { usdcAddress } from "@exactly/common/generated/chain";
+import { marketUSDCAddress } from "@exactly/common/generated/chain";
 import { Coins } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, intlFormat } from "date-fns";
@@ -18,7 +18,7 @@ import View from "../shared/View";
 
 export default function NextPayment() {
   const { data: hidden } = useQuery<boolean>({ queryKey: ["privateText"] });
-  const { account, market, queryKey } = useMarketAccount(usdcAddress);
+  const { account, market, queryKey } = useMarketAccount(marketUSDCAddress);
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (market) {
     const { fixedBorrowPositions, usdPrice, decimals } = market;
