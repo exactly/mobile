@@ -1,8 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { Text as TamaguiText, styled } from "tamagui";
-
-import usePrivateText from "../../utils/usePrivateText";
 
 const StyledText = styled(TamaguiText, {
   color: "$uiNeutralPrimary",
@@ -113,6 +112,6 @@ interface TextProperties extends React.ComponentPropsWithoutRef<typeof StyledTex
 }
 
 export default function Text({ children, sensitive, ...rest }: TextProperties) {
-  const { hidden } = usePrivateText();
+  const { data: hidden } = useQuery<boolean>({ queryKey: ["privateText"] });
   return <StyledText {...rest}>{sensitive && hidden ? "***" : children}</StyledText>;
 }

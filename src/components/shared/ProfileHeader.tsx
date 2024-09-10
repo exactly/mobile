@@ -1,4 +1,5 @@
 import { Eye, EyeOff, Settings } from "@tamagui/lucide-icons";
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
@@ -7,8 +8,8 @@ import { Image, styled } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
 
 import alchemyConnector from "../../utils/alchemyConnector";
+import queryClient from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
-import usePrivateText from "../../utils/usePrivateText";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
@@ -33,7 +34,10 @@ export default function ProfileHeader() {
   const { address } = useAccount();
   const { connect } = useConnect();
   const { isConnected } = useAccount();
-  const { hidden, toggle } = usePrivateText();
+  const { data: hidden } = useQuery<boolean>({ queryKey: ["privateText"] });
+  function toggle() {
+    queryClient.setQueryData(["privateText"], !hidden);
+  }
   return (
     <View padded backgroundColor="$backgroundSoft">
       <View display="flex" flexDirection="row" justifyContent="space-between">

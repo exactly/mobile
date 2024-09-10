@@ -1,5 +1,6 @@
 import { usdcAddress } from "@exactly/common/generated/chain";
 import { Coins } from "@tamagui/lucide-icons";
+import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, intlFormat } from "date-fns";
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
@@ -11,13 +12,12 @@ import WAD from "../../utils/WAD";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
-import usePrivateText from "../../utils/usePrivateText";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function NextPayment() {
-  const { hidden } = usePrivateText();
+  const { data: hidden } = useQuery<boolean>({ queryKey: ["privateText"] });
   const { account, market, queryKey } = useMarketAccount(usdcAddress);
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (market) {

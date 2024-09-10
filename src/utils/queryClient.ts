@@ -24,17 +24,17 @@ queryClient.setQueryDefaults(["passkey"], {
     throw new Error("don't refetch");
   },
 });
-queryClient.setQueryDefaults(["privateText"], {
-  initialData: false,
-  retry: false,
+queryClient.setQueryDefaults(["theme"], {
+  initialData: undefined,
   staleTime: Infinity,
   gcTime: Infinity,
   queryFn: () => {
     throw new Error("don't refetch");
   },
 });
-queryClient.setQueryDefaults(["theme"], {
-  initialData: undefined,
+queryClient.setQueryDefaults(["privateText"], {
+  initialData: false,
+  retry: false,
   staleTime: Infinity,
   gcTime: Infinity,
   queryFn: () => {
