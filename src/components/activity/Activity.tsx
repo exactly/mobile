@@ -28,13 +28,19 @@ export default function Activity() {
         </View>
         <View gap="$s5" flex={1}>
           {isLoading ? (
-            <View padded justifyContent="center" alignItems="center">
+            <View margin="$s5" justifyContent="center" alignItems="center">
               <Spinner color="$interactiveBaseBrandDefault" />
             </View>
           ) : (
             <FlatList
               ListEmptyComponent={
-                <View borderRadius="$r3" backgroundColor="$uiNeutralTertiary" padding="$s3_5" alignSelf="center">
+                <View
+                  margin="$s5"
+                  borderRadius="$r3"
+                  backgroundColor="$uiNeutralTertiary"
+                  padding="$s3_5"
+                  alignSelf="center"
+                >
                   <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
                     There is no activity yet.
                   </Text>
