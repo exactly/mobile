@@ -1,7 +1,7 @@
 import { ArrowLeft, CheckCircle2, Moon, Smartphone, Sun } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router, useRouter } from "expo-router";
-import React from "react";
+import React, { useContext } from "react";
 import type { ColorSchemeName } from "react-native";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -10,7 +10,7 @@ import { ScrollView, ToggleGroup, XStack } from "tamagui";
 import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
-import useTheme from "../../utils/useTheme";
+import { ThemeContext } from "../context/ThemeProvider";
 
 const options: {
   name: string;
@@ -36,7 +36,7 @@ const options: {
 
 export default function Theme() {
   const { canGoBack } = useRouter();
-  const { setAppearance } = useTheme();
+  const { setAppearance } = useContext(ThemeContext);
   const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["theme"] });
   return (
     <SafeView fullScreen tab>
