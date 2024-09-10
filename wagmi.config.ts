@@ -39,11 +39,7 @@ export default defineConfig([
     plugins: [
       foundry({
         project: "contracts",
-        include: [
-          "ExaPlugin.sol/ExaPlugin.json",
-          "IAccountLoupe.sol/IAccountLoupe.json",
-          "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
-        ],
+        include: ["ExaPlugin.sol/ExaPlugin.json", "UpgradeableModularAccount.sol/UpgradeableModularAccount.json"],
       }),
       react(),
     ],
@@ -67,7 +63,11 @@ export default defineConfig([
       }),
       foundry({
         project: "contracts",
-        include: ["ExaAccountFactory.sol/ExaAccountFactory.json", "ExaPlugin.sol/ExaPlugin.json"],
+        include: [
+          "ExaAccountFactory.sol/ExaAccountFactory.json",
+          "ExaPlugin.sol/ExaPlugin.json",
+          "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
+        ],
       }),
       chain(),
     ],
