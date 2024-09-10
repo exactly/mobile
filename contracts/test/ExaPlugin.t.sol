@@ -34,8 +34,8 @@ import {
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 
-import { DeployAccount, ENTRYPOINT } from "./deploy/Account.s.sol";
-import { DeployProtocol } from "./deploy/Protocol.s.sol";
+import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
+import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
 // TODO use mock asset with price != 1
 // TODO use price feed for that asset with 8 decimals

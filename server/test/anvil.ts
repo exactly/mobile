@@ -31,7 +31,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
     } as Record<string, string>,
   };
 
-  await $(shell)`forge script test/deploy/Account.s.sol --code-size-limit 42000
+  await $(shell)`forge script test/mocks/Account.s.sol --code-size-limit 42000
     --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
 
   await $(shell)`forge script node_modules/webauthn-owner-plugin/script/Plugin.s.sol
@@ -43,7 +43,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
     await import(`@exactly/plugin/broadcast/Plugin.s.sol/${String(foundry.id)}/run-latest.json`),
   ).transactions[0].contractAddress;
 
-  await $(shell)`forge script test/deploy/Protocol.s.sol --code-size-limit 42000
+  await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 42000
     --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
   // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
   const [, auditor, , , , , , , , , usdc, , marketUSDC, , , , balancer] = parse(
