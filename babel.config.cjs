@@ -9,6 +9,7 @@ module.exports = function config(api) {
         {
           alias: {
             "@wagmi/core/codegen": "@wagmi/core/dist/esm/exports/codegen",
+            "hono/client": "hono/dist/client",
           },
         },
       ],
