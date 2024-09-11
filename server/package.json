@@ -49,7 +49,6 @@
     "@types/node": "^22.5.4",
     "@types/pg": "^8.11.9",
     "@wagmi/core": "^2.13.5",
-    "concurrently": "^9.0.0",
     "drizzle-kit": "^0.24.2",
     "execa": "^9.3.1",
     "pkgroll": "^2.4.3",

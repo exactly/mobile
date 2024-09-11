@@ -26,7 +26,6 @@
     "account-abstraction": "eth-infinitism/account-abstraction#v0.6.0",
     "forge-std": "foundry-rs/forge-std#v1.9.2",
     "fresh-crypto-lib": "rdubois-crypto/FreshCryptoLib#fd2a0e6",
-    "concurrently": "^9.0.0",
     "solhint": "^5.0.3",
     "solmate": "transmissions11/solmate#v7"
   }

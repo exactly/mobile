@@ -270,9 +270,6 @@ importers:
       babel-preset-expo:
         specifier: ^11.0.14
         version: 11.0.14(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))
-      concurrently:
-        specifier: ^9.0.0
-        version: 9.0.0
       dotenv:
         specifier: ^16.4.5
         version: 16.4.5
@@ -400,9 +397,6 @@ importers:
       account-abstraction:
         specifier: eth-infinitism/account-abstraction#v0.6.0
         version: accountabstraction@https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/7174d6d845618dbd11cee68eefa715f5263690b6
-      concurrently:
-        specifier: ^9.0.0
-        version: 9.0.0
       forge-std:
         specifier: foundry-rs/forge-std#v1.9.2
         version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/1714bee72e286e73f76e320d110e0eaf5c4e649d
@@ -503,9 +497,6 @@ importers:
       '@wagmi/core':
         specifier: ^2.13.5
         version: 2.13.5(@tanstack/query-core@5.55.4)(@types/react@18.2.79)(react@18.2.0)(typescript@5.6.2)(viem@2.21.5(bufferutil@4.0.8)(typescript@5.6.2)(utf-8-validate@5.0.10)(zod@3.23.8))
-      concurrently:
-        specifier: ^9.0.0
-        version: 9.0.0
       drizzle-kit:
         specifier: ^0.24.2
         version: 0.24.2
@@ -2018,7 +2009,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.18.29':
     resolution: {integrity: sha512-X810C48Ss+67RdZU39YEO1khNYo1RmjouRV+vVe0QhMoTe8R6OA3t+XYEdwaNbJ5p/DJN7szfHfNmX2glpC7xg==}
@@ -4869,11 +4860,6 @@ packages:
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
-
-  concurrently@9.0.0:
-    resolution: {integrity: sha512-iAxbsDeUkn8E/4+QalT7T3WvlyTfmsoez+19lbbcsxZdOEMfBukd8LA30KYez2UR5xkKFzbcqXIZy5RisCbaxw==}
-    engines: {node: '>=18'}
-    hasBin: true
 
   config-chain@1.1.13:
     resolution: {integrity: sha512-qj+f8APARXHrM0hraqXYb2/bOVSV4PvJQlNZ/DVj0QrmNM2q2euizkeuVckQ57J+W0mRH6Hvi+k50M4Jul2VRQ==}
@@ -8235,9 +8221,6 @@ packages:
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
 
-  rxjs@7.8.1:
-    resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
-
   safe-array-concat@1.1.2:
     resolution: {integrity: sha512-vj6RsCsWBCf19jIeHEfkRMw8DPiBb+DMXklQ/1SGDHOMlHdPUkZXFQ2YdplS23zESTijAcurb1aSgJA3AgMu1Q==}
     engines: {node: '>=0.4'}
@@ -8776,10 +8759,6 @@ packages:
   traverse@0.6.9:
     resolution: {integrity: sha512-7bBrcF+/LQzSgFmT0X5YclVqQxtv7TDJ1f8Wj7ibBu/U6BMLeOpUxuZjV7rMc44UtKxlnMFigdhFAIszSX1DMg==}
     engines: {node: '>= 0.4'}
-
-  tree-kill@1.2.2:
-    resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
-    hasBin: true
 
   trim-right@1.0.1:
     resolution: {integrity: sha512-WZGXGstmCWgeevgTL54hrCuw1dyMQIzWy7ZfqRJfSmJZBwklI15egmQytFP6bPidmw3M8d5yEowl1niq4vmqZw==}
@@ -15126,16 +15105,6 @@ snapshots:
 
   concat-map@0.0.1: {}
 
-  concurrently@9.0.0:
-    dependencies:
-      chalk: 4.1.2
-      lodash: 4.17.21
-      rxjs: 7.8.1
-      shell-quote: 1.8.1
-      supports-color: 8.1.1
-      tree-kill: 1.2.2
-      yargs: 17.7.2
-
   config-chain@1.1.13:
     dependencies:
       ini: 1.3.8
@@ -18993,10 +18962,6 @@ snapshots:
     dependencies:
       queue-microtask: 1.2.3
 
-  rxjs@7.8.1:
-    dependencies:
-      tslib: 2.7.0
-
   safe-array-concat@1.1.2:
     dependencies:
       call-bind: 1.0.7
@@ -19689,8 +19654,6 @@ snapshots:
       gopd: 1.0.1
       typedarray.prototype.slice: 1.0.3
       which-typed-array: 1.1.15
-
-  tree-kill@1.2.2: {}
 
   trim-right@1.0.1: {}
 
