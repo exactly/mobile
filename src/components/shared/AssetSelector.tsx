@@ -1,10 +1,10 @@
 import { Address } from "@exactly/common/types";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
-import { SvgUri } from "react-native-svg";
 import { ToggleGroup, YStack } from "tamagui";
 import { safeParse } from "valibot";
 
+import AssetLogo from "./AssetLogo";
 import assetLogos from "../../utils/assetLogos";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -65,7 +65,7 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
           >
             <View flexDirection="row" alignItems="center" justifyContent="space-between" paddingVertical={vs(10)}>
               <View flexDirection="row" gap={ms(10)} alignItems="center">
-                <SvgUri uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
+                <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
                 <View gap="$s2" alignItems="flex-start">
                   <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralTertiary">
                     {symbol}

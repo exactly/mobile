@@ -4,12 +4,12 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { SvgUri } from "react-native-svg";
 import { ScrollView, XStack, YStack, Image } from "tamagui";
 
 import assetLogos from "../../utils/assetLogos";
 import type { Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
+import AssetLogo from "../shared/AssetLogo";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -43,7 +43,7 @@ export default function Review({
               Sending
             </Text>
             <XStack alignItems="center" gap="$s3">
-              <SvgUri uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
+              <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
               <YStack>
                 <Text title color="$uiNeutralPrimary">
                   {(Number(amount) / 1e18).toString()}

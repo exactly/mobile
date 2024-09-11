@@ -1,13 +1,13 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
-import { SvgUri } from "react-native-svg";
 import { View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
+import AssetLogo from "../shared/AssetLogo";
 import Text from "../shared/Text";
 
 export default function AssetList() {
@@ -38,7 +38,7 @@ export default function AssetList() {
         >
           <View flexDirection="row" alignItems="center" paddingVertical={vs(10)} flex={1}>
             <View flexDirection="row" gap={ms(10)} flex={1} alignItems="center">
-              <SvgUri uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
+              <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
               <View gap={ms(5)}>
                 <Text fontSize={ms(15)} fontWeight="bold">
                   {symbol}

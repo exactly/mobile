@@ -5,7 +5,6 @@ import { router } from "expo-router";
 import React, { useCallback } from "react";
 import { Alert, Pressable, Share } from "react-native";
 import { ms } from "react-native-size-matters";
-import { SvgUri } from "react-native-svg";
 import { ScrollView } from "tamagui";
 import { useAccount } from "wagmi";
 
@@ -13,6 +12,7 @@ import OptimismImage from "../../assets/images/optimism.svg";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
 import shortenAddress from "../../utils/shortenAddress";
+import AssetLogo from "../shared/AssetLogo";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -113,7 +113,7 @@ export default function AddCrypto() {
                 return (
                   <View key={index} flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
                     <View flexDirection="row" alignItems="center" gap={ms(10)}>
-                      <SvgUri uri={asset.image} width={ms(32)} height={ms(32)} />
+                      <AssetLogo uri={asset.image} width={ms(32)} height={ms(32)} />
                       <Text fontSize={ms(18)} fontWeight="bold">
                         USDC
                       </Text>

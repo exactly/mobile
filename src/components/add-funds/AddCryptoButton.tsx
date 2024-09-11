@@ -2,12 +2,12 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { SvgUri } from "react-native-svg";
 import { View } from "tamagui";
 
 import CubeWithCircles from "../../assets/images/cube-with-circles.svg";
 import Optimism from "../../assets/images/optimism.svg";
 import assetLogos from "../../utils/assetLogos";
+import AssetLogo from "../shared/AssetLogo";
 import Text from "../shared/Text";
 
 function navigate() {
@@ -52,7 +52,7 @@ export default function AddCryptoButton() {
               Assets
             </Text>
             <View>
-              <SvgUri uri={assetLogos.USDC} width={ms(24)} height={ms(24)} />
+              <AssetLogo uri={assetLogos.USDC} width={ms(24)} height={ms(24)} />
             </View>
           </View>
         </View>
