@@ -15,6 +15,7 @@
     "expo-router",
     "expo-status-bar",
     "expo-system-ui",
+    "expo-updates",
     "react",
     "react-dom",
     "react-native",
