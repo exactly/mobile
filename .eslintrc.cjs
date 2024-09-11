@@ -55,6 +55,7 @@ module.exports = {
             ],
           },
         ],
+        "import/no-unresolved": "off", // handled by bundler
         "unicorn/prefer-top-level-await": "off", // unsupported in react-native
       },
     },
