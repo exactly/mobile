@@ -2,26 +2,15 @@ import { testClient } from "hono/testing";
 import Redis from "ioredis-mock";
 import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { foundry } from "viem/chains";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import anvilClient from "./utils/anvilClient";
+import "./utils/mockDeployments";
 import app from "../hooks/cryptomate";
 import deriveAddress from "../utils/deriveAddress";
 import keeper from "../utils/keeper";
 
 vi.mock("ioredis", () => ({ Redis }));
-
-vi.mock("@exactly/common/generated/chain", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@exactly/common/generated/chain")>()), // eslint-disable-line @typescript-eslint/consistent-type-imports
-  default: { ...foundry, rpcUrls: { ...foundry.rpcUrls, alchemy: foundry.rpcUrls.default } },
-  usdcAddress: inject("USDC"),
-  marketUSDCAddress: inject("MarketUSDC"),
-}));
-vi.mock("../generated/contracts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../generated/contracts")>()), // eslint-disable-line @typescript-eslint/consistent-type-imports
-  issuerCheckerAddress: inject("IssuerChecker"),
-}));
 
 const appClient = testClient(app);
 
