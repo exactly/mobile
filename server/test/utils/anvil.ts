@@ -2,20 +2,18 @@ import { Address } from "@exactly/common/types";
 import { $ } from "execa";
 import { anvil } from "prool/instances";
 import { literal, null_, object, parse, tuple } from "valibot";
-import { createTestClient, http, padHex, publicActions, walletActions } from "viem";
+import { padHex } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
 import type { GlobalSetupContext } from "vitest/node";
 
-export const client = createTestClient({ chain: foundry, mode: "anvil", transport: http() })
-  .extend(publicActions)
-  .extend(walletActions);
+import anvilClient from "./anvilClient";
 
 export default async function setup({ provide }: GlobalSetupContext) {
   const instance = anvil({ codeSizeLimit: 42_000, blockBaseFeePerGas: 1n });
   await instance.start();
 
-  const [deployer] = await client.getAddresses();
+  const [deployer] = await anvilClient.getAddresses();
   if (!deployer) {
     await instance.stop();
     throw new Error("no anvil account");
