@@ -27,6 +27,7 @@
     "@exactly/common": "workspace:*",
     "@exactly/plugin": "workspace:*",
     "@expo/html-elements": "^0.10.1",
+    "@expo/metro-runtime": "~3.2.3",
     "@onesignal/node-onesignal": "5.0.0-alpha-01",
     "@peculiar/asn1-ecc": "^2.3.13",
     "@peculiar/asn1-schema": "^2.3.13",
