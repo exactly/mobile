@@ -1,11 +1,11 @@
 import type { Passkey } from "@exactly/common/types";
-import { Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
+import { ChevronDown, Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Platform, Pressable } from "react-native";
 import { Inquiry } from "react-native-persona";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Switch, styled, Spinner, XStack } from "tamagui";
+import { ScrollView, Switch, styled, Spinner, XStack, Accordion, Square } from "tamagui";
 
 import CardDetails from "./CardDetails";
 import ISO7810_ASPECT_RATIO from "./ISO7810_ASPECT_RATIO";
@@ -15,7 +15,6 @@ import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
 import { getCard, kyc, kycStatus } from "../../utils/server";
-import InfoCard from "../home/InfoCard";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -223,13 +222,42 @@ export default function Card() {
               </View>
             </View>
             <View>
-              <InfoCard title="Spending limits">
-                <View gap="$s4">
-                  <SpendingLimitButton title="Daily" limit={1000} />
-                  <SpendingLimitButton title="Weekly" limit={3000} />
-                  <SpendingLimitButton title="Monthly" limit={5000} />
-                </View>
-              </InfoCard>
+              <Accordion
+                overflow="hidden"
+                type="multiple"
+                backgroundColor="$backgroundSoft"
+                borderRadius="$r3"
+                padding="$s4"
+              >
+                <Accordion.Item value="a1" flex={1}>
+                  <Accordion.Trigger
+                    unstyled
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    backgroundColor="transparent"
+                    borderWidth={0}
+                    alignItems="center"
+                  >
+                    {({ open }: { open: boolean }) => (
+                      <>
+                        <Text emphasized headline>
+                          Spending Limits
+                        </Text>
+                        <Square animation="quick" rotate={open ? "180deg" : "0deg"}>
+                          <ChevronDown size={ms(24)} color="$interactiveTextBrandDefault" />
+                        </Square>
+                      </>
+                    )}
+                  </Accordion.Trigger>
+                  <Accordion.HeightAnimator animation="quick">
+                    <Accordion.Content exitStyle={exitStyle} gap="$s4" paddingTop="$s4">
+                      <SpendingLimitButton title="Daily" limit={1000} />
+                      <SpendingLimitButton title="Weekly" limit={3000} />
+                      <SpendingLimitButton title="Monthly" limit={5000} />
+                    </Accordion.Content>
+                  </Accordion.HeightAnimator>
+                </Accordion.Item>
+              </Accordion>
             </View>
           </View>
         </View>
@@ -237,3 +265,5 @@ export default function Card() {
     </SafeView>
   );
 }
+
+const exitStyle = { opacity: 0 };

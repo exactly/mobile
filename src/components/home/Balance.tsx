@@ -1,9 +1,8 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons";
-import React, { useState } from "react";
-import { Pressable } from "react-native";
+import { ChevronDown } from "@tamagui/lucide-icons";
+import React from "react";
 import { ms } from "react-native-size-matters";
-import { View } from "tamagui";
+import { Accordion, Square, View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -12,7 +11,6 @@ import { useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 
 export default function Balance() {
-  const [isOpen, setIsOpen] = useState(false);
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({
     address: previewerAddress,
@@ -41,42 +39,50 @@ export default function Balance() {
           Balance
         </Text>
       </View>
-      <View gap="$s3_5" paddingVertical="$s3">
-        <Pressable
-          disabled={usdBalance === 0n}
-          onPress={() => {
-            setIsOpen(!isOpen);
-          }}
-        >
-          <View flexDirection="row" justifyContent="center" alignItems="center" gap="$s3_5">
-            <View flexDirection="row" maxWidth="100%" alignItems="center">
-              <Text
-                sensitive
-                textAlign="center"
-                fontFamily="$mono"
-                fontSize={ms(40)}
-                fontWeight="bold"
-                overflow="hidden"
-              >
-                {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
-                  style: "currency",
-                  currency: "USD",
-                })}
-              </Text>
-            </View>
-            {usdBalance > 0n && (
-              <View flexDirection="row">
-                {isOpen ? (
-                  <ChevronUp size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
-                ) : (
-                  <ChevronDown size={ms(32)} color="$uiBrandSecondary" fontWeight="bold" />
-                )}
-              </View>
-            )}
-          </View>
-        </Pressable>
-        {isOpen && <AssetList />}
-      </View>
+
+      <Accordion overflow="hidden" type="multiple" borderRadius="$r3" padding="$s4">
+        <Accordion.Item value="balance" flex={1}>
+          <Accordion.Trigger
+            unstyled
+            flexDirection="row"
+            justifyContent="center"
+            backgroundColor="transparent"
+            borderWidth={0}
+            alignItems="center"
+            gap="$s3"
+          >
+            {({ open }: { open: boolean }) => {
+              return (
+                <>
+                  <Text
+                    sensitive
+                    textAlign="center"
+                    fontFamily="$mono"
+                    fontSize={ms(40)}
+                    fontWeight="bold"
+                    overflow="hidden"
+                  >
+                    {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                    })}
+                  </Text>
+                  <Square animation="quick" rotate={open ? "180deg" : "0deg"}>
+                    <ChevronDown size={ms(24)} color="$interactiveTextBrandDefault" />
+                  </Square>
+                </>
+              );
+            }}
+          </Accordion.Trigger>
+          <Accordion.HeightAnimator animation="quick">
+            <Accordion.Content exitStyle={exitStyle} gap="$s4" paddingTop="$s4">
+              <AssetList />
+            </Accordion.Content>
+          </Accordion.HeightAnimator>
+        </Accordion.Item>
+      </Accordion>
     </View>
   );
 }
+
+const exitStyle = { opacity: 0 };
