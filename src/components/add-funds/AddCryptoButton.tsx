@@ -2,13 +2,17 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View } from "tamagui";
+import { View, XStack } from "tamagui";
 
 import CubeWithCircles from "../../assets/images/cube-with-circles.svg";
 import Optimism from "../../assets/images/optimism.svg";
 import assetLogos from "../../utils/assetLogos";
 import AssetLogo from "../shared/AssetLogo";
 import Text from "../shared/Text";
+
+const supportedAssets = Object.entries(assetLogos)
+  .filter(([symbol]) => symbol !== "ETH")
+  .map(([symbol, image]) => ({ symbol, image }));
 
 function navigate() {
   router.push("../add-funds/add-crypto");
@@ -51,9 +55,15 @@ export default function AddCryptoButton() {
             <Text fontSize={ms(13)} color="$uiNeutralSecondary" fontWeight="bold">
               Assets
             </Text>
-            <View>
-              <AssetLogo uri={assetLogos.USDC} width={ms(24)} height={ms(24)} />
-            </View>
+            <XStack>
+              {supportedAssets.map((asset, index) => {
+                return (
+                  <View key={asset.symbol} transform={[{ translateX: index * ms(10) * -0.5 }]}>
+                    <AssetLogo uri={asset.image} width={ms(24)} height={ms(24)} />
+                  </View>
+                );
+              })}
+            </XStack>
           </View>
         </View>
       </View>

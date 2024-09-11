@@ -25,7 +25,10 @@ function about() {
   router.push("../add-funds/add-crypto-about");
 }
 
-const supportedAssets = [{ image: assetLogos.USDC }];
+// TODO remove limitation for next release
+const supportedAssets = Object.entries(assetLogos)
+  .filter(([symbol]) => symbol !== "ETH")
+  .map(([symbol, image]) => ({ symbol, image }));
 
 export default function AddCrypto() {
   const { canGoBack } = router;
@@ -99,7 +102,7 @@ export default function AddCrypto() {
             </View>
             <View
               flex={1}
-              gap={ms(15)}
+              gap="$s4"
               borderBottomWidth={1}
               borderBottomColor="$borderNeutralSoft"
               paddingBottom={ms(20)}
@@ -115,10 +118,7 @@ export default function AddCrypto() {
                     <View flexDirection="row" alignItems="center" gap={ms(10)}>
                       <AssetLogo uri={asset.image} width={ms(32)} height={ms(32)} />
                       <Text fontSize={ms(18)} fontWeight="bold">
-                        USDC
-                      </Text>
-                      <Text fontSize={ms(13)} color="$uiNeutralSecondary">
-                        USD Coin
+                        {asset.symbol}
                       </Text>
                     </View>
                   </View>
