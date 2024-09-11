@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    globalSetup: "test/anvil.ts",
+    globalSetup: "test/utils/anvil.ts",
     env: {
       COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
       CRYPTOMATE_WEBHOOK_KEY: "cryptomate",

@@ -5,7 +5,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import { client as anvilClient } from "./anvil";
+import { client as anvilClient } from "./utils/anvil";
 import app from "../hooks/cryptomate";
 import deriveAddress from "../utils/deriveAddress";
 import keeper from "../utils/keeper";
