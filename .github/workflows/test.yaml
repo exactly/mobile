@@ -32,5 +32,5 @@ jobs:
       - run: pip install -r contracts/requirements.txt
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run --recursive --no-bail build
-      - run: pnpm test --recursive --no-bail
+      - run: pnpm run --recursive --aggregate-output --no-bail build
+      - run: pnpm test --recursive --aggregate-output --no-bail

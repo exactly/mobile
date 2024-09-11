@@ -2,7 +2,7 @@
   "name": "@exactly/plugin",
   "scripts": {
     "build": "forge build",
-    "test": "concurrently 'npm:test:*' --group -c auto",
+    "test": "pnpm run --aggregate-output --workspace-concurrency 1 /test:/",
     "test:fmt": "forge fmt --check",
     "test:sizes": "forge build --sizes --skip test --skip script",
     "test:forge": "forge test",
