@@ -59,7 +59,7 @@
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
     "react-native-onesignal": "^5.2.4",
-    "react-native-passkeys": "github:cruzdanilo/react-native-passkeys#c745e8f",
+    "react-native-passkeys": "github:cruzdanilo/react-native-passkeys#a6bf796",
     "react-native-persona": "^2.9.3",
     "react-native-quick-crypto": "^0.7.4",
     "react-native-reanimated": "~3.10.1",
@@ -71,7 +71,7 @@
     "react-onesignal": "^3.0.1",
     "tamagui": "^1.110.3",
     "valibot": "^0.41.0",
-    "viem": "^2.21.4",
+    "viem": "^2.21.5",
     "wagmi": "^2.12.10",
     "zustand": "^4.5.5"
   },
