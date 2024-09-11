@@ -35,16 +35,12 @@ const authorization = {
 
 describe("validation", () => {
   it("fails with bad key", async () => {
-    expect.assertions(1);
-
     const response = await appClient.index.$post({ ...authorization, header: { "x-webhook-key": "bad" } });
 
     expect(response.status).toBe(401);
   });
 
   it("accepts valid request", async () => {
-    expect.assertions(2);
-
     const response = await appClient.index.$post(authorization);
 
     expect(response.status).toBe(200);
@@ -80,8 +76,6 @@ describe("authorization", () => {
   });
 
   it("authorizes", async () => {
-    expect.assertions(2);
-
     const response = await appClient.index.$post({
       ...authorization,
       json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
