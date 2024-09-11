@@ -65,6 +65,10 @@ module.exports = {
       extends: ["plugin:@vitest/legacy-all"],
       rules: {
         "@vitest/no-hooks": "off",
+        "@vitest/prefer-expect-assertions": [
+          "warn",
+          { onlyFunctionsWithExpectInLoop: true, onlyFunctionsWithExpectInCallback: true },
+        ],
       },
     },
   ],
