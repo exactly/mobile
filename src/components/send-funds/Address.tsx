@@ -26,7 +26,7 @@ export default function AddressSelection() {
   const [permission, requestPermission] = useCameraPermissions();
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { Field, Subscribe, handleSubmit, setFieldValue } = useForm<{ receiver: string }, ValibotValidator>({
-    defaultValues: withdraw?.receiver && { receiver: withdraw.receiver },
+    defaultValues: { receiver: withdraw?.receiver ?? "" },
     onSubmit: ({ value }) => {
       const receiver = parse(Address, value.receiver);
       queryClient.setQueryData<Withdraw>(["withdrawal"], (old) =>
