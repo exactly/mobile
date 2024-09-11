@@ -4,7 +4,6 @@ import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import anvilClient from "./utils/anvilClient";
 import "./utils/mockDeployments";
 import app from "../hooks/cryptomate";
 import deriveAddress from "../utils/deriveAddress";
@@ -54,7 +53,6 @@ describe("authorization", () => {
 
   beforeAll(async () => {
     const { exaAccountFactoryAbi, exaPluginAbi } = await import("@exactly/common/generated/chain");
-    await anvilClient.setBalance({ address: keeper.account.address, value: 10n ** 20n });
     await keeper.writeContract({
       address: inject("USDC"),
       abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],

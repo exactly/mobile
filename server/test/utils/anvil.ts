@@ -19,13 +19,16 @@ export default async function setup({ provide }: GlobalSetupContext) {
     throw new Error("no anvil account");
   }
 
+  const keeperAddress = privateKeyToAddress(padHex("0x69"));
+  await anvilClient.setBalance({ address: keeperAddress, value: 10n ** 24n });
+
   const shell = {
     cwd: "node_modules/@exactly/plugin",
     env: {
       OPTIMISM_ETHERSCAN_KEY: "",
       COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
       ISSUER_ADDRESS: privateKeyToAddress(padHex("0x420")),
-      KEEPER_ADDRESS: privateKeyToAddress(padHex("0x69")),
+      KEEPER_ADDRESS: keeperAddress,
     } as Record<string, string>,
   };
 
