@@ -14,6 +14,7 @@ export default function useMarketAccount(address?: Address) {
   return {
     account,
     market: useMemo(() => markets?.find(({ market }) => market === address), [address, markets]),
+    markets,
     queryKey,
   };
 }

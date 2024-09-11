@@ -1,24 +1,19 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import { Address } from "@exactly/common/types";
+import type { Address } from "@exactly/common/types";
 import { ArrowLeft, ArrowRight, User } from "@tamagui/lucide-icons";
-import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-adapter";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms, vs } from "react-native-size-matters";
-import { SvgUri } from "react-native-svg";
-import { Avatar, ScrollView, ToggleGroup, XStack, YStack } from "tamagui";
-import { parse } from "valibot";
+import { ms } from "react-native-size-matters";
+import { Avatar, ScrollView, XStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../../generated/contracts";
-import assetLogos from "../../utils/assetLogos";
-import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
+import AssetSelector from "../shared/AssetSelector";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -28,22 +23,12 @@ export default function AssetSelection() {
   const { canGoBack } = router;
   const { address } = useAccount();
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
+  const [selectedMarket, setSelectedMarket] = React.useState<Address | undefined>();
 
   const { data: markets } = useReadPreviewerExactly({
     address: previewerAddress,
     account: address,
     args: [address ?? zeroAddress],
-  });
-
-  const { Field, Subscribe, handleSubmit } = useForm<{ market: string }, ValibotValidator>({
-    defaultValues: withdraw?.market && { market: withdraw.market },
-    onSubmit: ({ value }) => {
-      const market = parse(Address, value.market);
-      queryClient.setQueryData<Withdraw>(["withdrawal"], (old) => {
-        return old ? { ...old, market } : { market, amount: 0n };
-      });
-      router.push("/send-funds/amount");
-    },
   });
 
   const positions = markets
@@ -53,6 +38,15 @@ export default function AssetSelection() {
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0);
+
+  const handleSubmit = () => {
+    if (selectedMarket) {
+      queryClient.setQueryData<Withdraw>(["withdrawal"], (old) => {
+        return old ? { ...old, market: selectedMarket } : { market: selectedMarket, amount: 0n };
+      });
+      router.push("/send-funds/amount");
+    }
+  };
 
   return (
     <SafeView fullScreen>
@@ -95,105 +89,21 @@ export default function AssetSelection() {
                 </XStack>
               </XStack>
             )}
-            {positions && positions.length > 0 ? (
-              <Field name="market" validatorAdapter={valibotValidator()} validators={{ onChange: Address }}>
-                {({ state: { value, meta }, handleChange }) => (
-                  <YStack gap="$s2">
-                    <ToggleGroup
-                      type="single"
-                      flexDirection="column"
-                      backgroundColor="transparent"
-                      borderWidth={1}
-                      borderColor="$borderNeutralSeparator"
-                      padding="$s3"
-                      onValueChange={handleChange}
-                      value={value}
-                    >
-                      {positions.map(
-                        ({ symbol, assetName, floatingDepositAssets, decimals, usdValue, market }, index) => (
-                          <ToggleGroup.Item
-                            key={index}
-                            value={market}
-                            paddingHorizontal="$s4"
-                            paddingVertical={0}
-                            backgroundColor="transparent"
-                            alignItems="stretch"
-                            borderWidth={1}
-                            borderRadius="$r_2"
-                            borderColor={value === market ? "$borderBrandStrong" : "transparent"}
-                          >
-                            <View
-                              flexDirection="row"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              paddingVertical={vs(10)}
-                            >
-                              <View flexDirection="row" gap={ms(10)} alignItems="center">
-                                <SvgUri
-                                  uri={assetLogos[symbol as keyof typeof assetLogos]}
-                                  width={ms(32)}
-                                  height={ms(32)}
-                                />
-                                <View gap="$s2" alignItems="flex-start">
-                                  <Text fontSize={ms(15)} fontWeight="bold">
-                                    {symbol}
-                                  </Text>
-                                  <Text fontSize={ms(12)} color="$uiNeutralSecondary">
-                                    {assetName}
-                                  </Text>
-                                </View>
-                              </View>
-                              <View gap="$s2" flex={1}>
-                                <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                                  <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
-                                    {(Number(usdValue) / 1e18).toLocaleString(undefined, {
-                                      style: "currency",
-                                      currency: "USD",
-                                    })}
-                                  </Text>
-                                </View>
-                                <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                                  {Number(floatingDepositAssets / BigInt(10 ** decimals)).toLocaleString()} {symbol}
-                                </Text>
-                              </View>
-                            </View>
-                          </ToggleGroup.Item>
-                        ),
-                      )}
-                    </ToggleGroup>
-                    {meta.errors.length > 0 ? (
-                      <Text padding="$s3" footnote color="$uiNeutralSecondary">
-                        {meta.errors[0]?.toString().split(",")[0]}
-                      </Text>
-                    ) : undefined}
-                  </YStack>
-                )}
-              </Field>
-            ) : (
-              <Text textAlign="center" emphasized footnote color="$uiNeutralSecondary">
-                No available assets.
-              </Text>
-            )}
-            <Subscribe selector={({ canSubmit }) => canSubmit}>
-              {(canSubmit) => {
-                return (
-                  <Button
-                    contained
-                    main
-                    spaced
-                    disabled={!canSubmit}
-                    iconAfter={
-                      <ArrowRight color={canSubmit ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"} />
-                    }
-                    onPress={() => {
-                      handleSubmit().catch(handleError);
-                    }}
-                  >
-                    Next
-                  </Button>
-                );
+            <AssetSelector positions={positions} onSubmit={setSelectedMarket} />
+            <Button
+              contained
+              main
+              spaced
+              disabled={!selectedMarket}
+              iconAfter={
+                <ArrowRight color={selectedMarket ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"} />
+              }
+              onPress={() => {
+                handleSubmit();
               }}
-            </Subscribe>
+            >
+              Next
+            </Button>
           </View>
         </ScrollView>
       </View>
