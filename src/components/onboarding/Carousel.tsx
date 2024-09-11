@@ -70,7 +70,7 @@ export default function Carousel() {
   const { connect } = useConnect();
 
   const flatListReference = useRef<Animated.FlatList<Page>>(null);
-  const x = useSharedValue(0);
+  const offsetX = useSharedValue(0);
   const progress = useSharedValue(0);
 
   const currentItem = pages[activeIndex] ?? pages[0];
@@ -87,15 +87,15 @@ export default function Carousel() {
 
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
-      x.value = event.contentOffset.x;
+      offsetX.value = event.contentOffset.x;
     },
   });
 
   const renderItem = useCallback(
     ({ item, index }: { item: Page; index: number }) => {
-      return <ListItem item={item} index={index} x={x} />;
+      return <ListItem item={item} index={index} x={offsetX} />;
     },
-    [x],
+    [offsetX],
   );
 
   const scrollToNextPage = useCallback(() => {
@@ -157,7 +157,7 @@ export default function Carousel() {
       >
         <View flexDirection="column" alignSelf="stretch" gap="$s5">
           <View flexDirection="row" justifyContent="center">
-            <Pagination length={pages.length} x={x} progress={progress} />
+            <Pagination length={pages.length} x={offsetX} progress={progress} />
           </View>
 
           <View flexDirection="column" gap="$s5">
