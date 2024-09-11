@@ -24,7 +24,6 @@ import {
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
-  getAddress,
   isHash,
   padHex,
 } from "viem";
@@ -105,7 +104,8 @@ export default new Hono().post(
     setContext("cryptomate", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
     const account =
       payload.data.metadata?.account ??
-      getAddress(
+      v.parse(
+        Address,
         await database
           .select({ id: credentials.id, account: credentials.account })
           .from(cards)

@@ -1,4 +1,4 @@
-import { type InferOutput, check, custom, email, number, object, pipe, regex, string, transform } from "valibot";
+import { type InferOutput, brand, check, custom, email, number, object, pipe, regex, string, transform } from "valibot";
 import {
   type Address as ViemAddress,
   checksumAddress,
@@ -13,6 +13,7 @@ export const Address = pipe(
   string(),
   check((input) => isAddress(input, { strict: false })),
   transform((input) => checksumAddress(input as ViemAddress)),
+  brand("Address"),
 );
 
 export const Base64URL = pipe(string(), regex(/^[\w-]+$/));

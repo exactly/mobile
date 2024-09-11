@@ -1,8 +1,9 @@
+import { Address } from "@exactly/common/types";
 import { Mutex } from "async-mutex";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
-import { getAddress } from "viem";
+import { parse } from "valibot";
 
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
@@ -43,7 +44,7 @@ app.get("/", async (c) => {
           : `+${data.attributes["phone-number"]}`,
       );
       const card = await createCard({
-        account: getAddress(credential.account),
+        account: parse(Address, credential.account),
         cardholder: [data.attributes["name-first"], data.attributes["name-middle"], data.attributes["name-last"]]
           .filter(Boolean)
           .join(" "),

@@ -12,7 +12,7 @@ import createDebug from "debug";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import * as v from "valibot";
-import { BaseError, bytesToBigInt, ContractFunctionRevertedError, getAddress } from "viem";
+import { BaseError, bytesToBigInt, ContractFunctionRevertedError } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
@@ -77,7 +77,7 @@ app.post(
         Object.fromEntries(
           result.map(
             ({ account, publicKey, factory }) =>
-              [getAddress(account), { publicKey, factory: getAddress(factory) }] as const,
+              [v.parse(Address, account), { publicKey, factory: v.parse(Address, factory) }] as const,
           ),
         ),
       );
@@ -101,7 +101,7 @@ app.post(
                 redis
                   .hset(`${String(chain.id)}:${underlying}`, { market: address, index })
                   .catch((error: unknown) => captureException(error));
-                return [underlying, { address, index }] as const;
+                return [underlying, { address: v.parse(Address, address), index }] as const;
               }),
             ),
           )[asset];

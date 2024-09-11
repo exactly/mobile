@@ -66,7 +66,12 @@ app.post(
         switch (event.eventName) {
           case "Proposed":
             await redis.zadd("withdraw", Number(event.args.unlock), serialize(v.parse(Withdraw, event.args)));
-            return scheduleWithdraw(event.args);
+            return scheduleWithdraw({
+              ...event.args,
+              account: v.parse(Address, event.args.account),
+              market: v.parse(Address, event.args.market),
+              receiver: v.parse(Address, event.args.receiver),
+            });
         }
       }),
     ).catch((error: unknown) => captureException(error));
