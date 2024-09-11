@@ -37,7 +37,7 @@ redis
 
 const app = new Hono();
 
-app.post(
+export default app.post(
   "/",
   headerValidator(signingKey),
   jsonValidator(
@@ -78,8 +78,6 @@ app.post(
     return c.json({});
   },
 );
-
-export default app;
 
 async function scheduleWithdraw({ account, market, receiver, amount, unlock }: v.InferOutput<typeof Withdraw>) {
   return setTimeout((Number(unlock) + 10) * 1000 - Date.now()).then(() =>

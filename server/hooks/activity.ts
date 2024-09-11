@@ -31,7 +31,7 @@ Object.assign(debug, { inspectOpts: { depth: undefined } });
 
 const app = new Hono();
 
-app.post(
+export default app.post(
   "/",
   headerValidator(signingKey),
   jsonValidator(
@@ -189,7 +189,5 @@ app.post(
     return c.json({});
   },
 );
-
-export default app;
 
 const MarketEntry = v.object({ address: Address, index: v.pipe(v.string(), v.transform(Number)) });

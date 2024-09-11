@@ -20,22 +20,24 @@ import androidFingerprint from "./utils/android/fingerprint";
 import appOrigin from "./utils/appOrigin";
 
 const app = new Hono();
-app.use("*", sentry());
+app.use(sentry());
 app.use(trimTrailingSlash());
-
 app.use("/api/*", cors({ origin: appOrigin, credentials: true }));
-app.route("/api/auth/authentication", authentication);
-app.route("/api/auth/registration", registration);
-app.route("/api/activity", activity);
-app.route("/api/card", card);
-app.route("/api/kyc", kyc);
-app.route("/api/passkey", passkey);
+app.use("/.well-known/*", serveStatic());
+
+const api = app
+  .route("/api/auth/authentication", authentication)
+  .route("/api/auth/registration", registration)
+  .route("/api/activity", activity)
+  .route("/api/card", card)
+  .route("/api/kyc", kyc)
+  .route("/api/passkey", passkey);
+export default api;
+export type ExaServer = typeof api;
 
 app.route("/hooks/activity", activityHook);
 app.route("/hooks/block", block);
 app.route("/hooks/cryptomate", cryptomate);
-
-app.use("/.well-known/*", serveStatic());
 app.get("/.well-known/assetlinks.json", (c) =>
   c.json([
     {

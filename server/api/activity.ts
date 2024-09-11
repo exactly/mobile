@@ -6,10 +6,9 @@ import database, { cards } from "../database";
 import auth from "../middleware/auth";
 
 const app = new Hono();
+app.use(auth);
 
-app.use("*", auth);
-
-app.get("/", async (c) => {
+export default app.get("/", async (c) => {
   const credentialId = c.get("credentialId");
   const userCards = await database.query.cards.findMany({
     where: eq(cards.credentialId, credentialId),
@@ -43,8 +42,6 @@ app.get("/", async (c) => {
       .reverse(),
   );
 });
-
-export default app;
 
 const Transaction = object({
   operation_id: string(),

@@ -18,10 +18,9 @@ function createMutex(credentialId: string) {
 }
 
 const app = new Hono();
+app.use(auth);
 
-app.use("*", auth);
-
-app.get("/", async (c) => {
+export default app.get("/", async (c) => {
   const credentialId = c.get("credentialId");
   const mutex = mutexes.get(credentialId) ?? createMutex(credentialId);
   return mutex
@@ -59,5 +58,3 @@ app.get("/", async (c) => {
       if (!mutex.isLocked()) mutexes.delete(credentialId);
     });
 });
-
-export default app;
