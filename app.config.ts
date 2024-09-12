@@ -14,7 +14,6 @@ export default {
   scheme: "exactly",
   version: metadata.version,
   orientation: "portrait",
-  assetBundlePatterns: ["**/*"],
   userInterfaceStyle: "automatic",
   android: {
     package: "app.exactly",
