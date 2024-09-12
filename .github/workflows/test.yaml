@@ -34,3 +34,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run --recursive --aggregate-output --no-bail build
       - run: pnpm test --recursive --aggregate-output --no-bail
+
+      - uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
