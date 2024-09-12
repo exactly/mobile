@@ -23,7 +23,8 @@ export default function AssetList() {
       symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
-    .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0);
+    .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0)
+    .sort((a, b) => Number(b.usdValue) - Number(a.usdValue));
   return (
     <View width="100%">
       {positions?.map(({ symbol, floatingDepositAssets, decimals, usdValue }, index) => (
@@ -56,7 +57,15 @@ export default function AssetList() {
                 </Text>
               </View>
               <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                {Number(floatingDepositAssets / BigInt(10 ** decimals)).toLocaleString()} {symbol}
+                {(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: Math.min(
+                    8,
+                    Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(usdValue) / 1e18)))),
+                  ),
+                  useGrouping: false,
+                })}{" "}
+                {symbol}
               </Text>
             </View>
           </View>
