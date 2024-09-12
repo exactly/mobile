@@ -5,6 +5,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import "./utils/mockDeployments";
+import "./utils/mockSentry";
 import app from "../hooks/cryptomate";
 import deriveAddress from "../utils/deriveAddress";
 import keeper from "../utils/keeper";
