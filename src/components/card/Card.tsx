@@ -1,16 +1,17 @@
 import type { Passkey } from "@exactly/common/types";
-import { ChevronDown, Dot, Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
+import { ChevronDown, Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Platform, Pressable } from "react-native";
 import { Inquiry } from "react-native-persona";
+import { useSharedValue } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Switch, styled, Spinner, XStack, Accordion, Square } from "tamagui";
 
-import CardDetails from "./CardDetails";
-import ISO7810_ASPECT_RATIO from "./ISO7810_ASPECT_RATIO";
+import CardBack from "./CardBack";
+import CardFront from "./CardFront";
+import FlipCard from "./FlipCard";
 import SpendingLimitButton from "./SpendingLimitButton";
-import ExaCard from "../../assets/images/card.svg";
 import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
@@ -35,6 +36,7 @@ export default function Card() {
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
   const { data: alertShown } = useQuery({ queryKey: ["settings", "alertShown"] });
   const [detailsShown, setDetailsShown] = useState(false);
+  const flipped = useSharedValue(false);
 
   const {
     data: card,
@@ -56,6 +58,7 @@ export default function Card() {
       if (!passkey || isRevealing) return;
       if (detailsShown) {
         setDetailsShown(false);
+        flipped.value = false;
         return;
       }
       try {
@@ -80,6 +83,7 @@ export default function Card() {
 
       const { error } = await refetchCard();
       setDetailsShown(!error);
+      flipped.value = !error;
     },
   });
 
@@ -97,7 +101,18 @@ export default function Card() {
               </Pressable>
             </View>
             <View alignItems="center" gap="$s5" width="100%">
-              {card && detailsShown && !cardError && <CardDetails uri={card.url} />}
+              <FlipCard
+                flipped={flipped}
+                Front={<CardFront lastFour={card?.lastFour} />}
+                Back={card?.url ? <CardBack uri={card.url} flipped={flipped.value} /> : undefined}
+              />
+
+              {(cardError ?? revealError) && (
+                <Text color="$uiErrorPrimary" fontWeight="bold">
+                  {cardError ? cardError.message : revealError ? revealError.message : "Error"}
+                </Text>
+              )}
+
               {detailsShown && alertShown && (
                 <XStack
                   borderWidth={1}
@@ -143,52 +158,6 @@ export default function Card() {
                     </View>
                   </View>
                 </XStack>
-              )}
-              {!detailsShown && (
-                <View
-                  borderRadius="$r3"
-                  overflow="hidden"
-                  width="100%"
-                  maxWidth={ms(350)}
-                  aspectRatio={ISO7810_ASPECT_RATIO}
-                  alignSelf="center"
-                >
-                  <ExaCard width="100%" height="100%" />
-                  <View
-                    position="absolute"
-                    flexDirection="row"
-                    alignItems="center"
-                    justifyContent="center"
-                    gap="$s2"
-                    bottom={10}
-                    left={10}
-                  >
-                    <View flexDirection="row" gap="$s2">
-                      {Array.from({ length: 4 }).map((_, index) => (
-                        <Dot
-                          key={index}
-                          color="white"
-                          size={ms(17)}
-                          transform={[{ translateX: index * ms(12) * -1 }, { translateY: 1 }]}
-                        />
-                      ))}
-                    </View>
-                    <Text
-                      color="white"
-                      emphasized
-                      callout
-                      paddingTop={card?.lastFour ? 0 : ms(3)}
-                      transform={[{ translateX: ms(40) * -1 }]}
-                    >
-                      {card?.lastFour}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              {(cardError ?? revealError) && (
-                <Text color="$uiErrorPrimary" fontWeight="bold">
-                  {cardError ? cardError.message : revealError ? revealError.message : "Error"}
-                </Text>
               )}
               <View flexDirection="row" justifyContent="space-between" width="100%" gap="$s4">
                 <StyledAction>
