@@ -1,4 +1,4 @@
-import { ArrowUpFromLine } from "@tamagui/lucide-icons";
+import { CircleDollarSign } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
 
@@ -32,7 +32,7 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
         justifyContent="center"
         alignItems="center"
       >
-        <ArrowUpFromLine color="$iconBrandDefault" />
+        <CircleDollarSign color="$iconBrandDefault" />
       </View>
       <View flex={1} gap="$s2">
         <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
