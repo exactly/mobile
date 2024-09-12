@@ -78,7 +78,11 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
               <View gap="$s2" flex={1}>
                 <View flexDirection="row" alignItems="center" justifyContent="flex-end">
                   <Text fontSize={ms(15)} fontWeight="bold" textAlign="right" color="$uiNeutralTertiary">
-                    {(Number(usdValue) / 1e18).toLocaleString(undefined, { style: "currency", currency: "USD" })}
+                    {(Number(usdValue) / 1e18).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      currencyDisplay: "narrowSymbol",
+                    })}
                   </Text>
                 </View>
                 <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">

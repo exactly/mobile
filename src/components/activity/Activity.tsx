@@ -89,11 +89,12 @@ export default function Activity() {
                               {Number(usdAmount).toLocaleString(undefined, {
                                 style: "currency",
                                 currency: "USD",
+                                currencyDisplay: "narrowSymbol",
                               })}
                             </Text>
                           </View>
                           <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                            {Number(amount).toLocaleString()} {currency ?? "USD"}
+                            {Number(amount).toLocaleString(undefined, { currencyDisplay: "narrowSymbol" })} {currency}
                           </Text>
                         </View>
                       </View>

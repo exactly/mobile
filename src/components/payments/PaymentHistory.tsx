@@ -62,7 +62,7 @@ export default function PaymentHistory() {
                         style: "currency",
                         currency: "USD",
                         currencySign: "standard",
-                        currencyDisplay: "symbol",
+                        currencyDisplay: "narrowSymbol",
                       })}
                     </Text>
                   </View>

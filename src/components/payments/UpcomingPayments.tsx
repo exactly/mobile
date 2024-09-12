@@ -65,6 +65,7 @@ function ListItem({ maturity, amount }: Payment) {
             {(Number(amount) / 1e18).toLocaleString(undefined, {
               style: "currency",
               currency: "USD",
+              currencyDisplay: "narrowSymbol",
             })}
           </Text>
         </View>

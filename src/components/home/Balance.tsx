@@ -65,6 +65,7 @@ export default function Balance() {
                     {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
+                      currencyDisplay: "narrowSymbol",
                     })}
                   </Text>
                   <Square animation="quick" rotate={open ? "180deg" : "0deg"}>

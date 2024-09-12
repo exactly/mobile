@@ -51,6 +51,7 @@ export default function AssetList() {
                   {(Number(usdValue) / 1e18).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
+                    currencyDisplay: "narrowSymbol",
                   })}
                 </Text>
               </View>

@@ -52,6 +52,7 @@ export default function Review({
                   {(Number(usdValue) / 1e18).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
+                    currencyDisplay: "narrowSymbol",
                   })}
                 </Text>
               </YStack>

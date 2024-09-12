@@ -97,6 +97,7 @@ export default function Amount() {
                     <Text callout color="$uiNeutralPrimary">
                       {(Number(available) / 1e18).toLocaleString(undefined, {
                         currency: "USD",
+                        currencyDisplay: "narrowSymbol",
                       })}{" "}
                       {market.assetName}
                     </Text>

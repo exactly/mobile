@@ -40,6 +40,7 @@ export default function SpendingLimitButton({ title, limit }: SpendingLimitButto
             {limit.toLocaleString(undefined, {
               style: "currency",
               currency: "USD",
+              currencyDisplay: "narrowSymbol",
               maximumFractionDigits: 0,
             })}
           </Text>

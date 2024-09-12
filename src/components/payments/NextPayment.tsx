@@ -151,6 +151,7 @@ export default function NextPayment() {
                   {(Number(duePayment.position) / 1e18).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
+                    currencyDisplay: "narrowSymbol",
                   })}
                 </Text>
                 <Text
@@ -164,6 +165,7 @@ export default function NextPayment() {
                   {(Number(duePayment.previewValue) / 1e18).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
+                    currencyDisplay: "narrowSymbol",
                   })}
                 </Text>
               </View>

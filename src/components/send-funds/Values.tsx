@@ -27,6 +27,7 @@ export default function Values({ amount, assetName, usdValue }: ValuesProperties
           {(Number(usdValue) / 1e18).toLocaleString(undefined, {
             style: "currency",
             currency: "USD",
+            currencyDisplay: "narrowSymbol",
           })}
         </Text>
       </View>

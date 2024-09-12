@@ -43,7 +43,11 @@ export default function Payments() {
                   fontWeight="bold"
                   overflow="hidden"
                 >
-                  {(Number(usdDue) / 1e18).toLocaleString(undefined, { style: "currency", currency: "USD" })}
+                  {(Number(usdDue) / 1e18).toLocaleString(undefined, {
+                    style: "currency",
+                    currency: "USD",
+                    currencyDisplay: "narrowSymbol",
+                  })}
                 </Text>
               </View>
               <View gap="$s3" alignItems="center">
