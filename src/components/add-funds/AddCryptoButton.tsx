@@ -10,8 +10,9 @@ import assetLogos from "../../utils/assetLogos";
 import AssetLogo from "../shared/AssetLogo";
 import Text from "../shared/Text";
 
+// TODO remove limitation for next release
 const supportedAssets = Object.entries(assetLogos)
-  .filter(([symbol]) => symbol !== "ETH")
+  .filter(([symbol]) => symbol !== "ETH" && symbol !== "USDC.e" && symbol !== "DAI")
   .map(([symbol, image]) => ({ symbol, image }));
 
 function navigate() {

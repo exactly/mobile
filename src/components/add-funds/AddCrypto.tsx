@@ -27,7 +27,7 @@ function about() {
 
 // TODO remove limitation for next release
 const supportedAssets = Object.entries(assetLogos)
-  .filter(([symbol]) => symbol !== "ETH")
+  .filter(([symbol]) => symbol !== "ETH" && symbol !== "USDC.e" && symbol !== "DAI")
   .map(([symbol, image]) => ({ symbol, image }));
 
 export default function AddCrypto() {
