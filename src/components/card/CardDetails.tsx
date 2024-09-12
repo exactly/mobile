@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Platform } from "react-native";
+import { ms } from "react-native-size-matters";
 import { WebView } from "react-native-webview";
 import { Spinner, styled } from "tamagui";
 
@@ -12,8 +13,8 @@ export default function CardDetails({ uri }: { uri: string }) {
     <View
       borderRadius="$r3"
       overflow="hidden"
-      maxHeight={220}
       width="100%"
+      maxWidth={ms(350)}
       aspectRatio={ISO7810_ASPECT_RATIO}
       alignSelf="center"
     >
@@ -57,7 +58,7 @@ export default function CardDetails({ uri }: { uri: string }) {
 }
 
 const StyledWebView = styled(WebView, {});
-const styles = { height: 220, aspectRatio: ISO7810_ASPECT_RATIO, border: "none" };
+const styles = { aspectRatio: ISO7810_ASPECT_RATIO, border: "none" };
 
 const LoadingIndicator = (
   <View position="absolute" top={0} left={0} right={0} bottom={0} alignItems="center" justifyContent="center">

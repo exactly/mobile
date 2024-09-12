@@ -1,5 +1,5 @@
 import type { Passkey } from "@exactly/common/types";
-import { ChevronDown, Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
+import { ChevronDown, Dot, Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Platform, Pressable } from "react-native";
@@ -146,8 +146,8 @@ export default function Card() {
                 <View
                   borderRadius="$r3"
                   overflow="hidden"
-                  maxHeight={220}
                   width="100%"
+                  maxWidth={ms(350)}
                   aspectRatio={ISO7810_ASPECT_RATIO}
                   alignSelf="center"
                 >
@@ -157,15 +157,28 @@ export default function Card() {
                     flexDirection="row"
                     alignItems="center"
                     justifyContent="center"
-                    gap="$s1"
+                    gap="$s2"
                     bottom={10}
                     left={10}
                   >
-                    <Text color="white" emphasized callout verticalAlign="center" paddingTop={ms(3)}>
-                      **** **** ****
-                    </Text>
-                    <Text color="white" emphasized callout paddingTop={card?.lastFour ? 0 : ms(3)}>
-                      {card?.lastFour ?? "****"}
+                    <View flexDirection="row" gap="$s2">
+                      {Array.from({ length: 4 }).map((_, index) => (
+                        <Dot
+                          key={index}
+                          color="white"
+                          size={ms(17)}
+                          transform={[{ translateX: index * ms(12) * -1 }, { translateY: 1 }]}
+                        />
+                      ))}
+                    </View>
+                    <Text
+                      color="white"
+                      emphasized
+                      callout
+                      paddingTop={card?.lastFour ? 0 : ms(3)}
+                      transform={[{ translateX: ms(40) * -1 }]}
+                    >
+                      {card?.lastFour}
                     </Text>
                   </View>
                 </View>
