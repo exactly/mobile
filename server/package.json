@@ -6,7 +6,7 @@
     "db:push": "drizzle-kit push",
     "test": "pnpm run --aggregate-output /test:/",
     "test:ts": "tsc",
-    "test:vi": "vitest --run",
+    "test:vi": "vitest run",
     "dev": "tsx --watch --env-file=.env --require=./instrument.cjs index.ts"
   },
   "bin": "./dist/index.cjs",

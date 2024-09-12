@@ -1,4 +1,5 @@
 /app/
+/coverage/
 /dist/
 /drizzle/
 /generated/
