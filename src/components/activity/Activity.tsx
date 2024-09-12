@@ -54,7 +54,7 @@ export default function Activity() {
                   <View
                     key={id}
                     flexDirection="row"
-                    gap={ms(16)}
+                    gap="$s4"
                     alignItems="center"
                     paddingHorizontal="$s5"
                     paddingTop={index === 0 ? "$s4" : 0}
@@ -71,12 +71,12 @@ export default function Activity() {
                       <ArrowUpFromLine color="$iconBrandDefault" />
                     </View>
                     <View flex={1} gap="$s2">
-                      <View flexDirection="row" justifyContent="space-between" alignItems="center">
-                        <View gap="$s2">
-                          <Text subHeadline color="$uiNeutralPrimary">
+                      <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
+                        <View gap="$s2" flexShrink={1}>
+                          <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
                             {merchant.name}
                           </Text>
-                          <Text caption color="$uiNeutralSecondary">
+                          <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
                             {[merchant.city, merchant.state, merchant.country]
                               .filter(Boolean)
                               .filter((field) => field !== "null")
