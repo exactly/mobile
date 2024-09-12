@@ -14,6 +14,7 @@ import chain from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/types";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
+import { setUser } from "@sentry/react-native";
 import { base64URLStringToBuffer, bufferToBase64URLString } from "@simplewebauthn/browser";
 import { Platform } from "react-native";
 import { get } from "react-native-passkeys";
@@ -33,39 +34,41 @@ import publicClient from "./publicClient";
 
 export default async function createAccountClient({ credentialId, factory, x, y }: Passkey) {
   const transport = custom(publicClient);
+  const account = await toSmartContractAccount({
+    chain,
+    transport,
+    source: "WebauthnAccount" as const,
+    entryPoint: getEntryPoint(chain, { version: "0.6.0" }),
+    getAccountInitCode: () => Promise.resolve(accountInitCode({ factory, x, y })),
+    getDummySignature: () => "0x",
+    async signUserOperationHash(uoHash) {
+      const credential = await get({
+        rpId: domain,
+        challenge: bufferToBase64URLString(hexToBytes(hashMessage({ raw: uoHash }), { size: 32 })),
+        allowCredentials: Platform.OS === "android" ? [] : [{ id: credentialId, type: "public-key" }], // HACK fix android credential filtering
+        userVerification: "preferred",
+      });
+      if (!credential) throw new Error("no credential");
+      const response = credential.response;
+      const clientDataJSON = new TextDecoder().decode(base64URLStringToBuffer(response.clientDataJSON));
+      const typeIndex = BigInt(clientDataJSON.indexOf('"type":"'));
+      const challengeIndex = BigInt(clientDataJSON.indexOf('"challenge":"'));
+      const authenticatorData = bytesToHex(new Uint8Array(base64URLStringToBuffer(response.authenticatorData)));
+      const signature = AsnParser.parse(base64URLStringToBuffer(response.signature), ECDSASigValue);
+      const r = bytesToBigInt(new Uint8Array(signature.r));
+      let s = bytesToBigInt(new Uint8Array(signature.s));
+      if (s > P256_N / 2n) s = P256_N - s; // pass malleability guard
+      return webauthn({ authenticatorData, clientDataJSON, challengeIndex, typeIndex, r, s });
+    },
+    signMessage: () => Promise.resolve("0x..."), // TODO implement
+    signTypedData: () => Promise.resolve("0x..."), // TODO implement
+    ...standardExecutor,
+  });
+  setUser({ id: account.address });
   return createSmartAccountClient({
     chain,
     transport,
-    account: await toSmartContractAccount({
-      chain,
-      transport,
-      source: "WebauthnAccount" as const,
-      entryPoint: getEntryPoint(chain, { version: "0.6.0" }),
-      getAccountInitCode: () => Promise.resolve(accountInitCode({ factory, x, y })),
-      getDummySignature: () => "0x",
-      async signUserOperationHash(uoHash) {
-        const credential = await get({
-          rpId: domain,
-          challenge: bufferToBase64URLString(hexToBytes(hashMessage({ raw: uoHash }), { size: 32 })),
-          allowCredentials: Platform.OS === "android" ? [] : [{ id: credentialId, type: "public-key" }], // HACK fix android credential filtering
-          userVerification: "preferred",
-        });
-        if (!credential) throw new Error("no credential");
-        const response = credential.response;
-        const clientDataJSON = new TextDecoder().decode(base64URLStringToBuffer(response.clientDataJSON));
-        const typeIndex = BigInt(clientDataJSON.indexOf('"type":"'));
-        const challengeIndex = BigInt(clientDataJSON.indexOf('"challenge":"'));
-        const authenticatorData = bytesToHex(new Uint8Array(base64URLStringToBuffer(response.authenticatorData)));
-        const signature = AsnParser.parse(base64URLStringToBuffer(response.signature), ECDSASigValue);
-        const r = bytesToBigInt(new Uint8Array(signature.r));
-        let s = bytesToBigInt(new Uint8Array(signature.s));
-        if (s > P256_N / 2n) s = P256_N - s; // pass malleability guard
-        return webauthn({ authenticatorData, clientDataJSON, challengeIndex, typeIndex, r, s });
-      },
-      signMessage: () => Promise.resolve("0x..."), // TODO implement
-      signTypedData: () => Promise.resolve("0x..."), // TODO implement
-      ...standardExecutor,
-    }),
+    account,
     ...alchemyGasManagerMiddleware(publicClient, { policyId: alchemyGasPolicyId }),
     async customMiddleware(userOp) {
       if ((await userOp.signature) === "0x") {
