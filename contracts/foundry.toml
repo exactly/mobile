@@ -21,6 +21,9 @@ number_underscore = "thousands"
 [profile.production.fuzz]
 runs = 66_666
 
+[profile.snapshot]
+bytecode_hash = "none"
+
 [rpc_endpoints]
 optimism = "${OPTIMISM_RPC_URL}"
 optimism_sepolia = "${OPTIMISM_SEPOLIA_RPC_URL}"
