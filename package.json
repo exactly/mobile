@@ -201,6 +201,12 @@
     }
   },
   "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "enabled": true,
+        "listUnknownPackages": false
+      }
+    },
     "install": {
       "exclude": [
         "@sentry/react-native",
