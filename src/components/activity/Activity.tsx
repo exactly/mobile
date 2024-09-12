@@ -71,16 +71,19 @@ export default function Activity() {
                       <ArrowUpFromLine color="$iconBrandDefault" />
                     </View>
                     <View flex={1} gap="$s2">
-                      <View flexDirection="row" justifyContent="space-between" alignItems="flex-start">
+                      <View flexDirection="row" justifyContent="space-between" alignItems="center">
                         <View gap="$s2">
                           <Text subHeadline color="$uiNeutralPrimary">
                             {merchant.name}
                           </Text>
                           <Text caption color="$uiNeutralSecondary">
-                            {[merchant.city, merchant.state, merchant.country].filter(Boolean).join(", ")}
+                            {[merchant.city, merchant.state, merchant.country]
+                              .filter(Boolean)
+                              .filter((field) => field !== "null")
+                              .join(", ")}
                           </Text>
                           <Text caption color="$uiNeutralSecondary">
-                            {format(timestamp, "dd/MM/yyyy", { locale: undefined })}
+                            {format(timestamp, "yyyy-MM-dd", { locale: undefined })}
                           </Text>
                         </View>
                         <View gap="$s2">
@@ -94,7 +97,7 @@ export default function Activity() {
                             </Text>
                           </View>
                           <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                            {Number(amount).toLocaleString(undefined, { currencyDisplay: "narrowSymbol" })} {currency}
+                            {Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })} {currency}
                           </Text>
                         </View>
                       </View>
