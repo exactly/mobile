@@ -60,8 +60,9 @@ export default {
         android: {
           packagingOptions: { pickFirst: ["**/libcrypto.so"] },
           extraMavenRepos: ["https://sdk.withpersona.com/android/releases"],
+          newArchEnabled: true,
         },
-        ios: { deploymentTarget: "15.0" },
+        ios: { deploymentTarget: "15.0", newArchEnabled: true },
       } as BuildPropertiesConfig,
     ],
     "expo-router",
