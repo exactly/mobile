@@ -1,4 +1,10 @@
-import chain, { exaPluginAbi, upgradeableModularAccountAbi, usdcAddress } from "@exactly/common/generated/chain";
+import chain, {
+  auditorAbi,
+  exaPluginAbi,
+  marketAbi,
+  upgradeableModularAccountAbi,
+  usdcAddress,
+} from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -147,7 +153,13 @@ export default new Hono().post(
             try {
               error = decodeErrorResult({
                 data: trace.output,
-                abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi],
+                abi: [
+                  ...exaPluginAbi,
+                  ...issuerCheckerAbi,
+                  ...upgradeableModularAccountAbi,
+                  ...auditorAbi,
+                  ...marketAbi,
+                ],
               }).errorName;
             } catch {} // eslint-disable-line no-empty
             captureException(new Error(error));
