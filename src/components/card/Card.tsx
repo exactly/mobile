@@ -111,6 +111,8 @@ export default function Card() {
                     backgroundColor="$interactiveBaseSuccessSoftDefault"
                     justifyContent="center"
                     alignItems="center"
+                    borderTopLeftRadius="$r3"
+                    borderBottomLeftRadius="$r3"
                     flex={1}
                   >
                     <Info size={ms(24)} color="$interactiveOnBaseSuccessSoft" />
