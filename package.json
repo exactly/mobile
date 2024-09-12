@@ -189,7 +189,6 @@
         "react-native-reanimated",
         "react-native-safe-area-context",
         "react-native-screens",
-        "react-native-webview",
         "sharp-cli"
       ]
     },
@@ -211,6 +210,7 @@
       "exclude": [
         "@sentry/react-native",
         "react-native-svg",
+        "react-native-webview",
         "typescript"
       ]
     }
