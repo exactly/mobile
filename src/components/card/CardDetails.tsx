@@ -35,22 +35,10 @@ export default function CardDetails({ uri }: { uri: string }) {
         <StyledWebView
           source={{ uri }}
           backgroundColor="transparent"
-          startInLoadingState
+          width="100%"
+          height="100%"
           renderLoading={() => LoadingIndicator}
-          injectedJavaScript={`
-          (function() {
-            const cardData = document.querySelector('#card-data');
-            if (cardData) {
-              cardData.style.width = '100%';
-              cardData.style.height = '100%';
-              cardData.style.border = 'none';
-              cardData.style.borderRadius = '0';
-              cardData.style.boxSizing = 'border-box';
-              cardData.style.padding = '10px';
-              cardData.style.backgroundSize = 'cover';
-              cardData.style.backgroundPosition = 'center';
-            }
-          })();`}
+          startInLoadingState
         />
       )}
     </View>
@@ -58,7 +46,12 @@ export default function CardDetails({ uri }: { uri: string }) {
 }
 
 const StyledWebView = styled(WebView, {});
-const styles = { aspectRatio: ISO7810_ASPECT_RATIO, border: "none" };
+const styles = {
+  aspectRatio: ISO7810_ASPECT_RATIO,
+  border: "none",
+  width: "100%",
+  height: "100%",
+};
 
 const LoadingIndicator = (
   <View position="absolute" top={0} left={0} right={0} bottom={0} alignItems="center" justifyContent="center">
