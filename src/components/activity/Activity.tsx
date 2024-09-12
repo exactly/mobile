@@ -1,11 +1,12 @@
-import { ArrowUpFromLine, FileText } from "@tamagui/lucide-icons";
+import { FileText } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import React from "react";
+import React, { useMemo } from "react";
 import { FlatList, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { Separator, Spinner } from "tamagui";
+import { Spinner } from "tamagui";
 
+import ActivityItem from "./ActivityItem";
 import { getActivity } from "../../utils/server";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -13,6 +14,18 @@ import View from "../shared/View";
 
 export default function Activity() {
   const { data: activity, isLoading } = useQuery({ queryKey: ["activity"], queryFn: getActivity });
+
+  const groupedActivity = useMemo(() => {
+    if (!activity) return [];
+    const groups: Record<string, typeof activity> = {};
+    for (const purchase of activity) {
+      const date = format(new Date(purchase.timestamp), "yyyy-MM-dd");
+      groups[date] = groups[date] ?? [];
+      groups[date].push(purchase);
+    }
+    return Object.entries(groups).map(([date, purchases]) => ({ date, purchases }));
+  }, [activity]);
+
   return (
     <SafeView fullScreen tab>
       <View fullScreen>
@@ -46,65 +59,28 @@ export default function Activity() {
                   </Text>
                 </View>
               }
-              data={activity}
-              ItemSeparatorComponent={() => <Separator margin="$s3" borderColor="transparent" />}
-              renderItem={({ item, index }) => {
-                const { amount, currency, id, merchant, timestamp, usdAmount } = item;
+              data={groupedActivity}
+              renderItem={({ item }) => {
+                const { date, purchases } = item;
                 return (
-                  <View
-                    key={id}
-                    flexDirection="row"
-                    gap="$s4"
-                    alignItems="center"
-                    paddingHorizontal="$s5"
-                    paddingTop={index === 0 ? "$s4" : 0}
-                    paddingBottom={index + 1 === activity?.length ? "$s4" : 0}
-                  >
-                    <View
-                      width={ms(40)}
-                      height={ms(40)}
-                      backgroundColor="$backgroundBrandMild"
-                      borderRadius="$r3"
-                      justifyContent="center"
-                      alignItems="center"
-                    >
-                      <ArrowUpFromLine color="$iconBrandDefault" />
+                  <View key={date}>
+                    <View paddingHorizontal="$s5" paddingVertical="$s3" backgroundColor="$backgroundSoft">
+                      <Text subHeadline color="$uiNeutralSecondary">
+                        {format(new Date(date), "MMM d, yyyy")}
+                      </Text>
                     </View>
-                    <View flex={1} gap="$s2">
-                      <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
-                        <View gap="$s2" flexShrink={1}>
-                          <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
-                            {merchant.name}
-                          </Text>
-                          <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
-                            {[merchant.city, merchant.state, merchant.country]
-                              .filter(Boolean)
-                              .filter((field) => field !== "null")
-                              .join(", ")}
-                          </Text>
-                          <Text caption color="$uiNeutralSecondary">
-                            {format(timestamp, "yyyy-MM-dd", { locale: undefined })}
-                          </Text>
-                        </View>
-                        <View gap="$s2">
-                          <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                            <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
-                              {Number(usdAmount).toLocaleString(undefined, {
-                                style: "currency",
-                                currency: "USD",
-                                currencyDisplay: "narrowSymbol",
-                              })}
-                            </Text>
-                          </View>
-                          <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                            {Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })} {currency}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
+                    {purchases.map((purchase, index) => (
+                      <ActivityItem
+                        key={purchase.id}
+                        item={purchase}
+                        isFirst={index === 0}
+                        isLast={index === purchases.length - 1}
+                      />
+                    ))}
                   </View>
                 );
               }}
+              keyExtractor={(item) => item.date}
             />
           )}
         </View>
