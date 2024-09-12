@@ -9,6 +9,7 @@
     "web": "expo start --web",
     "prepare": "wagmi generate && node -e 'require(\"fs\").writeFileSync(\"src/generated/version.ts\", `export default \"${require(\"./package.json\").version}\" as const;`)'",
     "eas-build-pre-install": "export FOUNDRY_DIR=${FOUNDRY_DIR-$HOME/workingdir} && curl -L https://foundry.paradigm.xyz | bash || true && foundryup",
+    "eas-build-on-success": "expo-updates fingerprint:generate --debug --platform android",
     "test": "pnpm run --aggregate-output /test:/",
     "test:deps": "pnpm audit",
     "test:expo": "expo-doctor",
