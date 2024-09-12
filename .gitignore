@@ -23,6 +23,7 @@ generated/
 
 *.log
 *.dump
+lcov.info
 .vscode/
 .env
 .env*.local

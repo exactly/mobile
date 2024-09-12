@@ -13,3 +13,4 @@ out/
 !/broadcast/IssuerChecker.s.sol/*/run-latest.json
 
 .env
+lcov.info
