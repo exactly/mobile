@@ -16,12 +16,7 @@ export default function OnboardingLayout() {
     <Stack initialRouteName="index" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="(passkeys)/passkeys" />
-      <Stack.Screen
-        name="(passkeys)/about"
-        options={{
-          presentation: "modal",
-        }}
-      />
+      <Stack.Screen name="(passkeys)/about" options={{ presentation: "modal" }} />
     </Stack>
   );
 }
