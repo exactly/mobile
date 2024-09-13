@@ -1,6 +1,7 @@
 import { CircleDollarSign } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
+import { titleCase } from "title-case";
 
 import type { getActivity } from "../../utils/server";
 import Text from "../shared/Text";
@@ -41,10 +42,13 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
               {merchant.name}
             </Text>
             <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
-              {[merchant.city, merchant.state, merchant.country]
-                .filter(Boolean)
-                .filter((field) => field !== "null")
-                .join(", ")}
+              {titleCase(
+                [merchant.city, merchant.state, merchant.country]
+                  .filter((field) => field !== "null")
+                  .filter(Boolean)
+                  .join(", ")
+                  .toLowerCase(),
+              )}
             </Text>
           </View>
           <View gap="$s2">
