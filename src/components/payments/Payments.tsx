@@ -1,7 +1,5 @@
 import { marketUSDCAddress } from "@exactly/common/generated/chain";
-import { Info } from "@tamagui/lucide-icons";
 import React from "react";
-import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
@@ -28,9 +26,6 @@ export default function Payments() {
             <Text fontSize={ms(20)} fontWeight="bold">
               Payments
             </Text>
-            <Pressable>
-              <Info color="$uiNeutralPrimary" />
-            </Pressable>
           </View>
           <View gap="$s8">
             <View gap="$s6">

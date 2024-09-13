@@ -96,9 +96,6 @@ export default function Card() {
               <Text fontSize={ms(20)} fontWeight="bold">
                 My Card
               </Text>
-              <Pressable>
-                <Info color="$uiNeutralPrimary" />
-              </Pressable>
             </View>
             <View alignItems="center" gap="$s5" width="100%">
               <FlipCard

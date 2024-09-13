@@ -1,8 +1,7 @@
-import { FileText } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import React, { useMemo } from "react";
-import { FlatList, Pressable } from "react-native";
+import { FlatList } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Spinner } from "tamagui";
 
@@ -34,9 +33,6 @@ export default function Activity() {
             <Text fontSize={ms(20)} fontWeight="bold">
               All Activity
             </Text>
-            <Pressable>
-              <FileText color="$uiNeutralPrimary" />
-            </Pressable>
           </View>
         </View>
         <View gap="$s5" flex={1}>
