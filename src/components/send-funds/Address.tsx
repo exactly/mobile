@@ -74,7 +74,7 @@ export default function AddressSelection() {
                     />
                     <Button
                       outlined
-                      borderColor="$borderNeutralSoft"
+                      borderColor="$uiNeutralTertiary"
                       borderTopLeftRadius={0}
                       borderBottomLeftRadius={0}
                       borderLeftWidth={0}
