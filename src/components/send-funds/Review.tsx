@@ -31,7 +31,7 @@ export default function Review({
   const { canGoBack } = router;
   return (
     <>
-      <View padded alignItems="center">
+      <View alignItems="center">
         <Text emphasized callout color="$uiNeutralPrimary">
           Review transaction
         </Text>
