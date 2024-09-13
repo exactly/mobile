@@ -5,48 +5,25 @@
       "node": "22.8.0",
       "pnpm": "9.10.0",
       "prebuildCommand": "prebuild --clean --template https://github.com/expo/expo/tree/5532a07/templates/expo-template-bare-minimum",
-      "android": {
-        "image": "latest"
-      },
-      "ios": {
-        "image": "latest"
-      },
+      "android": { "image": "latest" },
+      "ios": { "image": "latest" },
       "env": {
         "CHAIN_ID": "10",
         "APP_DOMAIN": "web.exactly.app"
       }
     },
-    "development": {
-      "extends": "base",
-      "developmentClient": true,
-      "distribution": "internal"
-    },
-    "preview": {
-      "extends": "base",
-      "distribution": "internal",
-      "channel": "preview"
-    },
-    "production": {
-      "extends": "base",
-      "channel": "production"
-    }
+    "development": { "extends": "base", "developmentClient": true, "distribution": "internal" },
+    "preview": { "extends": "base", "distribution": "internal", "channel": "preview" },
+    "production": { "extends": "base", "channel": "production" }
   },
   "submit": {
     "base": {
-      "ios": {
-        "appleTeamId": "665NDX7LBZ",
-        "ascAppId": "6572315454",
-        "sku": "exa"
-      }
+      "ios": { "appleTeamId": "665NDX7LBZ", "ascAppId": "6572315454", "sku": "exa" }
     },
     "preview": {
       "extends": "base",
-      "android": {
-        "track": "internal"
-      }
+      "android": { "track": "internal" }
     },
-    "production": {
-      "extends": "base"
-    }
+    "production": { "extends": "base" }
   }
 }
