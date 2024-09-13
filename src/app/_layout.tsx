@@ -4,8 +4,7 @@ import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { isRunningInExpoGo } from "expo";
 import { type FontSource, useFonts } from "expo-font";
-import { Slot, SplashScreen, useNavigationContainerRef } from "expo-router";
-import { StatusBar } from "expo-status-bar";
+import { SplashScreen, Stack, useNavigationContainerRef } from "expo-router";
 import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { TamaguiProvider } from "tamagui";
@@ -26,8 +25,6 @@ import wagmiConfig from "../utils/wagmi";
 
 SplashScreen.preventAutoHideAsync().catch(handleError);
 
-export const unstable_settings = { initialRouteName: "(app)" };
-
 export { ErrorBoundary } from "expo-router";
 const routingInstrumentation = new ReactNavigationInstrumentation();
 init({
@@ -44,6 +41,7 @@ const useServerFonts = typeof window === "undefined" ? useFonts : () => undefine
 
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
+
   useOneSignal();
   useServerFonts({
     "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
@@ -55,20 +53,21 @@ export default wrap(function RootLayout() {
   useEffect(() => {
     routingInstrumentation.registerNavigationContainer(navigationContainer);
   }, [navigationContainer]);
+
   return (
-    <>
-      <StatusBar translucent={false} />
-      <WagmiProvider config={wagmiConfig}>
-        <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-          <TamaguiProvider config={tamagui}>
-            <ThemeProvider>
-              <SafeAreaProvider>
-                <Slot />
-              </SafeAreaProvider>
-            </ThemeProvider>
-          </TamaguiProvider>
-        </PersistQueryClientProvider>
-      </WagmiProvider>
-    </>
+    <WagmiProvider config={wagmiConfig}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+        <TamaguiProvider config={tamagui}>
+          <ThemeProvider>
+            <SafeAreaProvider>
+              <Stack initialRouteName="(app)" screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(app)" />
+                <Stack.Screen name="onboarding" />
+              </Stack>
+            </SafeAreaProvider>
+          </ThemeProvider>
+        </TamaguiProvider>
+      </PersistQueryClientProvider>
+    </WagmiProvider>
   );
 });
