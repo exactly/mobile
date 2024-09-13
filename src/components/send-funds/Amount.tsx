@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Coins, User } from "@tamagui/lucide-icons";
+import { ArrowLeft, ArrowRight, Coins, DollarSign, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-adapter";
@@ -6,9 +6,10 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { Avatar, ScrollView, XStack, YStack } from "tamagui";
+import { Avatar, ScrollView, XStack } from "tamagui";
 import { bigint, check, pipe } from "valibot";
 
+import WAD from "../../utils/WAD";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
@@ -23,19 +24,14 @@ export default function Amount() {
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { market } = useMarketAccount(withdraw?.market);
   const { canGoBack } = router;
-  const {
-    Field,
-    Subscribe,
-    handleSubmit,
-    state: { errors },
-  } = useForm<{ amount: bigint }, ValibotValidator>({
+  const { Field, Subscribe, handleSubmit } = useForm<{ amount: bigint }, ValibotValidator>({
     defaultValues: { amount: withdraw?.amount ?? 0n },
     onSubmit: ({ value: { amount } }) => {
       queryClient.setQueryData<Withdraw>(["withdrawal"], (old) => (old ? { ...old, amount } : { amount }));
       router.push("/send-funds/withdraw");
     },
   });
-  const available = market ? (market.maxBorrowAssets * 10n ** 18n) / BigInt(10 ** market.decimals) : 0n;
+  const available = market ? market.floatingDepositAssets : 0n;
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>
@@ -80,29 +76,60 @@ export default function Amount() {
               )}
 
               {market && (
-                <XStack
-                  alignItems="center"
-                  backgroundColor="$backgroundBrandSoft"
-                  borderRadius="$r2"
-                  justifyContent="space-between"
-                  gap="$s3"
-                >
-                  <XStack alignItems="center" gap="$s3" padding="$s3">
-                    <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-                      <Coins size={ms(20)} color="$interactiveOnBaseBrandDefault" />
-                    </Avatar>
-                    <Text callout color="$uiNeutralSecondary">
-                      Available:
-                    </Text>
-                    <Text callout color="$uiNeutralPrimary">
-                      {(Number(available) / 1e18).toLocaleString(undefined, {
-                        currency: "USD",
-                        currencyDisplay: "narrowSymbol",
-                      })}{" "}
-                      {market.assetName}
-                    </Text>
+                <>
+                  <XStack
+                    alignItems="center"
+                    backgroundColor="$backgroundBrandSoft"
+                    borderRadius="$r2"
+                    justifyContent="space-between"
+                    gap="$s3"
+                  >
+                    <XStack alignItems="center" gap="$s3" padding="$s3">
+                      <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+                        <Coins size={ms(20)} color="$interactiveOnBaseBrandDefault" />
+                      </Avatar>
+                      <Text callout color="$uiNeutralSecondary">
+                        Available:
+                      </Text>
+                      <Text callout color="$uiNeutralPrimary" numberOfLines={1}>
+                        {`${(Number(available) / 10 ** market.decimals).toLocaleString(undefined, {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: market.decimals,
+                          useGrouping: false,
+                        })} ${market.assetName}`}
+                      </Text>
+                    </XStack>
                   </XStack>
-                </XStack>
+
+                  <XStack
+                    alignItems="center"
+                    backgroundColor="$backgroundBrandSoft"
+                    borderRadius="$r2"
+                    justifyContent="space-between"
+                    gap="$s3"
+                  >
+                    <XStack alignItems="center" gap="$s3" padding="$s3">
+                      <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+                        <DollarSign size={ms(20)} color="$interactiveOnBaseBrandDefault" />
+                      </Avatar>
+                      <Text callout color="$uiNeutralSecondary">
+                        Value:
+                      </Text>
+                      <Text callout color="$uiNeutralPrimary" numberOfLines={1}>
+                        {(
+                          Number((market.floatingDepositAssets * market.usdPrice) / WAD) /
+                          10 ** market.decimals
+                        ).toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                          currencyDisplay: "narrowSymbol",
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </XStack>
+                  </XStack>
+                </>
               )}
             </View>
 
@@ -112,23 +139,26 @@ export default function Amount() {
               validators={{
                 onChange: pipe(
                   bigint(),
-                  check((value) => value > 0n, "invalid amount"),
-                  check((value) => value <= available, "invalid amount"),
+                  check((value) => {
+                    return value !== 0n;
+                  }, "amount cannot be 0"),
+                  check((value) => {
+                    return value <= available;
+                  }, "amount cannot be greater than available"),
                 ),
               }}
             >
-              {({ handleChange }) => (
-                <YStack gap="$s2">
+              {({ state: { meta }, handleChange }) => (
+                <>
                   <AmountSelector onChange={handleChange} />
-                </YStack>
+                  {meta.errors.length > 0 ? (
+                    <Text padding="$s3" footnote color="$uiNeutralSecondary">
+                      {meta.errors[0]?.toString().split(",")[0]}
+                    </Text>
+                  ) : undefined}
+                </>
               )}
             </Field>
-
-            {errors.length > 0 ? (
-              <Text padding="$s3" footnote color="$uiNeutralSecondary">
-                {errors[0]?.toString().split(",")[0]}
-              </Text>
-            ) : undefined}
 
             <Subscribe selector={({ isValid, isTouched }) => [isValid, isTouched]}>
               {([isValid, isTouched]) => {
@@ -137,7 +167,7 @@ export default function Amount() {
                     contained
                     main
                     spaced
-                    disabled={!(isValid && isTouched)}
+                    disabled={!isValid || !isTouched}
                     iconAfter={
                       <ArrowRight
                         color={isValid && isTouched ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"}

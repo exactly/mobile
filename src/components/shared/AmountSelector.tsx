@@ -5,9 +5,11 @@ import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
 import { styled } from "tamagui";
 import { nonEmpty, pipe, string } from "valibot";
+import { formatUnits, parseUnits } from "viem";
 
 import Input from "./Input";
 import View from "./View";
+import WAD from "../../utils/WAD";
 import type { Withdraw } from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
 
@@ -16,6 +18,7 @@ interface AmountSelectorProperties {
 }
 
 const AmountInput = styled(Input, {
+  focusStyle: { borderColor: "$borderBrandStrong", borderWidth: 1 },
   backgroundColor: "$backgroundSoft",
   borderRadius: "$r2",
   height: ms(60),
@@ -36,33 +39,37 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
     (text: string) => {
       if (!market) return;
       setFieldValue("assetInput", text);
-      const floatInput = Number(text);
-      if (Number.isNaN(floatInput)) {
-        setFieldValue("usdInput", "");
-        return;
-      }
-      const input = BigInt(Math.floor(floatInput * 10 ** market.decimals));
-      const usdInput = (input * market.usdPrice) / BigInt(10 ** market.decimals);
-      setFieldValue("usdInput", (Number(usdInput) / 1e18).toString());
-      onChange(input);
+      const sanitized = text.replaceAll(/[^\d.]/g, "").replaceAll(/(\..*?)\..*/g, "$1");
+      const assetWei = parseUnits(sanitized, market.decimals);
+      const usdWei = (assetWei * market.usdPrice) / WAD;
+      setFieldValue(
+        "usdInput",
+        Number(formatUnits(usdWei, market.decimals)).toLocaleString(undefined, {
+          style: "currency",
+          currency: "USD",
+          currencyDisplay: "narrowSymbol",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+      );
+      onChange(assetWei);
     },
     [market, setFieldValue, onChange],
   );
-  const handleUSDChange = useCallback(
+
+  const handleUsdChange = useCallback(
     (text: string) => {
       if (!market) return;
       setFieldValue("usdInput", text);
-      const floatInput = Number(text);
-      if (Number.isNaN(floatInput)) {
-        setFieldValue("assetInput", "");
-        return;
-      }
-      const input = BigInt(Math.floor(Number(floatInput * 1e18)));
-      const assetInput = (input * BigInt(10 ** market.decimals)) / market.usdPrice;
-      setFieldValue("assetInput", (Number(assetInput) / 10 ** market.decimals).toString());
-      onChange(assetInput);
+      const sanitized = text.replaceAll(/[^\d.]/g, "").replaceAll(/(\..*?)\..*/g, "$1");
+      const usdWei = parseUnits(sanitized, 18);
+      const assetWei = (usdWei * WAD) / market.usdPrice;
+      const formattedWei = (assetWei * BigInt(10 ** market.decimals)) / WAD;
+      const fieldValue = formatUnits(formattedWei, market.decimals);
+      setFieldValue("assetInput", fieldValue);
+      onChange(formattedWei);
     },
-    [market, setFieldValue, onChange],
+    [market, onChange, setFieldValue],
   );
 
   return (
@@ -74,7 +81,7 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
       >
         {({ state: { value } }) => (
           <AmountInput
-            inputMode="numeric"
+            inputMode="decimal"
             placeholder={`0 ${market?.assetName ?? ""}`}
             value={value}
             onChangeText={handleAssetChange}
@@ -87,7 +94,18 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
         validators={{ onChange: pipe(string(), nonEmpty("empty amount")) }}
       >
         {({ state: { value } }) => (
-          <AmountInput placeholder="0 USD" inputMode="numeric" value={value} onChangeText={handleUSDChange} />
+          <AmountInput
+            inputMode="decimal"
+            onChangeText={handleUsdChange}
+            placeholder={Number(0).toLocaleString(undefined, {
+              style: "currency",
+              currency: "USD",
+              currencyDisplay: "narrowSymbol",
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+            value={value}
+          />
         )}
       </Field>
     </View>

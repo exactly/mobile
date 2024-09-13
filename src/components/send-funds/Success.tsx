@@ -5,11 +5,12 @@ import { ScrollView } from "tamagui";
 
 import Details from "./Details";
 import Values from "./Values";
+import type { WithdrawDetails } from "./Withdraw";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 interface SuccessProperties {
-  details: { assetName?: string; amount: bigint; usdValue: bigint };
+  details: WithdrawDetails;
   hash?: string;
 }
 

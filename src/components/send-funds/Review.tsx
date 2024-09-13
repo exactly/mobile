@@ -6,6 +6,7 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, XStack, YStack, Image } from "tamagui";
 
+import type { WithdrawDetails } from "./Withdraw";
 import assetLogos from "../../utils/assetLogos";
 import type { Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
@@ -16,7 +17,7 @@ import View from "../shared/View";
 
 interface ReviewProperties {
   canSend: boolean;
-  details: { assetName?: string; amount: bigint; usdValue: bigint };
+  details: WithdrawDetails;
   isFirstSend: boolean;
   onSend: () => void;
 }
@@ -46,13 +47,14 @@ export default function Review({
               <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
               <YStack>
                 <Text title color="$uiNeutralPrimary">
-                  {(Number(amount) / 1e18).toString()}
+                  {amount} {assetName}
                 </Text>
                 <Text subHeadline color="$uiNeutralSecondary">
-                  {(Number(usdValue) / 1e18).toLocaleString(undefined, {
+                  {Number(usdValue).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
-                    currencyDisplay: "narrowSymbol",
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
                   })}
                 </Text>
               </YStack>

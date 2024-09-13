@@ -3,12 +3,13 @@ import { ScrollView } from "tamagui";
 
 import Details from "./Details";
 import Values from "./Values";
+import type { WithdrawDetails } from "./Withdraw";
 import Spinner from "../shared/Spinner";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 interface PendingProperties {
-  details: { assetName?: string; amount: bigint; usdValue: bigint };
+  details: WithdrawDetails;
   hash?: string;
 }
 
