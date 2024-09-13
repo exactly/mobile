@@ -10,26 +10,9 @@ export interface ViewProperties extends ViewProps {
 
 export default styled(View, {
   variants: {
-    fullScreen: {
-      true: {
-        width: "100%",
-        height: "100%",
-      },
-    },
-    padded: {
-      true: {
-        padding: "$s5",
-      },
-    },
-    tab: {
-      true: {
-        paddingBottom: 0,
-      },
-    },
-    smallPadding: {
-      true: {
-        padding: "$s3",
-      },
-    },
+    fullScreen: { true: { width: "100%", height: "100%" } },
+    padded: { true: { padding: "$s5" } },
+    tab: { true: { paddingBottom: 0 } },
+    smallPadding: { true: { padding: "$s3" } },
   },
 });

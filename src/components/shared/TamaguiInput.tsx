@@ -8,14 +8,8 @@ const InputFrame = styled(View, {
   borderWidth: 1,
   borderRadius: "$r2",
   borderColor: "$borderNeutralMild",
-  focusStyle: {
-    borderColor: "$borderBrandStrong",
-  },
-  focusVisibleStyle: {
-    outlineWidth: 0,
-    borderColor: "$borderBrandStrong",
-    outlineColor: "$borderBrandStrong",
-  },
+  focusStyle: { borderColor: "$borderBrandStrong" },
+  focusVisibleStyle: { outlineWidth: 0, borderColor: "$borderBrandStrong", outlineColor: "$borderBrandStrong" },
   flexDirection: "row",
   gap: "$s2",
   alignItems: "center",

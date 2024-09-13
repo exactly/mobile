@@ -29,11 +29,7 @@ export default styled(Button, {
       },
     },
     disabled: {
-      true: {
-        backgroundColor: "$interactiveDisabled",
-        color: "$interactiveOnDisabled",
-        borderColor: "transparent",
-      },
+      true: { backgroundColor: "$interactiveDisabled", color: "$interactiveOnDisabled", borderColor: "transparent" },
     },
     main: {
       true: {
@@ -48,27 +44,9 @@ export default styled(Button, {
         maxHeight: ms(68),
       },
     },
-    spaced: {
-      true: {
-        spaceFlex: true,
-        alignItems: "center",
-      },
-    },
-    noFlex: {
-      true: {
-        flex: 0,
-        flexBasis: "auto",
-      },
-    },
-    fullwidth: {
-      true: {
-        width: "100%",
-      },
-    },
-    halfWidth: {
-      true: {
-        flexBasis: "50%",
-      },
-    },
+    spaced: { true: { spaceFlex: true, alignItems: "center" } },
+    noFlex: { true: { flex: 0, flexBasis: "auto" } },
+    fullwidth: { true: { width: "100%" } },
+    halfWidth: { true: { flexBasis: "50%" } },
   } as const,
 });
