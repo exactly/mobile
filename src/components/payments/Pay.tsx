@@ -14,7 +14,6 @@ import Button from "../../components/shared/Button";
 import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
-import { useSimulateExaPluginRepay } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
@@ -48,10 +47,12 @@ export default function PaymentModal() {
     data: repaySimulation,
     error: repayError,
     isPending: isSimulatingRepay,
-  } = useSimulateExaPluginRepay({
+  } = useSimulateContract({
     address: account,
+    functionName: "repay",
     args: [maturity ?? 0n],
-    query: { enabled: !!USDCMarket && !!account },
+    abi: [...exaPluginAbi, { type: "error", name: "ZeroRepay" }],
+    query: { enabled: !!account && !!USDCMarket },
   });
   const {
     data: crossRepaySimulation,
@@ -61,7 +62,7 @@ export default function PaymentModal() {
     address: account,
     functionName: "crossRepay",
     args: [maturity ?? 0n, selectedMarket ?? zeroAddress],
-    abi: [...exaPluginAbi, { type: "error", name: "InsufficientOutputAmount" }],
+    abi: [...exaPluginAbi, { type: "error", name: "InsufficientOutputAmount" }, { type: "error", name: "ZeroRepay" }],
     query: {
       enabled: !!maturity && !!account && !!selectedMarket && selectedMarket !== parse(Address, marketUSDCAddress),
     },
