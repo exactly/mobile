@@ -1,6 +1,6 @@
 import "../utils/polyfill";
 
-import { ReactNativeTracing, ReactNavigationInstrumentation, init, wrap } from "@sentry/react-native";
+import { init, reactNativeTracingIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { isRunningInExpoGo } from "expo";
 import { type FontSource, useFonts } from "expo-font";
@@ -26,7 +26,7 @@ import wagmiConfig from "../utils/wagmi";
 SplashScreen.preventAutoHideAsync().catch(handleError);
 
 export { ErrorBoundary } from "expo-router";
-const routingInstrumentation = new ReactNavigationInstrumentation();
+const routingInstrumentation = reactNavigationIntegration();
 init({
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
   release: `v${version}`,
@@ -35,7 +35,9 @@ init({
   attachStacktrace: true,
   attachViewHierarchy: true,
   autoSessionTracking: true,
-  integrations: [new ReactNativeTracing({ routingInstrumentation, enableNativeFramesTracking: !isRunningInExpoGo() })],
+  integrations: [
+    reactNativeTracingIntegration({ routingInstrumentation, enableNativeFramesTracking: !isRunningInExpoGo() }),
+  ],
 });
 const useServerFonts = typeof window === "undefined" ? useFonts : () => undefined;
 
