@@ -75,6 +75,7 @@
     "react-native-webview": "^13.12.2",
     "react-onesignal": "^3.0.1",
     "tamagui": "^1.110.3",
+    "title-case": "^4.3.1",
     "valibot": "^0.41.0",
     "viem": "^2.21.6",
     "wagmi": "^2.12.11",
