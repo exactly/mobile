@@ -26,23 +26,20 @@ export default function AddCryptoAbout() {
             transform={[{ translateX: -ms(20) }]}
             width={ms(40)}
           />
-
           <View gap={ms(10)} justifyContent="space-between" flex={1}>
             <View gap={ms(10)}>
               <Text fontSize={ms(17)} fontWeight={700} textAlign="left">
                 Adding funds
               </Text>
               <Text fontSize={ms(16)} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
-                Your account is a self-custodial smart wallet on the OP Mainnet Network (Optimism). To fund your
-                account, simply send any of the supported assets to your address.
+                Your account is a self-custodial smart wallet on OP Mainnet. To fund your account, simply send any of
+                the supported assets to your address.
               </Text>
-
               <Text fontSize={ms(11)} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
                 Exa App runs on OP Mainnet Network. Sending assets on other networks may result in irreversible loss of
-                funds.{" "}
+                funds.
               </Text>
             </View>
-
             <Button
               main
               noFlex
