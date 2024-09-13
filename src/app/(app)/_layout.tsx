@@ -1,6 +1,6 @@
 import type { Passkey } from "@exactly/common/types";
 import { useQuery } from "@tanstack/react-query";
-import { Redirect, Slot, SplashScreen } from "expo-router";
+import { Redirect, SplashScreen, Stack } from "expo-router";
 import React, { useEffect } from "react";
 
 import handleError from "../../utils/handleError";
@@ -16,5 +16,9 @@ export default function AppLayout() {
 
   if (noPasskey) return <Redirect href="/onboarding" />;
   if (isLoading || !isFetched) return;
-  return <Slot />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(home)" />
+    </Stack>
+  );
 }
