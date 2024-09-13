@@ -1,13 +1,15 @@
 import { Eye, EyeOff, Settings } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
+import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React from "react";
-import { Pressable } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Image, styled } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
 
 import alchemyConnector from "../../utils/alchemyConnector";
+import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
 import Text from "../shared/Text";
@@ -38,6 +40,11 @@ export default function ProfileHeader() {
   function toggle() {
     queryClient.setQueryData(["settings", "sensitive"], !hidden);
   }
+  function copy() {
+    if (!address) return;
+    setStringAsync(address).catch(handleError);
+    Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
+  }
   return (
     <View padded backgroundColor="$backgroundSoft">
       <View display="flex" flexDirection="row" justifyContent="space-between">
@@ -57,13 +64,14 @@ export default function ProfileHeader() {
               borderRadius="$r_0"
             />
           </View>
-
           {address && (
-            <View display="flex" flexDirection="row" alignItems="flex-start">
-              <Text fontSize={ms(17)} lineHeight={ms(23)}>
-                {shortenAddress(address, 6, 4).toLowerCase()}
-              </Text>
-            </View>
+            <Pressable onPress={copy} hitSlop={ms(15)}>
+              <View display="flex" flexDirection="row" alignItems="flex-start">
+                <Text fontSize={ms(17)} lineHeight={ms(23)}>
+                  {shortenAddress(address, 6, 4).toLowerCase()}
+                </Text>
+              </View>
+            </Pressable>
           )}
         </View>
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
