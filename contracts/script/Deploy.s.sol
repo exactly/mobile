@@ -22,6 +22,7 @@ contract DeployScript is BaseScript {
   WebauthnOwnerPlugin public ownerPlugin;
   IAuditor public auditor;
   IMarket public exaUSDC;
+  IMarket public exaWETH;
   IBalancerVault public balancerVault;
   IVelodromeFactory public velodromeFactory;
 
@@ -46,6 +47,7 @@ contract DeployScript is BaseScript {
     }
     auditor = IAuditor(protocol("Auditor"));
     exaUSDC = IMarket(protocol("MarketUSDC"));
+    exaWETH = IMarket(protocol("MarketWETH"));
     balancerVault = IBalancerVault(protocol("BalancerVault"));
     velodromeFactory = IVelodromeFactory(protocol("VelodromePoolFactory"));
   }
@@ -56,7 +58,7 @@ contract DeployScript is BaseScript {
     vm.startBroadcast(msg.sender);
 
     exaPlugin = new ExaPlugin(
-      auditor, exaUSDC, balancerVault, velodromeFactory, issuerChecker, vm.envAddress("COLLECTOR_ADDRESS")
+      auditor, exaUSDC, exaWETH, balancerVault, velodromeFactory, issuerChecker, vm.envAddress("COLLECTOR_ADDRESS")
     );
     factory = new ExaAccountFactory(msg.sender, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 

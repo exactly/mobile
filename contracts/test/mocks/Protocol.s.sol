@@ -10,6 +10,8 @@ import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
 
 import { ERC1967Proxy } from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
+import { MockWETH } from "@exactly/protocol/mocks/MockWETH.sol";
+
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { BaseScript } from "../../script/Base.s.sol";
@@ -20,8 +22,10 @@ contract DeployProtocol is BaseScript {
   Auditor public auditor;
   Market public exaEXA;
   Market public exaUSDC;
+  Market public exaWETH;
   MockERC20 public exa;
   MockERC20 public usdc;
+  MockWETH public weth;
 
   IBalancerVault public balancer;
   MockVelodromeFactory public velodromeFactory;
@@ -45,6 +49,12 @@ contract DeployProtocol is BaseScript {
     Market(address(exaUSDC)).initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
     vm.label(address(exaUSDC), "exaUSDC");
     auditor.enableMarket(Market(address(exaUSDC)), new MockPriceFeed(18, 1e18), 0.9e18);
+    weth = new MockWETH();
+    vm.label(address(weth), "WETH");
+    exaWETH = Market(address(new ERC1967Proxy(address(new Market(weth, auditor)), "")));
+    Market(address(exaWETH)).initialize("WETH", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    vm.label(address(exaWETH), "exaWETH");
+    auditor.enableMarket(Market(address(exaWETH)), new MockPriceFeed(18, 2500e18), 0.86e18);
 
     balancer = IBalancerVault(address(new MockBalancerVault()));
     exa.mint(address(balancer), 1_000_000e18);

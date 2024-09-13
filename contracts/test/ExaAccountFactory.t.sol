@@ -35,6 +35,7 @@ contract ExaAccountFactoryTest is Test {
     exaPlugin = new ExaPlugin(
       IAuditor(address(0)),
       IMarket(address(new MockERC4626(new MockERC20()))),
+      IMarket(address(new MockERC4626(new MockERC20()))),
       IBalancerVault(address(this)),
       IVelodromeFactory(address(this)),
       IssuerChecker(address(this)),

@@ -65,6 +65,7 @@ contract ExaPluginTest is ForkTest {
   Auditor internal auditor;
   IMarket internal exaEXA;
   IMarket internal exaUSDC;
+  IMarket internal exaWETH;
   MockERC20 internal exa;
   MockERC20 internal usdc;
 
@@ -76,6 +77,7 @@ contract ExaPluginTest is ForkTest {
     auditor = p.auditor();
     exaEXA = IMarket(address(p.exaEXA()));
     exaUSDC = IMarket(address(p.exaUSDC()));
+    exaWETH = IMarket(address(p.exaWETH()));
     exa = p.exa();
     usdc = p.usdc();
 
@@ -88,8 +90,9 @@ contract ExaPluginTest is ForkTest {
 
     issuerChecker = new IssuerChecker(issuer);
 
-    exaPlugin =
-      new ExaPlugin(IAuditor(address(auditor)), exaUSDC, p.balancer(), p.velodromeFactory(), issuerChecker, collector);
+    exaPlugin = new ExaPlugin(
+      IAuditor(address(auditor)), exaUSDC, exaWETH, p.balancer(), p.velodromeFactory(), issuerChecker, collector
+    );
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     ownerPlugin = new WebauthnOwnerPlugin();
@@ -403,7 +406,17 @@ contract ExaPluginTest is ForkTest {
 
   function test_poke() external {
     vm.startPrank(keeper);
-    account.poke(exaEXA);
+    account.poke(exaEXA); // TODO test all cases
+  }
+
+  function test_pokeETH_deposits() external {
+    uint256 balance = address(account).balance;
+
+    vm.startPrank(keeper);
+    account.pokeETH();
+
+    assertEq(address(account).balance, 0, "ETH unwrapped");
+    assertEq(exaWETH.maxWithdraw(address(account)), balance, "WETH left");
   }
 
   function test_propose_emitsProposed() external {
