@@ -23,7 +23,7 @@ const authorization = {
     operation_id: "op",
     data: {
       bill_currency_code: "USD",
-      bill_currency_number: 840,
+      bill_currency_number: "840",
       bill_amount: 0.01,
       card_id: "card",
       created_at: new Date().toISOString(),

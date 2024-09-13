@@ -53,7 +53,7 @@ Object.assign(debug, { inspectOpts: { depth: undefined } });
 const OperationData = v.object({
   card_id: v.string(),
   bill_amount: v.number(),
-  bill_currency_number: v.literal(840),
+  bill_currency_number: v.literal("840"),
   bill_currency_code: v.literal("USD"),
   created_at: v.pipe(v.string(), v.isoTimestamp()),
   metadata: v.nullish(v.object({ account: v.nullish(Address) })),
