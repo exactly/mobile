@@ -47,7 +47,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 42000
     --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
   // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
-  const [, auditor, , , , , , , , , usdc, , marketUSDC, , , , balancer] = parse(
+  const [, auditor, , , , , , , , , usdc, , marketUSDC, , , , , , marketWETH, , , , balancer] = parse(
     object({
       transactions: tuple([
         object({ transactionType: literal("CREATE"), contractName: literal("Auditor") }),
@@ -66,6 +66,12 @@ export default async function setup({ provide }: GlobalSetupContext) {
         object({ transactionType: literal("CALL") }),
         object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
         object({ transactionType: literal("CALL") }),
+        object({ transactionType: literal("CREATE"), contractName: literal("MockWETH"), contractAddress: Address }),
+        object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
+        object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+        object({ transactionType: literal("CALL") }),
+        object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
+        object({ transactionType: literal("CALL") }),
         object({
           transactionType: literal("CREATE"),
           contractName: literal("MockBalancerVault"),
@@ -77,6 +83,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   ).transactions;
   shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor.contractAddress;
   shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC.contractAddress;
+  shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH.contractAddress;
   shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
   shell.env.PROTOCOL_VELODROMEPOOLFACTORY_ADDRESS = padHex("0x123", { size: 20 });
 
@@ -104,6 +111,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
 
   provide("USDC", usdc.contractAddress);
   provide("MarketUSDC", marketUSDC.contractAddress);
+  provide("MarketWETH", marketWETH.contractAddress);
   provide("IssuerChecker", issuerChecker.contractAddress);
   provide("ExaPlugin", exaPlugin.contractAddress);
   provide("ExaAccountFactory", exaAccountFactory.contractAddress);
@@ -119,6 +127,7 @@ declare module "vitest" {
     ExaPlugin: Address;
     IssuerChecker: Address;
     MarketUSDC: Address;
+    MarketWETH: Address;
     USDC: Address;
   }
 }
