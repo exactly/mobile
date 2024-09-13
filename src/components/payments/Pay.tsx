@@ -1,4 +1,4 @@
-import { exaPluginAbi, marketUSDCAddress } from "@exactly/common/generated/chain";
+import { auditorAbi, exaPluginAbi, marketAbi, marketUSDCAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/types";
 import { Coins, X } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
@@ -51,7 +51,7 @@ export default function PaymentModal() {
     address: account,
     functionName: "repay",
     args: [maturity ?? 0n],
-    abi: [...exaPluginAbi, { type: "error", name: "ZeroRepay" }],
+    abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi],
     query: { enabled: !!account && !!USDCMarket },
   });
   const {
@@ -62,7 +62,7 @@ export default function PaymentModal() {
     address: account,
     functionName: "crossRepay",
     args: [maturity ?? 0n, selectedMarket ?? zeroAddress],
-    abi: [...exaPluginAbi, { type: "error", name: "InsufficientOutputAmount" }, { type: "error", name: "ZeroRepay" }],
+    abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi, { type: "error", name: "InsufficientOutputAmount" }],
     query: {
       enabled: !!maturity && !!account && !!selectedMarket && selectedMarket !== parse(Address, marketUSDCAddress),
     },
