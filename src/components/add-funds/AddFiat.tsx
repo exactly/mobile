@@ -26,7 +26,7 @@ export default function AddFiat() {
           )}
           <View flexDirection="row" alignItems="center">
             <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
-              Add Funds /{" "}
+              {`Add Funds / `}
             </Text>
             <Text fontSize={ms(15)} fontWeight="bold">
               Fiat

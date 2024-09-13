@@ -83,10 +83,9 @@ export default function Passkeys() {
         <View alignItems="stretch" alignSelf="stretch">
           <View flexDirection="row" alignSelf="stretch" justifyContent="center">
             <Text fontSize={ms(11)} color="$uiNeutralPlaceholder">
-              By continuing, I accept the
+              {`By continuing, I accept the `}
             </Text>
             <Text fontSize={ms(11)} color="$interactiveBaseBrandDefault">
-              {" "}
               Terms & Conditions
             </Text>
           </View>

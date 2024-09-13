@@ -57,15 +57,14 @@ export default function AssetList() {
                 </Text>
               </View>
               <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                {(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
+                {`${(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: Math.min(
                     8,
                     Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(usdValue) / 1e18)))),
                   ),
                   useGrouping: false,
-                })}{" "}
-                {symbol}
+                })} ${symbol}`}
               </Text>
             </View>
           </View>

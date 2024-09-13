@@ -55,7 +55,7 @@ export default function NextPayment() {
                     backgroundColor="$interactiveBaseSuccessSoftDefault"
                     color="$uiSuccessSecondary"
                   >
-                    PAY NOW AND SAVE{" "}
+                    {`PAY NOW AND SAVE `}
                     {(Number(WAD - (duePayment.previewValue * WAD) / duePayment.position) / 1e18).toLocaleString(
                       undefined,
                       {
@@ -63,7 +63,7 @@ export default function NextPayment() {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       },
-                    )}{" "}
+                    )}
                   </Text>
                 )}
                 <Text sensitive body strikeThrough color="$uiNeutralSecondary">

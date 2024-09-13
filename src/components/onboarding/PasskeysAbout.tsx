@@ -51,20 +51,20 @@ export default function PasskeysAbout() {
                   </Text>
                   <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
-                      Strong credentials.
-                    </Text>{" "}
+                      {`Strong credentials.   `}
+                    </Text>
                     Every passkey is strong. They&apos;re never guessable, reused, or weak.
                   </Text>
                   <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
-                      Safe from server leaks.
-                    </Text>{" "}
+                      {`Safe from server leaks.   `}
+                    </Text>
                     Because servers only keep public keys, servers are less valuable targets for hackers.
                   </Text>
                   <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
-                      Safe from phishing.
-                    </Text>{" "}
+                      {`Safe from phishing.   `}
+                    </Text>
                     Passkeys are intrinsically linked with the app or website they were created for, so people can never
                     be tricked into using their passkey to sign in to a fraudulent app or website.
                   </Text>

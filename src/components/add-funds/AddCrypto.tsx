@@ -54,7 +54,7 @@ export default function AddCrypto() {
             )}
             <View flexDirection="row" alignItems="center">
               <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
-                Add Funds /{" "}
+                {`Add Funds / `}
               </Text>
               <Text fontSize={ms(15)} fontWeight="bold">
                 Cryptocurrency
@@ -145,8 +145,8 @@ export default function AddCrypto() {
               </View>
               <View flex={1}>
                 <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)}>
-                  Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
-                  loss of funds.{" "}
+                  {`Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
+                  loss of funds. `}
                   <Text
                     color="$uiBrandSecondary"
                     fontSize={ms(13)}

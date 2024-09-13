@@ -86,7 +86,11 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
                   </Text>
                 </View>
                 <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                  {Number(floatingDepositAssets / BigInt(10 ** decimals)).toLocaleString()} {symbol}
+                  {`${(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: decimals,
+                    useGrouping: false,
+                  })} ${symbol}`}
                 </Text>
               </View>
             </View>
