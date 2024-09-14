@@ -19,7 +19,7 @@ import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
 
 export default function PaymentModal() {
-  const { account, market: USDCMarket, markets, queryKey } = useMarketAccount(marketUSDCAddress);
+  const { account, market: USDCMarket, markets, queryKey: marketAccount } = useMarketAccount(marketUSDCAddress);
   const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
 
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
@@ -71,14 +71,16 @@ export default function PaymentModal() {
   const { writeContract: repay, isPending: isRepaying } = useWriteContract({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey }).catch(handleError);
+        queryClient.invalidateQueries({ queryKey: marketAccount }).catch(handleError);
+        router.replace("/payments");
       },
     },
   });
   const { writeContract: crossRepay, isPending: isCrossRepaying } = useWriteContract({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey }).catch(handleError);
+        queryClient.invalidateQueries({ queryKey: marketAccount }).catch(handleError);
+        router.replace("/payments");
       },
     },
   });
