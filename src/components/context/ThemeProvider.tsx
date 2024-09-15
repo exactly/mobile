@@ -1,55 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { createContext, useEffect, useState } from "react";
-import { Appearance, Platform, useColorScheme, type ColorSchemeName } from "react-native";
-import type { ThemeName } from "tamagui";
-import { Theme } from "tamagui";
+import { reloadAppAsync } from "expo";
+import React, { createContext } from "react";
+import { useColorScheme } from "react-native";
+import { TamaguiProvider } from "tamagui";
 
+import tamagui from "../../../tamagui.config";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 
 interface ThemeContextState {
-  appearance: ColorSchemeName;
-  setAppearance: (appearance: ColorSchemeName) => void;
-  theme: ThemeName;
+  theme: AppTheme;
+  setTheme: (theme: AppTheme) => void;
 }
 
-export const ThemeContext = createContext<ThemeContextState>({
-  appearance: Appearance.getColorScheme(),
-  theme: "light",
-  setAppearance: () => undefined,
-});
+export const ThemeContext = createContext<ThemeContextState>({ theme: "system", setTheme: () => undefined });
 
 interface ThemeProviderProperties {
   children: React.ReactNode;
 }
 
+export type AppTheme = "light" | "dark" | "system";
+
+function setTheme(theme: AppTheme) {
+  queryClient.setQueryData<AppTheme>(["settings", "theme"], theme);
+  reloadAppAsync().catch(handleError);
+}
+
 export default function ThemeProvider({ children }: ThemeProviderProperties) {
-  const appearance = useColorScheme();
-  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
-  const [tamaguiTheme, setTamaguiTheme] = useState<ThemeName>(theme ?? appearance ?? "light");
-
-  function setAppearance(value: ColorSchemeName) {
-    if (!value) queryClient.resetQueries({ queryKey: ["settings", "theme"] }).catch(handleError);
-    queryClient.setQueryData<ColorSchemeName>(["settings", "theme"], value);
-  }
-
-  useEffect(() => {
-    if (Platform.OS === "web") {
-      setTamaguiTheme(theme ?? appearance ?? "light");
-      return;
-    }
-    Appearance.setColorScheme(theme);
-  }, [appearance, theme]);
-
-  useEffect(() => {
-    if (appearance !== null && appearance !== undefined) {
-      setTamaguiTheme(appearance === "dark" ? "dark" : "light");
-    }
-  }, [appearance]);
-
+  const { data: theme } = useQuery<AppTheme>({ queryKey: ["settings", "theme"], initialData: "system" });
+  const systemTheme = useColorScheme();
   return (
-    <ThemeContext.Provider value={{ appearance, setAppearance, theme: tamaguiTheme }}>
-      <Theme name={tamaguiTheme}>{children}</Theme>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <TamaguiProvider config={tamagui} defaultTheme={theme === "system" ? (systemTheme ?? "light") : theme}>
+        {children}
+      </TamaguiProvider>
     </ThemeContext.Provider>
   );
 }

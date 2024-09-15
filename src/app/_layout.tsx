@@ -7,10 +7,8 @@ import { type FontSource, useFonts } from "expo-font";
 import { SplashScreen, Stack, useNavigationContainerRef } from "expo-router";
 import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { TamaguiProvider } from "tamagui";
 import { WagmiProvider } from "wagmi";
 
-import tamagui from "../../tamagui.config";
 import BDOGroteskBold from "../assets/fonts/BDOGrotesk-Bold.otf";
 import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
@@ -59,16 +57,14 @@ export default wrap(function RootLayout() {
   return (
     <WagmiProvider config={wagmiConfig}>
       <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-        <TamaguiProvider config={tamagui}>
+        <SafeAreaProvider>
           <ThemeProvider>
-            <SafeAreaProvider>
-              <Stack initialRouteName="(app)" screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(app)" />
-                <Stack.Screen name="onboarding" />
-              </Stack>
-            </SafeAreaProvider>
+            <Stack initialRouteName="(app)" screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(app)" />
+              <Stack.Screen name="onboarding" />
+            </Stack>
           </ThemeProvider>
-        </TamaguiProvider>
+        </SafeAreaProvider>
       </PersistQueryClientProvider>
     </WagmiProvider>
   );

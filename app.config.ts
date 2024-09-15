@@ -14,7 +14,6 @@ export default {
   scheme: "exactly",
   version: metadata.version,
   orientation: "portrait",
-  userInterfaceStyle: "automatic",
   android: {
     package: "app.exactly",
     adaptiveIcon: { foregroundImage: "src/assets/icon.png", backgroundColor: "#1D1D1D" },

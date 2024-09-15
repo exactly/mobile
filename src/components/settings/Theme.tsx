@@ -1,8 +1,6 @@
 import { ArrowLeft, CheckCircle2, Moon, Smartphone, Sun } from "@tamagui/lucide-icons";
-import { useQuery } from "@tanstack/react-query";
 import { router, useRouter } from "expo-router";
 import React, { useContext } from "react";
-import type { ColorSchemeName } from "react-native";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, ToggleGroup, XStack } from "tamagui";
@@ -10,34 +8,21 @@ import { ScrollView, ToggleGroup, XStack } from "tamagui";
 import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
-import { ThemeContext } from "../context/ThemeProvider";
+import { ThemeContext, type AppTheme } from "../context/ThemeProvider";
 
 const options: {
   name: string;
-  value: ColorSchemeName;
+  value: AppTheme;
   Icon: typeof Sun;
 }[] = [
-  {
-    name: "Light",
-    value: "light",
-    Icon: Sun,
-  },
-  {
-    name: "Dark",
-    value: "dark",
-    Icon: Moon,
-  },
-  {
-    name: "System",
-    value: undefined,
-    Icon: Smartphone,
-  },
+  { name: "Light", value: "light", Icon: Sun },
+  { name: "Dark", value: "dark", Icon: Moon },
+  { name: "System", value: "system", Icon: Smartphone },
 ];
 
 export default function Theme() {
   const { canGoBack } = useRouter();
-  const { setAppearance } = useContext(ThemeContext);
-  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
+  const { theme, setTheme } = useContext(ThemeContext);
   return (
     <SafeView fullScreen tab>
       <View fullScreen padded gap="$s5">
@@ -71,7 +56,7 @@ export default function Theme() {
                   backgroundColor="transparent"
                   borderWidth={0}
                   onPress={() => {
-                    setAppearance(value);
+                    setTheme(value);
                   }}
                 >
                   <XStack
