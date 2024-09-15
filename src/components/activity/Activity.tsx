@@ -18,7 +18,7 @@ export default function Activity() {
     if (!activity) return [];
     const groups: Record<string, typeof activity> = {};
     for (const purchase of activity) {
-      const date = format(new Date(purchase.timestamp), "yyyy-MM-dd");
+      const date = format(purchase.timestamp, "yyyy-MM-dd");
       groups[date] = groups[date] ?? [];
       groups[date].push(purchase);
     }
@@ -62,7 +62,7 @@ export default function Activity() {
                   <View key={date}>
                     <View paddingHorizontal="$s5" paddingVertical="$s3" backgroundColor="$backgroundSoft">
                       <Text subHeadline color="$uiNeutralSecondary">
-                        {format(new Date(date), "MMM d, yyyy")}
+                        {date}
                       </Text>
                     </View>
                     {purchases.map((purchase, index) => (
