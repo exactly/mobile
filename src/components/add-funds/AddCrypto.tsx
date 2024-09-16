@@ -145,8 +145,8 @@ export default function AddCrypto() {
               </View>
               <View flex={1}>
                 <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)}>
-                  {`Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
-                  loss of funds. `}
+                  Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
+                  loss of funds.
                   <Text
                     color="$uiBrandSecondary"
                     fontSize={ms(13)}
@@ -154,7 +154,7 @@ export default function AddCrypto() {
                     fontWeight="bold"
                     onPress={about}
                   >
-                    Learn more about adding funds.
+                    &nbsp;Learn more about adding funds
                   </Text>
                 </Text>
               </View>
