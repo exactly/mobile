@@ -11,6 +11,7 @@ import { ScrollView, Switch, styled, Spinner, XStack, Accordion, Square } from "
 import CardBack from "./CardBack";
 import CardFront from "./CardFront";
 import FlipCard from "./FlipCard";
+import SimulatePurchase from "./SimulatePurchase";
 import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
@@ -202,6 +203,9 @@ export default function Card() {
                 </StyledAction>
               </View>
             </View>
+
+            <SimulatePurchase />
+
             <View>
               <Accordion
                 overflow="hidden"
