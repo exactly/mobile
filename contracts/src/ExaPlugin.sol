@@ -23,6 +23,7 @@ import { WETH } from "solady/tokens/WETH.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
+import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 
 import {
   FixedPool,
@@ -46,6 +47,7 @@ import { IssuerChecker } from "./IssuerChecker.sol";
 /// @author Exactly
 contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   using FixedPointMathLib for uint256;
+  using SafeTransferLib for address;
   using SafeCastLib for int256;
   using SafeERC20 for IERC20;
   using Address for address;
@@ -210,9 +212,18 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     address market = address(proposal.market);
     if (market == address(0)) revert NoProposal();
 
+    if (market != address(EXA_WETH)) {
+      IPluginExecutor(msg.sender).executeFromPluginExternal(
+        market, 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, proposal.receiver, msg.sender))
+      );
+      return;
+    }
+    uint256 amount = proposal.amount;
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      market, 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, proposal.receiver, msg.sender))
+      market, 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), msg.sender))
     );
+    WETH(payable(EXA_WETH.asset())).withdraw(amount);
+    proposal.receiver.safeTransferETH(amount);
   }
 
   function setCollector(address collector_) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -274,7 +285,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if (proposal.amount == 0) revert NoProposal();
       if (proposal.amount < assets) revert NoProposal();
       if (proposal.market != target) revert NoProposal();
-      if (proposal.receiver != receiver) revert NoProposal();
+      if (proposal.receiver != receiver && receiver != address(this)) revert NoProposal();
       if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
       return abi.encode(assets);
     }
@@ -427,6 +438,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     assert(actualRepay == maxRepay);
     v.collateralMarket.withdraw(v.collateralAssets, msg.sender, v.borrower);
   }
+
+  receive() external payable { } // solhint-disable-line no-empty-blocks
 
   function _checkLiquidity(address account) internal view {
     IMarket withdrawMarket = proposals[account].market;
