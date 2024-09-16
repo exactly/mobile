@@ -264,18 +264,19 @@ contract ExaPluginTest is ForkTest {
 
   function test_withdraw_transfersAsset_asKeeper() external {
     uint256 amount = 100 ether;
+    address receiver = address(0x420);
     vm.prank(keeper);
     account.poke(exaEXA);
 
     vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
 
     skip(exaPlugin.PROPOSAL_DELAY());
 
-    assertEq(exa.balanceOf(address(account)), 0);
+    assertEq(exa.balanceOf(receiver), 0);
     vm.prank(keeper);
     account.withdraw();
-    assertEq(exa.balanceOf(address(account)), amount);
+    assertEq(exa.balanceOf(receiver), amount);
   }
 
   function test_withdraw_reverts_whenNoProposal() external {
