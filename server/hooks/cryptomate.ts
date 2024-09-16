@@ -1,3 +1,4 @@
+import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import chain, {
   auditorAbi,
   exaPluginAbi,
@@ -44,7 +45,6 @@ import transactionOptions from "../utils/transactionOptions";
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
 if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
 
-const MIN_INTERVAL = 24 * 3600;
 const MATURITY_INTERVAL = 4 * 7 * 24 * 3600;
 
 const debug = createDebug("exa:cryptomate");
@@ -129,7 +129,7 @@ export default new Hono().post(
     const call = {
       functionName: "collectCredit",
       args: [
-        BigInt(nextMaturity - timestamp < MIN_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
+        BigInt(nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
         BigInt(payload.data.bill_amount * 1e6),
         BigInt(timestamp),
         await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }), // TODO replace with payload signature
