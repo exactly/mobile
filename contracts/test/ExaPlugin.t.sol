@@ -296,6 +296,32 @@ contract ExaPluginTest is ForkTest {
     assertEq(receiver.balance, amount);
   }
 
+  function test_withdraw_reverts_whenReceiverIsContractAndMarketNotWETH() external {
+    uint256 amount = 100 ether;
+    address receiver = address(0x420);
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(exa.balanceOf(receiver), 0);
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(
+      address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(exaPlugin), address(account)))
+    );
+  }
+
   function test_withdraw_reverts_whenNoProposal() external {
     uint256 amount = 1;
     vm.prank(keeper);

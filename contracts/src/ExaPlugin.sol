@@ -285,7 +285,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if (proposal.amount == 0) revert NoProposal();
       if (proposal.amount < assets) revert NoProposal();
       if (proposal.market != target) revert NoProposal();
-      if (proposal.receiver != receiver && receiver != address(this)) revert NoProposal();
+      if (proposal.receiver != receiver && target != EXA_WETH || receiver != address(this) && target == EXA_WETH) {
+        revert NoProposal();
+      }
       if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
       return abi.encode(assets);
     }
