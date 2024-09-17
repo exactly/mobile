@@ -64,13 +64,13 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
             borderColor={selectedMarket === market ? "$borderBrandStrong" : "transparent"}
           >
             <View flexDirection="row" alignItems="center" justifyContent="space-between" paddingVertical={vs(10)}>
-              <View flexDirection="row" gap={ms(10)} alignItems="center">
+              <View flexDirection="row" gap={ms(10)} alignItems="center" maxWidth="50%">
                 <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
-                <View gap="$s2" alignItems="flex-start">
-                  <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralTertiary">
+                <View gap="$s2" alignItems="flex-start" flexShrink={1}>
+                  <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralTertiary" numberOfLines={1}>
                     {symbol}
                   </Text>
-                  <Text fontSize={ms(12)} color="$uiNeutralSecondary">
+                  <Text fontSize={ms(12)} color="$uiNeutralSecondary" numberOfLines={1}>
                     {assetName}
                   </Text>
                 </View>
@@ -88,7 +88,10 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
                 <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
                   {`${(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
                     minimumFractionDigits: 0,
-                    maximumFractionDigits: decimals,
+                    maximumFractionDigits: Math.min(
+                      8,
+                      Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(usdValue) / 1e18)))),
+                    ),
                     useGrouping: false,
                   })} ${symbol}`}
                 </Text>
