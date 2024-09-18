@@ -40,7 +40,7 @@ export default function AddCrypto() {
   }
   const share = useCallback(async () => {
     if (!address) return;
-    await Share.share({ message: address, title: "Share Optimism (OP) address" });
+    await Share.share({ message: address, title: `Share ${chain.name} address` });
   }, [address]);
   return (
     <SafeView fullScreen>
@@ -75,7 +75,7 @@ export default function AddCrypto() {
               paddingBottom={ms(20)}
             >
               <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
-                Your address
+                Your {chain.name} address
               </Text>
               <View flexDirection="row" justifyContent="space-between" alignItems="center">
                 <View>
@@ -145,7 +145,7 @@ export default function AddCrypto() {
               </View>
               <View flex={1}>
                 <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)}>
-                  Exa App runs on the OP Mainnet network. Sending assets on other networks may result in irreversible
+                  Exa App runs on the {chain.name} network. Sending assets on other networks may result in irreversible
                   loss of funds.
                   <Text
                     color="$uiBrandSecondary"
