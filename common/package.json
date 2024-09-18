@@ -4,12 +4,12 @@
     "test": "tsc"
   },
   "engines": {
-    "node": ">=22.8.0"
+    "node": ">=22.9.0"
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.19.0",
     "@exactly/plugin": "workspace:*",
-    "valibot": "^0.41.0",
-    "viem": "^2.21.6"
+    "valibot": "^0.42.0",
+    "viem": "^2.21.9"
   }
 }

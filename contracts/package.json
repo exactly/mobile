@@ -15,12 +15,12 @@
     "modular-account": "alchemyplatform/modular-account#c81e712",
     "modular-account-libs": "erc6900/modular-account-libs#v0.7.1",
     "openzeppelin-contracts": "openzeppelin/openzeppelin-contracts#ddddc2e",
-    "solady": "^0.0.238",
+    "solady": "^0.0.240",
     "webauthn-owner-plugin": "exactly/webauthn-owner-plugin#42b67f8",
     "webauthn-sol": "base-org/webauthn-sol#v1.0.0"
   },
   "devDependencies": {
-    "@exactly/protocol": "exactly/protocol#2c8bf48",
+    "@exactly/protocol": "exactly/protocol#96faa44",
     "@openzeppelin/contracts-v4": "npm:@openzeppelin/contracts@^4.9.6",
     "@openzeppelin/contracts-upgradeable-v4": "npm:@openzeppelin/contracts-upgradeable@^4.9.6",
     "@openzeppelin/contracts-upgradeable": "^5.0.2",

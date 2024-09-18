@@ -16,11 +16,11 @@
     "instrument.cjs"
   ],
   "engines": {
-    "node": ">=22.8.0"
+    "node": ">=22.9.0"
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.19.0",
-    "@hono/node-server": "^1.12.2",
+    "@hono/node-server": "^1.13.0",
     "@hono/sentry": "^1.2.0",
     "@hono/valibot-validator": "^0.3.0",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
@@ -32,27 +32,27 @@
     "async-mutex": "^0.5.0",
     "debug": "^4.3.7",
     "drizzle-orm": "^0.33.0",
-    "hono": "^4.6.1",
+    "hono": "^4.6.2",
     "ioredis": "^5.4.1",
     "ioredis-mock": "^8.9.0",
     "libphonenumber-js": "^1.11.8",
-    "pg": "^8.12.0",
+    "pg": "^8.13.0",
     "redis-semaphore": "^5.6.0",
-    "valibot": "^0.41.0",
-    "viem": "^2.21.6"
+    "valibot": "^0.42.0",
+    "viem": "^2.21.9"
   },
   "devDependencies": {
     "@exactly/common": "workspace:*",
     "@exactly/plugin": "workspace:*",
     "@sentry/cli": "^2.36.1",
     "@types/ioredis-mock": "^8.2.5",
-    "@types/node": "^22.5.4",
-    "@types/pg": "^8.11.9",
+    "@types/node": "^22.5.5",
+    "@types/pg": "^8.11.10",
     "@vitest/coverage-v8": "^2.1.1",
     "@vitest/ui": "^2.1.1",
     "@wagmi/core": "^2.13.5",
     "drizzle-kit": "^0.24.2",
-    "execa": "^9.3.1",
+    "execa": "^9.4.0",
     "pkgroll": "^2.5.0",
     "prool": "^0.0.16",
     "tsx": "^4.19.1",
