@@ -14,7 +14,7 @@ export default function HomeActions() {
         spaced
         halfWidth
         onPress={() => {
-          router.push("/add-funds");
+          router.push("/add-funds/add-crypto");
         }}
         iconAfter={<ArrowDownToLine color="$interactiveOnBaseBrandDefault" />}
       >
