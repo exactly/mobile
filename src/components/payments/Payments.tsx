@@ -9,6 +9,7 @@ import NextPayment from "./NextPayment";
 import UpcomingPayments from "./UpcomingPayments";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
+import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -35,6 +36,7 @@ export default function Payments() {
             refreshing={isFetching}
             onRefresh={() => {
               refetch().catch(handleError);
+              queryClient.refetchQueries({ queryKey: ["activity"] }).catch(handleError);
             }}
           />
         }

@@ -6,13 +6,16 @@ import { ms } from "react-native-size-matters";
 
 import ActivityItem from "./ActivityItem";
 import handleError from "../../utils/handleError";
+import queryClient from "../../utils/queryClient";
 import { getActivity } from "../../utils/server";
+import useMarketAccount from "../../utils/useMarketAccount";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Activity() {
   const { data: activity, refetch, isFetching } = useQuery({ queryKey: ["activity"], queryFn: getActivity });
+  const { queryKey } = useMarketAccount();
   const groupedActivity = useMemo(() => {
     if (!activity) return [];
     const groups: Record<string, typeof activity> = {};
@@ -40,6 +43,7 @@ export default function Activity() {
                 refreshing={isFetching}
                 onRefresh={() => {
                   refetch().catch(handleError);
+                  queryClient.refetchQueries({ queryKey }).catch(handleError);
                 }}
               />
             }
