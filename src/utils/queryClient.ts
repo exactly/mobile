@@ -50,6 +50,15 @@ queryClient.setQueryDefaults(["settings", "alertShown"], {
     throw new Error("don't refetch");
   },
 });
+queryClient.setQueryDefaults(["contacts", "saved"], {
+  initialData: undefined,
+  retry: false,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  queryFn: () => {
+    throw new Error("don't refetch");
+  },
+});
 queryClient.setQueryDefaults(["auth"], { retry: false, staleTime: 24 * 60 * 60_000, gcTime: 24 * 60 * 60_000 });
 queryClient.setQueryDefaults(["withdrawal"], { structuralSharing: false });
 

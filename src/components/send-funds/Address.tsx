@@ -11,6 +11,7 @@ import { ms } from "react-native-size-matters";
 import { ButtonIcon, ScrollView, XStack, YStack } from "tamagui";
 import { parse } from "valibot";
 
+import Contacts from "./Contacts";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import Button from "../shared/Button";
@@ -22,10 +23,16 @@ import View from "../shared/View";
 export default function AddressSelection() {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<"front" | "back">("back");
+  const { data: savedContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
+    queryKey: ["contacts", "saved"],
+  });
   const { canGoBack } = router;
   const [permission, requestPermission] = useCameraPermissions();
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
-  const { Field, Subscribe, handleSubmit, setFieldValue } = useForm<{ receiver: string }, ValibotValidator>({
+  const { Field, Subscribe, handleSubmit, setFieldValue, validateAllFields } = useForm<
+    { receiver: string },
+    ValibotValidator
+  >({
     defaultValues: { receiver: withdraw?.receiver ?? "" },
     onSubmit: ({ value }) => {
       const receiver = parse(Address, value.receiver);
@@ -103,8 +110,9 @@ export default function AddressSelection() {
               <View minHeight={ms(300)}>
                 <CameraView
                   barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                  onBarcodeScanned={({ data: value }) => {
-                    setFieldValue("receiver", value);
+                  onBarcodeScanned={({ data: address }) => {
+                    setFieldValue("receiver", address);
+                    validateAllFields("change").catch(handleError);
                     setCameraOn(false);
                   }}
                   facing={cameraFacing}
@@ -127,6 +135,16 @@ export default function AddressSelection() {
                 </CameraView>
               </View>
             )}
+
+            {savedContacts && savedContacts.length > 0 && (
+              <Contacts
+                onContactPress={(address) => {
+                  setFieldValue("receiver", address);
+                  validateAllFields("change").catch(handleError);
+                }}
+              />
+            )}
+
             <Subscribe selector={({ canSubmit }) => canSubmit}>
               {(canSubmit) => {
                 return (

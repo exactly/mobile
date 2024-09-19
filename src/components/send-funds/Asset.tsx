@@ -1,12 +1,13 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import type { Address } from "@exactly/common/types";
-import { ArrowLeft, ArrowRight, User } from "@tamagui/lucide-icons";
+import { Address } from "@exactly/common/types";
+import { ArrowLeft, ArrowRight, User, UserMinus, UserPlus } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React from "react";
-import { Pressable } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack } from "tamagui";
+import { parse } from "valibot";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -24,7 +25,9 @@ export default function AssetSelection() {
   const { address } = useAccount();
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const [selectedMarket, setSelectedMarket] = React.useState<Address | undefined>();
-
+  const { data: savedContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
+    queryKey: ["contacts", "saved"],
+  });
   const { data: markets } = useReadPreviewerExactly({
     address: previewerAddress,
     account: address,
@@ -47,6 +50,8 @@ export default function AssetSelection() {
       router.push("/send-funds/amount");
     }
   };
+
+  const hasContact = savedContacts?.find((contact) => contact.address === withdraw?.receiver);
 
   return (
     <SafeView fullScreen>
@@ -75,8 +80,10 @@ export default function AssetSelection() {
                 backgroundColor="$backgroundBrandSoft"
                 borderRadius="$r2"
                 justifyContent="space-between"
+                paddingVertical="$s2"
+                paddingHorizontal="$s2"
               >
-                <XStack alignItems="center" gap="$s3" padding="$s3">
+                <XStack alignItems="center" gap="$s3" paddingHorizontal="$s1">
                   <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
                     <User size={ms(20)} color="$interactiveOnBaseBrandDefault" />
                   </Avatar>
@@ -87,6 +94,36 @@ export default function AssetSelection() {
                     {shortenAddress(withdraw.receiver, 7, 7)}
                   </Text>
                 </XStack>
+                <Button
+                  backgroundColor={hasContact ? "$interactiveBaseErrorSoftDefault" : "$interactiveBaseBrandSoftDefault"}
+                  padding="$s3_5"
+                  onPress={() => {
+                    queryClient.setQueryData<{ name: string; address: Address; ens: string }[] | undefined>(
+                      ["contacts", "saved"],
+                      (old) => {
+                        if (hasContact) {
+                          return old?.filter((contact) => contact.address !== withdraw.receiver);
+                        } else {
+                          return old && old.length > 0
+                            ? [...old, { name: "New Contact", address: parse(Address, withdraw.receiver), ens: "" }]
+                            : [{ name: "New Contact", address: parse(Address, withdraw.receiver), ens: "" }];
+                        }
+                      },
+                    );
+                    Alert.alert(
+                      hasContact ? "Contact removed" : "Contact added",
+                      hasContact
+                        ? "This address has been removed from your contacts list."
+                        : "This address has been added to your contacts list.",
+                    );
+                  }}
+                >
+                  {hasContact ? (
+                    <UserMinus size={ms(24)} color="$interactiveOnBaseErrorSoft" />
+                  ) : (
+                    <UserPlus size={ms(24)} color="$interactiveOnBaseBrandSoft" />
+                  )}
+                </Button>
               </XStack>
             )}
             <AssetSelector positions={positions} onSubmit={setSelectedMarket} />
