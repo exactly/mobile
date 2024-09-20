@@ -4,11 +4,11 @@ import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import "./utils/mockDeployments";
-import "./utils/mockSentry";
-import app from "../hooks/cryptomate";
-import deriveAddress from "../utils/deriveAddress";
-import keeper from "../utils/keeper";
+import "../mockDeployments";
+import "../mockSentry";
+import app from "../../hooks/cryptomate";
+import deriveAddress from "../../utils/deriveAddress";
+import keeper from "../../utils/keeper";
 
 vi.mock("ioredis", () => ({ Redis }));
 
