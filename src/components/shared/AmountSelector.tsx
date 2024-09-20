@@ -39,12 +39,10 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
     (text: string) => {
       if (!market) return;
       setFieldValue("assetInput", text);
-      const sanitized = text.replaceAll(/[^\d.]/g, "").replaceAll(/(\..*?)\..*/g, "$1");
-      const assetWei = parseUnits(sanitized, market.decimals);
-      const usdWei = (assetWei * market.usdPrice) / WAD;
+      const assets = parseUnits(text.replaceAll(/[^\d.]/g, "").replaceAll(/(\..*?)\..*/g, "$1"), market.decimals);
       setFieldValue(
         "usdInput",
-        Number(formatUnits(usdWei, market.decimals)).toLocaleString(undefined, {
+        Number(formatUnits((assets * market.usdPrice) / WAD, market.decimals)).toLocaleString(undefined, {
           style: "currency",
           currency: "USD",
           currencyDisplay: "narrowSymbol",
@@ -52,7 +50,7 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
           maximumFractionDigits: 2,
         }),
       );
-      onChange(assetWei);
+      onChange(assets);
     },
     [market, setFieldValue, onChange],
   );
@@ -61,13 +59,12 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
     (text: string) => {
       if (!market) return;
       setFieldValue("usdInput", text);
-      const sanitized = text.replaceAll(/[^\d.]/g, "").replaceAll(/(\..*?)\..*/g, "$1");
-      const usdWei = parseUnits(sanitized, 18);
-      const assetWei = (usdWei * WAD) / market.usdPrice;
-      const formattedWei = (assetWei * BigInt(10 ** market.decimals)) / WAD;
-      const fieldValue = formatUnits(formattedWei, market.decimals);
-      setFieldValue("assetInput", fieldValue);
-      onChange(formattedWei);
+      const assets =
+        (((parseUnits(text.replaceAll(/[^\d.]/g, "").replaceAll(/(\..*?)\..*/g, "$1"), 18) * WAD) / market.usdPrice) *
+          BigInt(10 ** market.decimals)) /
+        WAD;
+      setFieldValue("assetInput", formatUnits(assets, market.decimals));
+      onChange(assets);
     },
     [market, onChange, setFieldValue],
   );

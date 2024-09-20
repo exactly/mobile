@@ -45,12 +45,16 @@ export default function SimulatePurchase() {
   });
 
   useEffect(() => {
-    const sanitized = input
-      .replaceAll(/[^\d,.]/g, "")
-      .replaceAll(",", ".")
-      .replaceAll(/^(\d*\.?\d*).*/g, "$1");
-    const usdWei = parseUnits(sanitized, market?.decimals ?? 18);
-    queryClient.setQueryData<bigint>(["purchase", "simulation"], usdWei);
+    queryClient.setQueryData<bigint>(
+      ["purchase", "simulation"],
+      parseUnits(
+        input
+          .replaceAll(/[^\d,.]/g, "")
+          .replaceAll(",", ".")
+          .replaceAll(/^(\d*\.?\d*).*/g, "$1"),
+        market?.decimals ?? 18,
+      ),
+    );
   }, [input, market?.decimals]);
 
   return (
