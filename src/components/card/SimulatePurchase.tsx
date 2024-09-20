@@ -46,13 +46,7 @@ export default function SimulatePurchase() {
   useEffect(() => {
     queryClient.setQueryData<bigint>(
       ["purchase", "simulation"],
-      parseUnits(
-        input
-          .replaceAll(/[^\d,.]/g, "")
-          .replaceAll(",", ".")
-          .replaceAll(/^(\d*\.?\d*).*/g, "$1"),
-        market?.decimals ?? 18,
-      ),
+      parseUnits(input.replaceAll(/\D/g, ".").replaceAll(/\.(?=.*\.)/g, ""), market?.decimals ?? 18),
     );
   }, [input, market?.decimals]);
 

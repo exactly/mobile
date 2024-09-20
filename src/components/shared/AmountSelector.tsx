@@ -39,7 +39,7 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
     (text: string) => {
       if (!market) return;
       setFieldValue("assetInput", text);
-      const assets = parseUnits(text.replaceAll(/[^\d.]/g, "").replaceAll(/(\..*?)\..*/g, "$1"), market.decimals);
+      const assets = parseUnits(text.replaceAll(/\D/g, ".").replaceAll(/\.(?=.*\.)/g, ""), market.decimals);
       setFieldValue(
         "usdInput",
         Number(formatUnits((assets * market.usdPrice) / WAD, market.decimals)).toLocaleString(undefined, {
@@ -60,7 +60,7 @@ export default function AmountSelector({ onChange }: AmountSelectorProperties) {
       if (!market) return;
       setFieldValue("usdInput", text);
       const assets =
-        (((parseUnits(text.replaceAll(/[^\d.]/g, "").replaceAll(/(\..*?)\..*/g, "$1"), 18) * WAD) / market.usdPrice) *
+        (((parseUnits(text.replaceAll(/\D/g, ".").replaceAll(/\.(?=.*\.)/g, ""), 18) * WAD) / market.usdPrice) *
           BigInt(10 ** market.decimals)) /
         WAD;
       setFieldValue("assetInput", formatUnits(assets, market.decimals));
