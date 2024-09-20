@@ -220,7 +220,8 @@ export default function Card() {
             </View>
 
             <SimulatePurchase />
-            <LatestActivity activity={activity} />
+
+            {activity && activity.length > 0 && <LatestActivity activity={activity} />}
 
             <View>
               <Accordion

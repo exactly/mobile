@@ -11,17 +11,10 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 interface LatestActivityProperties {
-  activity?: Awaited<ReturnType<typeof getActivity>>;
+  activity: Awaited<ReturnType<typeof getActivity>>;
 }
 
 export default function LatestActivity({ activity }: LatestActivityProperties) {
-  if (!activity || activity.length === 0) {
-    return (
-      <Text textAlign="center" fontSize={ms(15)} color="$uiNeutralSecondary">
-        There&apos;s no activity in your account.
-      </Text>
-    );
-  }
   return (
     <InfoCard
       title="Latest activity"
