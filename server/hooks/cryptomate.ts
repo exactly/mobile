@@ -1,12 +1,6 @@
 import MATURITY_INTERVAL from "@exactly/common/MATURITY_INTERVAL";
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
-import chain, {
-  auditorAbi,
-  exaPluginAbi,
-  marketAbi,
-  upgradeableModularAccountAbi,
-  usdcAddress,
-} from "@exactly/common/generated/chain";
+import chain, { exaPluginAbi, upgradeableModularAccountAbi, usdcAddress } from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -38,7 +32,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, credentials, transactions } from "../database/index";
-import { issuerCheckerAbi, issuerCheckerAddress } from "../generated/contracts";
+import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
 import keeper from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 import transactionOptions from "../utils/transactionOptions";

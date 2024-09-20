@@ -1,9 +1,7 @@
 import chain, {
-  auditorAbi,
   auditorAddress,
   exaAccountFactoryAbi,
   exaPluginAbi,
-  marketAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
 import { Address, Hash } from "@exactly/common/types";
@@ -16,6 +14,7 @@ import { BaseError, bytesToBigInt, ContractFunctionRevertedError } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
+import { auditorAbi, marketAbi } from "../generated/contracts";
 import { headerValidator, jsonValidator } from "../utils/alchemy";
 import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";

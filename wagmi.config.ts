@@ -73,10 +73,6 @@ export default defineConfig([
   },
   {
     out: "common/generated/chain.ts",
-    contracts: [
-      { name: "Auditor", abi: auditor.abi as Abi },
-      { name: "Market", abi: marketWETH.abi as Abi },
-    ],
     plugins: [
       addresses({
         auditor: auditor.address,
@@ -101,6 +97,11 @@ export default defineConfig([
   },
   {
     out: "server/generated/contracts.ts",
+    contracts: [
+      { name: "Auditor", abi: auditor.abi as Abi },
+      { name: "Market", abi: marketWETH.abi as Abi },
+      { name: "Previewer", abi: previewer.abi as Abi },
+    ],
     plugins: [
       addresses({ issuerChecker: issuerChecker.contractAddress }),
       foundry({ project: "contracts", include: ["IssuerChecker.sol/IssuerChecker.json"] }),
