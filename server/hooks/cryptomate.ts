@@ -1,3 +1,4 @@
+import MATURITY_INTERVAL from "@exactly/common/MATURITY_INTERVAL";
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import chain, {
   auditorAbi,
@@ -44,8 +45,6 @@ import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
 if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
-
-const MATURITY_INTERVAL = 4 * 7 * 24 * 3600;
 
 const debug = createDebug("exa:cryptomate");
 Object.assign(debug, { inspectOpts: { depth: undefined } });

@@ -1,3 +1,4 @@
+import MATURITY_INTERVAL from "@exactly/common/MATURITY_INTERVAL";
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import { Calculator } from "@tamagui/lucide-icons";
@@ -16,8 +17,6 @@ import useMarketAccount from "../../utils/useMarketAccount";
 import InfoCard from "../home/InfoCard";
 import TamaguiInput from "../shared/TamaguiInput";
 import Text from "../shared/Text";
-
-const MATURITY_INTERVAL = 4 * 7 * 24 * 3600;
 
 export default function SimulatePurchase() {
   const { data: assets } = useQuery<bigint>({
