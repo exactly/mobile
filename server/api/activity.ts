@@ -1,39 +1,118 @@
+import { previewerAddress } from "@exactly/common/generated/chain";
+import { Address } from "@exactly/common/types";
+import { vValidator } from "@hono/valibot-validator";
 import { captureException, withScope } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { type InferOutput, nullable, number, object, safeParse, string, isoTimestamp, pipe, transform } from "valibot";
+import {
+  array,
+  isoTimestamp,
+  nullable,
+  number,
+  object,
+  optional,
+  parse,
+  picklist,
+  pipe,
+  safeParse,
+  string,
+  transform,
+  union,
+} from "valibot";
+import { zeroAddress } from "viem";
 
-import database, { cards } from "../database";
+import database, { credentials } from "../database";
+import { previewerAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
+import publicClient, { type AssetTransfer } from "../utils/publicClient";
+
+const WAD = 10n ** 18n;
 
 const app = new Hono();
 app.use(auth);
 
-export default app.get("/", async (c) => {
-  const credentialId = c.get("credentialId");
-  const userCards = await database.query.cards.findMany({
-    where: eq(cards.credentialId, credentialId),
-    with: { transactions: { columns: { payload: true } } },
-  });
-  if (userCards.length === 0) return c.json("no cards found", 401);
-  return c.json(
-    userCards
-      .flatMap(({ transactions }) =>
-        transactions
-          .map(({ payload }) => {
-            const result = safeParse(Transaction, payload);
-            if (result.success) return result.output;
-            withScope((scope) => {
-              scope.setLevel("error");
-              scope.setContext("validation", result);
-              captureException(new Error("bad transaction"));
-            });
-          })
-          .filter(Boolean),
-      )
-      .reverse() as InferOutput<typeof Transaction>[],
-  );
-});
+export default app.get(
+  "/",
+  vValidator(
+    "query",
+    optional(
+      object({
+        include: optional(
+          union([picklist(["card", "received", "sent"]), array(picklist(["card", "received", "sent"]))]),
+        ),
+      }),
+      {},
+    ),
+  ),
+  async (c) => {
+    const { include } = c.req.valid("query");
+    const credentialId = c.get("credentialId");
+    const credential = await database.query.credentials.findFirst({
+      where: eq(credentials.id, credentialId),
+      columns: { account: true },
+      with: {
+        cards: {
+          columns: {},
+          with: { transactions: { columns: { payload: true } } },
+        },
+      },
+    });
+    if (!credential) return c.json("credential not found", 401);
+    const account = parse(Address, credential.account);
+    const transferOptions = { category: ["external", "erc20"], withMetadata: true, excludeZeroValue: true } as const;
+    const [received, sent, exactly] = await Promise.all([
+      publicClient.getAssetTransfers({ toAddress: account, ...transferOptions }),
+      publicClient.getAssetTransfers({ fromAddress: account, ...transferOptions }),
+      publicClient.readContract({
+        address: previewerAddress,
+        functionName: "exactly", // TODO cache
+        abi: previewerAbi,
+        args: [zeroAddress],
+      }),
+    ]);
+    const markets = new Map<Address, (typeof exactly)[number]>(
+      exactly.map((market) => [parse(Address, market.asset), market]),
+    );
+    function transfers(type: "received" | "sent", assetTransfers: readonly AssetTransfer[]) {
+      if (include && (Array.isArray(include) ? !include.includes(type) : include !== type)) return [];
+      return assetTransfers
+        .filter(({ rawContract }) => rawContract.address && markets.has(parse(Address, rawContract.address)))
+        .map(({ uniqueId, metadata, rawContract }) => {
+          const { decimals, symbol, usdPrice } = markets.get(parse(Address, rawContract.address))!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+          const value = BigInt(rawContract.value ?? 0);
+          const baseUnit = 10 ** decimals;
+          return {
+            type,
+            id: uniqueId,
+            timestamp: metadata.blockTimestamp,
+            currency: symbol.slice(3),
+            amount: Number(value) / baseUnit,
+            usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+          };
+        });
+    }
+
+    return c.json(
+      [
+        ...credential.cards.flatMap(({ transactions }) =>
+          transactions
+            .map(({ payload }) => {
+              const result = safeParse(Transaction, payload);
+              if (result.success) return result.output;
+              withScope((scope) => {
+                scope.setLevel("error");
+                scope.setContext("validation", result);
+                captureException(new Error("bad transaction"));
+              });
+            })
+            .filter(<T>(value: T | undefined): value is T => value !== undefined),
+        ),
+        ...transfers("received", received.transfers),
+        ...transfers("sent", sent.transfers),
+      ].sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
+    );
+  },
+);
 
 const Transaction = pipe(
   object({
@@ -52,16 +131,17 @@ const Transaction = pipe(
     }),
   }),
   transform(({ operation_id, data }) => ({
+    type: "card" as const,
     id: operation_id,
-    amount: data.transaction_amount,
+    timestamp: data.created_at,
     currency: data.transaction_currency_code,
+    amount: data.transaction_amount,
     merchant: {
       name: data.merchant_data.name,
       city: data.merchant_data.city,
       country: data.merchant_data.country,
       state: data.merchant_data.state,
     },
-    timestamp: data.created_at,
     usdAmount: data.bill_amount,
   })),
 );
