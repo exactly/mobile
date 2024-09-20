@@ -1,4 +1,5 @@
 import { CircleDollarSign } from "@tamagui/lucide-icons";
+import { getName, registerLocale, type LocaleData } from "i18n-iso-countries";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { titleCase } from "title-case";
@@ -6,6 +7,8 @@ import { titleCase } from "title-case";
 import type { getActivity } from "../../utils/server";
 import Text from "../shared/Text";
 import View from "../shared/View";
+
+registerLocale(require("i18n-iso-countries/langs/en.json") as LocaleData); // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
 
 interface ActivityItemProperties {
   item: Awaited<ReturnType<typeof getActivity>>[number];
@@ -43,7 +46,7 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
             </Text>
             <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
               {titleCase(
-                [merchant.city, merchant.state, merchant.country]
+                [merchant.city, merchant.state, merchant.country && getName(merchant.country, "en")]
                   .filter((field) => field !== "null")
                   .filter(Boolean)
                   .join(", ")
