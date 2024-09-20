@@ -39,7 +39,7 @@ export default function PaymentModal() {
       symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
-    .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0);
+    .filter(({ floatingDepositAssets, assetSymbol }) => floatingDepositAssets > 0 && assetSymbol !== "WBTC"); // TODO remove this limitation when new swap pool is available
 
   const maturity = usdDue.keys().next().value;
 
