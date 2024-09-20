@@ -14,6 +14,6 @@ export default defineConfig({
       POSTGRES_URL: "postgres",
       REDIS_URL: "redis",
     },
-    coverage: { enabled: true, reporter: ["lcovonly"] },
+    coverage: { enabled: true, reporter: ["lcov"] },
   },
 });
