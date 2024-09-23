@@ -1,11 +1,14 @@
-import { ArrowLeft, ChevronRight, FlaskConical, SunMoon } from "@tamagui/lucide-icons";
+import Intercom from "@intercom/intercom-react-native";
+import { ArrowLeft, ChevronRight, FlaskConical, HelpCircle, SunMoon } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router, useRouter } from "expo-router";
 import React from "react";
 import { Pressable, type ColorSchemeName } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, XStack } from "tamagui";
+import { useAccount } from "wagmi";
 
+import handleError from "../../utils/handleError";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -13,6 +16,11 @@ import View from "../shared/View";
 export default function Settings() {
   const { canGoBack } = useRouter();
   const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
+  const { address } = useAccount();
+  function handleSupport() {
+    Intercom.loginUserWithUserAttributes({ userId: address }).catch(handleError);
+    Intercom.present().catch(handleError);
+  }
   return (
     <SafeView fullScreen tab>
       <View fullScreen padded gap="$s5">
@@ -70,6 +78,17 @@ export default function Settings() {
                   </XStack>
                   <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
                     <ChevronRight color="$iconSecondary" />
+                  </XStack>
+                </XStack>
+              </Pressable>
+              <Separator borderColor="$borderNeutralSoft" />
+              <Pressable onPress={handleSupport}>
+                <XStack justifyContent="space-between" alignItems="center" padding="$s4">
+                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                    <HelpCircle color="$backgroundBrand" />
+                    <Text subHeadline color="$uiNeutralPrimary">
+                      Support
+                    </Text>
                   </XStack>
                 </XStack>
               </Pressable>
