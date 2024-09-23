@@ -1,5 +1,7 @@
+import { Address } from "@exactly/common/types";
 import { useQuery } from "@tanstack/react-query";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
+import { parse } from "valibot";
 import { formatUnits, zeroAddress } from "viem";
 import { useAccount, useWriteContract } from "wagmi";
 
@@ -10,6 +12,7 @@ import Success from "./Success";
 import { useSimulateExaPluginPropose } from "../../generated/contracts";
 import WAD from "../../utils/WAD";
 import type { Withdraw as IWithdraw } from "../../utils/queryClient";
+import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
 import SafeView from "../shared/SafeView";
 import View from "../shared/View";
@@ -41,6 +44,14 @@ export default function Withdraw() {
     amount: formatUnits(withdraw?.amount ?? 0n, market?.decimals ?? 0),
     usdValue: formatUnits(((withdraw?.amount ?? 0n) * (market?.usdPrice ?? 0n)) / WAD, market?.decimals ?? 0),
   };
+
+  useEffect(() => {
+    if (isSuccess) {
+      queryClient.setQueryData<{ address: Address; ens: string }[] | undefined>(["contacts", "recent"], (old) =>
+        [{ address: parse(Address, withdraw?.receiver), ens: "" }, ...(old ?? [])].slice(0, 3),
+      );
+    }
+  }, [isSuccess, withdraw?.receiver]);
   return (
     <SafeView fullScreen>
       <View fullScreen>

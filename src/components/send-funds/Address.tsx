@@ -12,6 +12,7 @@ import { ButtonIcon, ScrollView, XStack, YStack } from "tamagui";
 import { parse } from "valibot";
 
 import Contacts from "./Contacts";
+import RecentContacts from "./RecentContacts";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import Button from "../shared/Button";
@@ -23,6 +24,9 @@ import View from "../shared/View";
 export default function AddressSelection() {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<"front" | "back">("back");
+  const { data: recentContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
+    queryKey: ["contacts", "recent"],
+  });
   const { data: savedContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
     queryKey: ["contacts", "saved"],
   });
@@ -134,6 +138,15 @@ export default function AddressSelection() {
                   </Button>
                 </CameraView>
               </View>
+            )}
+
+            {recentContacts && recentContacts.length > 0 && (
+              <RecentContacts
+                onContactPress={(address) => {
+                  setFieldValue("receiver", address);
+                  validateAllFields("change").catch(handleError);
+                }}
+              />
             )}
 
             {savedContacts && savedContacts.length > 0 && (
