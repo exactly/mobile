@@ -1,7 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { reloadAppAsync } from "expo";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { createContext } from "react";
-import { useColorScheme } from "react-native";
+import { Appearance, Platform, useColorScheme } from "react-native";
 import { TamaguiProvider } from "tamagui";
 
 import tamagui from "../../../tamagui.config";
@@ -21,14 +20,21 @@ interface ThemeProviderProperties {
 
 export type AppTheme = "light" | "dark" | "system";
 
-function setTheme(theme: AppTheme) {
-  queryClient.setQueryData<AppTheme>(["settings", "theme"], theme);
-  reloadAppAsync().catch(handleError);
-}
-
 export default function ThemeProvider({ children }: ThemeProviderProperties) {
   const { data: theme } = useQuery<AppTheme>({ queryKey: ["settings", "theme"], initialData: "system" });
   const systemTheme = useColorScheme();
+
+  const { mutate: setTheme } = useMutation({
+    mutationFn: (value: AppTheme) => {
+      if (Platform.OS !== "web") {
+        Appearance.setColorScheme(value === "system" ? null : value); // eslint-disable-line unicorn/no-null
+      }
+      queryClient.setQueryData<AppTheme>(["settings", "theme"], value);
+      return Promise.resolve(true);
+    },
+    onError: handleError,
+  });
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <TamaguiProvider config={tamagui} defaultTheme={theme === "system" ? (systemTheme ?? "light") : theme}>

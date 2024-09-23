@@ -4,7 +4,7 @@ import { Button, styled } from "tamagui";
 export default styled(Button, {
   minHeight: "auto",
   fontWeight: "bold",
-  defaultVariants: { contained: true, outlined: false },
+  defaultVariants: { contained: true },
   fontSize: 15,
   padding: "$s3",
   variants: {

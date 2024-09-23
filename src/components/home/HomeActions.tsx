@@ -9,7 +9,6 @@ export default function HomeActions() {
   return (
     <View flexDirection="row" display="flex" gap="$s4" justifyContent="center" alignItems="center">
       <Button
-        contained
         main
         spaced
         halfWidth
@@ -17,11 +16,13 @@ export default function HomeActions() {
           router.push("/add-funds/add-crypto");
         }}
         iconAfter={<ArrowDownToLine color="$interactiveOnBaseBrandDefault" />}
+        backgroundColor="$interactiveBaseBrandDefault"
+        color="$interactiveOnBaseBrandDefault"
+        {...contained}
       >
         Add funds
       </Button>
       <Button
-        outlined
         main
         spaced
         halfWidth
@@ -29,9 +30,25 @@ export default function HomeActions() {
           router.push("/send-funds");
         }}
         iconAfter={<ArrowUpRight color="$interactiveOnBaseBrandSoft" />}
+        backgroundColor="$interactiveBaseBrandSoftDefault"
+        color="$interactiveOnBaseBrandSoft"
+        {...outlined}
       >
         Send
       </Button>
     </View>
   );
 }
+
+const contained = {
+  hoverStyle: { backgroundColor: "$interactiveBaseBrandHover" },
+  pressStyle: { backgroundColor: "$interactiveBaseBrandPressed" },
+};
+
+const outlined = {
+  hoverStyle: { backgroundColor: "$interactiveBaseBrandSoftHover" },
+  pressStyle: {
+    backgroundColor: "$interactiveBaseBrandSoftPressed",
+    color: "$interactiveOnBaseBrandSoft",
+  },
+};

@@ -237,6 +237,7 @@ const tamagui = createTamagui({
       weight: { 600: 600, 700: 700 },
     }),
   },
+  settings: { ...config.settings, fastSchemeChange: false },
   themes: {
     light: {
       backgroundSoft: tokens.color.grayscaleLight1,
