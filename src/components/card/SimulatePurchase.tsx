@@ -97,7 +97,7 @@ export default function SimulatePurchase() {
                 ).toLocaleString(undefined, {
                   style: "percent",
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 4,
+                  maximumFractionDigits: 2,
                 })
               : "N/A"}
           </Text>
