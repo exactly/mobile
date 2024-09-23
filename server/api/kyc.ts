@@ -21,7 +21,7 @@ export default app
     if (!credential.kycId) return c.json("kyc not found", 404);
     const { data } = await getInquiry(credential.kycId);
     if (data.attributes.status !== "approved") return c.json("kyc not approved", 403);
-    return c.json(true);
+    return c.json("ok");
   })
   .post(
     "/",
@@ -41,7 +41,7 @@ export default app
         if (data.attributes["reference-id"] !== credentialId) return c.json("unauthorized", 403);
         if (data.attributes.status === "completed" || data.attributes.status === "approved") {
           await database.update(credentials).set({ kycId: data.id }).where(eq(credentials.id, credentialId));
-          return c.json(true);
+          return c.json("ok");
         }
         return c.json("kyc not approved", 403);
       }
@@ -59,7 +59,7 @@ export default app
             return c.json(meta["one-time-link"]);
           }
           case "approved":
-            return c.json(true);
+            return c.json("ok");
           default:
             return c.json("kyc not approved", 403);
         }

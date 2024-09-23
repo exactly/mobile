@@ -8,7 +8,7 @@ import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
-import { any, literal, looseObject, object, optional } from "valibot";
+import { any, check, literal, object, optional, pipe, transform } from "valibot";
 
 import database, { credentials } from "../../database";
 import androidOrigin from "../../utils/android/origin";
@@ -37,23 +37,29 @@ export default app
       ]);
       setCookie(c, "session_id", sessionId, { domain, expires: new Date(Date.now() + timeout), httpOnly: true });
       await redis.set(sessionId, options.challenge, "PX", timeout);
-      return c.json(options);
+      return c.json({ ...options, extensions: options.extensions as Record<string, unknown> | undefined });
     },
   )
   .post(
     "/",
     vValidator("query", object({ credentialId: Base64URL }), ({ success }, c) => {
-      if (!success) return c.text("bad credential", 400);
-    }),
-    vValidator("cookie", object({ session_id: Base64URL }), ({ success }, c) => {
-      if (!success) return c.text("bad session", 400);
+      if (!success) return c.json("bad credential", 400);
     }),
     vValidator(
+      "cookie",
+      pipe(
+        optional(object({ session_id: Base64URL })),
+        check((input): input is { session_id: Base64URL } => !!input),
+        transform((input) => input as { session_id: Base64URL }),
+      ),
+      ({ success }, c) => (success ? undefined : c.text("bad session", 400)),
+    ),
+    vValidator(
       "json",
-      looseObject({
+      object({
         id: Base64URL,
         rawId: Base64URL,
-        response: looseObject({ clientDataJSON: Base64URL, authenticatorData: Base64URL, signature: Base64URL }),
+        response: object({ clientDataJSON: Base64URL, authenticatorData: Base64URL, signature: Base64URL }),
         clientExtensionResults: any(),
         type: literal("public-key"),
       }),

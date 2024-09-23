@@ -5,9 +5,10 @@ import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { cose, generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
-import { any, array, literal, looseObject, nullish, object, picklist } from "valibot";
+import { any, array, check, literal, nullish, object, optional, pipe, string, transform } from "valibot";
 import type { Hex } from "viem";
 
 import database, { credentials } from "../../database";
@@ -43,24 +44,33 @@ export default app
     ]);
     setCookie(c, "session_id", sessionId, { domain, expires: new Date(Date.now() + timeout), httpOnly: true });
     await redis.set(sessionId, options.challenge, "PX", timeout);
-    return c.json(options);
+    return c.json({ ...options, extensions: options.extensions as Record<string, unknown> | undefined });
   })
   .post(
     "/",
-    vValidator("cookie", object({ session_id: Base64URL }), ({ success }, c) => {
-      if (!success) return c.text("bad session", 400);
-    }),
+    vValidator(
+      "cookie",
+      pipe(
+        optional(object({ session_id: Base64URL })),
+        check((input): input is { session_id: Base64URL } => !!input),
+        transform((input) => input as { session_id: Base64URL }),
+      ),
+      ({ success }, c) => (success ? undefined : c.text("bad session", 400)),
+    ),
     vValidator(
       "json",
-      looseObject({
+      object({
         id: Base64URL,
         rawId: Base64URL,
-        response: looseObject({
+        response: object({
           clientDataJSON: Base64URL,
           attestationObject: Base64URL,
-          transports: nullish(
-            array(picklist(["ble", "cable", "hybrid", "internal", "nfc", "smart-card", "usb"])),
-            undefined, // eslint-disable-line unicorn/no-useless-undefined -- replace null with undefined
+          transports: pipe(
+            nullish(array(string())),
+            transform((value) => {
+              if (!value) return;
+              return value as AuthenticatorTransportFuture[];
+            }),
           ),
         }),
         clientExtensionResults: any(),
@@ -127,8 +137,8 @@ export default app
           headers: { "Content-Type": "application/json", "X-Alchemy-Token": webhooksKey },
           body: JSON.stringify({ webhook_id: webhookId, addresses_to_add: [account], addresses_to_remove: [] }),
         })
-          .then((response) => {
-            if (!response.ok) throw new Error(`${String(response.status)} ${response.statusText}`);
+          .then(async (response) => {
+            if (!response.ok) throw new Error(`${String(response.status)} ${await response.text()}`);
           })
           .catch((error: unknown) => captureException(error)),
       ]);

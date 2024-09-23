@@ -1,84 +1,89 @@
 import domain from "@exactly/common/domain";
-import type { Base64URL, Passkey } from "@exactly/common/types";
+import { Passkey } from "@exactly/common/types";
+import type { ExaServer } from "@exactly/server";
+import { hc } from "hono/client";
 import { Platform } from "react-native";
-import { type create, get } from "react-native-passkeys";
+import { get as assert } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
-import { check, number, parse, pipe } from "valibot";
+import { check, number, parse, pipe, safeParse } from "valibot";
 
 import queryClient from "./queryClient";
 
-export function registrationOptions() {
-  return server<Parameters<typeof create>[0]>("/auth/registration");
-}
-
-export async function verifyRegistration({
-  userId,
-  attestation,
-}: {
-  userId: Base64URL;
-  attestation: RegistrationResponseJSON;
-}) {
-  const { auth: expires, ...passkey } = await server<Passkey & { auth: number }>(
-    `/auth/registration?userId=${userId}`,
-    { body: attestation },
-  );
-  await queryClient.setQueryData(["auth"], parse(Auth, expires));
-  return passkey;
-}
-
-export function getCard() {
-  return auth<{ url: string; lastFour: string }>("/card");
-}
-
-export function kyc(inquiryId?: string) {
-  return auth<string>("/kyc", { inquiryId: inquiryId ?? undefined }, "POST");
-}
-
-export function kycStatus() {
-  return auth<boolean>("/kyc");
-}
-
-export function getPasskey() {
-  return auth<Passkey>("/passkey");
-}
-
-export function getActivity() {
-  return auth<Transaction[]>("/activity");
-}
-
-async function auth<T = unknown>(url: `/${string}`, body?: unknown, method?: "GET" | "POST") {
-  try {
-    parse(Auth, queryClient.getQueryData(["auth"]));
-  } catch {
+queryClient.setQueryDefaults(["auth"], {
+  retry: false,
+  gcTime: 30 * 60_000,
+  staleTime: 24 * 60 * 60_000,
+  queryFn: async () => {
     const credentialId = queryClient.getQueryData<Passkey>(["passkey"])?.credentialId;
-    const options = await server<Parameters<typeof get>[0]>(
-      `/auth/authentication${credentialId ? `?credentialId=${credentialId}` : ""}`,
-    );
+    const get = await client.api.auth.authentication.$get({ query: { credentialId } });
+    if (!get.ok) throw new APIError(get.status, await get.text());
+    const options = await get.json();
     if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
-    const assertion = await get(options);
+    const assertion = await assert(options);
     if (!assertion) throw new Error("bad assertion");
-    const { expires } = await server<{ expires: number }>(`/auth/authentication?credentialId=${assertion.id}`, {
-      body: assertion,
-    });
-    await queryClient.setQueryData(["auth"], parse(Auth, expires));
-  }
+    const post = await client.api.auth.authentication.$post({ query: { credentialId: assertion.id }, json: assertion });
+    if (!post.ok) throw new APIError(post.status, await post.text());
+    const { expires } = await post.json();
+    return parse(Auth, expires);
+  },
+});
 
-  return server<T>(url, { method, body, credentials: "include" });
+const client = hc<ExaServer>(domain === "localhost" ? "http://localhost:3000/" : `https://${domain}/`, {
+  init: { credentials: "include" },
+});
+
+export async function registrationOptions() {
+  const response = await client.api.auth.registration.$get();
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  return response.json();
 }
 
-async function server<T = unknown>(url: `/${string}`, init?: Omit<RequestInit, "body"> & { body?: unknown }) {
-  const response = await fetch(
-    `${domain === "localhost" ? "http://localhost:3000/api" : `https://${domain}/api`}${url}`,
-    {
-      credentials: "include",
-      ...init,
-      method: init?.method ?? (init?.body ? "POST" : "GET"),
-      headers: { "Content-Type": "application/json", ...init?.headers },
-      body: init?.body ? JSON.stringify(init.body) : undefined,
-    },
-  );
-  if (!response.ok) throw new Error(`${String(response.status)} ${await response.text()}`);
-  return response.json() as Promise<T>;
+export async function verifyRegistration(attestation: RegistrationResponseJSON) {
+  const response = await client.api.auth.registration.$post({ json: attestation });
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  const { auth: expires, ...passkey } = await response.json();
+  await queryClient.setQueryData(["auth"], parse(Auth, expires));
+  return parse(Passkey, passkey);
+}
+
+export async function getCard() {
+  await auth();
+  const response = await client.api.card.$get();
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  return response.json();
+}
+
+export async function kyc(inquiryId?: string) {
+  await auth();
+  const response = await client.api.kyc.$post({ json: { inquiryId } });
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  return response.json();
+}
+
+export async function kycStatus() {
+  await auth();
+  const response = await client.api.kyc.$get();
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  return response.json();
+}
+
+export async function getPasskey() {
+  await auth();
+  const response = await client.api.passkey.$get();
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  return response.json();
+}
+
+export async function getActivity() {
+  await auth();
+  const response = await client.api.activity.$get();
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  return response.json();
+}
+
+export async function auth() {
+  const { success } = safeParse(Auth, await queryClient.ensureQueryData({ queryKey: ["auth"] }));
+  if (!success) await queryClient.fetchQuery({ queryKey: ["auth"] });
 }
 
 const Auth = pipe(
@@ -86,16 +91,14 @@ const Auth = pipe(
   check((expires) => Date.now() < expires),
 );
 
-interface Transaction {
-  id: string;
-  amount: number;
-  currency: string | null;
-  merchant: {
-    name: string;
-    city: string | null;
-    country: string | null;
-    state: string | null;
-  };
-  timestamp: Date;
-  usdAmount: number;
+class APIError extends Error {
+  code: number;
+  text: string;
+
+  constructor(code: number, text: string) {
+    super(`${String(code)} ${text}`);
+    this.code = code;
+    this.text = text;
+    this.name = "APIError";
+  }
 }
