@@ -34,7 +34,8 @@ export default function LatestActivity({ activity }: LatestActivityProperties) {
         </Pressable>
       }
     >
-      {activity.slice(0, 4).map(({ amount, currency, id, merchant, usdAmount, timestamp }) => {
+      {activity.slice(0, 4).map((item) => {
+        const { amount, id, usdAmount, currency, type, timestamp } = item;
         return (
           <View key={id} flexDirection="row" gap="$s4" alignItems="center">
             <View
@@ -51,7 +52,9 @@ export default function LatestActivity({ activity }: LatestActivityProperties) {
               <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
                 <View gap="$s2" flexShrink={1}>
                   <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
-                    {merchant.name}
+                    {type === "card" && item.merchant.name}
+                    {type === "received" && "Received"}
+                    {type === "sent" && "Sent"}
                   </Text>
                   <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
                     {format(timestamp, "yyyy-MM-dd")}

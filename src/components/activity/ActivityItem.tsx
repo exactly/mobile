@@ -1,4 +1,5 @@
 import { CircleDollarSign } from "@tamagui/lucide-icons";
+import { format } from "date-fns";
 import { getName, registerLocale, type LocaleData } from "i18n-iso-countries";
 import React from "react";
 import { ms } from "react-native-size-matters";
@@ -17,7 +18,7 @@ interface ActivityItemProperties {
 }
 
 export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProperties) {
-  const { amount, currency, id, merchant, usdAmount } = item;
+  const { amount, id, usdAmount, currency, type, timestamp } = item;
   return (
     <View
       key={id}
@@ -42,16 +43,23 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
         <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
           <View gap="$s2" flexShrink={1}>
             <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
-              {merchant.name}
+              {type === "card" && item.merchant.name}
+              {type === "received" && "Received"}
+              {type === "sent" && "Sent"}
             </Text>
             <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
-              {titleCase(
-                [merchant.city, merchant.state, merchant.country && getName(merchant.country, "en")]
-                  .filter((field) => field !== "null")
-                  .filter(Boolean)
-                  .join(", ")
-                  .toLowerCase(),
-              )}
+              {type === "card" &&
+                titleCase(
+                  [
+                    item.merchant.city,
+                    item.merchant.state,
+                    item.merchant.country && getName(item.merchant.country, "en"),
+                  ]
+                    .filter((field) => field && field !== "null")
+                    .join(", ")
+                    .toLowerCase(),
+                )}
+              {type !== "card" && format(timestamp, "yyyy-MM-dd")}
             </Text>
           </View>
           <View gap="$s2">
@@ -66,7 +74,6 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
             </View>
             <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
               {Number(amount).toLocaleString(undefined, {
-                currency: currency ?? undefined,
                 currencyDisplay: "narrowSymbol",
                 maximumFractionDigits: 2,
                 minimumFractionDigits: 2,

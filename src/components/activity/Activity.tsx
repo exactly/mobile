@@ -19,10 +19,10 @@ export default function Activity() {
   const groupedActivity = useMemo(() => {
     if (!activity) return [];
     const groups: Record<string, typeof activity> = {};
-    for (const purchase of activity) {
-      const date = format(purchase.timestamp, "yyyy-MM-dd");
+    for (const item of activity) {
+      const date = format(item.timestamp, "yyyy-MM-dd");
       groups[date] = groups[date] ?? [];
-      groups[date].push(purchase);
+      groups[date].push(item);
     }
     return Object.entries(groups).map(([date, purchases]) => ({ date, purchases }));
   }, [activity]);
