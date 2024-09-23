@@ -60,8 +60,8 @@ export default function SimulatePurchase() {
           <Text primary subHeadline>
             Total
           </Text>
-          <XStack alignItems="center" gap="$s2">
-            <TamaguiInput minWidth={100} maxWidth="50%" borderRadius="$r3" backgroundColor="$backgroundMild">
+          <XStack alignItems="center" gap="$s2" justifyContent="flex-end" maxWidth="50%">
+            <TamaguiInput borderRadius="$r3" backgroundColor="$backgroundMild">
               <TamaguiInput.Icon>
                 <Text primary title3>
                   $
@@ -69,7 +69,7 @@ export default function SimulatePurchase() {
               </TamaguiInput.Icon>
               <TamaguiInput.Input
                 maxLength={10}
-                maxHeight={30}
+                numberOfLines={1}
                 inputMode="decimal"
                 textAlign="right"
                 fontSize={ms(20)}
