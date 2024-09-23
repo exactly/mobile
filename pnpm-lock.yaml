@@ -71,6 +71,9 @@ importers:
       '@expo/metro-runtime':
         specifier: ~3.2.3
         version: 3.2.3(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10))
+      '@intercom/intercom-react-native':
+        specifier: ^7.2.1
+        version: 7.2.1(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10))(react@18.2.0)
       '@onesignal/node-onesignal':
         specifier: 5.0.0-alpha-01
         version: 5.0.0-alpha-01
@@ -2303,6 +2306,13 @@ packages:
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [win32]
+
+  '@intercom/intercom-react-native@7.2.1':
+    resolution: {integrity: sha512-idpA36sM0nNB3iJStwv4klw+6e+MuzvbMyPe1PFyJzjwHkZWXsz67g//RogTMFOvf6asTbYCLIadTQGeiCrz9Q==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: '*'
+      react-native: 0.74.5
 
   '@ioredis/as-callback@3.0.0':
     resolution: {integrity: sha512-Kqv1rZ3WbgOrS+hgzJ5xG5WQuhvzzSTRYvNeyPMLOAM78MHSnuKI20JeJGbpuAt//LCuP0vsexZcorqW7kWhJg==}
@@ -11621,6 +11631,14 @@ snapshots:
 
   '@img/sharp-win32-x64@0.33.5':
     optional: true
+
+  '@intercom/intercom-react-native@7.2.1(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10))(react@18.2.0)':
+    dependencies:
+      node-fetch: 2.7.0
+      react: 18.2.0
+      react-native: 0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - encoding
 
   '@ioredis/as-callback@3.0.0': {}
 
