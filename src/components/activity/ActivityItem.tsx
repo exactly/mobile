@@ -65,7 +65,14 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
               </Text>
             </View>
             <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-              {Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })} {currency}
+              {Number(amount).toLocaleString(undefined, {
+                currency: currency ?? undefined,
+                currencyDisplay: "narrowSymbol",
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2,
+              })}
+              &nbsp;
+              {currency}
             </Text>
           </View>
         </View>
