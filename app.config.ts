@@ -87,6 +87,14 @@ export default {
       } as OneSignalPluginProps,
     ],
     ["expo-camera", { cameraPermission: "Exactly needs your permission to scan QR codes." }],
+    [
+      "@intercom/intercom-react-native",
+      {
+        appId: "eknd6y0s",
+        androidApiKey: process.env.INTERCOM_ANDROID_API_KEY,
+        iosApiKey: process.env.INTERCOM_IOS_API_KEY,
+      },
+    ],
   ],
   experiments: { typedRoutes: true },
   extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
