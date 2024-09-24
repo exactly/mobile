@@ -144,7 +144,7 @@ export default function AddCrypto() {
                 </View>
               </View>
               <View flex={1}>
-                <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)}>
+                <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)} textAlign="justify">
                   Exa App runs on the {chain.name} network. Sending assets on other networks may result in irreversible
                   loss of funds.
                   <Text
@@ -154,7 +154,7 @@ export default function AddCrypto() {
                     fontWeight="bold"
                     onPress={about}
                   >
-                    &nbsp;Learn more about adding funds
+                    &nbsp;Learn more about adding funds.
                   </Text>
                 </Text>
               </View>

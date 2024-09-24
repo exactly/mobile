@@ -38,11 +38,11 @@ export default function AddFunds() {
           <View flex={1} gap={ms(20)}>
             <AddCryptoButton />
             <View flex={1}>
-              <Text color="$uiNeutralPlaceholder" fontSize={ms(13)}>
+              <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} textAlign="justify">
                 Assets are added to your balance as collateral to increase your credit limit. You can change collateral
                 preferences in your account.
                 <Text color="$uiBrandSecondary" fontSize={ms(13)} fontWeight="bold">
-                  &nbsp;Learn more about collateral
+                  &nbsp;Learn more about collateral.
                 </Text>
               </Text>
             </View>
