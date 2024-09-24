@@ -61,8 +61,10 @@ module.exports = {
     },
     {
       files: [...nodeFiles, "server/**"],
-      extends: ["universe/node", "plugin:n/recommended"],
+      extends: ["universe/node", "plugin:n/recommended", "plugin:drizzle/all"],
       rules: {
+        "drizzle/enforce-delete-with-where": ["error", { drizzleObjectName: "database" }],
+        "drizzle/enforce-update-with-where": ["error", { drizzleObjectName: "database" }],
         "import/no-unresolved": "off", // handled by bundler
         "n/no-missing-import": "off", // handled by bundler
         "unicorn/prefer-top-level-await": "off", // unsupported in cjs
