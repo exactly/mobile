@@ -111,6 +111,7 @@ export default function AddressSelection() {
                 </YStack>
               )}
             </Field>
+
             {permission && permission.granted && cameraOn && (
               <View minHeight={ms(300)}>
                 <CameraView
@@ -141,23 +142,35 @@ export default function AddressSelection() {
               </View>
             )}
 
-            {recentContacts && recentContacts.length > 0 && (
-              <RecentContacts
-                onContactPress={(address) => {
-                  setFieldValue("receiver", address);
-                  validateAllFields("change").catch(handleError);
-                }}
-              />
+            {(recentContacts || savedContacts) && (
+              <ScrollView maxHeight={350} space="$s4">
+                {recentContacts && recentContacts.length > 0 && (
+                  <RecentContacts
+                    onContactPress={(address) => {
+                      setFieldValue("receiver", address);
+                      validateAllFields("change").catch(handleError);
+                    }}
+                  />
+                )}
+                {recentContacts && savedContacts && <Separator borderColor="$borderNeutralSoft" />}
+                {savedContacts && savedContacts.length > 0 && (
+                  <Contacts
+                    onContactPress={(address) => {
+                      setFieldValue("receiver", address);
+                      validateAllFields("change").catch(handleError);
+                    }}
+                  />
+                )}
+              </ScrollView>
             )}
-            {recentContacts && savedContacts && <Separator borderColor="$borderNeutralSoft" />}
-            {savedContacts && savedContacts.length > 0 && (
-              <Contacts
-                onContactPress={(address) => {
-                  setFieldValue("receiver", address);
-                  validateAllFields("change").catch(handleError);
-                }}
-              />
-            )}
+
+            <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)} textAlign="justify">
+              Make sure that the receiving address is compatible with {chain.name} network. Sending assets on other
+              networks may result in irreversible loss of funds.
+              <Text color="$uiBrandSecondary" fontSize={ms(13)} lineHeight={ms(16)} fontWeight="bold">
+                &nbsp;Learn more about sending funds
+              </Text>
+            </Text>
 
             <Subscribe selector={({ canSubmit }) => canSubmit}>
               {(canSubmit) => {
