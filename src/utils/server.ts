@@ -1,3 +1,4 @@
+import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { Passkey } from "@exactly/common/types";
 import type { ExaServer } from "@exactly/server";
@@ -12,7 +13,7 @@ import queryClient from "./queryClient";
 queryClient.setQueryDefaults(["auth"], {
   retry: false,
   gcTime: 30 * 60_000,
-  staleTime: 24 * 60 * 60_000,
+  staleTime: AUTH_EXPIRY,
   queryFn: async () => {
     const credentialId = queryClient.getQueryData<Passkey>(["passkey"])?.credentialId;
     const get = await client.api.auth.authentication.$get({ query: { credentialId } });

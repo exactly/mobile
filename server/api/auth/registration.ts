@@ -1,3 +1,4 @@
+import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
 import { Base64URL } from "@exactly/common/types";
@@ -118,7 +119,7 @@ export default app
         return c.text(error instanceof Error ? error.message : String(error), 400);
       }
 
-      const expires = new Date(Date.now() + 24 * 60 * 60_000);
+      const expires = new Date(Date.now() + AUTH_EXPIRY);
       const account = deriveAddress(exaAccountFactoryAddress, { x, y });
       await Promise.all([
         setSignedCookie(c, "credential_id", credentialID, authSecret, { domain, expires, httpOnly: true }),

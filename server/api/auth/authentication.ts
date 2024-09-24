@@ -1,3 +1,4 @@
+import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { Base64URL } from "@exactly/common/types";
 import { vValidator } from "@hono/valibot-validator";
@@ -107,7 +108,7 @@ export default app
       } = verification;
       if (!verified) return c.text("bad authentication", 400);
 
-      const expires = new Date(Date.now() + 24 * 60 * 60_000);
+      const expires = new Date(Date.now() + AUTH_EXPIRY);
       await Promise.all([
         setSignedCookie(c, "credential_id", credentialId, authSecret, { domain, expires, httpOnly: true }),
         database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID)),
