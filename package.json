@@ -107,6 +107,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-universe": "^13.0.0",
     "eslint-import-resolver-typescript": "^3.6.3",
+    "eslint-plugin-drizzle": "^0.2.3",
     "eslint-plugin-import": "^2.30.0",
     "eslint-plugin-n": "^17.10.3",
     "eslint-plugin-prettier": "^5.2.1",
