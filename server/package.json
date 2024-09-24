@@ -42,6 +42,7 @@
     "viem": "^2.21.14"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.2.7",
     "@exactly/common": "workspace:*",
     "@exactly/plugin": "workspace:*",
     "@sentry/cli": "^2.36.2",

@@ -465,7 +465,7 @@ importers:
         version: 4.3.7
       drizzle-orm:
         specifier: ^0.33.0
-        version: 0.33.0(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@18.2.79)(pg@8.13.0)(react@18.2.0)
+        version: 0.33.0(@electric-sql/pglite@0.2.7)(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@18.2.79)(pg@8.13.0)(react@18.2.0)
       hono:
         specifier: ^4.6.3
         version: 4.6.3
@@ -491,6 +491,9 @@ importers:
         specifier: ^2.21.14
         version: 2.21.14(bufferutil@4.0.8)(typescript@5.6.2)(utf-8-validate@5.0.10)(zod@3.23.8)
     devDependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.2.7
+        version: 0.2.7
       '@exactly/common':
         specifier: workspace:*
         version: link:../common
@@ -1347,6 +1350,9 @@ packages:
 
   '@drizzle-team/brocli@0.10.1':
     resolution: {integrity: sha512-AHy0vjc+n/4w/8Mif+w86qpppHuF3AyXbcWW+R/W7GNA3F5/p2nuhlkCJaTXSLZheB4l1rtHzOfr9A7NwoR/Zg==}
+
+  '@electric-sql/pglite@0.2.7':
+    resolution: {integrity: sha512-8Il//XHTAtZ8VeQF+6P1UjsIoaAJyO4LwOMoXhSFaHpmkwKs63cUhHHNzLzUmcZvP/ZTmlT3+xTiWfU/EyoxwQ==}
 
   '@emnapi/runtime@1.2.0':
     resolution: {integrity: sha512-bV21/9LQmcQeCPEg3BDFtvwL6cwiTMksYNWQQ4KOxCZikEGalWtenoZ0wCiukJINlGCIi2KXx01g4FoH/LxpzQ==}
@@ -10533,6 +10539,8 @@ snapshots:
 
   '@drizzle-team/brocli@0.10.1': {}
 
+  '@electric-sql/pglite@0.2.7': {}
+
   '@emnapi/runtime@1.2.0':
     dependencies:
       tslib: 2.7.0
@@ -15571,8 +15579,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.33.0(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@18.2.79)(pg@8.13.0)(react@18.2.0):
+  drizzle-orm@0.33.0(@electric-sql/pglite@0.2.7)(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@18.2.79)(pg@8.13.0)(react@18.2.0):
     optionalDependencies:
+      '@electric-sql/pglite': 0.2.7
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.11.10
       '@types/react': 18.2.79
