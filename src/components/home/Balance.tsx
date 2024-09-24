@@ -39,8 +39,7 @@ export default function Balance() {
           Balance
         </Text>
       </View>
-
-      <Accordion overflow="hidden" type="multiple" borderRadius="$r3" padding="$s4">
+      <Accordion overflow="hidden" type="multiple" borderRadius="$r3" padding="$s4" defaultValue={["balance"]}>
         <Accordion.Item value="balance" flex={1}>
           <Accordion.Trigger
             unstyled
