@@ -1,3 +1,4 @@
+import chain from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/types";
 import { ArrowLeft, ArrowRight, QrCode, SwitchCamera } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
@@ -75,7 +76,7 @@ export default function AddressSelection() {
                     <Input
                       neutral
                       flex={1}
-                      placeholder="Enter address"
+                      placeholder={`Enter ${chain.name} address`}
                       borderColor="$uiNeutralTertiary"
                       borderRightColor="transparent"
                       borderTopRightRadius={0}
