@@ -8,7 +8,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ButtonIcon, ScrollView, XStack, YStack } from "tamagui";
+import { ButtonIcon, ScrollView, Separator, XStack, YStack } from "tamagui";
 import { parse } from "valibot";
 
 import Contacts from "./Contacts";
@@ -148,7 +148,7 @@ export default function AddressSelection() {
                 }}
               />
             )}
-
+            {recentContacts && savedContacts && <Separator borderColor="$borderNeutralSoft" />}
             {savedContacts && savedContacts.length > 0 && (
               <Contacts
                 onContactPress={(address) => {

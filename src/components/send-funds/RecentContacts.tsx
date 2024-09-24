@@ -18,7 +18,7 @@ export default function RecentContacts({ onContactPress }: { onContactPress: (ad
       <XStack gap="$s2" alignItems="center">
         <TimerReset size={ms(20)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
         <Text emphasized footnote color="$uiNeutralSecondary">
-          Recent Contacts
+          Recents
         </Text>
       </XStack>
       {recentContacts ? (
