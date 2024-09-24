@@ -1,4 +1,4 @@
-import { CircleDollarSign } from "@tamagui/lucide-icons";
+import { ArrowDownToLine, ArrowUpFromLine, CircleDollarSign } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
 import { getName, registerLocale, type LocaleData } from "i18n-iso-countries";
 import React from "react";
@@ -37,7 +37,9 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
         justifyContent="center"
         alignItems="center"
       >
-        <CircleDollarSign color="$iconBrandDefault" />
+        {type === "card" && <CircleDollarSign color="$iconBrandDefault" />}
+        {type === "received" && <ArrowDownToLine color="$iconBrandDefault" />}
+        {type === "sent" && <ArrowUpFromLine color="$iconBrandDefault" />}
       </View>
       <View flex={1} gap="$s2">
         <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">

@@ -1,4 +1,4 @@
-import { ChevronRight, CircleDollarSign } from "@tamagui/lucide-icons";
+import { ArrowDownToLine, ArrowUpFromLine, ChevronRight, CircleDollarSign } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
 import { router } from "expo-router";
 import React from "react";
@@ -46,7 +46,9 @@ export default function LatestActivity({ activity }: LatestActivityProperties) {
               justifyContent="center"
               alignItems="center"
             >
-              <CircleDollarSign color="$iconBrandDefault" />
+              {type === "card" && <CircleDollarSign color="$iconBrandDefault" />}
+              {type === "received" && <ArrowDownToLine color="$iconBrandDefault" />}
+              {type === "sent" && <ArrowUpFromLine color="$iconBrandDefault" />}
             </View>
             <View flex={1} gap="$s2">
               <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
