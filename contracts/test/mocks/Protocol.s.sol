@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0;
 
-import { Auditor } from "@exactly/protocol/Auditor.sol";
-import { InterestRateModel } from "@exactly/protocol/InterestRateModel.sol";
+import { Auditor, IPriceFeed } from "@exactly/protocol/Auditor.sol";
+import { InterestRateModel, Parameters } from "@exactly/protocol/InterestRateModel.sol";
 import { Market } from "@exactly/protocol/Market.sol";
 import { MockBalancerVault } from "@exactly/protocol/mocks/MockBalancerVault.sol";
-import { MockInterestRateModel } from "@exactly/protocol/mocks/MockInterestRateModel.sol";
 import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
+import { Previewer } from "@exactly/protocol/periphery/Previewer.sol";
 
 import { ERC1967Proxy } from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -26,6 +26,7 @@ contract DeployProtocol is BaseScript {
   MockERC20 public exa;
   MockERC20 public usdc;
   MockWETH public weth;
+  Previewer public previewer;
 
   IBalancerVault public balancer;
   MockVelodromeFactory public velodromeFactory;
@@ -36,25 +37,47 @@ contract DeployProtocol is BaseScript {
     auditor = Auditor(address(new ERC1967Proxy(address(new Auditor(18)), "")));
     auditor.initialize(Auditor.LiquidationIncentive(0.09e18, 0.01e18));
     vm.label(address(auditor), "Auditor");
-    InterestRateModel irm = InterestRateModel(address(new MockInterestRateModel(0.1e18)));
+
+    Parameters memory irmParams = Parameters({
+      minRate: 3.5e16,
+      naturalRate: 8e16,
+      maxUtilization: 1.3e18,
+      naturalUtilization: 0.75e18,
+      growthSpeed: 1.1e18,
+      sigmoidSpeed: 2.5e18,
+      spreadFactor: 0.2e18,
+      maturitySpeed: 0.5e18,
+      timePreference: 0.01e18,
+      fixedAllocation: 0.6e18,
+      maxRate: 15_000e16
+    });
+    InterestRateModel irm = InterestRateModel(address(0));
+
     exa = new MockERC20("exactly", "EXA", 18);
     vm.label(address(exa), "EXA");
     exaEXA = Market(address(new ERC1967Proxy(address(new Market(exa, auditor)), "")));
-    Market(address(exaEXA)).initialize("EXA", 3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    exaEXA.initialize("EXA", 3, 1e18, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    exaEXA.setInterestRateModel(new InterestRateModel(irmParams, exaEXA));
     vm.label(address(exaEXA), "exaEXA");
-    auditor.enableMarket(Market(address(exaEXA)), new MockPriceFeed(18, 5e18), 0.8e18);
+    auditor.enableMarket(exaEXA, new MockPriceFeed(18, 5e18), 0.8e18);
+
     usdc = new MockERC20("USD Coin", "USDC", 6);
     vm.label(address(usdc), "USDC");
     exaUSDC = Market(address(new ERC1967Proxy(address(new Market(usdc, auditor)), "")));
-    Market(address(exaUSDC)).initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    exaUSDC.initialize("USDC", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    exaUSDC.setInterestRateModel(new InterestRateModel(irmParams, exaUSDC));
     vm.label(address(exaUSDC), "exaUSDC");
-    auditor.enableMarket(Market(address(exaUSDC)), new MockPriceFeed(18, 1e18), 0.9e18);
+    auditor.enableMarket(exaUSDC, new MockPriceFeed(18, 1e18), 0.9e18);
+
     weth = new MockWETH();
     vm.label(address(weth), "WETH");
     exaWETH = Market(address(new ERC1967Proxy(address(new Market(weth, auditor)), "")));
-    Market(address(exaWETH)).initialize("WETH", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    exaWETH.initialize("WETH", 3, 1e6, irm, 0.02e18 / uint256(1 days), 1e17, 0, 0.0046e18, 0.4e18);
+    exaWETH.setInterestRateModel(new InterestRateModel(irmParams, exaWETH));
     vm.label(address(exaWETH), "exaWETH");
-    auditor.enableMarket(Market(address(exaWETH)), new MockPriceFeed(18, 2500e18), 0.86e18);
+    auditor.enableMarket(exaWETH, new MockPriceFeed(18, 2500e18), 0.86e18);
+
+    previewer = new Previewer(auditor, IPriceFeed(address(0)));
 
     balancer = IBalancerVault(address(new MockBalancerVault()));
     exa.mint(address(balancer), 1_000_000e18);

@@ -47,40 +47,11 @@ export default async function setup({ provide }: GlobalSetupContext) {
   await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 42000
     --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
   // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
-  const [, auditor, , , , , , , , , usdc, , marketUSDC, , , , , , marketWETH, , , , balancer] = parse(
-    object({
-      transactions: tuple([
-        object({ transactionType: literal("CREATE"), contractName: literal("Auditor") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
-        object({ transactionType: literal("CALL") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("MockInterestRateModel") }),
-        object({ transactionType: literal("CREATE"), contractName: null_(), contractAddress: Address }),
-        object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
-        object({ transactionType: literal("CALL") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
-        object({ transactionType: literal("CALL") }),
-        object({ transactionType: literal("CREATE"), contractName: null_(), contractAddress: Address }),
-        object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
-        object({ transactionType: literal("CALL") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
-        object({ transactionType: literal("CALL") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("MockWETH"), contractAddress: Address }),
-        object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
-        object({ transactionType: literal("CALL") }),
-        object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
-        object({ transactionType: literal("CALL") }),
-        object({
-          transactionType: literal("CREATE"),
-          contractName: literal("MockBalancerVault"),
-          contractAddress: Address,
-        }),
-      ]),
-    }),
-    await import(`@exactly/plugin/broadcast/Protocol.s.sol/${String(foundry.id)}/run-latest.json`),
-  ).transactions;
+  const [, auditor, , , , , , , , , , usdc, , marketUSDC, , , , , , , , marketWETH, , , , , , previewer, balancer] =
+    parse(
+      Protocol,
+      await import(`@exactly/plugin/broadcast/Protocol.s.sol/${String(foundry.id)}/run-latest.json`),
+    ).transactions;
   shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor.contractAddress;
   shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC.contractAddress;
   shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH.contractAddress;
@@ -109,17 +80,56 @@ export default async function setup({ provide }: GlobalSetupContext) {
     await import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(foundry.id)}/run-latest.json`),
   ).transactions;
 
-  provide("USDC", usdc.contractAddress);
+  provide("ExaAccountFactory", exaAccountFactory.contractAddress);
+  provide("ExaPlugin", exaPlugin.contractAddress);
+  provide("IssuerChecker", issuerChecker.contractAddress);
   provide("MarketUSDC", marketUSDC.contractAddress);
   provide("MarketWETH", marketWETH.contractAddress);
-  provide("IssuerChecker", issuerChecker.contractAddress);
-  provide("ExaPlugin", exaPlugin.contractAddress);
-  provide("ExaAccountFactory", exaAccountFactory.contractAddress);
+  provide("Previewer", previewer.contractAddress);
+  provide("USDC", usdc.contractAddress);
 
   return async function teardown() {
     await instance.stop();
   };
 }
+
+const Protocol = object({
+  transactions: tuple([
+    object({ transactionType: literal("CREATE"), contractName: literal("Auditor") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: null_(), contractAddress: Address }),
+    object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("InterestRateModel") }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: null_(), contractAddress: Address }),
+    object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("InterestRateModel") }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("MockWETH"), contractAddress: Address }),
+    object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("InterestRateModel") }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
+    object({ transactionType: literal("CALL") }),
+    object({ transactionType: literal("CREATE"), contractName: literal("Previewer"), contractAddress: Address }),
+    object({
+      transactionType: literal("CREATE"),
+      contractName: literal("MockBalancerVault"),
+      contractAddress: Address,
+    }),
+  ]),
+});
 
 declare module "vitest" {
   export interface ProvidedContext {
@@ -128,6 +138,7 @@ declare module "vitest" {
     IssuerChecker: Address;
     MarketUSDC: Address;
     MarketWETH: Address;
+    Previewer: Address;
     USDC: Address;
   }
 }
