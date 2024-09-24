@@ -1,11 +1,13 @@
+import "../mockDeployments";
+import "../mockSentry";
+
+import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
 import { testClient } from "hono/testing";
 import Redis from "ioredis-mock";
 import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import "../mockDeployments";
-import "../mockSentry";
 import app from "../../hooks/cryptomate";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
@@ -53,7 +55,6 @@ describe("authorization", () => {
   const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
 
   beforeAll(async () => {
-    const { exaAccountFactoryAbi, exaPluginAbi } = await import("@exactly/common/generated/chain");
     await keeper.writeContract({
       address: inject("USDC"),
       abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
@@ -66,15 +67,16 @@ describe("authorization", () => {
       functionName: "createAccount",
       args: [0n, [{ x: hexToBigInt(owner.address), y: 0n }]],
     });
+  });
+
+  it("authorizes", async () => {
     await keeper.writeContract({
       address: account,
       abi: exaPluginAbi,
       functionName: "poke",
       args: [inject("MarketUSDC")],
     });
-  });
 
-  it("authorizes", async () => {
     const response = await appClient.index.$post({
       ...authorization,
       json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },

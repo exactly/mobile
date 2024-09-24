@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-vi.mock("@sentry/node", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@sentry/node")>()), // eslint-disable-line @typescript-eslint/consistent-type-imports
+vi.mock("@sentry/node", async () => ({
+  ...(await import("@sentry/node")),
   captureException: console.error, // eslint-disable-line no-console
 }));
