@@ -142,7 +142,7 @@ export default function AddressSelection() {
               </View>
             )}
 
-            {(recentContacts || savedContacts) && (
+            {(recentContacts ?? savedContacts) && (
               <ScrollView maxHeight={350} space="$s4">
                 {recentContacts && recentContacts.length > 0 && (
                   <RecentContacts
