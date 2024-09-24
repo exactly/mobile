@@ -1,4 +1,4 @@
-import { auditorAbi, exaPluginAbi, marketAbi, marketUSDCAddress } from "@exactly/common/generated/chain";
+import { exaPluginAbi, marketUSDCAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/types";
 import { Coins, X } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
@@ -14,6 +14,7 @@ import Button from "../../components/shared/Button";
 import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
+import { auditorAbi, marketAbi } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
