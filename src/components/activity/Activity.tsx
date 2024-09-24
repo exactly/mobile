@@ -36,7 +36,7 @@ export default function Activity() {
             </Text>
           </View>
         </View>
-        <View gap="$s5" height="100%">
+        <View gap="$s5" flex={1}>
           <FlatList
             refreshControl={
               <RefreshControl
