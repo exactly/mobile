@@ -1,8 +1,5 @@
 {
   "name": "@exactly/common",
-  "scripts": {
-    "test": "tsc"
-  },
   "engines": {
     "node": ">=22.9.0"
   },
