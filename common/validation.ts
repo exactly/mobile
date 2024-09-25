@@ -1,4 +1,4 @@
-import { type InferOutput, brand, check, custom, email, number, object, pipe, regex, string, transform } from "valibot";
+import { type InferOutput, brand, check, custom, object, pipe, regex, string, transform } from "valibot";
 import {
   type Address as ViemAddress,
   checksumAddress,
@@ -24,19 +24,10 @@ export const Hex = custom<ViemHex>(isHex, "bad hex");
 
 export const Passkey = object({ credentialId: Base64URL, factory: Address, x: Hash, y: Hash });
 
-export const CreateCardParameters = object({
-  account: Address,
-  cardholder: string(),
-  email: pipe(string(), email()),
-  phone: object({ countryCode: pipe(string(), regex(/^\d{2}$/)), number: pipe(string(), regex(/^\d+$/)) }),
-  limits: object({ daily: number(), weekly: number(), monthly: number() }),
-});
-
 /* eslint-disable @typescript-eslint/no-redeclare */
 export type Address = InferOutput<typeof Address>;
 export type Base64URL = InferOutput<typeof Base64URL>;
 export type Hash = InferOutput<typeof Hash>;
 export type Hex = InferOutput<typeof Hex>;
 export type Passkey = InferOutput<typeof Passkey>;
-export type CreateCardParameters = InferOutput<typeof CreateCardParameters>;
 /* eslint-enable @typescript-eslint/no-redeclare */

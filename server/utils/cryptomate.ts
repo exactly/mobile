@@ -1,11 +1,23 @@
-import { Address, type CreateCardParameters } from "@exactly/common/validation";
+import { Address } from "@exactly/common/validation";
 import * as v from "valibot";
 
 if (!process.env.CRYPTOMATE_URL || !process.env.CRYPTOMATE_API_KEY) throw new Error("missing cryptomate vars");
 const baseURL = process.env.CRYPTOMATE_URL;
 const apiKey = process.env.CRYPTOMATE_API_KEY;
 
-export function createCard({ account, cardholder, email, phone, limits }: CreateCardParameters) {
+export function createCard({
+  account,
+  cardholder,
+  email,
+  phone,
+  limits,
+}: {
+  account: Address;
+  cardholder: string;
+  email: string;
+  phone: { countryCode: string; number: string };
+  limits: { daily: number; weekly: number; monthly: number };
+}) {
   return request(
     CreateCardResponse,
     "/cards/virtual-cards/create",
