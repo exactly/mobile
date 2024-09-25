@@ -2,7 +2,7 @@ import { Address } from "@exactly/common/types";
 import { $ } from "execa";
 import { anvil } from "prool/instances";
 import { literal, null_, object, parse, tuple } from "valibot";
-import { padHex } from "viem";
+import { padHex, zeroAddress } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
 import type { GlobalSetupContext } from "vitest/node";
@@ -11,16 +11,13 @@ import anvilClient from "./anvilClient";
 
 export default async function setup({ provide }: GlobalSetupContext) {
   const instance = anvil({ codeSizeLimit: 42_000, blockBaseFeePerGas: 1n });
-  await instance.start();
-
-  const [deployer] = await anvilClient.getAddresses();
-  if (!deployer) {
-    await instance.stop();
-    throw new Error("no anvil account");
-  }
+  const initialize = await instance
+    .start()
+    .then(() => true)
+    .catch(() => false);
 
   const keeperAddress = privateKeyToAddress(padHex("0x69"));
-  await anvilClient.setBalance({ address: keeperAddress, value: 10n ** 24n });
+  if (initialize) await anvilClient.setBalance({ address: keeperAddress, value: 10n ** 24n });
 
   const shell = {
     cwd: "node_modules/@exactly/plugin",
@@ -31,45 +28,56 @@ export default async function setup({ provide }: GlobalSetupContext) {
       KEEPER_ADDRESS: keeperAddress,
     } as Record<string, string>,
   };
+  const deployer = await anvilClient
+    .getAddresses()
+    .then(([address]) => address ?? zeroAddress)
+    .catch(() => zeroAddress);
 
-  await $(shell)`forge script test/mocks/Account.s.sol --code-size-limit 42000
+  if (initialize) {
+    await $(shell)`forge script test/mocks/Account.s.sol --code-size-limit 42000
+      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+    await $(shell)`forge script node_modules/webauthn-owner-plugin/script/Plugin.s.sol
+      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+    shell.env.OWNER_PLUGIN_ADDRESS = parse(
+      object({
+        transactions: tuple([object({ contractName: literal("WebauthnOwnerPlugin"), contractAddress: Address })]),
+      }),
+      await import(`@exactly/plugin/broadcast/Plugin.s.sol/${String(foundry.id)}/run-latest.json`),
+    ).transactions[0].contractAddress;
+    await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 42000
     --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+  }
 
-  await $(shell)`forge script node_modules/webauthn-owner-plugin/script/Plugin.s.sol
-    --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
-  shell.env.OWNER_PLUGIN_ADDRESS = parse(
-    object({
-      transactions: tuple([object({ contractName: literal("WebauthnOwnerPlugin"), contractAddress: Address })]),
-    }),
-    await import(`@exactly/plugin/broadcast/Plugin.s.sol/${String(foundry.id)}/run-latest.json`),
-  ).transactions[0].contractAddress;
-
-  await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 42000
-    --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
   // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
   const [, auditor, , , , , , , , , , usdc, , marketUSDC, , , , , , , , marketWETH, , , , , , previewer, balancer] =
     parse(
       Protocol,
       await import(`@exactly/plugin/broadcast/Protocol.s.sol/${String(foundry.id)}/run-latest.json`),
     ).transactions;
-  shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor.contractAddress;
-  shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC.contractAddress;
-  shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH.contractAddress;
-  shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
-  shell.env.PROTOCOL_VELODROMEPOOLFACTORY_ADDRESS = padHex("0x123", { size: 20 });
 
-  await $(shell)`forge script script/IssuerChecker.s.sol
-    --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+  if (initialize) {
+    shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor.contractAddress;
+    shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC.contractAddress;
+    shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH.contractAddress;
+    shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
+    shell.env.PROTOCOL_VELODROMEPOOLFACTORY_ADDRESS = padHex("0x123", { size: 20 });
+    await $(shell)`forge script script/IssuerChecker.s.sol
+      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+  }
+
   const [issuerChecker] = parse(
     object({
       transactions: tuple([object({ contractName: literal("IssuerChecker"), contractAddress: Address })]),
     }),
     await import(`@exactly/plugin/broadcast/IssuerChecker.s.sol/${String(foundry.id)}/run-latest.json`),
   ).transactions;
-  shell.env.ISSUER_CHECKER_ADDRESS = issuerChecker.contractAddress;
 
-  await $(shell)`forge script script/Deploy.s.sol
-    --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+  if (initialize) {
+    shell.env.ISSUER_CHECKER_ADDRESS = issuerChecker.contractAddress;
+    await $(shell)`forge script script/Deploy.s.sol
+      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+  }
+
   const [exaPlugin, exaAccountFactory] = parse(
     object({
       transactions: tuple([
