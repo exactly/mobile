@@ -156,7 +156,7 @@ describe("authenticated", () => {
           }),
         ],
       });
-      const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
+      const captureException = vi.spyOn(sentry, "captureException");
       const response = await appClient.index.$get(
         { query: { include: "received" } },
         { headers: { "test-credential-id": account } },
