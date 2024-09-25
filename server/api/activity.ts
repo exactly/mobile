@@ -88,7 +88,7 @@ export default app.get(
       if (!response || ignore(type)) return [];
       return response.transfers
         .map((transfer) => {
-          const market = markets.get(parse(Address, transfer.rawContract.address));
+          const market = transfer.rawContract.address && markets.get(parse(Address, transfer.rawContract.address));
           if (!market) return;
           const result = safeParse({ received: AssetReceivedActivity, sent: AssetSentActivity }[type], {
             market,

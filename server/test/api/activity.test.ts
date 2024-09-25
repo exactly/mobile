@@ -143,6 +143,37 @@ describe("authenticated", () => {
       await expect(response.json()).resolves.toStrictEqual([parse(AssetSentActivity, { ...transfer, market })]);
     });
 
+    it("works with eth transfer", async () => {
+      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      getAssetTransfers.mockResolvedValueOnce({
+        transfers: [
+          transfer,
+          parse(AssetTransfer, {
+            to: account,
+            from: zeroAddress,
+            hash: zeroHash,
+            blockNum: "0x0",
+            category: "external",
+            uniqueId: "0x0:external",
+            metadata: { blockTimestamp: new Date().toISOString() },
+            asset: "ETH",
+            value: 1,
+            rawContract: { address: null, value: "0xde0b6b3a7640000", decimal: "0x12" },
+          }),
+        ],
+      });
+      const captureException = vi.spyOn(sentry, "captureException");
+      const response = await appClient.index.$get(
+        { query: { include: "received" } },
+        { headers: { "test-credential-id": account } },
+      );
+
+      expect(getAssetTransfers).toHaveBeenCalledOnce();
+      expect(captureException).toHaveBeenCalledTimes(0);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
+    });
+
     it("ignores unknown asset", async () => {
       const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
       getAssetTransfers.mockResolvedValueOnce({
