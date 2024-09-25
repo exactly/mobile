@@ -2,6 +2,7 @@ import "../mockDatabase";
 import "../mockDeployments";
 import "../mockSentry";
 
+import * as sentry from "@sentry/node";
 import { createMiddleware } from "hono/factory";
 import { testClient } from "hono/testing";
 import { parse, type InferInput } from "valibot";
@@ -79,6 +80,22 @@ describe("card", () => {
       { headers: { "test-credential-id": account } },
     );
 
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toStrictEqual([parse(CardTransaction, payload)]);
+  });
+
+  it("reports bad transaction", async () => {
+    await database.insert(transactions).values([{ id: "1", cardId: "card", hash: "0x1", payload: {} }]);
+
+    const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
+
+    const response = await appClient.index.$get(
+      { query: { include: "card" } },
+      { headers: { "test-credential-id": account } },
+    );
+
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(new Error("bad transaction"));
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toStrictEqual([parse(CardTransaction, payload)]);
   });
