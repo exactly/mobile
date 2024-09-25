@@ -207,6 +207,9 @@
     "doctor": {
       "reactNativeDirectoryCheck": {
         "enabled": true,
+        "exclude": [
+          "@intercom/intercom-react-native"
+        ],
         "listUnknownPackages": false
       }
     },
