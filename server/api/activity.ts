@@ -59,23 +59,34 @@ export default app.get(
     });
     if (!credential) return c.json("credential not found", 401);
     const account = parse(Address, credential.account);
-    const transferOptions = { category: ["external", "erc20"], withMetadata: true, excludeZeroValue: true } as const;
-    const [received, sent, exactly] = await Promise.all([
-      publicClient.getAssetTransfers({ toAddress: account, ...transferOptions }),
-      publicClient.getAssetTransfers({ fromAddress: account, ...transferOptions }),
+    async function getAssetTransfers(type: "received" | "sent") {
+      if (include && (Array.isArray(include) ? !include.includes(type) : include !== type)) return;
+      return publicClient.getAssetTransfers({
+        category: ["external", "erc20"],
+        withMetadata: true,
+        excludeZeroValue: true,
+        ...{
+          received: { toAddress: account },
+          sent: { fromAddress: account },
+        }[type],
+      });
+    }
+    const [exactly, received, sent] = await Promise.all([
       publicClient.readContract({
         address: previewerAddress,
         functionName: "exactly", // TODO cache
         abi: previewerAbi,
         args: [zeroAddress],
       }),
+      getAssetTransfers("received"),
+      getAssetTransfers("sent"),
     ]);
     const markets = new Map<Address, (typeof exactly)[number]>(
       exactly.map((market) => [parse(Address, market.asset), market]),
     );
-    function transfers(type: "received" | "sent", assetTransfers: readonly AssetTransfer[]) {
-      if (include && (Array.isArray(include) ? !include.includes(type) : include !== type)) return [];
-      return assetTransfers
+    function transfers(type: "received" | "sent", response: { transfers: readonly AssetTransfer[] } | undefined) {
+      if (!response || (include && (Array.isArray(include) ? !include.includes(type) : include !== type))) return [];
+      return response.transfers
         .filter(({ rawContract }) => rawContract.address && markets.has(parse(Address, rawContract.address)))
         .map(({ uniqueId, metadata, rawContract }) => {
           const { decimals, symbol, usdPrice } = markets.get(parse(Address, rawContract.address))!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
@@ -107,8 +118,8 @@ export default app.get(
             })
             .filter(<T>(value: T | undefined): value is T => value !== undefined),
         ),
-        ...transfers("received", received.transfers),
-        ...transfers("sent", sent.transfers),
+        ...transfers("received", received),
+        ...transfers("sent", sent),
       ].sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
     );
   },
