@@ -11,16 +11,16 @@ import {
 
 export const Address = pipe(
   string(),
-  check((input) => isAddress(input, { strict: false })),
+  check((input) => isAddress(input, { strict: false }), "bad address"),
   transform((input) => checksumAddress(input as ViemAddress)),
   brand("Address"),
 );
 
-export const Base64URL = pipe(string(), regex(/^[\w-]+$/));
+export const Base64URL = pipe(string(), regex(/^[\w-]+$/, "bad base64url"));
 
-export const Hash = custom<ViemHash>(isHash as (hash: unknown) => hash is ViemHash);
+export const Hash = custom<ViemHash>(isHash as (hash: unknown) => hash is ViemHash, "bad hash");
 
-export const Hex = custom<ViemHex>(isHex);
+export const Hex = custom<ViemHex>(isHex, "bad hex");
 
 export const Passkey = object({ credentialId: Base64URL, factory: Address, x: Hash, y: Hash });
 
