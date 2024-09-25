@@ -6,6 +6,8 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import {
   array,
+  bigint,
+  intersect,
   isoTimestamp,
   nullable,
   number,
@@ -24,7 +26,7 @@ import { zeroAddress } from "viem";
 import database, { credentials } from "../database";
 import { previewerAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
-import publicClient, { type AssetTransfer } from "../utils/publicClient";
+import publicClient, { AssetTransfer } from "../utils/publicClient";
 
 const WAD = 10n ** 18n;
 
@@ -87,20 +89,19 @@ export default app.get(
     function transfers(type: "received" | "sent", response: { transfers: readonly AssetTransfer[] } | undefined) {
       if (!response || (include && (Array.isArray(include) ? !include.includes(type) : include !== type))) return [];
       return response.transfers
-        .filter(({ rawContract }) => rawContract.address && markets.has(parse(Address, rawContract.address)))
-        .map(({ uniqueId, metadata, rawContract }) => {
-          const { decimals, symbol, usdPrice } = markets.get(parse(Address, rawContract.address))!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-          const value = BigInt(rawContract.value ?? 0);
-          const baseUnit = 10 ** decimals;
-          return {
-            type,
-            id: uniqueId,
-            timestamp: metadata.blockTimestamp,
-            currency: symbol.slice(3),
-            amount: Number(value) / baseUnit,
-            usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-          };
-        });
+        .map((transfer) => {
+          const result = safeParse({ received: AssetReceivedActivity, sent: AssetSentActivity }[type], {
+            market: markets.get(parse(Address, transfer.rawContract.address)),
+            ...transfer,
+          });
+          if (result.success) return result.output;
+          withScope((scope) => {
+            scope.setLevel("error");
+            scope.setContext("validation", result);
+            captureException(new Error("bad transfer"));
+          });
+        })
+        .filter(<T>(value: T | undefined): value is T => value !== undefined);
     }
 
     return c.json(
@@ -155,4 +156,29 @@ export const CardActivity = pipe(
     },
     usdAmount: data.bill_amount,
   })),
+);
+
+export const AssetActivity = pipe(
+  intersect([AssetTransfer, object({ market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }) })]),
+  transform(({ uniqueId, metadata, rawContract, market: { decimals, symbol, usdPrice } }) => {
+    const value = BigInt(rawContract.value ?? 0);
+    const baseUnit = 10 ** decimals;
+    return {
+      id: uniqueId,
+      timestamp: metadata.blockTimestamp,
+      currency: symbol.slice(3),
+      amount: Number(value) / baseUnit,
+      usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+    };
+  }),
+);
+
+export const AssetReceivedActivity = pipe(
+  AssetActivity,
+  transform((activity) => ({ type: "received" as const, ...activity })),
+);
+
+export const AssetSentActivity = pipe(
+  AssetActivity,
+  transform((activity) => ({ type: "sent" as const, ...activity })),
 );
