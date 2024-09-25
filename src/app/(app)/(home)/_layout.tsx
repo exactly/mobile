@@ -1,8 +1,11 @@
+import Intercom from "@intercom/intercom-react-native";
 import { CircleDollarSign, CreditCard, FileText, Home } from "@tamagui/lucide-icons";
 import { Tabs } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
+import { useAccount } from "wagmi";
 
 import TabBar from "../../../components/shared/TabBar";
+import handleError from "../../../utils/handleError";
 
 const tabs = [
   { name: "index", title: "Home", Icon: Home },
@@ -12,6 +15,13 @@ const tabs = [
 ];
 
 export default function HomeLayout() {
+  const { address } = useAccount();
+  useEffect(() => {
+    const register = address
+      ? Intercom.loginUserWithUserAttributes({ userId: address })
+      : Intercom.loginUnidentifiedUser();
+    register.catch(handleError);
+  }, [address]);
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(properties) => <TabBar {...properties} />}>
       {tabs.map(({ name, title, Icon }) => (

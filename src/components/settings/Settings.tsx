@@ -6,21 +6,20 @@ import React from "react";
 import { Pressable, type ColorSchemeName } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, XStack } from "tamagui";
-import { useAccount } from "wagmi";
 
 import handleError from "../../utils/handleError";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
+function handleSupport() {
+  Intercom.present().catch(handleError);
+}
+
 export default function Settings() {
   const { canGoBack } = useRouter();
   const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
-  const { address } = useAccount();
-  function handleSupport() {
-    Intercom.loginUserWithUserAttributes({ userId: address }).catch(handleError);
-    Intercom.present().catch(handleError);
-  }
+
   return (
     <SafeView fullScreen tab>
       <View fullScreen padded gap="$s5">
