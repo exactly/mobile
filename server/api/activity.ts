@@ -1,7 +1,7 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, withScope } from "@sentry/node";
+import { captureException, setUser, withScope } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import {
@@ -59,6 +59,7 @@ export default app.get(
     });
     if (!credential) return c.json("credential not found", 401);
     const account = parse(Address, credential.account);
+    setUser({ id: account });
     async function getAssetTransfers(type: "received" | "sent") {
       if (ignore(type)) return;
       return publicClient.getAssetTransfers({

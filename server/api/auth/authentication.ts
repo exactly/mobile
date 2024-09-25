@@ -1,15 +1,15 @@
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
-import { Base64URL } from "@exactly/common/validation";
+import { Address, Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setContext } from "@sentry/node";
+import { captureException, setContext, setUser } from "@sentry/node";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
-import { any, check, literal, object, optional, pipe, transform } from "valibot";
+import { any, check, literal, object, optional, parse, pipe, transform } from "valibot";
 
 import database, { credentials } from "../../database";
 import androidOrigin from "../../utils/android/origin";
@@ -76,10 +76,14 @@ export default app
       const { credentialId } = c.req.valid("query");
       const { session_id: sessionId } = c.req.valid("cookie");
       const [credential, challenge] = await Promise.all([
-        database.query.credentials.findFirst({ where: eq(credentials.id, credentialId) }),
+        database.query.credentials.findFirst({
+          columns: { publicKey: true, account: true, transports: true, counter: true },
+          where: eq(credentials.id, credentialId),
+        }),
         redis.get(sessionId),
       ]);
       if (!credential) return c.text("unknown credential", 400);
+      setUser({ id: parse(Address, credential.account) });
       if (!challenge) return c.text("no authentication", 400);
 
       let verification: Awaited<ReturnType<typeof verifyAuthenticationResponse>>;

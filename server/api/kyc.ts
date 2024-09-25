@@ -1,7 +1,9 @@
+import { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
+import { setUser } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { object, optional, string } from "valibot";
+import { object, optional, parse, string } from "valibot";
 
 import database, { credentials } from "../database/index";
 import auth from "../middleware/auth";
@@ -14,10 +16,11 @@ export default app
   .get("/", async (c) => {
     const credentialId = c.get("credentialId");
     const credential = await database.query.credentials.findFirst({
-      columns: { id: true, kycId: true },
+      columns: { id: true, account: true, kycId: true },
       where: eq(credentials.id, credentialId),
     });
     if (!credential) return c.json("credential not found", 404);
+    setUser({ id: parse(Address, credential.account) });
     if (!credential.kycId) return c.json("kyc not found", 404);
     const { data } = await getInquiry(credential.kycId);
     if (data.attributes.status !== "approved") return c.json("kyc not approved", 403);

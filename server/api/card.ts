@@ -1,4 +1,5 @@
 import { Address } from "@exactly/common/validation";
+import { setUser } from "@sentry/node";
 import { Mutex } from "async-mutex";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -31,6 +32,8 @@ export default app.get("/", async (c) => {
         with: { cards: { columns: { id: true, lastFour: true }, where: eq(cards.status, "ACTIVE") } },
       });
       if (!credential) return c.json("credential not found", 401);
+      const account = parse(Address, credential.account);
+      setUser({ id: account });
       if (!credential.kycId) return c.json("kyc required", 403);
       if (credential.cards.length > 0) {
         return c.json({ url: await getPAN(credential.cards[0]!.id), lastFour: credential.cards[0]!.lastFour }); // eslint-disable-line @typescript-eslint/no-non-null-assertion
@@ -43,7 +46,7 @@ export default app.get("/", async (c) => {
           : `+${data.attributes["phone-number"]}`,
       );
       const card = await createCard({
-        account: parse(Address, credential.account),
+        account,
         cardholder: [data.attributes["name-first"], data.attributes["name-middle"], data.attributes["name-last"]]
           .filter(Boolean)
           .join(" "),

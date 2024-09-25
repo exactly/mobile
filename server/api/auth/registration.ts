@@ -1,15 +1,15 @@
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
-import { Base64URL } from "@exactly/common/validation";
+import { Address, Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setContext } from "@sentry/node";
+import { captureException, setContext, setUser } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { cose, generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
-import { any, array, check, literal, nullish, object, optional, pipe, string, transform } from "valibot";
+import { any, array, check, literal, nullish, object, optional, parse, pipe, string, transform } from "valibot";
 import type { Hex } from "viem";
 
 import database, { credentials } from "../../database";
@@ -120,7 +120,8 @@ export default app
       }
 
       const expires = new Date(Date.now() + AUTH_EXPIRY);
-      const account = deriveAddress(exaAccountFactoryAddress, { x, y });
+      const account = parse(Address, deriveAddress(exaAccountFactoryAddress, { x, y }));
+      setUser({ id: account });
       await Promise.all([
         setSignedCookie(c, "credential_id", credentialID, authSecret, { domain, expires, httpOnly: true }),
         database.insert(credentials).values([
