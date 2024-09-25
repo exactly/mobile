@@ -108,7 +108,7 @@ export default app.get(
         ...credential.cards.flatMap(({ transactions }) =>
           transactions
             .map(({ payload }) => {
-              const result = safeParse(Transaction, payload);
+              const result = safeParse(CardActivity, payload);
               if (result.success) return result.output;
               withScope((scope) => {
                 scope.setLevel("error");
@@ -125,7 +125,7 @@ export default app.get(
   },
 );
 
-const Transaction = pipe(
+export const CardActivity = pipe(
   object({
     operation_id: string(),
     data: object({
