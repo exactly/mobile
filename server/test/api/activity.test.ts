@@ -142,5 +142,21 @@ describe("authenticated", () => {
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toStrictEqual([parse(AssetSentActivity, { ...transfer, market })]);
     });
+
+    it("reports bad transfer", async () => {
+      const transfer = parse(AssetTransfer, { ...baseTransfer, from: account, to: zeroAddress });
+      getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer, baseTransfer as any] }); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+      const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
+      const response = await appClient.index.$get(
+        { query: { include: "received" } },
+        { headers: { "test-credential-id": account } },
+      );
+
+      expect(getAssetTransfers).toHaveBeenCalledOnce();
+      expect(captureException).toHaveBeenCalledOnce();
+      expect(captureException).toHaveBeenCalledWith(new Error("bad transfer"));
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
+    });
   });
 });
