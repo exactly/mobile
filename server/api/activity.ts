@@ -7,6 +7,7 @@ import { Hono } from "hono";
 import {
   array,
   bigint,
+  type InferInput,
   intersect,
   isoTimestamp,
   nullable,
@@ -33,21 +34,17 @@ const WAD = 10n ** 18n;
 const app = new Hono();
 app.use(auth);
 
+const activityTypes = picklist(["card", "received", "sent"]);
+
 export default app.get(
   "/",
-  vValidator(
-    "query",
-    optional(
-      object({
-        include: optional(
-          union([picklist(["card", "received", "sent"]), array(picklist(["card", "received", "sent"]))]),
-        ),
-      }),
-      {},
-    ),
-  ),
+  vValidator("query", optional(object({ include: optional(union([activityTypes, array(activityTypes)])) }), {})),
   async (c) => {
     const { include } = c.req.valid("query");
+    function ignore(type: InferInput<typeof activityTypes>) {
+      return include && (Array.isArray(include) ? !include.includes(type) : include !== type);
+    }
+
     const credentialId = c.get("credentialId");
     const credential = await database.query.credentials.findFirst({
       where: eq(credentials.id, credentialId),
@@ -62,7 +59,7 @@ export default app.get(
     if (!credential) return c.json("credential not found", 401);
     const account = parse(Address, credential.account);
     async function getAssetTransfers(type: "received" | "sent") {
-      if (include && (Array.isArray(include) ? !include.includes(type) : include !== type)) return;
+      if (ignore(type)) return;
       return publicClient.getAssetTransfers({
         category: ["external", "erc20"],
         withMetadata: true,
@@ -87,7 +84,7 @@ export default app.get(
       exactly.map((market) => [parse(Address, market.asset), market]),
     );
     function transfers(type: "received" | "sent", response: { transfers: readonly AssetTransfer[] } | undefined) {
-      if (!response || (include && (Array.isArray(include) ? !include.includes(type) : include !== type))) return [];
+      if (!response || ignore(type)) return [];
       return response.transfers
         .map((transfer) => {
           const result = safeParse({ received: AssetReceivedActivity, sent: AssetSentActivity }[type], {
