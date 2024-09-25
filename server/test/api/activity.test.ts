@@ -34,6 +34,7 @@ describe("validation", () => {
     const response = await appClient.index.$get();
 
     expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toBe("unauthorized");
   });
 
   it("fails with bad credential", async () => {
