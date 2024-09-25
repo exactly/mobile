@@ -75,9 +75,11 @@ export async function getPasskey() {
   return response.json();
 }
 
-export async function getActivity() {
+export async function getActivity(parameters?: NonNullable<Parameters<typeof client.api.activity.$get>[0]>["query"]) {
   await auth();
-  const response = await client.api.activity.$get();
+  const response = await client.api.activity.$get(
+    parameters?.include === undefined ? undefined : { query: { include: parameters.include } },
+  );
   if (!response.ok) throw new APIError(response.status, await response.text());
   return response.json();
 }

@@ -17,7 +17,7 @@ export default function Home() {
     data: activity,
     refetch: refetchActivity,
     isFetching,
-  } = useQuery({ queryKey: ["activity"], queryFn: getActivity });
+  } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
   return (
     <SafeView fullScreen tab>
       <ProfileHeader />

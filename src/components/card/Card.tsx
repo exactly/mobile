@@ -2,7 +2,7 @@ import type { Passkey } from "@exactly/common/types";
 import { ChevronDown, Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
-import { Platform, Pressable } from "react-native";
+import { Platform, Pressable, RefreshControl } from "react-native";
 import { Inquiry } from "react-native-persona";
 import { useSharedValue } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
@@ -16,8 +16,9 @@ import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
-import { getCard, kyc, kycStatus } from "../../utils/server";
+import { getActivity, getCard, kyc, kycStatus } from "../../utils/server";
 import CreditLimit from "../home/CreditLimit";
+import LatestActivity from "../shared/LatestActivity";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -37,6 +38,11 @@ const StyledAction = styled(View, {
 export default function Card() {
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
   const { data: alertShown } = useQuery({ queryKey: ["settings", "alertShown"] });
+  const {
+    data: purchases,
+    refetch: refetchPurchases,
+    isFetching,
+  } = useQuery({ queryKey: ["activity", "card"], queryFn: () => getActivity({ include: "card" }) });
 
   const [detailsShown, setDetailsShown] = useState(false);
   const flipped = useSharedValue(false);
@@ -92,7 +98,16 @@ export default function Card() {
 
   return (
     <SafeView fullScreen tab>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching}
+            onRefresh={() => {
+              refetchPurchases().catch(handleError);
+            }}
+          />
+        }
+      >
         <View fullScreen padded>
           <View gap="$s5" flex={1}>
             <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
@@ -205,10 +220,9 @@ export default function Card() {
                 </StyledAction>
               </View>
             </View>
-
             <CreditLimit />
             <SimulatePurchase />
-
+            {purchases && purchases.length > 0 && <LatestActivity activity={purchases} title="Latest purchases" />}
             <View>
               <Accordion
                 overflow="hidden"

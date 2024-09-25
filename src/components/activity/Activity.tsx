@@ -14,7 +14,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Activity() {
-  const { data: activity, refetch, isFetching } = useQuery({ queryKey: ["activity"], queryFn: getActivity });
+  const { data: activity, refetch, isFetching } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
   const { queryKey } = useMarketAccount();
   const groupedActivity = useMemo(() => {
     if (!activity) return [];

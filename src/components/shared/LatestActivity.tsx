@@ -12,12 +12,13 @@ import View from "../shared/View";
 
 interface LatestActivityProperties {
   activity: Awaited<ReturnType<typeof getActivity>>;
+  title?: string;
 }
 
-export default function LatestActivity({ activity }: LatestActivityProperties) {
+export default function LatestActivity({ activity, title = "Latest activity" }: LatestActivityProperties) {
   return (
     <InfoCard
-      title="Latest activity"
+      title={title}
       renderAction={
         <Pressable
           hitSlop={ms(15)}
