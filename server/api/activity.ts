@@ -53,6 +53,7 @@ export default app.get(
         cards: {
           columns: {},
           with: { transactions: { columns: { payload: true } } },
+          limit: ignore("card") ? 0 : undefined,
         },
       },
     });

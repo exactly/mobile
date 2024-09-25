@@ -7,12 +7,13 @@ import { Address } from "@exactly/common/types";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { parse, type InferInput } from "valibot";
-import { zeroAddress } from "viem";
+import { zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import app, { CardActivity } from "../../api/activity";
+import app, { AssetReceivedActivity, AssetSentActivity, CardActivity } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
+import publicClient, { AssetTransfer } from "../../utils/publicClient";
 
 const appClient = testClient(app);
 
@@ -97,6 +98,49 @@ describe("authenticated", () => {
       expect(captureException).toHaveBeenCalledWith(new Error("bad transaction"));
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toStrictEqual([parse(CardActivity, payload)]);
+    });
+  });
+
+  describe("asset transfers", () => {
+    const baseTransfer = {
+      hash: zeroHash,
+      blockNum: "0x0",
+      uniqueId: "0x0:log:0",
+      metadata: { blockTimestamp: new Date().toISOString() },
+      category: "erc20",
+      asset: "USDC",
+      value: 1,
+      rawContract: { address: inject("USDC"), value: "0xf4240", decimal: "0x6" },
+    } as const;
+    const market = { decimals: 6, symbol: "exaUSDC", usdPrice: 10n ** 18n } as const;
+    const getAssetTransfers = vi.spyOn(publicClient, "getAssetTransfers");
+
+    afterEach(() => getAssetTransfers.mockClear());
+
+    it("returns the received transfers", async () => {
+      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer] });
+      const response = await appClient.index.$get(
+        { query: { include: "received" } },
+        { headers: { "test-credential-id": account } },
+      );
+
+      expect(getAssetTransfers).toHaveBeenCalledOnce();
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
+    });
+
+    it("returns the sent transfers", async () => {
+      const transfer = parse(AssetTransfer, { ...baseTransfer, from: account, to: zeroAddress });
+      getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer] });
+      const response = await appClient.index.$get(
+        { query: { include: "sent" } },
+        { headers: { "test-credential-id": account } },
+      );
+
+      expect(getAssetTransfers).toHaveBeenCalledOnce();
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual([parse(AssetSentActivity, { ...transfer, market })]);
     });
   });
 });
