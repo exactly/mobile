@@ -26,9 +26,7 @@ export default function ThemeProvider({ children }: ThemeProviderProperties) {
 
   const { mutate: setTheme } = useMutation({
     mutationFn: (value: AppTheme) => {
-      if (Platform.OS !== "web") {
-        Appearance.setColorScheme(value === "system" ? null : value); // eslint-disable-line unicorn/no-null
-      }
+      if (Platform.OS !== "web") Appearance.setColorScheme(value === "system" ? null : value);
       queryClient.setQueryData<AppTheme>(["settings", "theme"], value);
       return Promise.resolve(true);
     },
