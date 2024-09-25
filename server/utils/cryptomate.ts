@@ -58,7 +58,7 @@ async function request<TInput, TOutput, TIssue extends v.BaseIssue<unknown>>(
 const CreateCardRequest = v.object({
   card_holder_name: v.string(),
   email: v.pipe(v.string(), v.email()),
-  phone_country_code: v.pipe(v.string(), v.regex(/^\d{2}$/)),
+  phone_country_code: v.pipe(v.string(), v.regex(/^\d{1,4}$/)),
   phone: v.pipe(v.string(), v.regex(/^\d+$/)),
   approval_method: v.literal("DEFI"),
   daily_limit: v.number(),
