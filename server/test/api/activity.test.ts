@@ -1,9 +1,9 @@
+import "../mockAuth";
 import "../mockDatabase";
 import "../mockDeployments";
 import "../mockSentry";
 
 import * as sentry from "@sentry/node";
-import { createMiddleware } from "hono/factory";
 import { testClient } from "hono/testing";
 import { parse, type InferInput } from "valibot";
 import { zeroAddress } from "viem";
@@ -12,14 +12,6 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import app, { CardTransaction } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
-
-vi.mock("../../middleware/auth", () => ({
-  default: createMiddleware(async (c, next) => {
-    const credentialId = c.req.header("test-credential-id");
-    if (credentialId) c.set("credentialId", credentialId);
-    await next();
-  }),
-}));
 
 const appClient = testClient(app);
 
