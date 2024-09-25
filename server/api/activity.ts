@@ -60,37 +60,44 @@ export default app.get(
     if (!credential) return c.json("credential not found", 401);
     const account = parse(Address, credential.account);
     setUser({ id: account });
-    async function getAssetTransfers(type: "received" | "sent") {
-      if (ignore(type)) return;
-      return publicClient.getAssetTransfers({
-        category: ["erc20"],
-        withMetadata: true,
-        excludeZeroValue: true,
-        ...{
-          received: { toAddress: account },
-          sent: { fromAddress: account },
-        }[type],
-      });
-    }
-    const [exactly, received, sent] = await Promise.all([
-      publicClient.readContract({
-        address: previewerAddress,
-        functionName: "exactly", // TODO cache
-        abi: previewerAbi,
-        args: [zeroAddress],
-      }),
-      getAssetTransfers("received"),
-      getAssetTransfers("sent"),
-    ]);
-    const markets = new Map<Address, (typeof exactly)[number]>(
+    const exactly = await publicClient.readContract({
+      address: previewerAddress,
+      functionName: "exactly", // TODO cache
+      abi: previewerAbi,
+      args: [zeroAddress],
+    });
+    const marketsByAsset = new Map<Address, (typeof exactly)[number]>(
       exactly.map((market) => [parse(Address, market.asset), market]),
+    );
+    const [received, sent] = await Promise.all(
+      (["received", "sent"] as const).map((type) => {
+        if (ignore(type)) return;
+        return publicClient.getAssetTransfers({
+          category: ["erc20"],
+          contractAddresses: [...marketsByAsset.keys()],
+          withMetadata: true,
+          excludeZeroValue: true,
+          ...{
+            received: { toAddress: account },
+            sent: { fromAddress: account },
+          }[type],
+        });
+      }),
     );
     function transfers(type: "received" | "sent", response: { transfers: readonly AssetTransfer[] } | undefined) {
       if (!response || ignore(type)) return [];
       return response.transfers
         .map((transfer) => {
-          const market = transfer.rawContract.address && markets.get(parse(Address, transfer.rawContract.address));
+          const market =
+            transfer.rawContract.address && marketsByAsset.get(parse(Address, transfer.rawContract.address));
           if (!market) return;
+          const marketLowercase = market.market.toLowerCase();
+          if (
+            (type === "received" && transfer.from.toLowerCase() === marketLowercase) ||
+            (type === "sent" && transfer.to.toLowerCase() === marketLowercase)
+          ) {
+            return;
+          }
           const result = safeParse({ received: AssetReceivedActivity, sent: AssetSentActivity }[type], {
             market,
             ...transfer,

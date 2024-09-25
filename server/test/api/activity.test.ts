@@ -201,7 +201,7 @@ describe("authenticated", () => {
 
     it("reports bad transfer", async () => {
       const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
-      getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer, baseTransfer as any] }); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+      getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer, { ...baseTransfer, from: zeroAddress } as any] }); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
       const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "received" } },
