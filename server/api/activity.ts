@@ -27,7 +27,7 @@ import { zeroAddress } from "viem";
 import database, { credentials } from "../database";
 import { previewerAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
-import publicClient, { AssetTransfer } from "../utils/publicClient";
+import publicClient, { type AssetTransfer, ERC20Transfer } from "../utils/publicClient";
 
 const WAD = 10n ** 18n;
 
@@ -73,7 +73,7 @@ export default app.get(
       (["received", "sent"] as const).map((type) => {
         if (ignore(type)) return;
         return publicClient.getAssetTransfers({
-          category: ["erc20"],
+          category: ["erc20"] as const,
           contractAddresses: [...marketsByAsset.keys()],
           withMetadata: true,
           excludeZeroValue: true,
@@ -88,8 +88,8 @@ export default app.get(
       if (!response || ignore(type)) return [];
       return response.transfers
         .map((transfer) => {
-          const market =
-            transfer.rawContract.address && marketsByAsset.get(parse(Address, transfer.rawContract.address));
+          if (transfer.category !== "erc20") return;
+          const market = marketsByAsset.get(parse(Address, transfer.rawContract.address));
           if (!market) return;
           const marketLowercase = market.market.toLowerCase();
           if (
@@ -167,9 +167,9 @@ export const CardActivity = pipe(
 );
 
 export const AssetActivity = pipe(
-  intersect([AssetTransfer, object({ market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }) })]),
+  intersect([ERC20Transfer, object({ market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }) })]),
   transform(({ uniqueId, metadata, rawContract, market: { decimals, symbol, usdPrice } }) => {
-    const value = BigInt(rawContract.value ?? 0);
+    const value = BigInt(rawContract.value);
     const baseUnit = 10 ** decimals;
     return {
       id: uniqueId,
