@@ -1,6 +1,6 @@
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/generated/chain";
-import { Hash } from "@exactly/common/types";
+import { Hash } from "@exactly/common/validation";
 import { parse } from "valibot";
 import { createWalletClient, http, nonceManager } from "viem";
 import { privateKeyToAccount } from "viem/accounts";

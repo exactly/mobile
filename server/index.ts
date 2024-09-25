@@ -1,4 +1,4 @@
-import type { Base64URL } from "@exactly/common/types";
+import type { Base64URL } from "@exactly/common/validation";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { sentry } from "@hono/sentry";

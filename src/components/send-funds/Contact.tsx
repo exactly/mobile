@@ -1,4 +1,4 @@
-import type { Address } from "@exactly/common/types";
+import type { Address } from "@exactly/common/validation";
 import { User2 } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
 import React from "react";

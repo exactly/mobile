@@ -1,5 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import { ArrowLeft, ArrowRight, User, UserMinus, UserPlus } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";

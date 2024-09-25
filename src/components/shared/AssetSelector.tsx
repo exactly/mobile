@@ -1,4 +1,4 @@
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
 import { ToggleGroup, YStack } from "tamagui";

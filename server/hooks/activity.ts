@@ -4,7 +4,7 @@ import chain, {
   exaPluginAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
-import { Address, Hash } from "@exactly/common/types";
+import { Address, Hash } from "@exactly/common/validation";
 import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
 import createDebug from "debug";
 import { inArray } from "drizzle-orm";

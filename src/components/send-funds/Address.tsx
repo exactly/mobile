@@ -1,5 +1,5 @@
 import chain from "@exactly/common/generated/chain";
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import { ArrowLeft, ArrowRight, QrCode, SwitchCamera } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";

@@ -1,6 +1,6 @@
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/generated/chain";
-import { Hash, Hex } from "@exactly/common/types";
+import { Hash, Hex } from "@exactly/common/validation";
 import {
   array,
   type InferOutput,

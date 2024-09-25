@@ -11,7 +11,7 @@ import accountInitCode from "@exactly/common/accountInitCode";
 import alchemyGasPolicyId from "@exactly/common/alchemyGasPolicyId";
 import domain from "@exactly/common/domain";
 import chain from "@exactly/common/generated/chain";
-import type { Passkey } from "@exactly/common/types";
+import type { Passkey } from "@exactly/common/validation";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import { setUser } from "@sentry/react-native";

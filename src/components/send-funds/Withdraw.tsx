@@ -1,4 +1,4 @@
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect } from "react";
 import { parse } from "valibot";

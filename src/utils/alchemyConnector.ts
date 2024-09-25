@@ -1,7 +1,7 @@
 import type { ClientWithAlchemyMethods } from "@alchemy/aa-alchemy";
 import type { SmartAccountClient, SmartContractAccount } from "@alchemy/aa-core";
 import chain from "@exactly/common/generated/chain";
-import type { Passkey } from "@exactly/common/types";
+import type { Passkey } from "@exactly/common/validation";
 import { type Chain, SwitchChainError, type Transport, getAddress } from "viem";
 import { ChainNotConfiguredError, createConnector } from "wagmi";
 

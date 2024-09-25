@@ -1,4 +1,4 @@
-import type { Address } from "@exactly/common/types";
+import type { Address } from "@exactly/common/validation";
 import { TimerReset } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";

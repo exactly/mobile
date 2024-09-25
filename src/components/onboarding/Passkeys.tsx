@@ -1,4 +1,4 @@
-import type { Passkey } from "@exactly/common/types";
+import type { Passkey } from "@exactly/common/validation";
 import { Key, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";

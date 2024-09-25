@@ -3,7 +3,7 @@ import "../mockDatabase";
 import "../mockDeployments";
 import "../mockSentry";
 
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { parse, type InferInput } from "valibot";

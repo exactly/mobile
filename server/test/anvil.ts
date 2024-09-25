@@ -1,4 +1,4 @@
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import { $ } from "execa";
 import { anvil } from "prool/instances";
 import { literal, null_, object, parse, tuple } from "valibot";

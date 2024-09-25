@@ -1,6 +1,6 @@
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
-import { Passkey } from "@exactly/common/types";
+import { Passkey } from "@exactly/common/validation";
 import type { ExaServer } from "@exactly/server";
 import { hc } from "hono/client";
 import { Platform } from "react-native";

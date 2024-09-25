@@ -1,4 +1,4 @@
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import { Mutex } from "async-mutex";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";

@@ -1,5 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, withScope } from "@sentry/node";
 import { eq } from "drizzle-orm";

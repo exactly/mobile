@@ -1,4 +1,4 @@
-import type { Passkey } from "@exactly/common/types";
+import type { Passkey } from "@exactly/common/validation";
 import { ChevronDown, Eye, EyeOff, Info, Snowflake, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";

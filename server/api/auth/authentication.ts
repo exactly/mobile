@@ -1,6 +1,6 @@
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
-import { Base64URL } from "@exactly/common/types";
+import { Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";

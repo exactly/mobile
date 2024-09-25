@@ -1,7 +1,7 @@
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
-import { Base64URL } from "@exactly/common/types";
+import { Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";

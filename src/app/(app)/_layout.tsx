@@ -1,4 +1,4 @@
-import type { Passkey } from "@exactly/common/types";
+import type { Passkey } from "@exactly/common/validation";
 import { useQuery } from "@tanstack/react-query";
 import { Redirect, SplashScreen, Stack } from "expo-router";
 import React, { useEffect } from "react";

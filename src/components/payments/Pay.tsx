@@ -1,5 +1,5 @@
 import { exaPluginAbi, marketUSDCAddress } from "@exactly/common/generated/chain";
-import { Address } from "@exactly/common/types";
+import { Address } from "@exactly/common/validation";
 import { Coins, X } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";

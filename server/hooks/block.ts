@@ -1,5 +1,5 @@
 import { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain";
-import { Address, Hash, Hex } from "@exactly/common/types";
+import { Address, Hash, Hex } from "@exactly/common/validation";
 import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
 import { deserialize, serialize } from "@wagmi/core";
 import createDebug from "debug";
