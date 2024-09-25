@@ -1,5 +1,22 @@
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/generated/chain";
+import { Hash, Hex } from "@exactly/common/types";
+import {
+  array,
+  type InferOutput,
+  intersect,
+  isoTimestamp,
+  literal,
+  null_,
+  nullish,
+  number,
+  object,
+  optional,
+  picklist,
+  pipe,
+  string,
+  variant,
+} from "valibot";
 import {
   type Address,
   type BlockNumber,
@@ -7,8 +24,6 @@ import {
   type CallParameters,
   createPublicClient,
   formatTransactionRequest,
-  type Hash,
-  type Hex,
   http,
   rpcSchema,
   type RpcTransactionRequest,
@@ -33,6 +48,65 @@ export default createPublicClient({
   getAssetTransfers: async (parameters: AssetTransfersParameters) =>
     client.request({ method: "alchemy_getAssetTransfers", params: [parameters] }),
 }));
+
+export const AssetTransfer = intersect([
+  object({
+    hash: Hash,
+    blockNum: Hex,
+    from: Hex,
+    to: Hex,
+    uniqueId: string(),
+    metadata: object({ blockTimestamp: pipe(string(), isoTimestamp()) }),
+  }),
+  variant("category", [
+    object({
+      category: picklist(["external", "internal"]),
+      asset: literal("ETH"),
+      value: number(),
+      tokenId: optional(null_()),
+      erc721TokenId: optional(null_()),
+      erc1155Metadata: optional(null_()),
+      rawContract: object({ address: optional(null_()), value: Hex, decimal: literal("0x12") }),
+    }),
+    object({
+      category: literal("erc20"),
+      asset: nullish(string()),
+      value: nullish(number()),
+      tokenId: optional(null_()),
+      erc721TokenId: optional(null_()),
+      erc1155Metadata: optional(null_()),
+      rawContract: object({ address: Hex, value: Hex, decimal: nullish(Hex) }),
+    }),
+    object({
+      category: literal("erc721"),
+      asset: nullish(string()),
+      value: optional(null_()),
+      tokenId: Hex,
+      erc721TokenId: Hex,
+      erc1155Metadata: optional(null_()),
+      rawContract: object({ address: Hex, value: optional(null_()), decimal: nullish(literal("0x0")) }),
+    }),
+    object({
+      category: literal("erc1155"),
+      asset: nullish(string()),
+      value: optional(null_()),
+      tokenId: optional(null_()),
+      erc721TokenId: optional(null_()),
+      erc1155Metadata: array(object({ tokenId: Hex, value: Hex })),
+      rawContract: object({ address: Hex, value: optional(null_()), decimal: nullish(literal("0x0")) }),
+    }),
+    object({
+      category: literal("specialnft"),
+      asset: nullish(string()),
+      value: optional(null_()),
+      tokenId: Hex,
+      erc721TokenId: optional(null_()),
+      erc1155Metadata: optional(null_()),
+      rawContract: object({ address: Hex, value: optional(null_()), decimal: nullish(literal("0x0")) }),
+    }),
+  ]),
+]);
+export type AssetTransfer = InferOutput<typeof AssetTransfer>; // eslint-disable-line @typescript-eslint/no-redeclare
 
 export interface CallFrame {
   type: "CALL" | "CREATE" | "STATICCALL" | "DELEGATECALL";
@@ -67,61 +141,6 @@ export interface AssetTransfersParameters {
   maxCount?: Hex;
   pageKey?: string;
 }
-
-export type AssetTransfer = {
-  hash: Hash;
-  blockNum: Hex;
-  from: Address;
-  to: Address;
-  uniqueId: `${Hash}:${string}`;
-  metadata: { blockTimestamp: string };
-} & (
-  | {
-      category: "external" | "internal";
-      asset: "ETH";
-      value: number;
-      tokenId: null;
-      erc721TokenId: null;
-      erc1155Metadata: null;
-      rawContract: { address: null; value: Hex; decimal: "0x12" };
-    }
-  | {
-      category: "erc20";
-      asset: string | null;
-      value: number | null;
-      tokenId: null;
-      erc721TokenId: null;
-      erc1155Metadata: null;
-      rawContract: { address: Address; value: Hex; decimal: Hex | null };
-    }
-  | {
-      category: "erc721";
-      asset: string | null;
-      value: null;
-      tokenId: Hex;
-      erc721TokenId: Hex;
-      erc1155Metadata: null;
-      rawContract: { address: Address; value: null; decimal: "0x0" | null };
-    }
-  | {
-      category: "erc1155";
-      asset: string | null;
-      value: null;
-      tokenId: null;
-      erc721TokenId: null;
-      erc1155Metadata: { tokenId: Hex; value: Hex }[];
-      rawContract: { address: Address; value: null; decimal: "0x0" | null };
-    }
-  | {
-      category: "specialnft";
-      asset: string | null;
-      value: null;
-      tokenId: Hex;
-      erc721TokenId: null;
-      erc1155Metadata: null;
-      rawContract: { address: Address; value: null; decimal: "0x0" | null };
-    }
-);
 
 export type RpcSchema = [
   {
