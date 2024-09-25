@@ -62,7 +62,7 @@ export default app.get(
     async function getAssetTransfers(type: "received" | "sent") {
       if (ignore(type)) return;
       return publicClient.getAssetTransfers({
-        category: ["external", "erc20"],
+        category: ["erc20"],
         withMetadata: true,
         excludeZeroValue: true,
         ...{
