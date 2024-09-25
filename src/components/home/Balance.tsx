@@ -26,7 +26,7 @@ export default function Balance() {
     }
   }
   return (
-    <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s8">
+    <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s4">
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
         <Text
           fontSize={ms(15)}
@@ -36,7 +36,7 @@ export default function Balance() {
           textAlign="center"
           width="100%"
         >
-          Balance
+          Assets
         </Text>
       </View>
       <Accordion overflow="hidden" type="multiple" borderRadius="$r3" padding="$s4" defaultValue={["balance"]}>

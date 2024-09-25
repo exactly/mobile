@@ -11,7 +11,6 @@ export default function HomeActions() {
       <Button
         main
         spaced
-        halfWidth
         onPress={() => {
           router.push("/add-funds/add-crypto");
         }}
@@ -25,7 +24,6 @@ export default function HomeActions() {
       <Button
         main
         spaced
-        halfWidth
         onPress={() => {
           router.push("/send-funds");
         }}

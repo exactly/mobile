@@ -22,7 +22,7 @@ export default function CreditLimit() {
     creditLimit = (usdcMarket.maxBorrowAssets * usdcMarket.usdPrice) / 10n ** BigInt(usdcMarket.decimals);
   }
   return (
-    <InfoCard title="Credit limit">
+    <InfoCard title="Credit card limit">
       <Text sensitive color="$uiNeutralPrimary" fontFamily="$mono" fontSize={ms(30)}>
         {(Number(creditLimit) / 1e18).toLocaleString(undefined, {
           style: "currency",
