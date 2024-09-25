@@ -86,5 +86,14 @@ module.exports = {
       },
     },
   ],
-  ignorePatterns: [".expo/", "build/", "dist/", "expo-env.d.ts", "generated/", "public/", "server/drizzle/"],
+  ignorePatterns: [
+    ".expo/",
+    "build/",
+    "coverage/",
+    "dist/",
+    "expo-env.d.ts",
+    "generated/",
+    "public/",
+    "server/drizzle/",
+  ],
 };
