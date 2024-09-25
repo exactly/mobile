@@ -50,12 +50,15 @@ describe("validation", () => {
 
 describe("authenticated", () => {
   const account = parse(Address, privateKeyToAddress(generatePrivateKey()));
+  const captureException = vi.spyOn(sentry, "captureException");
 
   beforeAll(async () => {
     await database
       .insert(credentials)
       .values([{ id: account, publicKey: new Uint8Array(), account, factory: zeroAddress }]);
   });
+
+  afterEach(() => captureException.mockClear());
 
   describe("card", () => {
     const payload: InferInput<typeof CardActivity> = {
@@ -86,9 +89,7 @@ describe("authenticated", () => {
 
     it("reports bad transaction", async () => {
       await database.insert(transactions).values([{ id: "1", cardId: "card", hash: "0x1", payload: {} }]);
-
-      const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
-
+      captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "card" } },
         { headers: { "test-credential-id": account } },
@@ -162,13 +163,31 @@ describe("authenticated", () => {
           }),
         ],
       });
-      const captureException = vi.spyOn(sentry, "captureException");
       const response = await appClient.index.$get(
         { query: { include: "received" } },
         { headers: { "test-credential-id": account } },
       );
 
       expect(getAssetTransfers).toHaveBeenCalledOnce();
+      expect(captureException).toHaveBeenCalledTimes(0);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
+    });
+
+    it("ignores market transfers", async () => {
+      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      getAssetTransfers.mockResolvedValueOnce({
+        transfers: [transfer, parse(AssetTransfer, { ...baseTransfer, to: account, from: inject("MarketUSDC") })],
+      });
+      getAssetTransfers.mockResolvedValueOnce({
+        transfers: [parse(AssetTransfer, { ...baseTransfer, from: account, to: inject("MarketUSDC") })],
+      });
+      const response = await appClient.index.$get(
+        { query: { include: ["received", "sent"] } },
+        { headers: { "test-credential-id": account } },
+      );
+
+      expect(getAssetTransfers).toHaveBeenCalledTimes(2);
       expect(captureException).toHaveBeenCalledTimes(0);
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
@@ -187,7 +206,6 @@ describe("authenticated", () => {
           }),
         ],
       });
-      const captureException = vi.spyOn(sentry, "captureException");
       const response = await appClient.index.$get(
         { query: { include: "received" } },
         { headers: { "test-credential-id": account } },
@@ -202,7 +220,7 @@ describe("authenticated", () => {
     it("reports bad transfer", async () => {
       const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
       getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer, { ...baseTransfer, from: zeroAddress } as any] }); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-      const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
+      captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "received" } },
         { headers: { "test-credential-id": account } },
