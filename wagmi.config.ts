@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { defineConfig, type Plugin } from "@wagmi/cli";
 import { foundry, react } from "@wagmi/cli/plugins";
 import { type Abi, getAddress } from "viem";
