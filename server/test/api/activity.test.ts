@@ -143,8 +143,33 @@ describe("authenticated", () => {
       await expect(response.json()).resolves.toStrictEqual([parse(AssetSentActivity, { ...transfer, market })]);
     });
 
+    it("ignores unknown asset", async () => {
+      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      getAssetTransfers.mockResolvedValueOnce({
+        transfers: [
+          transfer,
+          parse(AssetTransfer, {
+            ...baseTransfer,
+            to: account,
+            from: zeroAddress,
+            rawContract: { ...baseTransfer.rawContract, address: zeroAddress },
+          }),
+        ],
+      });
+      const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
+      const response = await appClient.index.$get(
+        { query: { include: "received" } },
+        { headers: { "test-credential-id": account } },
+      );
+
+      expect(getAssetTransfers).toHaveBeenCalledOnce();
+      expect(captureException).toHaveBeenCalledTimes(0);
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
+    });
+
     it("reports bad transfer", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, from: account, to: zeroAddress });
+      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
       getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer, baseTransfer as any] }); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
       const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
