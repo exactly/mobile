@@ -66,15 +66,28 @@ export default function LatestActivity({ activity, title = "Latest activity" }: 
                 <View gap="$s2">
                   <View flexDirection="row" alignItems="center" justifyContent="flex-end">
                     <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
-                      {Number(usdAmount).toLocaleString(undefined, {
-                        style: "currency",
-                        currency: "USD",
-                        currencyDisplay: "narrowSymbol",
-                      })}
+                      {usdAmount > 0.01
+                        ? usdAmount.toLocaleString(undefined, {
+                            style: "currency",
+                            currency: "USD",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        : `< ${(0.01).toLocaleString(undefined, {
+                            style: "currency",
+                            currency: "USD",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`}
                     </Text>
                   </View>
                   <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                    {Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })} {currency}
+                    {Number(amount).toLocaleString(undefined, {
+                      maximumSignificantDigits: 2,
+                      minimumSignificantDigits: 1,
+                    })}
+                    &nbsp;
+                    {currency}
                   </Text>
                 </View>
               </View>
