@@ -1,16 +1,20 @@
 import "../mockDeployments";
 import "../mockSentry";
 
-import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
+import { exaAccountFactoryAbi, exaPluginAbi, usdcAddress } from "@exactly/common/generated/chain";
+import { Hex } from "@exactly/common/validation";
+import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import Redis from "ioredis-mock";
-import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
+import { parse } from "valibot";
+import { hexToBigInt, padHex, zeroAddress, zeroHash, toHex, encodeEventTopics, erc20Abi, type Address } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { beforeAll, describe, expect, inject, it, vi } from "vitest";
+import { beforeEach, describe, expect, inject, it, vi } from "vitest";
 
 import app from "../../hooks/cryptomate";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
+import publicClient, { type CallFrame } from "../../utils/publicClient";
 
 vi.mock("ioredis", () => ({ Redis }));
 
@@ -51,10 +55,24 @@ describe("validation", () => {
 });
 
 describe("authorization", () => {
-  const owner = privateKeyToAccount(generatePrivateKey());
-  const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
+  let owner;
+  let account: Address;
 
-  beforeAll(async () => {
+  const baseCallFrame: CallFrame = {
+    type: "CALL",
+    from: "0x1234567890abcdef1234567890abcdef12345678",
+    to: "0xabcdef1234567890abcdef1234567890abcdef12",
+    gas: "0x5208",
+    gasUsed: "0x5200",
+    input: "0x",
+    value: "0xde0b6b3a7640000",
+    error: undefined,
+    revertReason: undefined,
+  } as const;
+
+  beforeEach(async () => {
+    owner = privateKeyToAccount(generatePrivateKey());
+    account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
     await keeper.writeContract({
       address: inject("USDC"),
       abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
@@ -67,16 +85,16 @@ describe("authorization", () => {
       functionName: "createAccount",
       args: [0n, [{ x: hexToBigInt(owner.address), y: 0n }]],
     });
-  });
 
-  it("authorizes", async () => {
     await keeper.writeContract({
       address: account,
       abi: exaPluginAbi,
       functionName: "poke",
       args: [inject("MarketUSDC")],
     });
+  });
 
+  it("authorizes", async () => {
     const response = await appClient.index.$post({
       ...authorization,
       json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
@@ -84,5 +102,69 @@ describe("authorization", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+  });
+
+  it("reports a bad collectCredit simulation", async () => {
+    const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
+
+    const response = await appClient.index.$post({
+      ...authorization,
+      json: { ...authorization.json, data: { ...authorization.json.data, bill_amount: 0, metadata: { account } } },
+    });
+
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(new Error("ZeroBorrow"));
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toStrictEqual({ response_code: "69" });
+  });
+
+  it("reports collector didn't receive funds", async () => {
+    const traceCall = vi.spyOn(publicClient, "traceCall");
+
+    traceCall.mockResolvedValueOnce(baseCallFrame);
+
+    const response = await appClient.index.$post({
+      ...authorization,
+      json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
+    });
+
+    expect(traceCall).toHaveBeenCalledOnce();
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toStrictEqual({ response_code: "51" });
+  });
+
+  it("reports collector receive wrong funds", async () => {
+    const traceCall = vi.spyOn(publicClient, "traceCall");
+
+    const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
+    const transferLog = {
+      address: parse(Hex, usdcAddress.toLowerCase()),
+      topics: [],
+      data: padHex(toHex(4 * 1e6)),
+      position: parse(Hex, "0x0"),
+    };
+
+    traceCall.mockResolvedValueOnce({
+      ...baseCallFrame,
+      logs: [
+        {
+          ...transferLog,
+          topics: [
+            parse(Hex, transferTopic),
+            padHex(parse(Hex, "0xe0b89008304552823335Dc2d99783B9Ed74b1107".toLowerCase())),
+            padHex(parse(Hex, process.env.COLLECTOR_ADDRESS?.toLowerCase())),
+          ],
+        },
+      ],
+    });
+
+    const response = await appClient.index.$post({
+      ...authorization,
+      json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
+    });
+
+    expect(traceCall).toHaveBeenCalledOnce();
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toStrictEqual({ response_code: "51" });
   });
 });
