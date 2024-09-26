@@ -8,9 +8,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && apt-get install -y ca-certificates curl git rsync unzip --no-install-recommends && \
   rm -rf /var/lib/apt/lists/* && \
   curl -fsSL https://get.pnpm.io/install.sh | bash && \
-  curl -fsSL https://bun.sh/install | bash && \
   curl -fsSL https://foundry.paradigm.xyz | bash
-ENV PATH="$PATH:/root/.local/share/pnpm:/root/.bun/bin:/root/.foundry/bin"
+ENV PATH="$PATH:/root/.local/share/pnpm:/root/.foundry/bin"
 RUN foundryup
 WORKDIR /usr/src/app
 COPY . .
