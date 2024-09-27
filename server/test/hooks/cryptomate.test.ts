@@ -167,4 +167,24 @@ describe("authorization", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toStrictEqual({ response_code: "51" });
   });
+
+  it("reports unknown error", async () => {
+    const captureException = vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
+    const traceCall = vi.spyOn(publicClient, "traceCall");
+    const unknown = new Error("Unknown");
+    traceCall.mockImplementationOnce(() => {
+      throw unknown;
+    });
+
+    const response = await appClient.index.$post({
+      ...authorization,
+      json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
+    });
+
+    expect(traceCall).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(unknown);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toStrictEqual({ response_code: "05" });
+  });
 });
