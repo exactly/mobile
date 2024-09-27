@@ -16,7 +16,7 @@
     "test:build": "expo export --platform web",
     "test:ts:expo": "tsc",
     "test:ts:node": "tsc -p tsconfig.node.json",
-    "test:eslint": "eslint --max-warnings 0 ."
+    "test:eslint": "eslint --max-warnings 0 --color ."
   },
   "engines": {
     "node": ">=22.9.0"
