@@ -86,7 +86,7 @@ export async function getActivity(parameters?: NonNullable<Parameters<typeof cli
 
 export async function auth() {
   const { success } = safeParse(Auth, await queryClient.ensureQueryData({ queryKey: ["auth"] }));
-  if (!success) await queryClient.fetchQuery({ queryKey: ["auth"] });
+  if (!success) await queryClient.refetchQueries({ queryKey: ["auth"] });
 }
 
 const Auth = pipe(
@@ -94,7 +94,7 @@ const Auth = pipe(
   check((expires) => Date.now() < expires),
 );
 
-class APIError extends Error {
+export class APIError extends Error {
   code: number;
   text: string;
 

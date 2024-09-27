@@ -16,7 +16,7 @@ import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
-import { getActivity, getCard, kyc, kycStatus } from "../../utils/server";
+import { APIError, getActivity, getCard, kyc, kycStatus } from "../../utils/server";
 import CreditLimit from "../home/CreditLimit";
 import LatestActivity from "../shared/LatestActivity";
 import SafeView from "../shared/SafeView";
@@ -72,7 +72,8 @@ export default function Card() {
       }
       try {
         await kycStatus();
-      } catch {
+      } catch (error) {
+        if (error instanceof APIError && error.code === 401) return;
         if (Platform.OS !== "web") {
           Inquiry.fromTemplate(templateId)
             .environment(environment)
@@ -89,7 +90,6 @@ export default function Card() {
         const otl = await kyc();
         window.open(otl, "_self");
       }
-
       const { error } = await refetchCard();
       setDetailsShown(!error);
       flipped.value = !error;
@@ -267,5 +267,4 @@ export default function Card() {
     </SafeView>
   );
 }
-
 const exitStyle = { opacity: 0 };
