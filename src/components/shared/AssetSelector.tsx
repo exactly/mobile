@@ -67,7 +67,7 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
               <View flexDirection="row" gap={ms(10)} alignItems="center" maxWidth="50%">
                 <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
                 <View gap="$s2" alignItems="flex-start" flexShrink={1}>
-                  <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralTertiary" numberOfLines={1}>
+                  <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
                     {symbol}
                   </Text>
                   <Text fontSize={ms(12)} color="$uiNeutralSecondary" numberOfLines={1}>
@@ -77,7 +77,7 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
               </View>
               <View gap="$s2" flex={1}>
                 <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                  <Text fontSize={ms(15)} fontWeight="bold" textAlign="right" color="$uiNeutralTertiary">
+                  <Text fontSize={ms(15)} fontWeight="bold" textAlign="right" color="$uiNeutralPrimary">
                     {(Number(usdValue) / 1e18).toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
