@@ -43,7 +43,10 @@ export default {
     bundleIdentifier: "app.exactly",
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
     supportsTablet: true,
-    infoPlist: { NSCameraUsageDescription: "This app uses the camera to verify your identity." },
+    infoPlist: {
+      NSCameraUsageDescription: "This app uses the camera to verify your identity.",
+      NSLocationWhenInUseUsageDescription: "This app uses your location to verify your identity.",
+    },
     userInterfaceStyle: "automatic",
     splash: {
       backgroundColor: "#FCFCFC",
