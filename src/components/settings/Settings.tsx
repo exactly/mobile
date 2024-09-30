@@ -1,12 +1,14 @@
 import Intercom from "@intercom/intercom-react-native";
 import { ArrowLeft, ChevronRight, FlaskConical, HelpCircle, SunMoon } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
+import { setStringAsync } from "expo-clipboard";
 import { router, useRouter } from "expo-router";
 import React from "react";
-import { Pressable, type ColorSchemeName } from "react-native";
+import { Alert, Pressable, type ColorSchemeName } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, XStack } from "tamagui";
 
+import version from "../../generated/version";
 import handleError from "../../utils/handleError";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -92,6 +94,18 @@ export default function Settings() {
                 </XStack>
               </Pressable>
             </View>
+
+            <Pressable
+              hitSlop={ms(20)}
+              onPress={() => {
+                setStringAsync(version).catch(handleError);
+                Alert.alert("Copied", "App version has been copied to the clipboard.");
+              }}
+            >
+              <Text footnote color="$uiNeutralSecondary" textAlign="center">
+                version: {version}
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
       </View>
