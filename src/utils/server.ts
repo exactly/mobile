@@ -54,6 +54,22 @@ export async function getCard() {
   return response.json();
 }
 
+export async function createCard() {
+  await auth();
+  const response = await client.api.card.$post();
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  return response.json();
+}
+
+export async function setCardStatus(
+  status: NonNullable<Parameters<typeof client.api.card.$patch>[0]>["json"]["status"],
+) {
+  await auth();
+  const response = await client.api.card.$patch({ json: { status } });
+  if (!response.ok) throw new APIError(response.status, await response.text());
+  return response.json();
+}
+
 export async function kyc(inquiryId?: string) {
   await auth();
   const response = await client.api.kyc.$post({ json: { inquiryId } });

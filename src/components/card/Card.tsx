@@ -16,24 +16,12 @@ import SpendingLimitButton from "./SpendingLimitButton";
 import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
-import { APIError, getActivity, getCard, kyc, kycStatus } from "../../utils/server";
+import { APIError, getActivity, getCard, createCard, kyc, kycStatus, setCardStatus } from "../../utils/server";
 import CreditLimit from "../home/CreditLimit";
 import LatestActivity from "../shared/LatestActivity";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
-
-const StyledAction = styled(View, {
-  flex: 1,
-  minHeight: ms(140),
-  borderWidth: 1,
-  padding: ms(16),
-  borderRadius: 10,
-  backgroundColor: "$backgroundSoft",
-  borderColor: "$borderNeutralSoft",
-  justifyContent: "space-between",
-  width: "100%",
-});
 
 export default function Card() {
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
@@ -42,27 +30,39 @@ export default function Card() {
     data: purchases,
     refetch: refetchPurchases,
     isFetching,
-  } = useQuery({ queryKey: ["activity", "card"], queryFn: () => getActivity({ include: "card" }) });
+  } = useQuery({
+    queryKey: ["activity", "card"],
+    queryFn: () => getActivity({ include: "card" }),
+  });
+
+  const {
+    data: cardDetails,
+    refetch: refetchCard,
+    error: cardError,
+    isFetching: isFetchingCardDetails,
+  } = useQuery({
+    queryKey: ["card", "details"],
+    queryFn: getCard,
+    retry: false,
+  });
+
+  const { mutateAsync: changeCardStatus, isPending: isSettingCardStatus } = useMutation({
+    mutationKey: ["card", "status"],
+    mutationFn: setCardStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["card", "details"] }).catch(handleError);
+    },
+  });
 
   const [detailsShown, setDetailsShown] = useState(false);
   const flipped = useSharedValue(false);
-
-  const {
-    data: card,
-    error: cardError,
-    refetch: refetchCard,
-  } = useQuery({
-    queryKey: ["card"],
-    queryFn: getCard,
-    enabled: false,
-  });
 
   const {
     mutateAsync: revealCard,
     isPending: isRevealing,
     error: revealError,
   } = useMutation({
-    mutationKey: ["revealCard"],
+    mutationKey: ["card", "reveal"],
     mutationFn: async function handleReveal() {
       if (!passkey || isRevealing) return;
       if (detailsShown) {
@@ -72,27 +72,34 @@ export default function Card() {
       }
       try {
         await kycStatus();
-      } catch (error) {
-        if (error instanceof APIError && error.code === 401) return;
-        if (Platform.OS !== "web") {
-          Inquiry.fromTemplate(templateId)
-            .environment(environment)
-            .referenceId(passkey.credentialId)
-            .onComplete((inquiryId) => {
-              if (!inquiryId) throw new Error("no inquiry id");
-              kyc(inquiryId).catch(handleError);
-            })
-            .onError(handleError)
-            .build()
-            .start();
-          return;
+        const { error } = await refetchCard();
+        if (error) {
+          await createCard();
+          await refetchCard();
         }
-        const otl = await kyc();
-        window.open(otl, "_self");
+        setDetailsShown(true);
+        flipped.value = true;
+      } catch (error) {
+        if (error instanceof APIError && (error.code === 403 || error.code === 404)) {
+          if (Platform.OS !== "web") {
+            Inquiry.fromTemplate(templateId)
+              .environment(environment)
+              .referenceId(passkey.credentialId)
+              .onComplete((inquiryId) => {
+                if (!inquiryId) throw new Error("no inquiry id");
+                kyc(inquiryId).catch(handleError);
+              })
+              .onError(handleError)
+              .build()
+              .start();
+            return;
+          }
+          const otl = await kyc();
+          window.open(otl, "_self");
+        } else {
+          handleError(error);
+        }
       }
-      const { error } = await refetchCard();
-      setDetailsShown(!error);
-      flipped.value = !error;
     },
   });
 
@@ -118,8 +125,12 @@ export default function Card() {
             <View alignItems="center" gap="$s5" width="100%">
               <FlipCard
                 flipped={flipped}
-                Front={<CardFront lastFour={card?.lastFour} />}
-                Back={card?.url ? <CardBack uri={card.url} flipped={flipped.value} /> : undefined}
+                Front={<CardFront lastFour={cardDetails?.lastFour} />}
+                Back={
+                  cardDetails?.url && detailsShown ? (
+                    <CardBack uri={cardDetails.url} flipped={flipped.value} />
+                  ) : undefined
+                }
               />
 
               {(cardError ?? revealError) && (
@@ -189,7 +200,9 @@ export default function Card() {
                       ) : (
                         <EyeOff size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
                       )}
-                      <Text fontSize={ms(15)}>Details</Text>
+                      <Text fontSize={ms(15)} color="$uiNeutralPrimary">
+                        Details
+                      </Text>
                       {isRevealing ? (
                         <Spinner color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
                       ) : (
@@ -201,22 +214,35 @@ export default function Card() {
                   </Pressable>
                 </StyledAction>
                 <StyledAction>
-                  <Pressable>
-                    <View gap="$s3_5">
-                      <Snowflake size={ms(24)} color="$interactiveDisabled" fontWeight="bold" />
-                      <Text fontSize={ms(15)} color="$interactiveDisabled">
-                        Freeze
-                      </Text>
-                      <Switch disabled backgroundColor="$backgroundMild" borderColor="$borderNeutralSoft">
-                        <Switch.Thumb
-                          disabled
-                          animation="quicker"
-                          backgroundColor="$backgroundSoft"
-                          shadowColor="$uiNeutralPrimary"
-                        />
-                      </Switch>
-                    </View>
-                  </Pressable>
+                  <View gap="$s3_5">
+                    <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                    <Text fontSize={ms(15)} color="$uiNeutralPrimary">
+                      Freeze
+                    </Text>
+                    <XStack alignItems="center" gap="$s3">
+                      <View>
+                        <Switch
+                          disabled={isFetchingCardDetails || isSettingCardStatus}
+                          checked={cardDetails?.status === "FROZEN"}
+                          onCheckedChange={(checked) => {
+                            changeCardStatus(checked ? "FROZEN" : "ACTIVE").catch(handleError);
+                          }}
+                          backgroundColor="$backgroundMild"
+                          borderColor="$borderNeutralSoft"
+                        >
+                          <Switch.Thumb
+                            disabled={isFetchingCardDetails || isSettingCardStatus}
+                            animation="quicker"
+                            backgroundColor="$interactiveBaseBrandDefault"
+                            shadowColor="$uiNeutralSecondary"
+                          />
+                        </Switch>
+                      </View>
+                      <View>
+                        {isSettingCardStatus && <Spinner color="$interactiveBaseBrandDefault" alignSelf="flex-start" />}
+                      </View>
+                    </XStack>
+                  </View>
                 </StyledAction>
               </View>
             </View>
@@ -267,4 +293,16 @@ export default function Card() {
     </SafeView>
   );
 }
+
 const exitStyle = { opacity: 0 };
+const StyledAction = styled(View, {
+  flex: 1,
+  minHeight: ms(140),
+  borderWidth: 1,
+  padding: ms(16),
+  borderRadius: 10,
+  backgroundColor: "$backgroundSoft",
+  borderColor: "$borderNeutralSoft",
+  justifyContent: "space-between",
+  width: "100%",
+});
