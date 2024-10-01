@@ -137,6 +137,9 @@ importers:
       expo-clipboard:
         specifier: ~6.0.3
         version: 6.0.3(expo@51.0.35(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+      expo-constants:
+        specifier: ~16.0.2
+        version: 16.0.2(expo@51.0.35(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
       expo-font:
         specifier: ~12.0.9
         version: 12.0.10(expo@51.0.35(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
@@ -2183,7 +2186,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.18.30':
     resolution: {integrity: sha512-V90TUJh9Ly8stYo8nwqIqNWCsYjE28GlVFWEhAFCUOp99foiQr8HSTpiiX5GIrprcPoWmlGoY+J5fQA29R4lFg==}
@@ -11365,8 +11368,8 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.25.6
       '@expo/code-signing-certificates': 0.0.5
-      '@expo/config': 9.0.4
-      '@expo/config-plugins': 8.0.10
+      '@expo/config': 9.0.3
+      '@expo/config-plugins': 8.0.9
       '@expo/devcert': 1.1.4
       '@expo/env': 0.3.0
       '@expo/image-utils': 0.5.1
@@ -11513,7 +11516,7 @@ snapshots:
   '@expo/config@9.0.4':
     dependencies:
       '@babel/code-frame': 7.10.4
-      '@expo/config-plugins': 8.0.10
+      '@expo/config-plugins': 8.0.9
       '@expo/config-types': 51.0.3
       '@expo/json-file': 8.3.3
       getenv: 1.0.0
@@ -11595,7 +11598,7 @@ snapshots:
       '@babel/generator': 7.25.6
       '@babel/parser': 7.25.6
       '@babel/types': 7.25.6
-      '@expo/config': 9.0.4
+      '@expo/config': 9.0.3
       '@expo/env': 0.3.0
       '@expo/json-file': 8.3.3
       '@expo/spawn-async': 1.7.2
@@ -11662,8 +11665,8 @@ snapshots:
 
   '@expo/prebuild-config@7.0.9(expo-modules-autolinking@1.11.2)':
     dependencies:
-      '@expo/config': 9.0.4
-      '@expo/config-plugins': 8.0.10
+      '@expo/config': 9.0.3
+      '@expo/config-plugins': 8.0.9
       '@expo/config-types': 51.0.3
       '@expo/image-utils': 0.5.1
       '@expo/json-file': 8.3.3
