@@ -9,14 +9,17 @@ import metadata from "./package.json";
 
 if (process.env.APP_DOMAIN) process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
 
+const buildNumber = execSync("git rev-list --count HEAD").toString().trim();
+
 export default {
   name: "Exa",
   slug: "exactly",
   scheme: "exactly",
-  version: metadata.version,
+  version: `v${metadata.version}`,
   orientation: "portrait",
   android: {
     package: "app.exactly",
+    buildNumber: Number(buildNumber),
     adaptiveIcon: { foregroundImage: "src/assets/icon.png", backgroundColor: "#1D1D1D" },
     permissions: ["android.permission.CAMERA"],
     userInterfaceStyle: "automatic",
@@ -44,6 +47,7 @@ export default {
     bundleIdentifier: "app.exactly",
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
     supportsTablet: true,
+    buildNumber,
     infoPlist: {
       NSCameraUsageDescription: "This app uses the camera to verify your identity.",
       NSLocationWhenInUseUsageDescription: "This app uses your location to verify your identity.",
