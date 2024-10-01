@@ -12,6 +12,8 @@ jobs:
       EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID: test
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: ">=9.11.0"
