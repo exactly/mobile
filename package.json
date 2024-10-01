@@ -7,7 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "prepare": "wagmi generate && echo \"export default \\\"$(git describe --always)\\\" as const;\" > src/generated/version.ts",
+    "prepare": "wagmi generate",
     "eas-build-pre-install": "export FOUNDRY_DIR=${FOUNDRY_DIR-$HOME/workingdir} && curl -L https://foundry.paradigm.xyz | bash || true && foundryup",
     "eas-build-on-success": "expo-updates fingerprint:generate --debug --platform android",
     "test": "pnpm run --aggregate-output /test:/",
