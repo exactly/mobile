@@ -31,7 +31,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-import database, { cards, credentials, transactions } from "../database/index";
+import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
 import keeper from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
@@ -101,21 +101,13 @@ export default new Hono().post(
     setTag("cryptomate.status", payload.status);
     const jsonBody = await c.req.json(); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     setContext("cryptomate", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
-    const account =
-      payload.data.metadata?.account ??
-      v.parse(
-        Address,
-        await database
-          .select({ id: credentials.id, account: credentials.account })
-          .from(cards)
-          .leftJoin(credentials, eq(cards.credentialId, credentials.id))
-          .where(eq(cards.id, payload.data.card_id))
-          .limit(1)
-          .then(([credential]) => {
-            if (!credential?.account) throw new Error("missing credential");
-            return credential.account;
-          }),
-      );
+    const result = await database.query.cards.findFirst({
+      columns: {},
+      where: and(eq(cards.id, payload.data.card_id), eq(cards.status, "ACTIVE")),
+      with: { credential: { columns: { account: true } } },
+    });
+    if (!result) return c.json("not found", 404);
+    const account = v.parse(Address, result.credential.account);
     setUser({ id: account });
     const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
     const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;

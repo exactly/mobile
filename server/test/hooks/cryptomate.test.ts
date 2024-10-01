@@ -1,5 +1,6 @@
 import "../mockDeployments";
 import "../mockSentry";
+import "../mockDatabase";
 
 import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
 import { testClient } from "hono/testing";
@@ -8,6 +9,7 @@ import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 
+import database, { cards, credentials } from "../../database";
 import app from "../../hooks/cryptomate";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
@@ -35,6 +37,16 @@ const authorization = {
   },
 } as const;
 
+const owner = privateKeyToAccount(generatePrivateKey());
+const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
+
+beforeAll(async () => {
+  await database
+    .insert(credentials)
+    .values([{ id: "cred", publicKey: new Uint8Array(), account, factory: zeroAddress }]);
+  await database.insert(cards).values([{ id: "card", credentialId: "cred", lastFour: "1234" }]);
+});
+
 describe("validation", () => {
   it("fails with bad key", async () => {
     const response = await appClient.index.$post({ ...authorization, header: { "x-webhook-key": "bad" } });
@@ -51,9 +63,6 @@ describe("validation", () => {
 });
 
 describe("authorization", () => {
-  const owner = privateKeyToAccount(generatePrivateKey());
-  const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
-
   beforeAll(async () => {
     await keeper.writeContract({
       address: inject("USDC"),
