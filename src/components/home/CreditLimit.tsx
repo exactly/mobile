@@ -1,5 +1,4 @@
 import { previewerAddress, usdcAddress } from "@exactly/common/generated/chain";
-import Intercom, { IntercomContent } from "@intercom/intercom-react-native";
 import { ArrowRight } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
@@ -9,11 +8,13 @@ import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
+import useIntercom from "../../utils/useIntercom";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function CreditLimit() {
   const { address } = useAccount();
+  const { presentContent } = useIntercom();
   const { data: markets } = useReadPreviewerExactly({
     address: previewerAddress,
     account: address,
@@ -49,7 +50,7 @@ export default function CreditLimit() {
           alignItems="center"
           hitSlop={ms(15)}
           onPress={() => {
-            Intercom.presentContent(IntercomContent.articleWithArticleId("9467331")).catch(handleError);
+            presentContent("9467331").catch(handleError);
           }}
         >
           <Text secondary caption>

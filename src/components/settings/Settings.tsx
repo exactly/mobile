@@ -1,5 +1,4 @@
 import release from "@exactly/common/generated/release";
-import Intercom from "@intercom/intercom-react-native";
 import { ArrowLeft, ChevronRight, FlaskConical, HelpCircle, SunMoon } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
@@ -10,17 +9,19 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, XStack } from "tamagui";
 
 import handleError from "../../utils/handleError";
+import useIntercom from "../../utils/useIntercom";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-function handleSupport() {
-  Intercom.present().catch(handleError);
-}
-
 export default function Settings() {
   const { canGoBack } = useRouter();
   const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
+  const { present } = useIntercom();
+
+  function handleSupport() {
+    present().catch(handleError);
+  }
 
   return (
     <SafeView fullScreen tab>
