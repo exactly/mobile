@@ -2,6 +2,7 @@ import "dotenv/config";
 import type { ExpoConfig } from "expo/config";
 import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-properties/build/pluginConfig";
 import type { FontProps } from "expo-font/plugin/build/withFonts";
+import { execSync } from "node:child_process";
 import type { OneSignalPluginProps } from "onesignal-expo-plugin/types/types";
 
 import metadata from "./package.json";
@@ -100,7 +101,10 @@ export default {
     ],
   ],
   experiments: { typedRoutes: true },
-  extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
+  extra: {
+    eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" },
+    release: execSync("git describe").toString().trim(),
+  },
   updates: { url: "https://u.expo.dev/06bc0158-d23b-430b-a7e8-802df03c450b" },
   runtimeVersion: { policy: "fingerprint" },
   owner: "exactly",
