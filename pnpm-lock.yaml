@@ -74,6 +74,9 @@ importers:
       '@intercom/intercom-react-native':
         specifier: ^7.2.1
         version: 7.2.1(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10))(react@18.2.0)
+      '@intercom/messenger-js-sdk':
+        specifier: ^0.0.14
+        version: 0.0.14
       '@onesignal/node-onesignal':
         specifier: 5.0.0-alpha-01
         version: 5.0.0-alpha-01
@@ -2460,6 +2463,9 @@ packages:
     peerDependencies:
       react: '*'
       react-native: 0.74.5
+
+  '@intercom/messenger-js-sdk@0.0.14':
+    resolution: {integrity: sha512-2dH4BDAh9EI90K7hUkAdZ76W79LM45Sd1OBX7t6Vzy8twpNiQ5X+7sH9G5hlJlkSGnf+vFWlFcy9TOYAyEs1hA==}
 
   '@ioredis/as-callback@3.0.0':
     resolution: {integrity: sha512-Kqv1rZ3WbgOrS+hgzJ5xG5WQuhvzzSTRYvNeyPMLOAM78MHSnuKI20JeJGbpuAt//LCuP0vsexZcorqW7kWhJg==}
@@ -11870,6 +11876,8 @@ snapshots:
       react-native: 0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(bufferutil@4.0.8)(react@18.2.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - encoding
+
+  '@intercom/messenger-js-sdk@0.0.14': {}
 
   '@ioredis/as-callback@3.0.0': {}
 
