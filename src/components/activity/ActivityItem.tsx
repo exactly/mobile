@@ -1,6 +1,6 @@
 import { ArrowDownToLine, ArrowUpFromLine, CircleDollarSign } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
-import { getName, registerLocale, type LocaleData } from "i18n-iso-countries";
+import { getName, registerLocale, type LocaleData } from "i18n-iso-countries/index";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { titleCase } from "title-case";
