@@ -15,6 +15,7 @@ const { Mode } =
   require("onesignal-expo-plugin/build/types/types") as typeof import("onesignal-expo-plugin/types/types"); // eslint-disable-line @typescript-eslint/no-require-imports, @typescript-eslint/consistent-type-imports, unicorn/prefer-module
 
 if (process.env.APP_DOMAIN) process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
+else if (process.env.EAS_BUILD_RUNNER === "eas-build") process.env.EXPO_PUBLIC_DOMAIN ??= "web.exactly.app";
 
 const buildProperties: BuildPropertiesConfig = {
   android: {
