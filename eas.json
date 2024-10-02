@@ -10,8 +10,6 @@
       "ios": { "image": "latest" },
       "env": {
         "CHAIN_ID": "10",
-        "INTERCOM_ANDROID_API_KEY": "android_sdk-d602d62cbdb9e8e0a6f426db847ddc74d2e26090",
-        "INTERCOM_IOS_API_KEY": "ios_sdk-ad6831098d9c2d69bd98e92a5ad7a4f030472a92",
         "APP_DOMAIN": "web.exactly.app"
       }
     },
