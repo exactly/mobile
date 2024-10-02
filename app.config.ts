@@ -2,14 +2,13 @@ import "dotenv/config";
 import type { ExpoConfig } from "expo/config";
 import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-properties/build/pluginConfig";
 import type { FontProps } from "expo-font/plugin/build/withFonts";
-import { execSync } from "node:child_process";
 import type { OneSignalPluginProps } from "onesignal-expo-plugin/types/types";
 
 import metadata from "./package.json";
+import release from "./src/generated/release.js";
+import versionCode from "./src/generated/versionCode.js";
 
 if (process.env.APP_DOMAIN) process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
-
-const buildNumber = execSync("git rev-list --count HEAD").toString().trim();
 
 export default {
   name: "Exa",
@@ -19,10 +18,10 @@ export default {
   orientation: "portrait",
   android: {
     package: "app.exactly",
-    buildNumber: Number(buildNumber),
     adaptiveIcon: { foregroundImage: "src/assets/icon.png", backgroundColor: "#1D1D1D" },
     permissions: ["android.permission.CAMERA"],
     userInterfaceStyle: "automatic",
+    versionCode,
     splash: {
       backgroundColor: "#FCFCFC",
       image: "src/assets/splash.png",
@@ -47,7 +46,7 @@ export default {
     bundleIdentifier: "app.exactly",
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
     supportsTablet: true,
-    buildNumber,
+    buildNumber: String(versionCode),
     infoPlist: {
       NSCameraUsageDescription: "This app uses the camera to verify your identity.",
       NSLocationWhenInUseUsageDescription: "This app uses your location to verify your identity.",
@@ -105,10 +104,7 @@ export default {
     ],
   ],
   experiments: { typedRoutes: true },
-  extra: {
-    eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" },
-    release: execSync("git describe").toString().trim(),
-  },
+  extra: { release, eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
   updates: { url: "https://u.expo.dev/06bc0158-d23b-430b-a7e8-802df03c450b" },
   runtimeVersion: { policy: "fingerprint" },
   owner: "exactly",
