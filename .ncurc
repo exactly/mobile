@@ -10,6 +10,7 @@
     "expo-clipboard",
     "expo-dev-client",
     "expo-font",
+    "expo-insights",
     "expo-linking",
     "expo-router",
     "expo-status-bar",
