@@ -8,7 +8,6 @@ import type withCamera from "expo-camera/plugin/build/withCamera";
 import type { FontProps } from "expo-font/plugin/build/withFonts";
 import type { OneSignalPluginProps } from "onesignal-expo-plugin/types/types";
 
-import release from "./common/generated/release.js";
 import metadata from "./package.json";
 import versionCode from "./src/generated/versionCode.js";
 
@@ -113,7 +112,7 @@ const config: ExpoConfig = {
     ["onesignal-expo-plugin", onesignal],
   ],
   experiments: { typedRoutes: true },
-  extra: { release, eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
+  extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
   updates: { url: "https://u.expo.dev/06bc0158-d23b-430b-a7e8-802df03c450b" },
   runtimeVersion: { policy: "fingerprint" },
   owner: "exactly",

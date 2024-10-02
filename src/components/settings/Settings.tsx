@@ -1,8 +1,8 @@
+import release from "@exactly/common/generated/release";
 import Intercom from "@intercom/intercom-react-native";
 import { ArrowLeft, ChevronRight, FlaskConical, HelpCircle, SunMoon } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
-import Constants from "expo-constants";
 import { router, useRouter } from "expo-router";
 import React from "react";
 import { Alert, Pressable, type ColorSchemeName } from "react-native";
@@ -13,9 +13,6 @@ import handleError from "../../utils/handleError";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
-
-if (!Constants.expoConfig?.extra?.release) throw new Error("missing release");
-const release = Constants.expoConfig.extra.release as string;
 
 function handleSupport() {
   Intercom.present().catch(handleError);

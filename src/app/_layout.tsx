@@ -1,9 +1,9 @@
 import "../utils/polyfill";
 
+import release from "@exactly/common/generated/release";
 import { init, reactNativeTracingIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { isRunningInExpoGo } from "expo";
-import Constants from "expo-constants";
 import { type FontSource, useFonts } from "expo-font";
 import { SplashScreen, Stack, useNavigationContainerRef } from "expo-router";
 import React, { useEffect } from "react";
@@ -26,8 +26,8 @@ SplashScreen.preventAutoHideAsync().catch(handleError);
 export { ErrorBoundary } from "expo-router";
 const routingInstrumentation = reactNavigationIntegration();
 init({
+  release,
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  release: Constants.expoConfig?.extra?.release as string,
   environment: __DEV__ ? "development" : "production",
   tracesSampleRate: 1,
   attachStacktrace: true,
