@@ -58,7 +58,7 @@ const config: ExpoConfig = {
   name: "Exa",
   slug: "exactly",
   scheme: "exactly",
-  version: `v${metadata.version}`,
+  version: metadata.version,
   orientation: "portrait",
   android: {
     package: "app.exactly",
