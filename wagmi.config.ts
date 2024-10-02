@@ -1,68 +1,31 @@
 import "dotenv/config";
 import { defineConfig, type Plugin } from "@wagmi/cli";
 import { foundry, react } from "@wagmi/cli/plugins";
+import { readFileSync } from "node:fs";
 import { type Abi, getAddress } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
 const chainId = Number(process.env.CHAIN_ID ?? String(optimismSepolia.id));
 
-const [
-  { default: auditor },
-  { default: marketUSDC },
-  { default: marketWETH },
-  { default: previewer },
-  { default: usdc },
-  { default: weth },
-  {
-    default: {
-      transactions: [exaPlugin, factory],
-    },
-  },
-  {
-    default: {
-      transactions: [issuerChecker],
-    },
-  },
-] = await Promise.all(
-  (() => {
-    switch (chainId) {
-      case optimism.id:
-        return [
-          import("@exactly/protocol/deployments/optimism/Auditor.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/optimism/MarketUSDC.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/optimism/MarketWETH.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/optimism/Previewer.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/optimism/USDC.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/optimism/WETH.json", { with: { type: "json" } }),
-          import("@exactly/plugin/broadcast/Deploy.s.sol/10/run-latest.json", { with: { type: "json" } }),
-          import("@exactly/plugin/broadcast/IssuerChecker.s.sol/10/run-latest.json", { with: { type: "json" } }),
-        ];
-      case optimismSepolia.id:
-        return [
-          import("@exactly/protocol/deployments/op-sepolia/Auditor.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/op-sepolia/MarketUSDC.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/op-sepolia/MarketWETH.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/op-sepolia/Previewer.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/op-sepolia/USDC.json", { with: { type: "json" } }),
-          import("@exactly/protocol/deployments/op-sepolia/WETH.json", { with: { type: "json" } }),
-          import("@exactly/plugin/broadcast/Deploy.s.sol/11155420/run-latest.json", { with: { type: "json" } }),
-          import("@exactly/plugin/broadcast/IssuerChecker.s.sol/11155420/run-latest.json", { with: { type: "json" } }),
-        ];
-      default:
-        throw new Error("unknown chain");
-    }
-  })(),
-);
 
+
+const auditor = loadDeployment("Auditor");
+const marketUSDC = loadDeployment("MarketUSDC");
+const marketWETH = loadDeployment("MarketWETH");
+const previewer = loadDeployment("Previewer");
+const usdc = loadDeployment("USDC");
+const weth = loadDeployment("WETH");
+const [exaPlugin, factory] = loadBroadcast("Deploy").transactions;
+const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
 if (!exaPlugin || !factory || !issuerChecker) throw new Error("missing contracts");
 
 export default defineConfig([
   {
     out: "src/generated/contracts.ts",
     contracts: [
-      { name: "Auditor", abi: auditor.abi as Abi },
-      { name: "Market", abi: marketWETH.abi as Abi },
-      { name: "Previewer", abi: previewer.abi as Abi },
+      { name: "Auditor", abi: auditor.abi },
+      { name: "Market", abi: marketWETH.abi },
+      { name: "Previewer", abi: previewer.abi },
     ],
     plugins: [
       foundry({
@@ -99,9 +62,9 @@ export default defineConfig([
   {
     out: "server/generated/contracts.ts",
     contracts: [
-      { name: "Auditor", abi: auditor.abi as Abi },
-      { name: "Market", abi: marketWETH.abi as Abi },
-      { name: "Previewer", abi: previewer.abi as Abi },
+      { name: "Auditor", abi: auditor.abi },
+      { name: "Market", abi: marketWETH.abi },
+      { name: "Previewer", abi: previewer.abi },
     ],
     plugins: [
       addresses({ issuerChecker: issuerChecker.contractAddress }),
@@ -125,4 +88,19 @@ function chain(): Plugin {
   const importName = { [optimism.id]: "optimism", [optimismSepolia.id]: "optimismSepolia" }[chainId];
   if (!importName) throw new Error("unknown chain");
   return { name: "Chain", run: () => ({ content: `export { ${importName} as default } from "@alchemy/aa-core"` }) };
+}
+
+function loadDeployment(contract: string) {
+  return JSON.parse(
+    readFileSync(
+      `node_modules/@exactly/protocol/deployments/${chainId === optimism.id ? "optimism" : "op-sepolia"}/${contract}.json`,
+      "utf8",
+    ),
+  ) as { address: string; abi: Abi };
+}
+
+function loadBroadcast(script: string) {
+  return JSON.parse(
+    readFileSync(`node_modules/@exactly/plugin/broadcast/${script}.s.sol/10/run-latest.json`, "utf8"),
+  ) as { transactions: { contractAddress: string }[] };
 }
