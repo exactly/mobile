@@ -1,13 +1,20 @@
 import "dotenv/config";
 import { defineConfig, type Plugin } from "@wagmi/cli";
 import { foundry, react } from "@wagmi/cli/plugins";
+import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { type Abi, getAddress } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
-const chainId = Number(process.env.CHAIN_ID ?? String(optimismSepolia.id));
+const easBuild = process.env.EAS_BUILD_RUNNER === "eas-build";
 
+const chainId = Number(process.env.CHAIN_ID ?? String(easBuild ? optimism.id : optimismSepolia.id));
 
+if (easBuild) {
+  execSync(
+    "export FOUNDRY_DIR=${FOUNDRY_DIR-$HOME/workingdir} && curl -L https://foundry.paradigm.xyz | bash || true && foundryup",
+  );
+}
 
 const auditor = loadDeployment("Auditor");
 const marketUSDC = loadDeployment("MarketUSDC");
