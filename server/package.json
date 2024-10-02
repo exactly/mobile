@@ -1,5 +1,6 @@
 {
   "name": "@exactly/server",
+  "private": true,
   "scripts": {
     "build": "pkgroll --sourcemap --src .",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject dist && sentry-cli sourcemaps upload -o exactly -p mobile dist",
