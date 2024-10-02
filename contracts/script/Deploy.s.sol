@@ -7,7 +7,9 @@ import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factor
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin, IAuditor, IBalancerVault, IMarket, IVelodromeFactory } from "../src/ExaPlugin.sol";
+import {
+  ExaPlugin, IAuditor, IBalancerVault, IInstallmentsRouter, IMarket, IVelodromeFactory
+} from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 
 import { BaseScript, stdJson } from "./Base.s.sol";
@@ -23,6 +25,7 @@ contract DeployScript is BaseScript {
   IAuditor public auditor;
   IMarket public exaUSDC;
   IMarket public exaWETH;
+  IInstallmentsRouter public installmentsRouter;
   IBalancerVault public balancerVault;
   IVelodromeFactory public velodromeFactory;
 
@@ -48,6 +51,7 @@ contract DeployScript is BaseScript {
     auditor = IAuditor(protocol("Auditor"));
     exaUSDC = IMarket(protocol("MarketUSDC"));
     exaWETH = IMarket(protocol("MarketWETH"));
+    installmentsRouter = IInstallmentsRouter(protocol("InstallmentsRouter"));
     balancerVault = IBalancerVault(protocol("BalancerVault"));
     velodromeFactory = IVelodromeFactory(protocol("VelodromePoolFactory"));
   }
@@ -58,7 +62,14 @@ contract DeployScript is BaseScript {
     vm.startBroadcast(msg.sender);
 
     exaPlugin = new ExaPlugin(
-      auditor, exaUSDC, exaWETH, balancerVault, velodromeFactory, issuerChecker, vm.envAddress("COLLECTOR_ADDRESS")
+      auditor,
+      exaUSDC,
+      exaWETH,
+      balancerVault,
+      installmentsRouter,
+      velodromeFactory,
+      issuerChecker,
+      vm.envAddress("COLLECTOR_ADDRESS")
     );
     factory = new ExaAccountFactory(msg.sender, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 

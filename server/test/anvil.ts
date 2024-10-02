@@ -48,17 +48,25 @@ export default async function setup({ provide }: GlobalSetupContext) {
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
   }
 
-  // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
-  const [, auditor, , , , , , , , , , usdc, , marketUSDC, , , , , , weth, , marketWETH, , , , , , previewer, balancer] =
-    parse(
-      Protocol,
-      await import(`@exactly/plugin/broadcast/Protocol.s.sol/${foundry.id}/run-latest.json`),
-    ).transactions;
+  const protocol = parse(
+    Protocol,
+    await import(`@exactly/plugin/broadcast/Protocol.s.sol/${foundry.id}/run-latest.json`),
+  ).transactions;
+
+  const auditor = protocol[1];
+  const usdc = protocol[11];
+  const marketUSDC = protocol[13];
+  const weth = protocol[19];
+  const marketWETH = protocol[21];
+  const previewer = protocol[27];
+  const installmentsRouter = protocol[28];
+  const balancer = protocol[29];
 
   if (initialize) {
     shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor.contractAddress;
     shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC.contractAddress;
     shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH.contractAddress;
+    shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter.contractAddress;
     shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
     shell.env.PROTOCOL_VELODROMEPOOLFACTORY_ADDRESS = padHex("0x123", { size: 20 });
     await $(shell)`forge script script/IssuerChecker.s.sol
@@ -91,6 +99,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   provide("Auditor", auditor.contractAddress);
   provide("ExaAccountFactory", exaAccountFactory.contractAddress);
   provide("ExaPlugin", exaPlugin.contractAddress);
+  provide("InstallmentsRouter", installmentsRouter.contractAddress);
   provide("IssuerChecker", issuerChecker.contractAddress);
   provide("MarketUSDC", marketUSDC.contractAddress);
   provide("MarketWETH", marketWETH.contractAddress);
@@ -135,6 +144,11 @@ const Protocol = object({
     object({ transactionType: literal("CREATE"), contractName: literal("Previewer"), contractAddress: Address }),
     object({
       transactionType: literal("CREATE"),
+      contractName: literal("InstallmentsRouter"),
+      contractAddress: Address,
+    }),
+    object({
+      transactionType: literal("CREATE"),
       contractName: literal("MockBalancerVault"),
       contractAddress: Address,
     }),
@@ -146,6 +160,7 @@ declare module "vitest" {
     Auditor: Address;
     ExaAccountFactory: Address;
     ExaPlugin: Address;
+    InstallmentsRouter: Address;
     IssuerChecker: Address;
     MarketUSDC: Address;
     MarketWETH: Address;

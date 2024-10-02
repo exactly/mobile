@@ -63,6 +63,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   IMarket public immutable EXA_USDC;
   IMarket public immutable EXA_WETH;
   IBalancerVault public immutable BALANCER_VAULT;
+  IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
   IVelodromeFactory public immutable VELODROME_FACTORY;
   IssuerChecker public immutable ISSUER_CHECKER;
 
@@ -79,6 +80,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IMarket exaUSDC,
     IMarket exaWETH,
     IBalancerVault balancerVault,
+    IInstallmentsRouter installmentsRouter,
     IVelodromeFactory velodromeFactory,
     IssuerChecker issuerChecker,
     address collector_
@@ -87,6 +89,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     EXA_USDC = exaUSDC;
     EXA_WETH = exaWETH;
     BALANCER_VAULT = balancerVault;
+    INSTALLMENTS_ROUTER = installmentsRouter;
     VELODROME_FACTORY = velodromeFactory;
     ISSUER_CHECKER = issuerChecker;
 
@@ -168,6 +171,30 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   {
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender))
+    );
+    _checkLiquidity(msg.sender);
+  }
+
+  function collectInstallments(
+    uint256 firstMaturity,
+    uint256[] calldata amounts,
+    uint256 maxRepay,
+    uint256 timestamp,
+    bytes calldata signature
+  ) external {
+    uint256 totalAmount = 0;
+    for (uint256 i = 0; i < amounts.length; ++i) {
+      totalAmount += amounts[i];
+    }
+    ISSUER_CHECKER.checkIssuer(msg.sender, totalAmount, timestamp, signature);
+
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(INSTALLMENTS_ROUTER), maxRepay))
+    );
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(INSTALLMENTS_ROUTER),
+      0,
+      abi.encodeCall(IInstallmentsRouter.borrow, (EXA_USDC, firstMaturity, amounts, maxRepay, collector))
     );
     _checkLiquidity(msg.sender);
   }
@@ -312,17 +339,18 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](10);
+    manifest.executionFunctions = new bytes4[](11);
     manifest.executionFunctions[0] = this.propose.selector;
     manifest.executionFunctions[1] = this.repay.selector;
     manifest.executionFunctions[2] = this.crossRepay.selector;
     manifest.executionFunctions[3] = this.collectCredit.selector;
     manifest.executionFunctions[4] = this.collectDebit.selector;
-    manifest.executionFunctions[5] = this.poke.selector;
-    manifest.executionFunctions[6] = this.pokeETH.selector;
-    manifest.executionFunctions[7] = this.withdraw.selector;
-    manifest.executionFunctions[8] = this.receiveFlashLoan.selector;
-    manifest.executionFunctions[9] = this.hook.selector;
+    manifest.executionFunctions[5] = this.collectInstallments.selector;
+    manifest.executionFunctions[6] = this.poke.selector;
+    manifest.executionFunctions[7] = this.pokeETH.selector;
+    manifest.executionFunctions[8] = this.withdraw.selector;
+    manifest.executionFunctions[9] = this.receiveFlashLoan.selector;
+    manifest.executionFunctions[10] = this.hook.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -344,7 +372,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_VELODROME),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](10);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](11);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
@@ -366,22 +394,26 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.poke.selector,
+      executionSelector: IExaAccount.collectInstallments.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.pokeETH.selector,
+      executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.withdraw.selector,
+      executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.withdraw.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
       executionSelector: this.receiveFlashLoan.selector,
       associatedFunction: balancerRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
       executionSelector: this.hook.selector,
       associatedFunction: velodromeRuntimeValidationFunction
     });
@@ -536,6 +568,12 @@ error ZeroAddress();
 
 interface IBalancerVault {
   function flashLoan(address recipient, IERC20[] memory tokens, uint256[] memory amounts, bytes memory data) external;
+}
+
+interface IInstallmentsRouter {
+  function borrow(IMarket market, uint256 firstMaturity, uint256[] calldata amounts, uint256 maxRepay, address receiver)
+    external
+    returns (uint256[] memory assetsOwed);
 }
 
 interface IVelodromeFactory {

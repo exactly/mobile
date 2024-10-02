@@ -22,7 +22,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
-import { ExaPlugin, FunctionId } from "../src/ExaPlugin.sol";
+import { ExaPlugin, FunctionId, IInstallmentsRouter } from "../src/ExaPlugin.sol";
 import {
   Expired,
   IAuditor,
@@ -91,7 +91,14 @@ contract ExaPluginTest is ForkTest {
     issuerChecker = new IssuerChecker(issuer);
 
     exaPlugin = new ExaPlugin(
-      IAuditor(address(auditor)), exaUSDC, exaWETH, p.balancer(), p.velodromeFactory(), issuerChecker, collector
+      IAuditor(address(auditor)),
+      exaUSDC,
+      exaWETH,
+      p.balancer(),
+      IInstallmentsRouter(address(p.installmentsRouter())),
+      p.velodromeFactory(),
+      issuerChecker,
+      collector
     );
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
@@ -243,6 +250,94 @@ contract ExaPluginTest is ForkTest {
       )
     );
     account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
+  }
+
+  function test_collectInstallments_collects() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    assertEq(usdc.balanceOf(collector), 0);
+
+    uint256[] memory amounts = new uint256[](3);
+    amounts[0] = 10e6;
+    amounts[1] = 10e6;
+    amounts[2] = 10e6;
+
+    account.collectInstallments(
+      FixedLib.INTERVAL, amounts, type(uint256).max, block.timestamp, _issuerOp(30e6, block.timestamp)
+    );
+
+    assertEq(usdc.balanceOf(collector), 30e6);
+  }
+
+  function test_collectInstallments_toleratesTimeDrift() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    assertEq(usdc.balanceOf(collector), 0);
+
+    uint256 timestamp = block.timestamp + 1 minutes;
+    uint256[] memory amounts = new uint256[](3);
+    amounts[0] = 10e6;
+    amounts[1] = 10e6;
+    amounts[2] = 10e6;
+
+    account.collectInstallments(FixedLib.INTERVAL, amounts, type(uint256).max, timestamp, _issuerOp(30e6, timestamp));
+    assertEq(usdc.balanceOf(collector), 30e6);
+  }
+
+  function test_collectInstallments_reverts_whenTimelocked() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 timestamp = block.timestamp + 1 minutes + 1;
+    uint256[] memory amounts = new uint256[](2);
+    amounts[0] = 10e6;
+    amounts[1] = 10e6;
+    vm.expectRevert(Timelocked.selector);
+    account.collectInstallments(FixedLib.INTERVAL, amounts, type(uint256).max, timestamp, _issuerOp(20e6, timestamp));
+  }
+
+  function test_collectInstallments_reverts_whenExpired() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    skip(1 days);
+    uint256 timestamp = block.timestamp - exaPlugin.OPERATION_EXPIRY() - 1;
+    uint256[] memory amounts = new uint256[](2);
+    amounts[0] = 10e6;
+    amounts[1] = 10e6;
+    vm.expectRevert(Expired.selector);
+    account.collectInstallments(FixedLib.INTERVAL, amounts, type(uint256).max, timestamp, _issuerOp(20e6, timestamp));
+  }
+
+  function test_collectInstallments_reverts_whenReplay() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    bytes memory signature = _issuerOp(20e6, block.timestamp);
+    uint256[] memory amounts = new uint256[](2);
+    amounts[0] = 10e6;
+    amounts[1] = 10e6;
+
+    account.collectInstallments(FixedLib.INTERVAL, amounts, type(uint256).max, block.timestamp, signature);
+    vm.expectRevert(Expired.selector);
+    account.collectInstallments(FixedLib.INTERVAL, amounts, type(uint256).max, block.timestamp, signature);
+  }
+
+  function test_collectInstallments_reverts_asNotKeeper() external {
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.collectInstallments(
+      FixedLib.INTERVAL, new uint256[](0), type(uint256).max, block.timestamp, _issuerOp(0, block.timestamp)
+    );
   }
 
   function test_withdraw_transfersAsset_asOwner() external {

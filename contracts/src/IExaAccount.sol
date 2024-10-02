@@ -10,6 +10,13 @@ interface IExaAccount {
 
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature) external;
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external;
+  function collectInstallments(
+    uint256 firstMaturity,
+    uint256[] calldata amounts,
+    uint256 maxRepay,
+    uint256 timestamp,
+    bytes calldata signature
+  ) external;
   function poke(IMarket market) external;
   function pokeETH() external;
   function withdraw() external;
