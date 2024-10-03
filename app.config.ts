@@ -6,13 +6,12 @@ import type { ExpoConfig } from "expo/config";
 import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-properties/build/pluginConfig";
 import type withCamera from "expo-camera/plugin/build/withCamera";
 import type { FontProps } from "expo-font/plugin/build/withFonts";
-import type { OneSignalPluginProps } from "onesignal-expo-plugin/types/types";
+import type * as OneSignalPlugin from "onesignal-expo-plugin/types/types";
 
 import metadata from "./package.json";
 import versionCode from "./src/generated/versionCode.js";
 
-const { Mode } =
-  require("onesignal-expo-plugin/build/types/types") as typeof import("onesignal-expo-plugin/types/types"); // eslint-disable-line @typescript-eslint/no-require-imports, @typescript-eslint/consistent-type-imports, unicorn/prefer-module
+const { Mode } = require("onesignal-expo-plugin/build/types/types") as typeof OneSignalPlugin; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
 
 if (process.env.APP_DOMAIN) process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
 if (process.env.EAS_BUILD_RUNNER === "eas-build") {
@@ -56,7 +55,7 @@ const intercom: IntercomPluginProps = {
 
 const sentry: Parameters<typeof withSentry>[1] = { organization: "exactly", project: "mobile" };
 
-const onesignal: OneSignalPluginProps = {
+const onesignal: OneSignalPlugin.OneSignalPluginProps = {
   mode: process.env.NODE_ENV === "production" ? Mode.Prod : Mode.Dev,
   smallIcons: ["src/assets/notifications_default.png"],
   largeIcons: ["src/assets/notifications_default_large.png"],
