@@ -14,6 +14,7 @@ module.exports = {
     "plugin:import/recommended",
     "plugin:import/typescript",
     "plugin:prettier/recommended",
+    "plugin:regexp/recommended",
     "plugin:unicorn/recommended",
   ],
   rules: {
