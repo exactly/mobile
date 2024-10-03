@@ -15,7 +15,15 @@ const { Mode } =
   require("onesignal-expo-plugin/build/types/types") as typeof import("onesignal-expo-plugin/types/types"); // eslint-disable-line @typescript-eslint/no-require-imports, @typescript-eslint/consistent-type-imports, unicorn/prefer-module
 
 if (process.env.APP_DOMAIN) process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
-else if (process.env.EAS_BUILD_RUNNER === "eas-build") process.env.EXPO_PUBLIC_DOMAIN ??= "web.exactly.app";
+if (process.env.EAS_BUILD_RUNNER === "eas-build") {
+  process.env.EXPO_PUBLIC_DOMAIN ??= "web.exactly.app";
+  process.env.EXPO_PUBLIC_ALCHEMY_API_KEY ??= "Wz728rhq_yGIAXdRmCy4VuKIAFjSmlpc";
+  process.env.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID ??= "cb9db554-658f-46eb-ae73-8bff8ed2556b";
+  process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID ??= "31d4be98-1fa3-4a8c-9657-dc21c991adc7";
+  process.env.EXPO_PUBLIC_PERSONA_TEMPLATE_ID ??= "itmpl_8uim4FvD5P3kFpKHX37CW817";
+  process.env.EXPO_PUBLIC_SENTRY_DSN ??=
+    "https://ac8875331e4cecd67dd0a7519a36dfeb@o1351734.ingest.us.sentry.io/4506186349674496";
+}
 
 const buildProperties: BuildPropertiesConfig = {
   android: {
