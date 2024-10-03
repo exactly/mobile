@@ -36,6 +36,7 @@ module.exports = {
       files: ["src/**"],
       extends: [
         "universe/native",
+        "plugin:@tanstack/eslint-plugin-query/recommended",
         "plugin:react/recommended",
         "plugin:react-hooks/recommended",
         "plugin:react-native/all",
