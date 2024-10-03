@@ -10,5 +10,5 @@ module.exports = {
     "ExpoConfigVersions",
     "PackageJsonAndroidAndIosScriptsIfNotContainRun",
   ],
-  ignorePaths: [".gitignore", "package.json", "patches/eslint-*"],
+  ignorePaths: [".gitignore", "package.json", "patches/eslint-*", "src/generated/versionCode.js"],
 };
