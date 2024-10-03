@@ -41,11 +41,11 @@
     "@simplewebauthn/browser": "^10.0.0",
     "@tamagui/config": "^1.112.21",
     "@tamagui/lucide-icons": "^1.112.21",
-    "@tanstack/query-async-storage-persister": "^5.59.0",
-    "@tanstack/query-persist-client-core": "^5.59.0",
+    "@tanstack/query-async-storage-persister": "5.56.2",
+    "@tanstack/query-persist-client-core": "5.56.2",
     "@tanstack/react-form": "^0.33.0",
     "@tanstack/react-query": "5.56.2",
-    "@tanstack/react-query-persist-client": "^5.59.0",
+    "@tanstack/react-query-persist-client": "5.56.2",
     "@tanstack/valibot-form-adapter": "^0.33.0",
     "@wagmi/core": "^2.13.8",
     "abitype": "^1.0.6",
@@ -176,7 +176,10 @@
         "@openzeppelin/contracts-v4",
         "@openzeppelin/contracts-upgradeable-v4",
         "@react-native-async-storage/async-storage",
+        "@tanstack/query-async-storage-persister",
+        "@tanstack/query-persist-client-core",
         "@tanstack/react-query",
+        "@tanstack/react-query-persist-client",
         "@types/react",
         "account-abstraction",
         "eslint",
@@ -200,9 +203,6 @@
       ]
     },
     "peerDependencyRules": {
-      "allowedVersions": {
-        "@tanstack/react-query": "5.56.2"
-      },
       "ignoreMissing": [
         "hardhat",
         "typechain"
