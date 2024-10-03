@@ -262,6 +262,9 @@ importers:
       '@tamagui/babel-plugin':
         specifier: ^1.112.21
         version: 1.112.21(@swc/helpers@0.5.13)(react@18.2.0)
+      '@tanstack/eslint-plugin-query':
+        specifier: ^5.58.1
+        version: 5.58.1(eslint@8.57.1)(typescript@5.6.2)
       '@types/babel__core':
         specifier: ^7.20.5
         version: 7.20.5
@@ -2190,7 +2193,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.18.30':
     resolution: {integrity: sha512-V90TUJh9Ly8stYo8nwqIqNWCsYjE28GlVFWEhAFCUOp99foiQr8HSTpiiX5GIrprcPoWmlGoY+J5fQA29R4lFg==}
@@ -4109,6 +4112,11 @@ packages:
 
   '@tamagui/web@1.112.21':
     resolution: {integrity: sha512-ZqaoyagB4LWPmT90rnMurCrxlAIiBTviApQ89mLB0SV2MrjBo2JagypUK8733GM+Gpp6Th2M5BAthB7NJ6kocQ==}
+
+  '@tanstack/eslint-plugin-query@5.58.1':
+    resolution: {integrity: sha512-hJR3N5ilK60gCgDWr7pWHV/vDiDVczT95F8AGIcg1gf9117aLPK+LDu+xP2JuEWpWKpsQ6OpWdVMim9kKlMybw==}
+    peerDependencies:
+      eslint: ^8.57.0 || ^9.0.0
 
   '@tanstack/form-core@0.33.0':
     resolution: {integrity: sha512-ouu1JVwLZgfPkIdIq3TWIZs++KpLOo8Bx4tXYOc/1KwA9qUQ0Iv/+Y6GfiC4wMcUzGCtLKOww84eZ8Qdge3ZmQ==}
@@ -14337,6 +14345,14 @@ snapshots:
       '@tamagui/use-force-update': 1.112.21(react@18.2.0)
     transitivePeerDependencies:
       - react
+
+  '@tanstack/eslint-plugin-query@5.58.1(eslint@8.57.1)(typescript@5.6.2)':
+    dependencies:
+      '@typescript-eslint/utils': 8.8.0(eslint@8.57.1)(typescript@5.6.2)
+      eslint: 8.57.1
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
 
   '@tanstack/form-core@0.33.0':
     dependencies:
