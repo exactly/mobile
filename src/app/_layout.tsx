@@ -37,7 +37,7 @@ init({
     reactNativeTracingIntegration({ routingInstrumentation, enableNativeFramesTracking: !isRunningInExpoGo() }),
   ],
 });
-const useServerFonts = typeof window === "undefined" ? useFonts : () => undefined;
+const useServerFonts = globalThis.window ? () => undefined : useFonts; // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
