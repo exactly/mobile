@@ -43,7 +43,7 @@
     "@tanstack/query-async-storage-persister": "^5.59.0",
     "@tanstack/query-persist-client-core": "^5.59.0",
     "@tanstack/react-form": "^0.33.0",
-    "@tanstack/react-query": "^5.59.0",
+    "@tanstack/react-query": "5.56.2",
     "@tanstack/react-query-persist-client": "^5.59.0",
     "@tanstack/valibot-form-adapter": "^0.33.0",
     "@wagmi/core": "^2.13.8",
@@ -173,6 +173,7 @@
         "@openzeppelin/contracts-v4",
         "@openzeppelin/contracts-upgradeable-v4",
         "@react-native-async-storage/async-storage",
+        "@tanstack/react-query",
         "@types/react",
         "account-abstraction",
         "eslint",
@@ -196,6 +197,9 @@
       ]
     },
     "peerDependencyRules": {
+      "allowedVersions": {
+        "@tanstack/react-query": "5.56.2"
+      },
       "ignoreMissing": [
         "hardhat",
         "typechain"
