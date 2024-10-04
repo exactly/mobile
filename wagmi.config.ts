@@ -20,6 +20,7 @@ const auditor = loadDeployment("Auditor");
 const marketUSDC = loadDeployment("MarketUSDC");
 const marketWETH = loadDeployment("MarketWETH");
 const previewer = loadDeployment("Previewer");
+const ratePreviewer = loadDeployment("RatePreviewer");
 const usdc = loadDeployment("USDC");
 const weth = loadDeployment("WETH");
 const [exaPlugin, factory] = loadBroadcast("Deploy").transactions;
@@ -33,6 +34,7 @@ export default defineConfig([
       { name: "Auditor", abi: auditor.abi },
       { name: "Market", abi: marketWETH.abi },
       { name: "Previewer", abi: previewer.abi },
+      { name: "RatePreviewer", abi: ratePreviewer.abi },
     ],
     plugins: [
       foundry({
@@ -52,6 +54,7 @@ export default defineConfig([
         marketUSDC: marketUSDC.address,
         marketWETH: marketWETH.address,
         previewer: previewer.address,
+        ratePreviewer: ratePreviewer.address,
         usdc: usdc.address,
         weth: weth.address,
       }),
