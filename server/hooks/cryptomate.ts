@@ -123,7 +123,7 @@ export default new Hono().post(
       functionName: "collectCredit",
       args: [
         BigInt(nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
-        BigInt(payload.data.bill_amount * 1e6),
+        BigInt(Math.round(payload.data.bill_amount * 1e6)),
         BigInt(timestamp),
         await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }), // TODO replace with payload signature
       ],
@@ -270,6 +270,6 @@ function signIssuerOp({ account, amount, timestamp }: { account: Address; amount
       ],
     },
     primaryType: "Operation",
-    message: { account, amount: BigInt(amount * 1e6), timestamp },
+    message: { account, amount: BigInt(Math.round(amount * 1e6)), timestamp },
   });
 }
