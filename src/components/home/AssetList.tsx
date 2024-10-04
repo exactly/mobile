@@ -1,11 +1,12 @@
-import { previewerAddress } from "@exactly/common/generated/chain";
+import { previewerAddress, ratePreviewerAddress } from "@exactly/common/generated/chain";
+import { floatingDepositRates } from "@exactly/lib";
 import React from "react";
 import { ms, vs } from "react-native-size-matters";
 import { View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import { useReadPreviewerExactly } from "../../generated/contracts";
+import { useReadPreviewerExactly, useReadRatePreviewerSnapshot } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
 import AssetLogo from "../shared/AssetLogo";
 import Text from "../shared/Text";
@@ -25,9 +26,11 @@ export default function AssetList() {
     }))
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0)
     .sort((a, b) => Number(b.usdValue) - Number(a.usdValue));
+  const { data: snapshots } = useReadRatePreviewerSnapshot({ address: ratePreviewerAddress, account: address });
+  const rates = snapshots ? floatingDepositRates(snapshots, Math.floor(new Date(Date.now()).getTime() / 1000)) : [];
   return (
     <View width="100%">
-      {positions?.map(({ symbol, floatingDepositAssets, decimals, usdValue }, index) => (
+      {positions?.map(({ symbol, floatingDepositAssets, decimals, usdValue, market }, index) => (
         <View
           key={index}
           flexDirection="row"
@@ -43,6 +46,16 @@ export default function AssetList() {
               <View gap={ms(5)}>
                 <Text fontSize={ms(15)} fontWeight="bold">
                   {symbol}
+                </Text>
+                <Text>
+                  {(
+                    Number(rates.find((r: { market: string; rate: bigint }) => r.market === market)?.rate) / 1e18
+                  ).toLocaleString(undefined, {
+                    style: "percent",
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  APR
                 </Text>
               </View>
             </View>
