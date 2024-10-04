@@ -24,6 +24,7 @@ export default function CardBack({ uri, flipped }: { uri: string; flipped: boole
     <View width="100%" height="100%" backgroundColor="transparent">
       {Platform.OS === "web" ? (
         <iframe
+          title="Card"
           allow="clipboard-write"
           id="card-iframe"
           src={uri}
