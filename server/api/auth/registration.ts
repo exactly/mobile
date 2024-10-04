@@ -140,7 +140,7 @@ export default app
           body: JSON.stringify({ webhook_id: webhookId, addresses_to_add: [account], addresses_to_remove: [] }),
         })
           .then(async (response) => {
-            if (!response.ok) throw new Error(`${String(response.status)} ${await response.text()}`);
+            if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
           })
           .catch((error: unknown) => captureException(error)),
       ]);

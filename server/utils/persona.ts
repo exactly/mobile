@@ -36,7 +36,7 @@ async function request<TInput, TOutput, TIssue extends BaseIssue<unknown>>(
     headers: { authorization, accept: "application/json", "content-type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!response.ok) throw new Error(`${String(response.status)} ${await response.text()}`);
+  if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
   return parse(schema, await response.json());
 }
 

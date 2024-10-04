@@ -1,5 +1,4 @@
 import React, { memo } from "react";
-import type { DimensionValue } from "react-native";
 import { StyleSheet } from "react-native";
 import type { SharedValue } from "react-native-reanimated";
 import { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
@@ -46,7 +45,7 @@ function PaginationComponent({
     );
 
     return {
-      width: isActive ? (((progress.value * 100).toString() + "%") as DimensionValue) : "0%",
+      width: isActive ? `${progress.value * 100}%` : "0%",
       backgroundColor: activeColor,
     };
   }, [progress, x]);

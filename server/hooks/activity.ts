@@ -85,7 +85,7 @@ export default app.post(
       transfers.map(async ({ toAddress: account, rawContract }) => {
         if (!accounts[account]) return;
         const asset = rawContract.address ?? wethAddress;
-        const market = await redis.hgetall(`${String(chain.id)}:${asset}`).then(async (found) => {
+        const market = await redis.hgetall(`${chain.id}:${asset}`).then(async (found) => {
           const parsed = v.safeParse(MarketEntry, found);
           if (parsed.success) return parsed.output;
           const markets = await publicClient.readContract({
@@ -98,7 +98,7 @@ export default app.post(
               markets.map(async (address, index) => {
                 const underlying = await publicClient.readContract({ address, functionName: "asset", abi: marketAbi });
                 redis
-                  .hset(`${String(chain.id)}:${underlying}`, { market: address, index })
+                  .hset(`${chain.id}:${underlying}`, { market: address, index })
                   .catch((error: unknown) => captureException(error));
                 return [underlying, { address: v.parse(Address, address), index }] as const;
               }),

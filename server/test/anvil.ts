@@ -42,7 +42,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
       object({
         transactions: tuple([object({ contractName: literal("WebauthnOwnerPlugin"), contractAddress: Address })]),
       }),
-      await import(`@exactly/plugin/broadcast/Plugin.s.sol/${String(foundry.id)}/run-latest.json`),
+      await import(`@exactly/plugin/broadcast/Plugin.s.sol/${foundry.id}/run-latest.json`),
     ).transactions[0].contractAddress;
     await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 42000
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
@@ -52,7 +52,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   const [, auditor, , , , , , , , , , usdc, , marketUSDC, , , , , , , , marketWETH, , , , , , previewer, balancer] =
     parse(
       Protocol,
-      await import(`@exactly/plugin/broadcast/Protocol.s.sol/${String(foundry.id)}/run-latest.json`),
+      await import(`@exactly/plugin/broadcast/Protocol.s.sol/${foundry.id}/run-latest.json`),
     ).transactions;
 
   if (initialize) {
@@ -69,7 +69,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
     object({
       transactions: tuple([object({ contractName: literal("IssuerChecker"), contractAddress: Address })]),
     }),
-    await import(`@exactly/plugin/broadcast/IssuerChecker.s.sol/${String(foundry.id)}/run-latest.json`),
+    await import(`@exactly/plugin/broadcast/IssuerChecker.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
 
   if (initialize) {
@@ -85,7 +85,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
         object({ contractName: literal("ExaAccountFactory"), contractAddress: Address }),
       ]),
     }),
-    await import(`@exactly/plugin/broadcast/Deploy.s.sol/${String(foundry.id)}/run-latest.json`),
+    await import(`@exactly/plugin/broadcast/Deploy.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
 
   provide("ExaAccountFactory", exaAccountFactory.contractAddress);

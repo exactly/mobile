@@ -99,7 +99,7 @@ export class APIError extends Error {
   text: string;
 
   constructor(code: number, text: string) {
-    super(`${String(code)} ${text}`);
+    super(`${code} ${text}`);
     this.code = code;
     this.text = text;
     this.name = "APIError";

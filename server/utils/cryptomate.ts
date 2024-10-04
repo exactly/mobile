@@ -51,7 +51,7 @@ async function request<TInput, TOutput, TIssue extends v.BaseIssue<unknown>>(
     headers: { "Content-Type": "application/json", "X-API-KEY": apiKey },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!response.ok) throw new Error(`${String(response.status)} ${await response.text()}`);
+  if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
   return v.parse(schema, await response.json());
 }
 
