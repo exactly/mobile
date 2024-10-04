@@ -72,7 +72,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
   address public collector;
-  mapping(address account => bytes32 hash) public issuerOperations;
   mapping(address account => Proposal lastProposal) public proposals;
 
   constructor(
