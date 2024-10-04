@@ -14,6 +14,7 @@ module.exports = {
     "plugin:import/recommended",
     "plugin:import/typescript",
     "plugin:prettier/recommended",
+    "plugin:promise/recommended",
     "plugin:regexp/recommended",
     "plugin:unicorn/recommended",
   ],
@@ -27,6 +28,7 @@ module.exports = {
     "no-console": "warn",
     "no-restricted-imports": ["error", { patterns: ["./server/"] }],
     "no-shadow": "off", // @typescript-eslint/no-shadow
+    "promise/always-return": ["error", { ignoreLastCallback: true }],
     "unicorn/filename-case": "off", // use default export name
     "unicorn/no-null": "off", // part of multiple apis
     "unicorn/no-useless-undefined": ["error", { checkArrowFunctionBody: false }], // @typescript-eslint/no-empty-function
