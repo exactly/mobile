@@ -10,6 +10,8 @@ import { ScrollView, Switch, styled, Spinner, XStack, Accordion, Square } from "
 
 import CardBack from "./CardBack";
 import CardFront from "./CardFront";
+import CreditLimit from "./CreditLimit";
+import DebitLimit from "./DebitLimit";
 import FlipCard from "./FlipCard";
 import SimulatePurchase from "./SimulatePurchase";
 import SpendingLimitButton from "./SpendingLimitButton";
@@ -17,7 +19,6 @@ import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
 import { APIError, getActivity, getCard, createCard, kyc, kycStatus, setCardStatus } from "../../utils/server";
-import CreditLimit from "../home/CreditLimit";
 import LatestActivity from "../shared/LatestActivity";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -247,6 +248,7 @@ export default function Card() {
               </View>
             </View>
             <CreditLimit />
+            <DebitLimit />
             <SimulatePurchase />
             {purchases && purchases.length > 0 && <LatestActivity activity={purchases} title="Latest purchases" />}
             <View>
