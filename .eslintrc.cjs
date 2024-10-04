@@ -38,6 +38,7 @@ module.exports = {
       extends: [
         "universe/native",
         "plugin:@tanstack/eslint-plugin-query/recommended",
+        "plugin:jsx-a11y/recommended",
         "plugin:react/recommended",
         "plugin:react-hooks/recommended",
         "plugin:react-native/all",
