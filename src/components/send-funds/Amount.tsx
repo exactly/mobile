@@ -1,3 +1,5 @@
+import { previewerAddress } from "@exactly/common/generated/chain";
+import { withdrawLimit } from "@exactly/lib";
 import { ArrowLeft, ArrowRight, Coins, DollarSign, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +10,9 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack } from "tamagui";
 import { bigint, check, pipe } from "valibot";
+import { zeroAddress } from "viem";
 
+import { useReadPreviewerExactly } from "../../generated/contracts";
 import WAD from "../../utils/WAD";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
@@ -21,9 +25,14 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Amount() {
-  const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
-  const { market } = useMarketAccount(withdraw?.market);
   const { canGoBack } = router;
+  const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
+  const { market, account } = useMarketAccount(withdraw?.market);
+  const { data: markets } = useReadPreviewerExactly({
+    address: previewerAddress,
+    account,
+    args: [account ?? zeroAddress],
+  });
   const { Field, Subscribe, handleSubmit } = useForm<{ amount: bigint }, ValibotValidator>({
     defaultValues: { amount: withdraw?.amount ?? 0n },
     onSubmit: ({ value: { amount } }) => {
@@ -31,7 +40,10 @@ export default function Amount() {
       router.push("/send-funds/withdraw");
     },
   });
-  const available = market ? market.floatingDepositAssets : 0n;
+  const available =
+    markets && withdraw?.market
+      ? withdrawLimit(markets, withdraw.market, Math.floor(new Date(Date.now()).getTime() / 1000))
+      : 0n;
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>
