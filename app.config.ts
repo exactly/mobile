@@ -24,44 +24,7 @@ if (process.env.EAS_BUILD_RUNNER === "eas-build") {
     "https://ac8875331e4cecd67dd0a7519a36dfeb@o1351734.ingest.us.sentry.io/4506186349674496";
 }
 
-const buildProperties: BuildPropertiesConfig = {
-  android: {
-    packagingOptions: { pickFirst: ["**/libcrypto.so"] },
-    extraMavenRepos: ["https://sdk.withpersona.com/android/releases"],
-    newArchEnabled: true,
-  },
-  ios: { deploymentTarget: "15.0", newArchEnabled: true },
-};
-
-const camera: Parameters<typeof withCamera>[1] = {
-  cameraPermission: "Exactly needs your permission to scan QR codes.",
-};
-
-const font: FontProps = {
-  fonts: [
-    "src/assets/fonts/BDOGrotesk-Bold.otf",
-    "src/assets/fonts/BDOGrotesk-Regular.otf",
-    "src/assets/fonts/IBMPlexMono-Bold.otf",
-    "src/assets/fonts/IBMPlexMono-Regular.otf",
-    "src/assets/fonts/IBMPlexMono-SemiBold.otf",
-  ],
-};
-
-const intercom: IntercomPluginProps = {
-  appId: "eknd6y0s",
-  androidApiKey: "android_sdk-d602d62cbdb9e8e0a6f426db847ddc74d2e26090",
-  iosApiKey: "ios_sdk-ad6831098d9c2d69bd98e92a5ad7a4f030472a92",
-};
-
-const sentry: Parameters<typeof withSentry>[1] = { organization: "exactly", project: "mobile" };
-
-const onesignal: OneSignalPlugin.OneSignalPluginProps = {
-  mode: process.env.NODE_ENV === "production" ? Mode.Prod : Mode.Dev,
-  smallIcons: ["src/assets/notifications_default.png"],
-  largeIcons: ["src/assets/notifications_default_large.png"],
-};
-
-const config: ExpoConfig = {
+export default {
   name: "Exa",
   slug: "exactly",
   scheme: "exactly",
@@ -111,19 +74,60 @@ const config: ExpoConfig = {
   },
   web: { output: "static", favicon: "src/assets/favicon.png" },
   plugins: [
-    ["expo-build-properties", buildProperties],
-    ["expo-camera", camera],
-    ["expo-font", font],
+    [
+      "expo-build-properties",
+      {
+        android: {
+          packagingOptions: { pickFirst: ["**/libcrypto.so"] },
+          extraMavenRepos: ["https://sdk.withpersona.com/android/releases"],
+          newArchEnabled: true,
+        },
+        ios: { deploymentTarget: "15.0", newArchEnabled: true },
+      } satisfies BuildPropertiesConfig,
+    ],
+    [
+      "expo-camera",
+      {
+        cameraPermission: "Exactly needs your permission to scan QR codes.",
+      } satisfies Parameters<typeof withCamera>[1],
+    ],
+    [
+      "expo-font",
+      {
+        fonts: [
+          "src/assets/fonts/BDOGrotesk-Bold.otf",
+          "src/assets/fonts/BDOGrotesk-Regular.otf",
+          "src/assets/fonts/IBMPlexMono-Bold.otf",
+          "src/assets/fonts/IBMPlexMono-Regular.otf",
+          "src/assets/fonts/IBMPlexMono-SemiBold.otf",
+        ],
+      } satisfies FontProps,
+    ],
     "expo-router",
-    ["@intercom/intercom-react-native", intercom],
-    ["@sentry/react-native/expo", sentry],
-    ["onesignal-expo-plugin", onesignal],
+    [
+      "@intercom/intercom-react-native",
+      {
+        appId: "eknd6y0s",
+        androidApiKey: "android_sdk-d602d62cbdb9e8e0a6f426db847ddc74d2e26090",
+        iosApiKey: "ios_sdk-ad6831098d9c2d69bd98e92a5ad7a4f030472a92",
+      } satisfies IntercomPluginProps,
+    ],
+    [
+      "@sentry/react-native/expo",
+      { organization: "exactly", project: "mobile" } satisfies Parameters<typeof withSentry>[1],
+    ],
+    [
+      "onesignal-expo-plugin",
+      {
+        mode: process.env.NODE_ENV === "production" ? Mode.Prod : Mode.Dev,
+        smallIcons: ["src/assets/notifications_default.png"],
+        largeIcons: ["src/assets/notifications_default_large.png"],
+      } satisfies OneSignalPlugin.OneSignalPluginProps,
+    ],
   ],
   experiments: { typedRoutes: true },
   extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
   updates: { url: "https://u.expo.dev/06bc0158-d23b-430b-a7e8-802df03c450b" },
   runtimeVersion: { policy: "fingerprint" },
   owner: "exactly",
-};
-
-export default config;
+} satisfies ExpoConfig;
