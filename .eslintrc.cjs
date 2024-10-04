@@ -22,6 +22,7 @@ module.exports = {
     "@typescript-eslint/consistent-type-imports": "error",
     "@typescript-eslint/no-import-type-side-effects": "error",
     "@typescript-eslint/no-shadow": "error",
+    "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
     "import/prefer-default-export": "error",
     "no-console": "warn",
     "no-restricted-imports": ["error", { patterns: ["./server/"] }],
