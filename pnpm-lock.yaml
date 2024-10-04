@@ -60,6 +60,9 @@ importers:
       '@exactly/common':
         specifier: workspace:*
         version: link:common
+      '@exactly/lib':
+        specifier: exactly/lib#4687ffd
+        version: https://codeload.github.com/exactly/lib/tar.gz/4687ffd
       '@exactly/plugin':
         specifier: workspace:*
         version: link:contracts
@@ -248,8 +251,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0(eslint@8.57.1)
       '@exactly/protocol':
-        specifier: github:exactly/protocol#d2b0caa
-        version: https://codeload.github.com/exactly/protocol/tar.gz/d2b0caa
+        specifier: github:exactly/protocol#d683f02
+        version: https://codeload.github.com/exactly/protocol/tar.gz/d683f02
       '@expo/image-utils':
         specifier: ^0.5.1
         version: 0.5.1
@@ -420,8 +423,8 @@ importers:
         version: webauthn-sol#v1.0.0@https://codeload.github.com/base-org/webauthn-sol/tar.gz/619f20ab0f074fef41066ee4ab24849a913263b2
     devDependencies:
       '@exactly/protocol':
-        specifier: exactly/protocol#d2b0caa
-        version: https://codeload.github.com/exactly/protocol/tar.gz/d2b0caa
+        specifier: exactly/protocol#d683f02
+        version: https://codeload.github.com/exactly/protocol/tar.gz/d683f02
       '@openzeppelin/contracts':
         specifier: ^5.1.0-rc.0
         version: 5.1.0-rc.0
@@ -2195,8 +2198,13 @@ packages:
   '@ethersproject/wordlists@5.7.0':
     resolution: {integrity: sha512-S2TFNJNfHWVHNE6cNDjbVlZ6MgE17MIxMbMg2zv3wn+3XSJGosL1m9ZVv3GXCf/2ymSsQ+hRI5IzoMJTG6aoVA==}
 
-  '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/d2b0caa':
-    resolution: {tarball: https://codeload.github.com/exactly/protocol/tar.gz/d2b0caa}
+  '@exactly/lib@https://codeload.github.com/exactly/lib/tar.gz/4687ffd':
+    resolution: {tarball: https://codeload.github.com/exactly/lib/tar.gz/4687ffd}
+    version: 0.0.1
+    engines: {node: '>=20'}
+
+  '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/d683f02':
+    resolution: {tarball: https://codeload.github.com/exactly/protocol/tar.gz/d683f02}
     version: 0.2.19
     engines: {node: '>=18'}
 
@@ -11457,7 +11465,9 @@ snapshots:
       '@ethersproject/strings': 5.7.0
     optional: true
 
-  '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/d2b0caa':
+  '@exactly/lib@https://codeload.github.com/exactly/lib/tar.gz/4687ffd': {}
+
+  '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/d683f02':
     dependencies:
       '@openzeppelin/contracts': 5.0.2
       '@openzeppelin/contracts-upgradeable': 5.0.2(@openzeppelin/contracts@5.0.2)
