@@ -111,6 +111,6 @@ function loadDeployment(contract: string) {
 
 function loadBroadcast(script: string) {
   return JSON.parse(
-    readFileSync(`node_modules/@exactly/plugin/broadcast/${script}.s.sol/10/run-latest.json`, "utf8"),
+    readFileSync(`node_modules/@exactly/plugin/broadcast/${script}.s.sol/${chainId}/run-latest.json`, "utf8"),
   ) as { transactions: { contractAddress: string }[] };
 }
