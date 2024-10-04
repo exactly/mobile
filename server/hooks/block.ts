@@ -80,37 +80,39 @@ export default app.post(
 );
 
 async function scheduleWithdraw({ account, market, receiver, amount, unlock }: v.InferOutput<typeof Withdraw>) {
-  return setTimeout((Number(unlock) + 10) * 1000 - Date.now()).then(() =>
-    startSpan(
-      {
-        name: "exa.withdraw",
-        op: "exa.withdraw",
-        attributes: { account, market, receiver, amount: String(amount), unlock: Number(unlock) },
-      },
-      async () => {
-        const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-          publicClient.simulateContract({
-            account: keeper.account,
-            address: account,
-            functionName: "withdraw",
-            abi: exaPluginAbi,
-            ...transactionOptions,
-          }),
-        );
-        setContext("tx", request);
-        const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-          keeper.writeContract(request),
-        );
-        setContext("tx", { ...request, transactionHash: hash });
-        const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-          publicClient.waitForTransactionReceipt({ hash }),
-        );
-        setContext("tx", { ...request, ...receipt });
-        if (receipt.status !== "success") captureException(new Error("tx reverted"));
-        return redis.zrem("withdraw", serialize(v.parse(Withdraw, { account, market, receiver, amount, unlock })));
-      },
-    ).catch((error: unknown) => captureException(error)),
-  );
+  return setTimeout((Number(unlock) + 10) * 1000 - Date.now())
+    .then(() =>
+      startSpan(
+        {
+          name: "exa.withdraw",
+          op: "exa.withdraw",
+          attributes: { account, market, receiver, amount: String(amount), unlock: Number(unlock) },
+        },
+        async () => {
+          const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+            publicClient.simulateContract({
+              account: keeper.account,
+              address: account,
+              functionName: "withdraw",
+              abi: exaPluginAbi,
+              ...transactionOptions,
+            }),
+          );
+          setContext("tx", request);
+          const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+            keeper.writeContract(request),
+          );
+          setContext("tx", { ...request, transactionHash: hash });
+          const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+            publicClient.waitForTransactionReceipt({ hash }),
+          );
+          setContext("tx", { ...request, ...receipt });
+          if (receipt.status !== "success") captureException(new Error("tx reverted"));
+          return redis.zrem("withdraw", serialize(v.parse(Withdraw, { account, market, receiver, amount, unlock })));
+        },
+      ),
+    )
+    .catch((error: unknown) => captureException(error));
 }
 
 export const query = `#graphql

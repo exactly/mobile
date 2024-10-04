@@ -99,7 +99,7 @@ export default app.post(
                 const underlying = await publicClient.readContract({ address, functionName: "asset", abi: marketAbi });
                 redis
                   .hset(`${chain.id}:${underlying}`, { market: address, index })
-                  .catch((error: unknown) => captureException(error));
+                  .catch((error: unknown) => captureException(error)); // eslint-disable-line promise/no-nesting -- floating promise
                 return [underlying, { address: v.parse(Address, address), index }] as const;
               }),
             ),

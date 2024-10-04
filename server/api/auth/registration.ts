@@ -141,6 +141,7 @@ export default app
         })
           .then(async (response) => {
             if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
+            return true;
           })
           .catch((error: unknown) => captureException(error)),
       ]);
