@@ -1,3 +1,6 @@
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
+import type { Hex } from "viem";
+
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
@@ -6,11 +9,9 @@ import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext, setUser } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { cose, generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
 import { any, array, check, literal, nullish, object, optional, parse, pipe, string, transform } from "valibot";
-import type { Hex } from "viem";
 
 import database, { credentials } from "../../database";
 import androidOrigin from "../../utils/android/origin";
@@ -32,14 +33,14 @@ export default app
     const timeout = 5 * 60_000;
     const [options, sessionId] = await Promise.all([
       generateRegistrationOptions({
+        authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
         rpID: domain,
         rpName: "exactly",
-        userName: "user", // TODO change username
-        userDisplayName: "user", // TODO change display name
         supportedAlgorithmIDs: [cose.COSEALG.ES256],
-        authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
         // TODO excludeCredentials?
         timeout,
+        userDisplayName: "user", // TODO change display name
+        userName: "user", // TODO change username
       }),
       generateChallenge().then(isoBase64URL.fromBuffer),
     ]);
@@ -61,11 +62,12 @@ export default app
     vValidator(
       "json",
       object({
+        clientExtensionResults: any(),
         id: Base64URL,
         rawId: Base64URL,
         response: object({
-          clientDataJSON: Base64URL,
           attestationObject: Base64URL,
+          clientDataJSON: Base64URL,
           transports: pipe(
             nullish(array(string())),
             transform((value) => {
@@ -74,7 +76,6 @@ export default app
             }),
           ),
         }),
-        clientExtensionResults: any(),
         type: literal("public-key"),
       }),
       (result, c) => {
@@ -94,10 +95,10 @@ export default app
       let verification: Awaited<ReturnType<typeof verifyRegistrationResponse>>;
       try {
         verification = await verifyRegistrationResponse({
-          response: attestation,
-          expectedRPID: domain,
-          expectedOrigin: [appOrigin, androidOrigin],
           expectedChallenge: challenge,
+          expectedOrigin: [appOrigin, androidOrigin],
+          expectedRPID: domain,
+          response: attestation,
           supportedAlgorithmIDs: [cose.COSEALG.ES256],
         });
       } catch (error) {
@@ -106,10 +107,10 @@ export default app
       } finally {
         await redis.del(sessionId);
       }
-      const { verified, registrationInfo } = verification;
+      const { registrationInfo, verified } = verification;
       if (!verified || !registrationInfo) return c.text("bad registration", 400);
 
-      const { credentialID, credentialPublicKey, credentialDeviceType, counter } = registrationInfo;
+      const { counter, credentialDeviceType, credentialID, credentialPublicKey } = registrationInfo;
       if (credentialDeviceType !== "multiDevice") return c.text("backup eligibility required", 400); // TODO improve ux
 
       let x: Hex, y: Hex;
@@ -127,25 +128,23 @@ export default app
         database.insert(credentials).values([
           {
             account,
+            counter,
+            factory: exaAccountFactoryAddress,
             id: credentialID,
             publicKey: credentialPublicKey,
-            factory: exaAccountFactoryAddress,
             transports: attestation.response.transports,
-            counter,
           },
         ]),
         fetch("https://dashboard.alchemy.com/api/update-webhook-addresses", {
-          method: "PATCH",
+          body: JSON.stringify({ addresses_to_add: [account], addresses_to_remove: [], webhook_id: webhookId }),
           headers: { "Content-Type": "application/json", "X-Alchemy-Token": webhooksKey },
-          body: JSON.stringify({ webhook_id: webhookId, addresses_to_add: [account], addresses_to_remove: [] }),
-        })
-          .then(async (response) => {
-            if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
-            return true;
-          })
-          .catch((error: unknown) => captureException(error)),
-      ]);
+          method: "PATCH",
+        }).then(async (response) => {
+          if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
+          return true;
+        }),
+      ]).catch((error: unknown) => captureException(error));
 
-      return c.json({ credentialId: credentialID, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() });
+      return c.json({ auth: expires.getTime(), credentialId: credentialID, factory: exaAccountFactoryAddress, x, y });
     },
   );

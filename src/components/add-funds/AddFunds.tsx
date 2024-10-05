@@ -5,10 +5,10 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
-import AddCryptoButton from "./AddCryptoButton";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
+import AddCryptoButton from "./AddCryptoButton";
 
 function back() {
   router.back();
@@ -18,12 +18,12 @@ export default function AddFunds() {
   const { canGoBack } = router;
   return (
     <SafeView fullScreen>
-      <View gap={ms(20)} fullScreen padded>
+      <View fullScreen gap={ms(20)} padded>
         <View gap={ms(20)}>
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+          <View alignItems="center" flexDirection="row" gap={ms(10)} justifyContent="space-between">
             {canGoBack() && (
               <Pressable onPress={back}>
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft color="$uiNeutralPrimary" size={ms(24)} />
               </Pressable>
             )}
             <Text fontSize={ms(15)} fontWeight="bold">

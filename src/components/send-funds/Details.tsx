@@ -1,11 +1,11 @@
 import { A } from "@expo/html-elements";
-import { User, Calendar, Hash, ExternalLink } from "@tamagui/lucide-icons";
+import { Calendar, ExternalLink, Hash, User } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { XStack, Avatar } from "tamagui";
+import { Avatar, XStack } from "tamagui";
 import { optimism } from "viem/chains";
 import { useAccount } from "wagmi";
 
@@ -23,42 +23,42 @@ export default function Details({ hash }: DetailsProperties) {
   const { chainId } = useAccount();
   const { data } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   return (
-    <View padded gap="$s4">
-      <XStack justifyContent="space-between" alignItems="center">
+    <View gap="$s4" padded>
+      <XStack alignItems="center" justifyContent="space-between">
         <XStack alignItems="center" gap="$s3">
-          <Avatar size={ms(20)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-            <User size={ms(16)} color="$interactiveOnBaseBrandDefault" />
+          <Avatar backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0" size={ms(20)}>
+            <User color="$interactiveOnBaseBrandDefault" size={ms(16)} />
           </Avatar>
-          <Text footnote color="$uiNeutralSecondary">
+          <Text color="$uiNeutralSecondary" footnote>
             To
           </Text>
         </XStack>
         <Text>{shortenAddress(data?.receiver ?? "", 7, 7)}</Text>
       </XStack>
-      <XStack justifyContent="space-between" alignItems="center">
+      <XStack alignItems="center" justifyContent="space-between">
         <XStack alignItems="center" gap="$s3">
-          <Calendar size={ms(20)} color="$uiBrandPrimary" />
-          <Text footnote color="$uiNeutralSecondary">
+          <Calendar color="$uiBrandPrimary" size={ms(20)} />
+          <Text color="$uiNeutralSecondary" footnote>
             Date
           </Text>
         </XStack>
         <Text>
           {new Date().toLocaleString("en-US", {
-            month: "short",
             day: "numeric",
-            year: "numeric",
             hour: "2-digit",
-            minute: "2-digit",
             hour12: false,
+            minute: "2-digit",
+            month: "short",
+            year: "numeric",
           })}
         </Text>
       </XStack>
       {hash && (
         <>
-          <XStack justifyContent="space-between" alignItems="center">
+          <XStack alignItems="center" justifyContent="space-between">
             <XStack alignItems="center" gap="$s3">
-              <Hash size={ms(20)} color="$uiBrandPrimary" />
-              <Text footnote color="$uiNeutralSecondary">
+              <Hash color="$uiBrandPrimary" size={ms(20)} />
+              <Text color="$uiNeutralSecondary" footnote>
                 Transaction hash
               </Text>
             </XStack>
@@ -67,19 +67,19 @@ export default function Details({ hash }: DetailsProperties) {
           <A
             href={`${chainId === optimism.id ? "https://optimistic.etherscan.io" : "https://sepolia-optimism.etherscan.io"}/tx/${hash}`}
           >
-            <Button contained main spaced fullwidth iconAfter={<ExternalLink color="$interactiveOnBaseBrandDefault" />}>
+            <Button contained fullwidth iconAfter={<ExternalLink color="$interactiveOnBaseBrandDefault" />} main spaced>
               View on explorer
             </Button>
           </A>
 
-          <View padded alignItems="center">
+          <View alignItems="center" padded>
             <Pressable
               onPress={() => {
-                queryClient.setQueryData(["withdrawal"], { receiver: undefined, market: undefined, amount: 0n });
+                queryClient.setQueryData(["withdrawal"], { amount: 0n, market: undefined, receiver: undefined });
                 router.replace("/");
               }}
             >
-              <Text emphasized footnote color="$interactiveBaseBrandDefault">
+              <Text color="$interactiveBaseBrandDefault" emphasized footnote>
                 Close
               </Text>
             </Pressable>

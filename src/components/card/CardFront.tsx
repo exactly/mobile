@@ -8,23 +8,23 @@ import View from "../shared/View";
 
 export default function CardFront({ lastFour }: { lastFour?: string }) {
   return (
-    <View width="100%" height="100%">
-      <ExaCard width="100%" height="100%" />
-      <View position="absolute" flexDirection="row" gap="$s2" bottom={ms(10)} left={ms(10)}>
+    <View height="100%" width="100%">
+      <ExaCard height="100%" width="100%" />
+      <View bottom={ms(10)} flexDirection="row" gap="$s2" left={ms(10)} position="absolute">
         <View flexDirection="row" gap="$s2">
           {Array.from({ length: 4 }).map((_, index) => (
             <Dot
-              key={index}
               color="white"
+              key={index}
               size={ms(17)}
               transform={[{ translateX: index * ms(12) * -1 }, { translateY: 1 }]}
             />
           ))}
         </View>
         <Text
+          callout
           color="white"
           emphasized
-          callout
           paddingTop={lastFour ? 0 : ms(3)}
           transform={[{ translateX: ms(40) * -1 }]}
         >

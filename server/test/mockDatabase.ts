@@ -1,5 +1,6 @@
-import { PGlite } from "@electric-sql/pglite";
 import type * as DrizzleKit from "drizzle-kit/api";
+
+import { PGlite } from "@electric-sql/pglite";
 import { drizzle, type PgliteDatabase } from "drizzle-orm/pglite";
 import { vi } from "vitest";
 

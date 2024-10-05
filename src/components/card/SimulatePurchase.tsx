@@ -1,6 +1,6 @@
+import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import MATURITY_INTERVAL from "@exactly/common/MATURITY_INTERVAL";
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
-import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import { Calculator } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -11,19 +11,19 @@ import { formatUnits, parseUnits, zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
-import WAD from "../../utils/WAD";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
+import WAD from "../../utils/WAD";
 import InfoCard from "../home/InfoCard";
 import TamaguiInput from "../shared/TamaguiInput";
 import Text from "../shared/Text";
 
 export default function SimulatePurchase() {
   const { data: assets } = useQuery<bigint>({
-    queryKey: ["purchase", "simulation"],
-    initialData: 100n,
-    staleTime: Infinity,
     gcTime: Infinity,
+    initialData: 100n,
+    queryKey: ["purchase", "simulation"],
+    staleTime: Infinity,
   });
   const { market } = useMarketAccount(marketUSDCAddress);
   const { address } = useAccount();
@@ -33,8 +33,8 @@ export default function SimulatePurchase() {
   const maturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
 
   const { data: borrowPreview, isLoading } = useReadPreviewerPreviewBorrowAtMaturity({
-    address: previewerAddress,
     account: address,
+    address: previewerAddress,
     args: [
       market?.market ?? zeroAddress,
       BigInt(maturity - timestamp < MIN_BORROW_INTERVAL ? maturity + MATURITY_INTERVAL : maturity),
@@ -52,8 +52,8 @@ export default function SimulatePurchase() {
 
   return (
     <InfoCard
-      title="Simulate purchase"
       renderAction={isLoading ? <Spinner color="$uiNeutralSecondary" /> : <Calculator color="$uiNeutralSecondary" />}
+      title="Simulate purchase"
     >
       <YStack gap="$s4_5">
         <XStack alignItems="center" justifyContent="space-between" width="100%">
@@ -61,24 +61,24 @@ export default function SimulatePurchase() {
             Total
           </Text>
           <XStack alignItems="center" gap="$s2" justifyContent="flex-end" maxWidth="50%">
-            <TamaguiInput borderRadius="$r3" backgroundColor="$backgroundMild">
+            <TamaguiInput backgroundColor="$backgroundMild" borderRadius="$r3">
               <TamaguiInput.Icon>
                 <Text primary title3>
                   $
                 </Text>
               </TamaguiInput.Icon>
               <TamaguiInput.Input
+                fontSize={ms(20)}
+                inputMode="decimal"
+                letterSpacing={ms(-0.2)}
+                lineHeight={ms(25)}
                 maxLength={10}
                 numberOfLines={1}
-                inputMode="decimal"
-                textAlign="right"
-                fontSize={ms(20)}
-                lineHeight={ms(25)}
-                letterSpacing={ms(-0.2)}
-                value={input}
                 onChangeText={(text) => {
                   setInput(text);
                 }}
+                textAlign="right"
+                value={input}
               />
             </TamaguiInput>
           </XStack>
@@ -87,7 +87,7 @@ export default function SimulatePurchase() {
           <Text primary subHeadline>
             Fixed APR
           </Text>
-          <Text primary headline maxWidth="50%" flexShrink={1}>
+          <Text flexShrink={1} headline maxWidth="50%" primary>
             {borrowPreview
               ? (
                   Number(
@@ -95,9 +95,9 @@ export default function SimulatePurchase() {
                       (assets * (borrowPreview.maturity - BigInt(timestamp))),
                   ) / 1e18
                 ).toLocaleString(undefined, {
-                  style: "percent",
-                  minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                  style: "percent",
                 })
               : "N/A"}
           </Text>
@@ -107,14 +107,14 @@ export default function SimulatePurchase() {
             Installments
           </Text>
           <XStack alignItems="center" gap="$s2">
-            <Text headline color="$backgroundBrand" textAlign="right">
+            <Text color="$backgroundBrand" headline textAlign="right">
               1x
             </Text>
             <Text headline primary textAlign="right">
               {borrowPreview
                 ? Number(formatUnits(borrowPreview.assets, market?.decimals ?? 18)).toLocaleString(undefined, {
-                    style: "currency",
                     currency: "USD",
+                    style: "currency",
                   })
                 : "N/A"}
             </Text>

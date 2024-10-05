@@ -22,9 +22,9 @@ Object.assign(debug, { inspectOpts: { depth: undefined } });
 
 const Withdraw = v.object({
   account: Address,
+  amount: v.bigint(),
   market: Address,
   receiver: Address,
-  amount: v.bigint(),
   unlock: v.bigint(),
 });
 
@@ -42,15 +42,15 @@ export default app.post(
   headerValidator(signingKey),
   jsonValidator(
     v.object({
-      type: v.literal("GRAPHQL"),
       event: v.object({
         data: v.object({
           block: v.object({
+            logs: v.array(v.object({ data: Hex, topics: v.tupleWithRest([Hash], Hash) })),
             timestamp: v.number(),
-            logs: v.array(v.object({ topics: v.tupleWithRest([Hash], Hash), data: Hex })),
           }),
         }),
       }),
+      type: v.literal("GRAPHQL"),
     }),
     debug,
     ({ event }) => event.data.block.logs.length > 0,
@@ -60,7 +60,7 @@ export default app.post(
     if (logs.length === 0) return c.json({});
     setContext("alchemy", await c.req.json());
     getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
-    const events = logs.map(({ topics, data }) => decodeEventLog({ topics, data, abi: exaPluginAbi }));
+    const events = logs.map(({ data, topics }) => decodeEventLog({ abi: exaPluginAbi, data, topics }));
     Promise.allSettled(
       events.map(async (event) => {
         switch (event.eventName) {
@@ -79,22 +79,22 @@ export default app.post(
   },
 );
 
-async function scheduleWithdraw({ account, market, receiver, amount, unlock }: v.InferOutput<typeof Withdraw>) {
+async function scheduleWithdraw({ account, amount, market, receiver, unlock }: v.InferOutput<typeof Withdraw>) {
   return setTimeout((Number(unlock) + 10) * 1000 - Date.now())
     .then(() =>
       startSpan(
         {
+          attributes: { account, amount: String(amount), market, receiver, unlock: Number(unlock) },
           name: "exa.withdraw",
           op: "exa.withdraw",
-          attributes: { account, market, receiver, amount: String(amount), unlock: Number(unlock) },
         },
         async () => {
           const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
             publicClient.simulateContract({
+              abi: exaPluginAbi,
               account: keeper.account,
               address: account,
               functionName: "withdraw",
-              abi: exaPluginAbi,
               ...transactionOptions,
             }),
           );
@@ -108,7 +108,7 @@ async function scheduleWithdraw({ account, market, receiver, amount, unlock }: v
           );
           setContext("tx", { ...request, ...receipt });
           if (receipt.status !== "success") captureException(new Error("tx reverted"));
-          return redis.zrem("withdraw", serialize(v.parse(Withdraw, { account, market, receiver, amount, unlock })));
+          return redis.zrem("withdraw", serialize(v.parse(Withdraw, { account, amount, market, receiver, unlock })));
         },
       ),
     )

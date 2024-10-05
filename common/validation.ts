@@ -1,12 +1,12 @@
-import { type InferOutput, brand, check, custom, object, pipe, regex, string, transform } from "valibot";
+import { brand, check, custom, type InferOutput, object, pipe, regex, string, transform } from "valibot";
 import {
-  type Address as ViemAddress,
   checksumAddress,
-  type Hash as ViemHash,
-  type Hex as ViemHex,
   isAddress,
   isHash,
   isHex,
+  type Address as ViemAddress,
+  type Hash as ViemHash,
+  type Hex as ViemHex,
 } from "viem";
 
 export const Address = pipe(

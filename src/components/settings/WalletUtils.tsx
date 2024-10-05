@@ -20,11 +20,11 @@ export default function WalletUtils() {
       <View flexDirection="row" gap={ms(10)}>
         <Button
           contained
+          flex={1}
           onPress={() => {
             connect({ connector: alchemyConnector });
           }}
           padding={ms(10)}
-          flex={1}
         >
           Connect
         </Button>

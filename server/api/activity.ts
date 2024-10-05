@@ -47,13 +47,13 @@ export default app.get(
 
     const credentialId = c.get("credentialId");
     const credential = await database.query.credentials.findFirst({
-      where: eq(credentials.id, credentialId),
       columns: { account: true },
+      where: eq(credentials.id, credentialId),
       with: {
         cards: {
           columns: {},
-          with: { transactions: { columns: { payload: true } } },
           limit: ignore("card") ? 0 : undefined,
+          with: { transactions: { columns: { payload: true } } },
         },
       },
     });
@@ -61,10 +61,10 @@ export default app.get(
     const account = parse(Address, credential.account);
     setUser({ id: account });
     const exactly = await publicClient.readContract({
-      address: previewerAddress,
-      functionName: "exactly", // TODO cache
       abi: previewerAbi,
+      address: previewerAddress,
       args: [zeroAddress],
+      functionName: "exactly", // TODO cache
     });
     const marketsByAsset = new Map<Address, (typeof exactly)[number]>(
       exactly.map((market) => [parse(Address, market.asset), market]),
@@ -75,8 +75,8 @@ export default app.get(
         return publicClient.getAssetTransfers({
           category: ["erc20"] as const,
           contractAddresses: [...marketsByAsset.keys()],
-          withMetadata: true,
           excludeZeroValue: true,
+          withMetadata: true,
           ...{
             received: { toAddress: account },
             sent: { fromAddress: account },
@@ -136,46 +136,46 @@ export default app.get(
 
 export const CardActivity = pipe(
   object({
-    operation_id: string(),
     data: object({
-      created_at: pipe(string(), isoTimestamp()),
       bill_amount: number(),
+      created_at: pipe(string(), isoTimestamp()),
       merchant_data: object({
-        name: string(),
-        country: nullable(string()),
-        state: nullable(string()),
         city: nullable(string()),
+        country: nullable(string()),
+        name: string(),
+        state: nullable(string()),
       }),
       transaction_amount: number(),
       transaction_currency_code: nullable(string()),
     }),
+    operation_id: string(),
   }),
-  transform(({ operation_id, data }) => ({
-    type: "card" as const,
-    id: operation_id,
-    timestamp: data.created_at,
-    currency: data.transaction_currency_code,
+  transform(({ data, operation_id }) => ({
     amount: data.transaction_amount,
+    currency: data.transaction_currency_code,
+    id: operation_id,
     merchant: {
-      name: data.merchant_data.name,
       city: data.merchant_data.city,
       country: data.merchant_data.country,
+      name: data.merchant_data.name,
       state: data.merchant_data.state,
     },
+    timestamp: data.created_at,
+    type: "card" as const,
     usdAmount: data.bill_amount,
   })),
 );
 
 export const AssetActivity = pipe(
   intersect([ERC20Transfer, object({ market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }) })]),
-  transform(({ uniqueId, metadata, rawContract, market: { decimals, symbol, usdPrice } }) => {
+  transform(({ market: { decimals, symbol, usdPrice }, metadata, rawContract, uniqueId }) => {
     const value = BigInt(rawContract.value);
     const baseUnit = 10 ** decimals;
     return {
+      amount: Number(value) / baseUnit,
+      currency: symbol.slice(3),
       id: uniqueId,
       timestamp: metadata.blockTimestamp,
-      currency: symbol.slice(3),
-      amount: Number(value) / baseUnit,
       usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
     };
   }),

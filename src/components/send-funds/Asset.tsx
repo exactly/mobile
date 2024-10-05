@@ -29,8 +29,8 @@ export default function AssetSelection() {
     queryKey: ["contacts", "saved"],
   });
   const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
     account: address,
+    address: previewerAddress,
     args: [address ?? zeroAddress],
   });
 
@@ -45,7 +45,7 @@ export default function AssetSelection() {
   const handleSubmit = () => {
     if (selectedMarket) {
       queryClient.setQueryData<Withdraw>(["withdrawal"], (old) => {
-        return old ? { ...old, market: selectedMarket } : { market: selectedMarket, amount: 0n };
+        return old ? { ...old, market: selectedMarket } : { amount: 0n, market: selectedMarket };
       });
       router.push("/send-funds/amount");
     }
@@ -55,20 +55,20 @@ export default function AssetSelection() {
 
   return (
     <SafeView fullScreen>
-      <View gap={ms(20)} fullScreen padded>
-        <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
-          <View position="absolute" left={0}>
+      <View fullScreen gap={ms(20)} padded>
+        <View alignItems="center" flexDirection="row" gap={ms(10)} justifyContent="space-around">
+          <View left={0} position="absolute">
             {canGoBack() && (
               <Pressable
                 onPress={() => {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft color="$uiNeutralPrimary" size={ms(24)} />
               </Pressable>
             )}
           </View>
-          <Text emphasized color="$uiNeutralPrimary" fontSize={ms(15)}>
+          <Text color="$uiNeutralPrimary" emphasized fontSize={ms(15)}>
             Choose asset
           </Text>
         </View>
@@ -80,33 +80,32 @@ export default function AssetSelection() {
                 backgroundColor="$backgroundBrandSoft"
                 borderRadius="$r2"
                 justifyContent="space-between"
-                paddingVertical="$s2"
                 paddingHorizontal="$s2"
+                paddingVertical="$s2"
               >
                 <XStack alignItems="center" gap="$s3" paddingHorizontal="$s1">
-                  <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-                    <User size={ms(20)} color="$interactiveOnBaseBrandDefault" />
+                  <Avatar backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0" size={ms(32)}>
+                    <User color="$interactiveOnBaseBrandDefault" size={ms(20)} />
                   </Avatar>
-                  <Text emphasized callout color="$uiNeutralSecondary">
+                  <Text callout color="$uiNeutralSecondary" emphasized>
                     To:
                   </Text>
-                  <Text emphasized callout color="$uiNeutralPrimary">
+                  <Text callout color="$uiNeutralPrimary" emphasized>
                     {shortenAddress(withdraw.receiver, 7, 7)}
                   </Text>
                 </XStack>
                 <Button
                   backgroundColor={hasContact ? "$interactiveBaseErrorSoftDefault" : "$interactiveBaseBrandSoftDefault"}
-                  padding="$s3_5"
                   onPress={() => {
-                    queryClient.setQueryData<{ name: string; address: Address; ens: string }[] | undefined>(
+                    queryClient.setQueryData<{ address: Address; ens: string; name: string }[] | undefined>(
                       ["contacts", "saved"],
                       (old) => {
                         if (hasContact) {
                           return old?.filter((contact) => contact.address !== withdraw.receiver);
                         } else {
                           return old && old.length > 0
-                            ? [...old, { name: "New Contact", address: parse(Address, withdraw.receiver), ens: "" }]
-                            : [{ name: "New Contact", address: parse(Address, withdraw.receiver), ens: "" }];
+                            ? [...old, { address: parse(Address, withdraw.receiver), ens: "", name: "New Contact" }]
+                            : [{ address: parse(Address, withdraw.receiver), ens: "", name: "New Contact" }];
                         }
                       },
                     );
@@ -117,27 +116,28 @@ export default function AssetSelection() {
                         : "This address has been added to your contacts list.",
                     );
                   }}
+                  padding="$s3_5"
                 >
                   {hasContact ? (
-                    <UserMinus size={ms(24)} color="$interactiveOnBaseErrorSoft" />
+                    <UserMinus color="$interactiveOnBaseErrorSoft" size={ms(24)} />
                   ) : (
-                    <UserPlus size={ms(24)} color="$interactiveOnBaseBrandSoft" />
+                    <UserPlus color="$interactiveOnBaseBrandSoft" size={ms(24)} />
                   )}
                 </Button>
               </XStack>
             )}
-            <AssetSelector positions={positions} onSubmit={setSelectedMarket} />
+            <AssetSelector onSubmit={setSelectedMarket} positions={positions} />
             <Button
               contained
-              main
-              spaced
               disabled={!selectedMarket}
               iconAfter={
                 <ArrowRight color={selectedMarket ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"} />
               }
+              main
               onPress={() => {
                 handleSubmit();
               }}
+              spaced
             >
               Next
             </Button>

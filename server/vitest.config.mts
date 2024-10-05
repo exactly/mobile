@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    globalSetup: "test/anvil.ts",
+    coverage: { enabled: true, reporter: ["lcov"] },
     env: {
       AUTH_SECRET: "auth",
       COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
@@ -15,6 +15,6 @@ export default defineConfig({
       POSTGRES_URL: "postgres",
       REDIS_URL: "redis",
     },
-    coverage: { enabled: true, reporter: ["lcov"] },
+    globalSetup: "test/anvil.ts",
   },
 });

@@ -15,32 +15,32 @@ function close() {
 
 export default function PasskeysAbout() {
   return (
-    <SafeView fullScreen paddingTop={0} backgroundColor="$backgroundSoft">
+    <SafeView backgroundColor="$backgroundSoft" fullScreen paddingTop={0}>
       <View
-        flexDirection="column"
         alignItems="center"
-        position="relative"
         backgroundColor="$backgroundSoft"
-        justifyContent="space-between"
+        flexDirection="column"
         fullScreen
+        justifyContent="space-between"
+        position="relative"
       >
         <View
-          position="relative"
-          height={ms(4)}
-          width={ms(40)}
-          borderRadius="$r_0"
-          marginTop="$s3"
           backgroundColor="$backgroundMild"
+          borderRadius="$r_0"
+          height={ms(4)}
+          marginTop="$s3"
+          position="relative"
+          width={ms(40)}
         />
-        <View flex={1} paddingVertical="$s8" paddingHorizontal="$s6" alignItems="center">
-          <View flex={1} flexDirection="column" justifyContent="space-between" gap="$s5">
+        <View alignItems="center" flex={1} paddingHorizontal="$s6" paddingVertical="$s8">
+          <View flex={1} flexDirection="column" gap="$s5" justifyContent="space-between">
             <ScrollView flex={1}>
               <View flex={1} gap="$s8">
                 <View gap="$s5">
                   <Text fontSize={ms(17)} fontWeight={700} textAlign="left">
                     How passkeys work
                   </Text>
-                  <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
+                  <Text color="$uiNeutralSecondary" fontSize={16} fontWeight={400} textAlign="left">
                     Passkeys replace passwords with cryptographic keys. Your private key stays on your devide, while the
                     public key is shared with the service. This ensures secure and seamless authentication.
                   </Text>
@@ -49,19 +49,19 @@ export default function PasskeysAbout() {
                   <Text fontSize={ms(17)} fontWeight={700} textAlign="left">
                     Passkeys advantages
                   </Text>
-                  <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
+                  <Text color="$uiNeutralSecondary" fontSize={16} fontWeight={400} textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
                       {`Strong credentials.   `}
                     </Text>
                     Every passkey is strong. They&apos;re never guessable, reused, or weak.
                   </Text>
-                  <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
+                  <Text color="$uiNeutralSecondary" fontSize={16} fontWeight={400} textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
                       {`Safe from server leaks.   `}
                     </Text>
                     Because servers only keep public keys, servers are less valuable targets for hackers.
                   </Text>
-                  <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
+                  <Text color="$uiNeutralSecondary" fontSize={16} fontWeight={400} textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
                       {`Safe from phishing.   `}
                     </Text>
@@ -73,12 +73,12 @@ export default function PasskeysAbout() {
             </ScrollView>
 
             <Button
-              outlined
-              main
-              spaced
-              onPress={close}
               fontWeight="bold"
               iconAfter={<X color="$interactiveOnBaseBrandSoft" />}
+              main
+              onPress={close}
+              outlined
+              spaced
             >
               Close
             </Button>

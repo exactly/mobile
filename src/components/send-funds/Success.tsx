@@ -3,36 +3,37 @@ import React from "react";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
-import Details from "./Details";
-import Values from "./Values";
 import type { WithdrawDetails } from "./Withdraw";
+
 import Text from "../shared/Text";
 import View from "../shared/View";
+import Details from "./Details";
+import Values from "./Values";
 
 interface SuccessProperties {
   details: WithdrawDetails;
   hash?: string;
 }
 
-export default function Success({ details: { assetName, amount, usdValue }, hash }: SuccessProperties) {
+export default function Success({ details: { amount, assetName, usdValue }, hash }: SuccessProperties) {
   return (
     <View>
       <ScrollView>
         <View borderBottomColor="$borderNeutralSoft" borderBottomWidth={1}>
-          <View padded gap="$s5">
-            <View gap="$s4" alignItems="center">
+          <View gap="$s5" padded>
+            <View alignItems="center" gap="$s4">
               <View
+                alignItems="center"
                 backgroundColor="$interactiveBaseSuccessSoftDefault"
-                width={ms(88)}
+                borderRadius="$r_0"
                 height={ms(88)}
                 justifyContent="center"
-                alignItems="center"
-                borderRadius="$r_0"
                 padding="$5"
+                width={ms(88)}
               >
-                <CheckCircle2 size={ms(56)} color="$interactiveOnBaseSuccessSoft" />
+                <CheckCircle2 color="$interactiveOnBaseSuccessSoft" size={ms(56)} />
               </View>
-              <Text title3 color="$uiSuccessSecondary">
+              <Text color="$uiSuccessSecondary" title3>
                 Successfully sent
               </Text>
             </View>

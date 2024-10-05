@@ -1,79 +1,80 @@
+import type { Address } from "viem";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { persistQueryClientRestore, persistQueryClientSubscribe } from "@tanstack/query-persist-client-core";
 import { QueryClient } from "@tanstack/react-query";
-import type { Address } from "viem";
 import { deserialize, serialize } from "wagmi";
 import { structuralSharing } from "wagmi/query";
 
 import handleError from "./handleError";
 
-export const persister = createAsyncStoragePersister({ serialize, deserialize, storage: AsyncStorage });
+export const persister = createAsyncStoragePersister({ deserialize, serialize, storage: AsyncStorage });
 const queryClient = new QueryClient({ defaultOptions: { queries: { structuralSharing } } });
 
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 if (globalThis.window) {
-  persistQueryClientRestore({ queryClient, persister }).catch(handleError);
-  persistQueryClientSubscribe({ queryClient, persister });
+  persistQueryClientRestore({ persister, queryClient }).catch(handleError);
+  persistQueryClientSubscribe({ persister, queryClient });
 }
 
 queryClient.setQueryDefaults(["passkey"], {
-  retry: false,
-  staleTime: Infinity,
   gcTime: Infinity,
   queryFn: () => {
     throw new Error("don't refetch");
   },
+  retry: false,
+  staleTime: Infinity,
 });
 queryClient.setQueryDefaults(["settings", "theme"], {
-  initialData: undefined,
-  staleTime: Infinity,
   gcTime: Infinity,
+  initialData: undefined,
   queryFn: () => {
     throw new Error("don't refetch");
   },
+  staleTime: Infinity,
 });
 queryClient.setQueryDefaults(["settings", "sensitive"], {
-  initialData: false,
-  retry: false,
-  staleTime: Infinity,
   gcTime: Infinity,
+  initialData: false,
   queryFn: () => {
     throw new Error("don't refetch");
   },
+  retry: false,
+  staleTime: Infinity,
 });
 queryClient.setQueryDefaults(["settings", "alertShown"], {
-  initialData: true,
-  retry: false,
-  staleTime: Infinity,
   gcTime: Infinity,
+  initialData: true,
   queryFn: () => {
     throw new Error("don't refetch");
   },
+  retry: false,
+  staleTime: Infinity,
 });
 queryClient.setQueryDefaults(["contacts", "saved"], {
-  initialData: undefined,
-  retry: false,
-  staleTime: Infinity,
   gcTime: Infinity,
+  initialData: undefined,
   queryFn: () => {
     throw new Error("don't refetch");
   },
+  retry: false,
+  staleTime: Infinity,
 });
 queryClient.setQueryDefaults(["contacts", "recent"], {
-  initialData: undefined,
-  retry: false,
-  staleTime: Infinity,
   gcTime: Infinity,
+  initialData: undefined,
   queryFn: () => {
     throw new Error("don't refetch");
   },
+  retry: false,
+  staleTime: Infinity,
 });
 
 export default queryClient;
 
 export interface Withdraw {
-  receiver?: Address;
-  market?: Address;
   amount: bigint;
+  market?: Address;
+  receiver?: Address;
 }

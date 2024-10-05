@@ -9,12 +9,12 @@ const config = createConfiguration({
 const client = new DefaultApi(config);
 
 interface Notification {
-  userId: string;
-  headings: NonNullable<OSNotification["headings"]>;
   contents: NonNullable<OSNotification["contents"]>;
+  headings: NonNullable<OSNotification["headings"]>;
+  userId: string;
 }
 
-export async function sendPushNotification({ userId, headings, contents }: Notification) {
+export async function sendPushNotification({ contents, headings, userId }: Notification) {
   if (!APP_ID) {
     return;
   }

@@ -1,4 +1,5 @@
 import type { Scope } from "@sentry/node";
+
 import { beforeEach } from "node:test";
 import { inspect } from "node:util";
 import { vi } from "vitest";

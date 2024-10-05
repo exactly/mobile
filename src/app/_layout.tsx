@@ -26,16 +26,16 @@ SplashScreen.preventAutoHideAsync().catch(handleError);
 export { ErrorBoundary } from "expo-router";
 const routingInstrumentation = reactNavigationIntegration();
 init({
-  release,
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  environment: __DEV__ ? "development" : "production",
-  tracesSampleRate: 1,
   attachStacktrace: true,
   attachViewHierarchy: true,
   autoSessionTracking: true,
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  environment: __DEV__ ? "development" : "production",
   integrations: [
-    reactNativeTracingIntegration({ routingInstrumentation, enableNativeFramesTracking: !isRunningInExpoGo() }),
+    reactNativeTracingIntegration({ enableNativeFramesTracking: !isRunningInExpoGo(), routingInstrumentation }),
   ],
+  release,
+  tracesSampleRate: 1,
 });
 const useServerFonts = globalThis.window ? () => undefined : useFonts; // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 

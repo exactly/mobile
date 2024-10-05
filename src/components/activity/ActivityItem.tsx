@@ -1,50 +1,51 @@
 import { ArrowDownToLine, ArrowUpFromLine, CircleDollarSign } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
-import { getName, registerLocale, type LocaleData } from "i18n-iso-countries/index";
+import { getName, type LocaleData, registerLocale } from "i18n-iso-countries/index";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { titleCase } from "title-case";
 
 import type { getActivity } from "../../utils/server";
+
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 registerLocale(require("i18n-iso-countries/langs/en.json") as LocaleData); // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
 
 interface ActivityItemProperties {
-  item: Awaited<ReturnType<typeof getActivity>>[number];
   isFirst: boolean;
   isLast: boolean;
+  item: Awaited<ReturnType<typeof getActivity>>[number];
 }
 
-export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProperties) {
-  const { amount, id, usdAmount, currency, type, timestamp } = item;
+export default function ActivityItem({ isFirst, isLast, item }: ActivityItemProperties) {
+  const { amount, currency, id, timestamp, type, usdAmount } = item;
   return (
     <View
-      key={id}
+      alignItems="center"
       flexDirection="row"
       gap="$s4"
-      alignItems="center"
+      key={id}
+      paddingBottom={isLast ? "$s4" : "$s3"}
       paddingHorizontal="$s5"
       paddingTop={isFirst ? "$s4" : "$s3"}
-      paddingBottom={isLast ? "$s4" : "$s3"}
     >
       <View
-        width={ms(40)}
-        height={ms(40)}
+        alignItems="center"
         backgroundColor="$backgroundBrandMild"
         borderRadius="$r3"
+        height={ms(40)}
         justifyContent="center"
-        alignItems="center"
+        width={ms(40)}
       >
         {type === "card" && <CircleDollarSign color="$iconBrandDefault" />}
         {type === "received" && <ArrowDownToLine color="$iconBrandDefault" />}
         {type === "sent" && <ArrowUpFromLine color="$iconBrandDefault" />}
       </View>
       <View flex={1} gap="$s2">
-        <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
-          <View gap="$s2" flexShrink={1}>
-            <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
+        <View alignItems="center" flexDirection="row" gap="$s4" justifyContent="space-between">
+          <View flexShrink={1} gap="$s2">
+            <Text color="$uiNeutralPrimary" numberOfLines={1} subHeadline>
               {type === "card" && item.merchant.name}
               {type === "received" && "Received"}
               {type === "sent" && "Sent"}
@@ -65,24 +66,24 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
             </Text>
           </View>
           <View gap="$s2">
-            <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-              <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
+            <View alignItems="center" flexDirection="row" justifyContent="flex-end">
+              <Text fontSize={ms(15)} fontWeight="bold" sensitive textAlign="right">
                 {usdAmount > 0.01
                   ? usdAmount.toLocaleString(undefined, {
-                      style: "currency",
                       currency: "USD",
-                      minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                      style: "currency",
                     })
                   : `< ${(0.01).toLocaleString(undefined, {
-                      style: "currency",
                       currency: "USD",
-                      minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                      style: "currency",
                     })}`}
               </Text>
             </View>
-            <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+            <Text color="$uiNeutralSecondary" fontSize={ms(12)} sensitive textAlign="right">
               {Number(amount).toLocaleString(undefined, {
                 maximumSignificantDigits: 2,
                 minimumSignificantDigits: 1,

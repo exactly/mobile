@@ -32,9 +32,9 @@ async function request<TInput, TOutput, TIssue extends BaseIssue<unknown>>(
   method: "GET" | "POST" = body === undefined ? "GET" : "POST",
 ) {
   const response = await fetch(`${baseURL}${url}`, {
-    method,
-    headers: { authorization, accept: "application/json", "content-type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
+    headers: { accept: "application/json", authorization, "content-type": "application/json" },
+    method,
   });
   if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
   return parse(schema, await response.json());
@@ -42,42 +42,42 @@ async function request<TInput, TOutput, TIssue extends BaseIssue<unknown>>(
 
 const CreateInquiryResponse = object({
   data: object({
+    attributes: object({ "reference-id": string(), status: literal("created") }),
     id: string(),
     type: literal("inquiry"),
-    attributes: object({ status: literal("created"), "reference-id": string() }),
   }),
 });
 const GetInquiryResponse = object({
   data: object({
-    id: string(),
-    type: literal("inquiry"),
     attributes: variant("status", [
       object({
-        status: picklist(["completed", "approved"]),
-        "reference-id": string(),
-        "name-first": string(),
-        "name-middle": nullable(string()),
-        "name-last": string(),
         "email-address": string(),
+        "name-first": string(),
+        "name-last": string(),
+        "name-middle": nullable(string()),
         "phone-number": string(),
+        "reference-id": string(),
+        status: picklist(["completed", "approved"]),
       }),
       object({
-        status: picklist(["created", "pending", "expired", "failed", "needs_review", "declined"]),
-        "reference-id": string(),
-        "name-first": nullable(string()),
-        "name-middle": nullable(string()),
-        "name-last": nullable(string()),
         "email-address": nullable(string()),
+        "name-first": nullable(string()),
+        "name-last": nullable(string()),
+        "name-middle": nullable(string()),
         "phone-number": nullable(string()),
+        "reference-id": string(),
+        status: picklist(["created", "pending", "expired", "failed", "needs_review", "declined"]),
       }),
     ]),
+    id: string(),
+    type: literal("inquiry"),
   }),
 });
 const GenerateOTLResponse = object({
   data: object({
+    attributes: object({ "reference-id": string(), status: string() }),
     id: string(),
     type: literal("inquiry"),
-    attributes: object({ status: string(), "reference-id": string() }),
   }),
   meta: object({ "one-time-link": string(), "one-time-link-short": string() }),
 });

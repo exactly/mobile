@@ -8,65 +8,65 @@ import View from "../shared/View";
 
 // TODO remove once payment history is retrieved
 interface Payment {
-  status: string;
-  date: string;
-  usdValue: number;
   amount: number;
   asset: string;
+  date: string;
+  status: string;
+  usdValue: number;
 }
 const payments: Payment[] = [];
 export default function PaymentHistory() {
   return (
-    <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s4">
-      <View flexDirection="row" gap="$s3" alignItems="center" justifyContent="space-between">
-        <Text emphasized headline flex={1}>
+    <View backgroundColor="$backgroundSoft" borderRadius="$r3" gap="$s4" padding="$s4">
+      <View alignItems="center" flexDirection="row" gap="$s3" justifyContent="space-between">
+        <Text emphasized flex={1} headline>
           Past payments
         </Text>
         <Pressable>
-          <View flexDirection="row" gap={2} alignItems="center">
-            <Text color="$interactiveTextBrandDefault" emphasized footnote fontWeight="bold">
+          <View alignItems="center" flexDirection="row" gap={2}>
+            <Text color="$interactiveTextBrandDefault" emphasized fontWeight="bold" footnote>
               View all
             </Text>
-            <ChevronRight size={ms(14)} color="$interactiveTextBrandDefault" fontWeight="bold" />
+            <ChevronRight color="$interactiveTextBrandDefault" fontWeight="bold" size={ms(14)} />
           </View>
         </Pressable>
       </View>
       {payments.length > 0 ? (
-        payments.map(({ status, date, usdValue, asset, amount }, index) => (
-          <View key={index} flexDirection="row" gap={ms(16)} alignItems="center">
+        payments.map(({ amount, asset, date, status, usdValue }, index) => (
+          <View alignItems="center" flexDirection="row" gap={ms(16)} key={index}>
             <View
-              width={ms(40)}
-              height={ms(40)}
+              alignItems="center"
               backgroundColor="$backgroundBrandMild"
               borderRadius="$r3"
+              height={ms(40)}
               justifyContent="center"
-              alignItems="center"
+              width={ms(40)}
             >
-              <Check size={ms(20)} color="$uiSuccessPrimary" fontWeight="bold" />
+              <Check color="$uiSuccessPrimary" fontWeight="bold" size={ms(20)} />
             </View>
             <View flex={1} gap={ms(5)}>
-              <View flexDirection="row" justifyContent="space-between" alignItems="center">
+              <View alignItems="center" flexDirection="row" justifyContent="space-between">
                 <View gap={ms(5)}>
                   <Text fontSize={ms(15)}>{status}</Text>
-                  <Text fontSize={ms(12)} color="$uiNeutralSecondary">
+                  <Text color="$uiNeutralSecondary" fontSize={ms(12)}>
                     {date}
                   </Text>
                 </View>
                 <View gap={ms(5)}>
-                  <View flexDirection="row" alignItems="center" justifyContent="flex-end">
+                  <View alignItems="center" flexDirection="row" justifyContent="flex-end">
                     <Text fontSize={ms(15)} fontWeight="bold">
                       -
                     </Text>
                     <Text fontSize={ms(15)} fontWeight="bold" textAlign="right">
                       {usdValue.toLocaleString(undefined, {
-                        style: "currency",
                         currency: "USD",
-                        currencySign: "standard",
                         currencyDisplay: "narrowSymbol",
+                        currencySign: "standard",
+                        style: "currency",
                       })}
                     </Text>
                   </View>
-                  <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                  <Text color="$uiNeutralSecondary" fontSize={ms(12)} textAlign="right">
                     {amount.toLocaleString()} {asset}
                   </Text>
                 </View>
@@ -75,7 +75,7 @@ export default function PaymentHistory() {
           </View>
         ))
       ) : (
-        <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
+        <Text color="$uiNeutralSecondary" subHeadline textAlign="center">
           No payments have been made.
         </Text>
       )}

@@ -1,11 +1,11 @@
 import React from "react";
 
-import Carousel from "./Carousel";
 import SafeView from "../shared/SafeView";
+import Carousel from "./Carousel";
 
 export default function Onboarding() {
   return (
-    <SafeView fullScreen backgroundColor="$backgroundSoft">
+    <SafeView backgroundColor="$backgroundSoft" fullScreen>
       <Carousel />
     </SafeView>
   );

@@ -1,9 +1,10 @@
+import type { Debugger } from "debug";
+import type { BaseIssue, BaseSchema } from "valibot";
+
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext } from "@sentry/node";
-import type { Debugger } from "debug";
 import { validator } from "hono/validator";
 import { createHmac } from "node:crypto";
-import type { BaseIssue, BaseSchema } from "valibot";
 
 export function headerValidator(signingKey: string) {
   return validator("header", async ({ "x-alchemy-signature": signature }, c) => {

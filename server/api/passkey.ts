@@ -14,8 +14,8 @@ app.use(auth);
 export default app.get("/", async (c) => {
   const credentialId = c.get("credentialId");
   const credential = await database.query.credentials.findFirst({
+    columns: { account: true, factory: true, publicKey: true },
     where: eq(credentials.id, credentialId),
-    columns: { publicKey: true, account: true, factory: true },
   });
   if (!credential) return c.text("credential not found", 401);
   setUser({ id: parse(Address, credential.account) });

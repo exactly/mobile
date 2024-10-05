@@ -1,6 +1,7 @@
+import type { SharedValue } from "react-native-reanimated";
+
 import React, { memo } from "react";
 import { StyleSheet } from "react-native";
-import type { SharedValue } from "react-native-reanimated";
 import { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import { useTheme, useWindowDimensions, View } from "tamagui";
@@ -8,15 +9,15 @@ import { useTheme, useWindowDimensions, View } from "tamagui";
 import AnimatedView from "../shared/AnimatedView";
 
 function PaginationComponent({
-  index,
-  x,
-  progress,
   activeColor,
+  index,
+  progress,
+  x,
 }: {
-  index: number;
-  x: SharedValue<number>;
-  progress: SharedValue<number>;
   activeColor: string;
+  index: number;
+  progress: SharedValue<number>;
+  x: SharedValue<number>;
 }) {
   const { width } = useWindowDimensions();
   const itemWidth = width - ms(40);
@@ -30,9 +31,9 @@ function PaginationComponent({
     );
 
     return {
-      width: interpolatedWidth,
       backgroundColor: "rgba(0,0,0,0.1)",
       overflow: "hidden",
+      width: interpolatedWidth,
     };
   }, [x]);
 
@@ -45,8 +46,8 @@ function PaginationComponent({
     );
 
     return {
-      width: isActive ? `${progress.value * 100}%` : "0%",
       backgroundColor: activeColor,
+      width: isActive ? `${progress.value * 100}%` : "0%",
     };
   }, [progress, x]);
 
@@ -59,22 +60,22 @@ function PaginationComponent({
 
 interface PaginationProperties {
   length: number;
-  x: SharedValue<number>;
   progress: SharedValue<number>;
+  x: SharedValue<number>;
 }
 
-export default memo(function Pagination({ length, x, progress }: PaginationProperties) {
+export default memo(function Pagination({ length, progress, x }: PaginationProperties) {
   const theme = useTheme();
   return (
-    <View flexDirection="row" alignItems="center" justifyContent="center">
+    <View alignItems="center" flexDirection="row" justifyContent="center">
       {Array.from({ length }).map((_, index) => {
         return (
           <PaginationComponent
-            key={index}
-            index={index}
-            x={x}
-            progress={progress}
             activeColor={theme.interactiveBaseBrandDefault.val}
+            index={index}
+            key={index}
+            progress={progress}
+            x={x}
           />
         );
       })}

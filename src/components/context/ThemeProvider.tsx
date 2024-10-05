@@ -8,20 +8,20 @@ import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 
 interface ThemeContextState {
-  theme: AppTheme;
   setTheme: (theme: AppTheme) => void;
+  theme: AppTheme;
 }
 
-export const ThemeContext = createContext<ThemeContextState>({ theme: "system", setTheme: () => undefined });
+export const ThemeContext = createContext<ThemeContextState>({ setTheme: () => undefined, theme: "system" });
 
 interface ThemeProviderProperties {
   children: React.ReactNode;
 }
 
-export type AppTheme = "light" | "dark" | "system";
+export type AppTheme = "dark" | "light" | "system";
 
 export default function ThemeProvider({ children }: ThemeProviderProperties) {
-  const { data: theme } = useQuery<AppTheme>({ queryKey: ["settings", "theme"], initialData: "system" });
+  const { data: theme } = useQuery<AppTheme>({ initialData: "system", queryKey: ["settings", "theme"] });
   const systemTheme = useColorScheme();
 
   const { mutate: setTheme } = useMutation({
@@ -34,7 +34,7 @@ export default function ThemeProvider({ children }: ThemeProviderProperties) {
   });
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ setTheme, theme }}>
       <TamaguiProvider config={tamagui} defaultTheme={theme === "system" ? (systemTheme ?? "light") : theme}>
         {children}
       </TamaguiProvider>

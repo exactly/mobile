@@ -9,20 +9,20 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 interface Payment {
-  maturity: bigint;
   amount: bigint;
+  maturity: bigint;
 }
 
 export default function UpcomingPayments() {
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
     account: address,
+    address: previewerAddress,
     args: [address ?? zeroAddress],
   });
   const duePayments = new Map<bigint, bigint>();
   if (markets) {
-    for (const { fixedBorrowPositions, usdPrice, decimals } of markets) {
+    for (const { decimals, fixedBorrowPositions, usdPrice } of markets) {
       for (const { maturity, previewValue } of fixedBorrowPositions) {
         if (!previewValue) continue;
         duePayments.set(
@@ -34,17 +34,17 @@ export default function UpcomingPayments() {
   }
   const payments = [...duePayments];
   return (
-    <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s6">
-      <View flexDirection="row" gap="$s3" alignItems="center" justifyContent="space-between">
-        <Text emphasized headline flex={1}>
+    <View backgroundColor="$backgroundSoft" borderRadius="$r3" gap="$s6" padding="$s4">
+      <View alignItems="center" flexDirection="row" gap="$s3" justifyContent="space-between">
+        <Text emphasized flex={1} headline>
           Next payments
         </Text>
       </View>
       {payments.length > 0 ? (
-        payments.map(([maturity, amount], index) => <ListItem key={index} maturity={maturity} amount={amount} />)
+        payments.map(([maturity, amount], index) => <ListItem amount={amount} key={index} maturity={maturity} />)
       ) : (
         <View>
-          <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
+          <Text color="$uiNeutralSecondary" subHeadline textAlign="center">
             There are no fixed payments due.
           </Text>
         </View>
@@ -53,19 +53,19 @@ export default function UpcomingPayments() {
   );
 }
 
-function ListItem({ maturity, amount }: Payment) {
+function ListItem({ amount, maturity }: Payment) {
   return (
-    <View flexDirection="row" justifyContent="space-between" alignItems="center">
+    <View alignItems="center" flexDirection="row" justifyContent="space-between">
       <View>
         <Text>{intlFormat(new Date(Number(maturity) * 1000), { dateStyle: "medium" })}</Text>
       </View>
-      <View flexDirection="row" alignItems="center" gap="$s2">
+      <View alignItems="center" flexDirection="row" gap="$s2">
         <View>
           <Text sensitive>
             {(Number(amount) / 1e18).toLocaleString(undefined, {
-              style: "currency",
               currency: "USD",
               currencyDisplay: "narrowSymbol",
+              style: "currency",
             })}
           </Text>
         </View>

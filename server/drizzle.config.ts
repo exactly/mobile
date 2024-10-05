@@ -3,9 +3,9 @@ import { defineConfig } from "drizzle-kit";
 if (!process.env.POSTGRES_URL) throw new Error("missing postgres url");
 
 export default defineConfig({
-  schema: "database/schema.ts",
-  dialect: "postgresql",
   dbCredentials: { url: process.env.POSTGRES_URL },
-  verbose: true,
+  dialect: "postgresql",
+  schema: "database/schema.ts",
   strict: true,
+  verbose: true,
 });

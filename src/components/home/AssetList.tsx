@@ -13,8 +13,8 @@ import Text from "../shared/Text";
 export default function AssetList() {
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
     account: address,
+    address: previewerAddress,
     args: [address ?? zeroAddress],
   });
   const positions = markets
@@ -27,42 +27,42 @@ export default function AssetList() {
     .sort((a, b) => Number(b.usdValue) - Number(a.usdValue));
   return (
     <View width="100%">
-      {positions?.map(({ symbol, floatingDepositAssets, decimals, usdValue }, index) => (
+      {positions?.map(({ decimals, floatingDepositAssets, symbol, usdValue }, index) => (
         <View
-          key={index}
-          flexDirection="row"
-          gap={ms(16)}
           alignItems="center"
-          justifyContent="space-between"
           borderBottomWidth={index === positions.length - 1 ? 0 : 1}
           borderColor="$borderNeutralSoft"
+          flexDirection="row"
+          gap={ms(16)}
+          justifyContent="space-between"
+          key={index}
         >
-          <View flexDirection="row" alignItems="center" paddingVertical={vs(10)} flex={1}>
-            <View flexDirection="row" gap={ms(10)} flex={1} alignItems="center">
-              <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
+          <View alignItems="center" flex={1} flexDirection="row" paddingVertical={vs(10)}>
+            <View alignItems="center" flex={1} flexDirection="row" gap={ms(10)}>
+              <AssetLogo height={ms(32)} uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} />
               <View gap={ms(5)}>
                 <Text fontSize={ms(15)} fontWeight="bold">
                   {symbol}
                 </Text>
               </View>
             </View>
-            <View gap={ms(5)} flex={1}>
-              <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
+            <View flex={1} gap={ms(5)}>
+              <View alignItems="center" flexDirection="row" justifyContent="flex-end">
+                <Text fontSize={ms(15)} fontWeight="bold" sensitive textAlign="right">
                   {(Number(usdValue) / 1e18).toLocaleString(undefined, {
-                    style: "currency",
                     currency: "USD",
                     currencyDisplay: "narrowSymbol",
+                    style: "currency",
                   })}
                 </Text>
               </View>
-              <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+              <Text color="$uiNeutralSecondary" fontSize={ms(12)} sensitive textAlign="right">
                 {`${(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
-                  minimumFractionDigits: 0,
                   maximumFractionDigits: Math.min(
                     8,
                     Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(usdValue) / 1e18)))),
                   ),
+                  minimumFractionDigits: 0,
                   useGrouping: false,
                 })} ${symbol}`}
               </Text>

@@ -5,8 +5,6 @@ import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 import { zeroAddress } from "viem";
 
-import NextPayment from "./NextPayment";
-import UpcomingPayments from "./UpcomingPayments";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
@@ -14,10 +12,12 @@ import useMarketAccount from "../../utils/useMarketAccount";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
+import NextPayment from "./NextPayment";
+import UpcomingPayments from "./UpcomingPayments";
 
 export default function Payments() {
-  const { market, account } = useMarketAccount(marketUSDCAddress);
-  const { refetch, isFetching } = useReadPreviewerExactly({
+  const { account, market } = useMarketAccount(marketUSDCAddress);
+  const { isFetching, refetch } = useReadPreviewerExactly({
     address: previewerAddress,
     args: [account ?? zeroAddress],
   });
@@ -33,47 +33,47 @@ export default function Payments() {
         flex={1}
         refreshControl={
           <RefreshControl
-            refreshing={isFetching}
             onRefresh={() => {
               refetch().catch(handleError);
               queryClient.refetchQueries({ queryKey: ["activity"] }).catch(handleError);
             }}
+            refreshing={isFetching}
           />
         }
       >
-        <View padded gap="$s5" backgroundColor="$backgroundSoft">
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+        <View backgroundColor="$backgroundSoft" gap="$s5" padded>
+          <View alignItems="center" flexDirection="row" gap={ms(10)} justifyContent="space-between">
             <Text fontSize={ms(20)} fontWeight="bold">
               Payments
             </Text>
           </View>
           <View gap="$s8">
             <View gap="$s6">
-              <View flexDirection="column" justifyContent="center" alignItems="center">
+              <View alignItems="center" flexDirection="column" justifyContent="center">
                 <Text
-                  sensitive
-                  textAlign="center"
                   fontFamily="$mono"
                   fontSize={ms(40)}
                   fontWeight="bold"
                   overflow="hidden"
+                  sensitive
+                  textAlign="center"
                 >
                   {(Number(usdDue) / 1e18).toLocaleString(undefined, {
-                    style: "currency",
                     currency: "USD",
                     currencyDisplay: "narrowSymbol",
+                    style: "currency",
                   })}
                 </Text>
               </View>
-              <View gap="$s3" alignItems="center">
-                <Text emphasized title3 color="$uiNeutralSecondary">
+              <View alignItems="center" gap="$s3">
+                <Text color="$uiNeutralSecondary" emphasized title3>
                   Total debt
                 </Text>
               </View>
             </View>
           </View>
         </View>
-        <View padded gap="$s6">
+        <View gap="$s6" padded>
           <NextPayment />
           <UpcomingPayments />
         </View>

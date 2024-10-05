@@ -4,31 +4,31 @@ import { ms, vs } from "react-native-size-matters";
 import { ToggleGroup, YStack } from "tamagui";
 import { safeParse } from "valibot";
 
-import AssetLogo from "./AssetLogo";
 import assetLogos from "../../utils/assetLogos";
 import Text from "../shared/Text";
 import View from "../shared/View";
+import AssetLogo from "./AssetLogo";
 
 interface Position {
-  symbol: string;
   assetName: string;
-  floatingDepositAssets: bigint;
   decimals: number;
-  usdValue: bigint;
+  floatingDepositAssets: bigint;
   market: string;
+  symbol: string;
+  usdValue: bigint;
 }
 
 interface AssetSelectorProperties {
-  positions: Position[] | undefined;
   onSubmit: (market: Address) => void;
+  positions: Position[] | undefined;
 }
 
-export default function AssetSelector({ positions, onSubmit }: AssetSelectorProperties) {
+export default function AssetSelector({ onSubmit, positions }: AssetSelectorProperties) {
   const [selectedMarket, setSelectedMarket] = React.useState<Address | undefined>();
 
   if (!positions || positions.length === 0) {
     return (
-      <Text textAlign="center" emphasized footnote color="$uiNeutralSecondary">
+      <Text color="$uiNeutralSecondary" emphasized footnote textAlign="center">
         No available assets.
       </Text>
     );
@@ -37,61 +37,61 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
   return (
     <YStack gap="$s2">
       <ToggleGroup
-        type="single"
-        flexDirection="column"
         backgroundColor="transparent"
-        borderWidth={1}
         borderColor="$borderNeutralSeparator"
-        padding="$s3"
+        borderWidth={1}
+        flexDirection="column"
         onValueChange={(value) => {
           const market = safeParse(Address, value);
           if (!market.success) return;
           setSelectedMarket(market.output);
           onSubmit(market.output);
         }}
+        padding="$s3"
+        type="single"
         value={selectedMarket}
       >
-        {positions.map(({ symbol, assetName, floatingDepositAssets, decimals, usdValue, market }, index) => (
+        {positions.map(({ assetName, decimals, floatingDepositAssets, market, symbol, usdValue }, index) => (
           <ToggleGroup.Item
+            alignItems="stretch"
+            backgroundColor="transparent"
+            borderColor={selectedMarket === market ? "$borderBrandStrong" : "transparent"}
+            borderRadius="$r_2"
+            borderWidth={1}
             key={index}
-            value={market}
             paddingHorizontal="$s4"
             paddingVertical={0}
-            backgroundColor="transparent"
-            alignItems="stretch"
-            borderWidth={1}
-            borderRadius="$r_2"
-            borderColor={selectedMarket === market ? "$borderBrandStrong" : "transparent"}
+            value={market}
           >
-            <View flexDirection="row" alignItems="center" justifyContent="space-between" paddingVertical={vs(10)}>
-              <View flexDirection="row" gap={ms(10)} alignItems="center" maxWidth="50%">
-                <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
-                <View gap="$s2" alignItems="flex-start" flexShrink={1}>
-                  <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
+            <View alignItems="center" flexDirection="row" justifyContent="space-between" paddingVertical={vs(10)}>
+              <View alignItems="center" flexDirection="row" gap={ms(10)} maxWidth="50%">
+                <AssetLogo height={ms(32)} uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} />
+                <View alignItems="flex-start" flexShrink={1} gap="$s2">
+                  <Text color="$uiNeutralPrimary" fontSize={ms(15)} fontWeight="bold" numberOfLines={1}>
                     {symbol}
                   </Text>
-                  <Text fontSize={ms(12)} color="$uiNeutralSecondary" numberOfLines={1}>
+                  <Text color="$uiNeutralSecondary" fontSize={ms(12)} numberOfLines={1}>
                     {assetName}
                   </Text>
                 </View>
               </View>
-              <View gap="$s2" flex={1}>
-                <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                  <Text fontSize={ms(15)} fontWeight="bold" textAlign="right" color="$uiNeutralPrimary">
+              <View flex={1} gap="$s2">
+                <View alignItems="center" flexDirection="row" justifyContent="flex-end">
+                  <Text color="$uiNeutralPrimary" fontSize={ms(15)} fontWeight="bold" textAlign="right">
                     {(Number(usdValue) / 1e18).toLocaleString(undefined, {
-                      style: "currency",
                       currency: "USD",
                       currencyDisplay: "narrowSymbol",
+                      style: "currency",
                     })}
                   </Text>
                 </View>
-                <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                <Text color="$uiNeutralSecondary" fontSize={ms(12)} textAlign="right">
                   {`${(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
-                    minimumFractionDigits: 0,
                     maximumFractionDigits: Math.min(
                       8,
                       Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(usdValue) / 1e18)))),
                     ),
+                    minimumFractionDigits: 0,
                     useGrouping: false,
                   })} ${symbol}`}
                 </Text>

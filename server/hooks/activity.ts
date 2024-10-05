@@ -35,29 +35,29 @@ export default app.post(
   headerValidator(signingKey),
   jsonValidator(
     v.object({
-      type: v.literal("ADDRESS_ACTIVITY"),
       event: v.object({
-        network: v.literal(chain.id === optimism.id ? "OPT_MAINNET" : "OPT_SEPOLIA"),
         activity: v.array(
           v.intersect([
-            v.object({ hash: Hash, fromAddress: Address, toAddress: Address }),
+            v.object({ fromAddress: Address, hash: Hash, toAddress: Address }),
             v.variant("category", [
               v.object({
-                category: v.picklist(["external", "internal"]),
                 asset: v.literal("ETH"),
+                category: v.picklist(["external", "internal"]),
                 rawContract: v.object({ address: v.undefined() }),
                 value: v.number(),
               }),
               v.object({
-                category: v.picklist(["token", "erc20", "erc721", "erc1155"]),
                 asset: v.string(),
+                category: v.picklist(["token", "erc20", "erc721", "erc1155"]),
                 rawContract: v.object({ address: Address }),
                 value: v.optional(v.number()),
               }),
             ]),
           ]),
         ),
+        network: v.literal(chain.id === optimism.id ? "OPT_MAINNET" : "OPT_SEPOLIA"),
       }),
+      type: v.literal("ADDRESS_ACTIVITY"),
     }),
     debug,
   ),
@@ -69,36 +69,36 @@ export default app.post(
       .event.activity.filter(({ category, value }) => category !== "erc721" && category !== "erc1155" && value);
     const accounts = await database.query.credentials
       .findMany({
-        columns: { account: true, publicKey: true, factory: true },
+        columns: { account: true, factory: true, publicKey: true },
         where: inArray(credentials.account, [...new Set(transfers.map(({ toAddress }) => toAddress))]),
       })
       .then((result) =>
         Object.fromEntries(
           result.map(
-            ({ account, publicKey, factory }) =>
-              [v.parse(Address, account), { publicKey, factory: v.parse(Address, factory) }] as const,
+            ({ account, factory, publicKey }) =>
+              [v.parse(Address, account), { factory: v.parse(Address, factory), publicKey }] as const,
           ),
         ),
       );
-    const pokes = new Map<Address, { publicKey: Uint8Array; factory: Address; markets: Set<Address> }>();
+    const pokes = new Map<Address, { factory: Address; markets: Set<Address>; publicKey: Uint8Array }>();
     await Promise.all(
-      transfers.map(async ({ toAddress: account, rawContract }) => {
+      transfers.map(async ({ rawContract, toAddress: account }) => {
         if (!accounts[account]) return;
         const asset = rawContract.address ?? wethAddress;
         const market = await redis.hgetall(`${chain.id}:${asset}`).then(async (found) => {
           const parsed = v.safeParse(MarketEntry, found);
           if (parsed.success) return parsed.output;
           const markets = await publicClient.readContract({
+            abi: auditorAbi,
             address: auditorAddress,
             functionName: "allMarkets",
-            abi: auditorAbi,
           });
           return Object.fromEntries(
             await Promise.all(
               markets.map(async (address, index) => {
-                const underlying = await publicClient.readContract({ address, functionName: "asset", abi: marketAbi });
+                const underlying = await publicClient.readContract({ abi: marketAbi, address, functionName: "asset" });
                 redis
-                  .hset(`${chain.id}:${underlying}`, { market: address, index })
+                  .hset(`${chain.id}:${underlying}`, { index, market: address })
                   .catch((error: unknown) => captureException(error)); // eslint-disable-line promise/no-nesting -- floating promise
                 return [underlying, { address: v.parse(Address, address), index }] as const;
               }),
@@ -109,24 +109,24 @@ export default app.post(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         if (pokes.has(account)) pokes.get(account)!.markets.add(market.address);
         else {
-          const { publicKey, factory } = accounts[account];
-          pokes.set(account, { publicKey, factory, markets: new Set([market.address]) });
+          const { factory, publicKey } = accounts[account];
+          pokes.set(account, { factory, markets: new Set([market.address]), publicKey });
         }
       }),
     );
     Promise.allSettled(
-      [...pokes.entries()].map(([account, { publicKey, factory, markets }]) =>
-        startSpan({ name: "account activity", op: "exa.activity", attributes: { account } }, async () => {
+      [...pokes.entries()].map(([account, { factory, markets, publicKey }]) =>
+        startSpan({ attributes: { account }, name: "account activity", op: "exa.activity" }, async () => {
           if (
             !(await publicClient.getCode({ address: account })) &&
-            !(await startSpan({ name: "create account", op: "exa.account", attributes: { account } }, async () => {
+            !(await startSpan({ attributes: { account }, name: "create account", op: "exa.account" }, async () => {
               const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
                 publicClient.simulateContract({
+                  abi: exaAccountFactoryAbi,
                   account: keeper.account,
                   address: factory,
-                  functionName: "createAccount",
                   args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
-                  abi: exaAccountFactoryAbi,
+                  functionName: "createAccount",
                   ...transactionOptions,
                 }),
               );
@@ -148,15 +148,15 @@ export default app.post(
           }
           await Promise.allSettled(
             [...markets].map(async (market) => {
-              await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
+              await startSpan({ attributes: { account, market }, name: "poke account", op: "exa.poke" }, async () => {
                 try {
                   const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
                     publicClient.simulateContract({
+                      abi: exaPluginAbi,
                       account: keeper.account,
                       address: account,
-                      functionName: "poke",
                       args: [market],
-                      abi: exaPluginAbi,
+                      functionName: "poke",
                     }),
                   );
                   setContext("tx", request);

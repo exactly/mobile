@@ -16,15 +16,15 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 const OnlineIndicator = styled(View, {
-  width: 12,
-  height: 12,
-  borderRadius: 100,
   backgroundColor: "$uiBrandPrimary",
+  borderColor: "$borderBrandSoft",
+  borderRadius: 100,
+  borderWidth: 2,
+  height: 12,
   position: "absolute",
   right: -2,
   top: -2,
-  borderWidth: 2,
-  borderColor: "$borderBrandSoft",
+  width: 12,
   zIndex: 1,
 });
 
@@ -46,27 +46,27 @@ export default function ProfileHeader() {
     Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
   }
   return (
-    <View padded backgroundColor="$backgroundSoft">
+    <View backgroundColor="$backgroundSoft" padded>
       <View display="flex" flexDirection="row" justifyContent="space-between">
-        <View display="flex" flexDirection="row" alignItems="center" gap={8}>
+        <View alignItems="center" display="flex" flexDirection="row" gap={8}>
           <View
-            position="relative"
             onPress={() => {
               connect({ connector: alchemyConnector });
             }}
+            position="relative"
           >
             {isConnected && <OnlineIndicator />}
             <Image
-              source={{ uri: "https://avatars.githubusercontent.com/u/83888950?s=200&v=4" }}
               alt="Profile picture"
-              width={ms(32)}
-              height={ms(32)}
               borderRadius="$r_0"
+              height={ms(32)}
+              source={{ uri: "https://avatars.githubusercontent.com/u/83888950?s=200&v=4" }}
+              width={ms(32)}
             />
           </View>
           {address && (
-            <Pressable onPress={copy} hitSlop={ms(15)}>
-              <View display="flex" flexDirection="row" alignItems="flex-start">
+            <Pressable hitSlop={ms(15)} onPress={copy}>
+              <View alignItems="flex-start" display="flex" flexDirection="row">
                 <Text fontSize={ms(17)} lineHeight={ms(23)}>
                   {shortenAddress(address, 6, 4).toLowerCase()}
                 </Text>
@@ -74,11 +74,11 @@ export default function ProfileHeader() {
             </Pressable>
           )}
         </View>
-        <View display="flex" flexDirection="row" alignItems="center" gap={16}>
-          <Pressable onPress={toggle} hitSlop={ms(15)}>
+        <View alignItems="center" display="flex" flexDirection="row" gap={16}>
+          <Pressable hitSlop={ms(15)} onPress={toggle}>
             {hidden ? <Eye color="$uiNeutralPrimary" /> : <EyeOff color="$uiNeutralPrimary" />}
           </Pressable>
-          <Pressable onPress={settings} hitSlop={ms(15)}>
+          <Pressable hitSlop={ms(15)} onPress={settings}>
             <Settings color="$uiNeutralPrimary" />
           </Pressable>
         </View>

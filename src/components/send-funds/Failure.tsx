@@ -5,36 +5,37 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
-import Details from "./Details";
-import Values from "./Values";
 import type { WithdrawDetails } from "./Withdraw";
+
 import Text from "../shared/Text";
 import View from "../shared/View";
+import Details from "./Details";
+import Values from "./Values";
 
 interface FailureProperties {
   details: WithdrawDetails;
   hash?: string;
 }
 
-export default function Failure({ details: { assetName, amount, usdValue }, hash }: FailureProperties) {
+export default function Failure({ details: { amount, assetName, usdValue }, hash }: FailureProperties) {
   return (
     <View>
       <ScrollView>
         <View borderBottomColor="$borderNeutralSoft" borderBottomWidth={1}>
-          <View padded gap="$s5">
-            <View gap="$s4" alignItems="center">
+          <View gap="$s5" padded>
+            <View alignItems="center" gap="$s4">
               <View
+                alignItems="center"
                 backgroundColor="$interactiveBaseErrorSoftDefault"
-                width={ms(88)}
+                borderRadius="$r_0"
                 height={ms(88)}
                 justifyContent="center"
-                alignItems="center"
-                borderRadius="$r_0"
                 padding="$5"
+                width={ms(88)}
               >
-                <XCircle size={ms(56)} color="$interactiveOnBaseErrorSoft" />
+                <XCircle color="$interactiveOnBaseErrorSoft" size={ms(56)} />
               </View>
-              <Text title3 color="$uiErrorSecondary">
+              <Text color="$uiErrorSecondary" title3>
                 Transaction failed
               </Text>
             </View>
@@ -42,13 +43,13 @@ export default function Failure({ details: { assetName, amount, usdValue }, hash
           </View>
         </View>
         <Details hash={hash} />
-        <View padded alignItems="center">
+        <View alignItems="center" padded>
           <Pressable
             onPress={() => {
               router.back();
             }}
           >
-            <Text emphasized footnote color="$interactiveBaseBrandDefault">
+            <Text color="$interactiveBaseBrandDefault" emphasized footnote>
               Close
             </Text>
           </Pressable>

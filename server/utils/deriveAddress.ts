@@ -29,11 +29,11 @@ export default function deriveAddress(factory: Address, { x, y }: { x: Hash; y: 
                   encodeAbiParameters(
                     [
                       {
-                        type: "tuple[]",
                         components: [
                           { name: "x", type: "bytes32" },
                           { name: "y", type: "bytes32" },
                         ],
+                        type: "tuple[]",
                       },
                     ],
                     [[{ x, y }]],

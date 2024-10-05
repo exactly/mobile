@@ -8,26 +8,26 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 const StyledAction = styled(View, {
-  flex: 1,
-  minHeight: ms(140),
-  borderWidth: 1,
-  padding: ms(16),
-  borderRadius: 10,
   backgroundColor: "$backgroundSoft",
   borderColor: "$borderNeutralSoft",
-  justifyContent: "space-between",
+  borderRadius: 10,
+  borderWidth: 1,
+  flex: 1,
   flexBasis: "50%",
+  justifyContent: "space-between",
+  minHeight: ms(140),
+  padding: ms(16),
 });
 
 export default function PaymentsActions() {
   return (
-    <View flexDirection="row" justifyContent="space-between" gap={ms(10)}>
+    <View flexDirection="row" gap={ms(10)} justifyContent="space-between">
       <StyledAction>
         <Pressable>
           <View gap={ms(10)}>
-            <Coins size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
+            <Coins color="$backgroundBrand" fontWeight="bold" size={ms(24)} />
             <Text fontSize={ms(15)}>Auto-pay</Text>
-            <Switch disabled backgroundColor="$backgroundMild" borderColor="$borderNeutralSoft">
+            <Switch backgroundColor="$backgroundMild" borderColor="$borderNeutralSoft" disabled>
               <Switch.Thumb animation="quicker" backgroundColor="$backgroundSoft" shadowColor="$uiNeutralPrimary" />
             </Switch>
           </View>
@@ -36,8 +36,8 @@ export default function PaymentsActions() {
       <StyledAction>
         <Pressable>
           <View gap={ms(10)}>
-            <CircleDollarSign size={ms(24)} color="$interactiveDisabled" fontWeight="bold" />
-            <Text fontSize={ms(15)} color="$interactiveDisabled">
+            <CircleDollarSign color="$interactiveDisabled" fontWeight="bold" size={ms(24)} />
+            <Text color="$interactiveDisabled" fontSize={ms(15)}>
               Collateral
             </Text>
             <Text color="$interactiveDisabled" fontSize={ms(15)} fontWeight="bold">

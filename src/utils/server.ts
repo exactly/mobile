@@ -1,19 +1,18 @@
+import type { ExaServer } from "@exactly/server";
+import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
+
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { Passkey } from "@exactly/common/validation";
-import type { ExaServer } from "@exactly/server";
 import { hc } from "hono/client";
 import { Platform } from "react-native";
 import { get as assert } from "react-native-passkeys";
-import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 import { check, number, parse, pipe, safeParse } from "valibot";
 
 import queryClient from "./queryClient";
 
 queryClient.setQueryDefaults(["auth"], {
-  retry: false,
   gcTime: 30 * 60_000,
-  staleTime: AUTH_EXPIRY,
   queryFn: async () => {
     const credentialId = queryClient.getQueryData<Passkey>(["passkey"])?.credentialId;
     const get = await client.api.auth.authentication.$get({ query: { credentialId } });
@@ -22,11 +21,13 @@ queryClient.setQueryDefaults(["auth"], {
     if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
     const assertion = await assert(options);
     if (!assertion) throw new Error("bad assertion");
-    const post = await client.api.auth.authentication.$post({ query: { credentialId: assertion.id }, json: assertion });
+    const post = await client.api.auth.authentication.$post({ json: assertion, query: { credentialId: assertion.id } });
     if (!post.ok) throw new APIError(post.status, await post.text());
     const { expires } = await post.json();
     return parse(Auth, expires);
   },
+  retry: false,
+  staleTime: AUTH_EXPIRY,
 });
 
 const client = hc<ExaServer>(domain === "localhost" ? "http://localhost:3000/" : `https://${domain}/`, {

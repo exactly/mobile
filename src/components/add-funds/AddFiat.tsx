@@ -17,14 +17,14 @@ export default function AddFiat() {
   const { canGoBack } = router;
   return (
     <SafeView fullScreen>
-      <View gap={ms(20)} fullScreen padded>
-        <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+      <View fullScreen gap={ms(20)} padded>
+        <View alignItems="center" flexDirection="row" gap={ms(10)} justifyContent="space-between">
           {canGoBack() && (
             <Pressable onPress={back}>
-              <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+              <ArrowLeft color="$uiNeutralPrimary" size={ms(24)} />
             </Pressable>
           )}
-          <View flexDirection="row" alignItems="center">
+          <View alignItems="center" flexDirection="row">
             <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
               {`Add Funds / `}
             </Text>

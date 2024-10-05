@@ -1,3 +1,5 @@
+import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
+
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { Address, Base64URL } from "@exactly/common/validation";
@@ -5,7 +7,6 @@ import { vValidator } from "@hono/valibot-validator";
 import { captureException, setContext, setUser } from "@sentry/node";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
@@ -30,8 +31,8 @@ export default app
       const { credentialId } = c.req.valid("query");
       const [options, sessionId] = await Promise.all([
         generateAuthenticationOptions({
-          rpID: domain,
           allowCredentials: credentialId ? [{ id: credentialId }] : undefined,
+          rpID: domain,
           timeout,
         }),
         generateChallenge().then(isoBase64URL.fromBuffer),
@@ -58,10 +59,10 @@ export default app
     vValidator(
       "json",
       object({
+        clientExtensionResults: any(),
         id: Base64URL,
         rawId: Base64URL,
-        response: object({ clientDataJSON: Base64URL, authenticatorData: Base64URL, signature: Base64URL }),
-        clientExtensionResults: any(),
+        response: object({ authenticatorData: Base64URL, clientDataJSON: Base64URL, signature: Base64URL }),
         type: literal("public-key"),
       }),
       (result, c) => {
@@ -77,7 +78,7 @@ export default app
       const { session_id: sessionId } = c.req.valid("cookie");
       const [credential, challenge] = await Promise.all([
         database.query.credentials.findFirst({
-          columns: { publicKey: true, account: true, transports: true, counter: true },
+          columns: { account: true, counter: true, publicKey: true, transports: true },
           where: eq(credentials.id, credentialId),
         }),
         redis.get(sessionId),
@@ -89,16 +90,16 @@ export default app
       let verification: Awaited<ReturnType<typeof verifyAuthenticationResponse>>;
       try {
         verification = await verifyAuthenticationResponse({
-          response: c.req.valid("json"),
-          expectedRPID: domain,
-          expectedOrigin: [appOrigin, androidOrigin],
-          expectedChallenge: challenge,
           authenticator: {
+            counter: credential.counter,
             credentialID: credentialId,
             credentialPublicKey: credential.publicKey,
             transports: credential.transports ? (credential.transports as AuthenticatorTransportFuture[]) : undefined,
-            counter: credential.counter,
           },
+          expectedChallenge: challenge,
+          expectedOrigin: [appOrigin, androidOrigin],
+          expectedRPID: domain,
+          response: c.req.valid("json"),
         });
       } catch (error) {
         captureException(error);
@@ -107,8 +108,8 @@ export default app
         await redis.del(sessionId);
       }
       const {
-        verified,
         authenticationInfo: { credentialID, newCounter },
+        verified,
       } = verification;
       if (!verified) return c.text("bad authentication", 400);
 

@@ -1,6 +1,8 @@
+import type { UnofficialStatusCode } from "hono/utils/http-status";
+
+import chain, { exaPluginAbi, upgradeableModularAccountAbi, usdcAddress } from "@exactly/common/generated/chain";
 import MATURITY_INTERVAL from "@exactly/common/MATURITY_INTERVAL";
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
-import chain, { exaPluginAbi, upgradeableModularAccountAbi, usdcAddress } from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -16,7 +18,6 @@ import {
 import createDebug from "debug";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
-import type { UnofficialStatusCode } from "hono/utils/http-status";
 import * as v from "valibot";
 import {
   BaseError,
@@ -44,10 +45,10 @@ const debug = createDebug("exa:cryptomate");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
 const OperationData = v.object({
-  card_id: v.string(),
   bill_amount: v.number(),
-  bill_currency_number: v.literal("840"),
   bill_currency_code: v.literal("USD"),
+  bill_currency_number: v.literal("840"),
+  card_id: v.string(),
   created_at: v.pipe(v.string(), v.isoTimestamp()),
   metadata: v.nullish(v.object({ account: v.nullish(Address) })),
 });
@@ -69,9 +70,9 @@ export default new Hono().post(
     "json",
     v.intersect([
       v.variant("event_type", [
-        v.object({ event_type: v.literal("AUTHORIZATION"), status: v.literal("PENDING"), data: CollectData }),
+        v.object({ data: CollectData, event_type: v.literal("AUTHORIZATION"), status: v.literal("PENDING") }),
         v.variant("status", [
-          v.object({ event_type: v.literal("CLEARING"), status: v.literal("PENDING"), data: CollectData }),
+          v.object({ data: CollectData, event_type: v.literal("CLEARING"), status: v.literal("PENDING") }),
           v.object({ event_type: v.literal("CLEARING"), status: v.literal("SUCCESS") }),
           v.object({ event_type: v.literal("CLEARING"), status: v.literal("FAILED") }),
         ]),
@@ -79,7 +80,7 @@ export default new Hono().post(
         v.object({ event_type: v.literal("REFUND"), status: v.literal("SUCCESS") }),
         v.object({ event_type: v.literal("REVERSAL"), status: v.literal("SUCCESS") }),
       ]),
-      v.object({ product: v.literal("CARDS"), operation_id: v.string(), data: OperationData }),
+      v.object({ data: OperationData, operation_id: v.string(), product: v.literal("CARDS") }),
     ]),
     (result, c) => {
       if (debug.enabled) {
@@ -106,7 +107,7 @@ export default new Hono().post(
       v.parse(
         Address,
         await database
-          .select({ id: credentials.id, account: credentials.account })
+          .select({ account: credentials.account, id: credentials.id })
           .from(cards)
           .leftJoin(credentials, eq(cards.credentialId, credentials.id))
           .where(eq(cards.id, payload.data.card_id))
@@ -120,18 +121,18 @@ export default new Hono().post(
     const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
     const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
     const call = {
-      functionName: "collectCredit",
       args: [
         BigInt(nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
         BigInt(Math.round(payload.data.bill_amount * 1e6)),
         BigInt(timestamp),
         await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }), // TODO replace with payload signature
       ],
+      functionName: "collectCredit",
     } as const;
     const transaction = {
+      data: encodeFunctionData({ abi: exaPluginAbi, ...call }),
       from: keeper.account.address,
       to: account,
-      data: encodeFunctionData({ abi: exaPluginAbi, ...call }),
     } as const;
 
     switch (payload.event_type) {
@@ -145,7 +146,6 @@ export default new Hono().post(
             let error: string = trace.output;
             try {
               error = decodeErrorResult({
-                data: trace.output,
                 abi: [
                   ...exaPluginAbi,
                   ...issuerCheckerAbi,
@@ -153,6 +153,7 @@ export default new Hono().post(
                   ...auditorAbi,
                   ...marketAbi,
                 ],
+                data: trace.output,
               }).errorName;
             } catch {} // eslint-disable-line no-empty
             captureException(new Error(error));
@@ -163,8 +164,8 @@ export default new Hono().post(
             debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "no collection");
             return c.json({ response_code: "51" });
           }
-          const [{ topics, data }] = transfers as [TransferLog];
-          const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
+          const [{ data, topics }] = transfers as [TransferLog];
+          const { args } = decodeEventLog({ abi: erc20Abi, data, eventName: "Transfer", topics });
           if (args.value !== call.args[1]) {
             debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "wrong amount");
             return c.json({ response_code: "51" });
@@ -177,13 +178,13 @@ export default new Hono().post(
       case "CLEARING":
         if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
-        return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
+        return startSpan({ attributes: { account }, name: "collect credit", op: "exa.collect" }, async () => {
           try {
             const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
               publicClient.simulateContract({
+                abi: [...exaPluginAbi, ...issuerCheckerAbi],
                 account: keeper.account,
                 address: account,
-                abi: [...exaPluginAbi, ...issuerCheckerAbi],
                 ...transactionOptions,
                 ...call,
               }),
@@ -195,7 +196,7 @@ export default new Hono().post(
             setContext("tx", { ...request, transactionHash: hash });
             await database
               .insert(transactions)
-              .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]);
+              .values([{ cardId: payload.data.card_id, hash, id: payload.operation_id, payload: jsonBody }]);
             startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
               .then((receipt) => {
                 setContext("tx", { ...request, ...receipt });
@@ -252,16 +253,18 @@ function usdcTransfersToCollector({ calls, logs }: CallFrame): TransferLog[] {
 
 interface TransferLog {
   address: Hex;
-  topics: [Hash, Hash, Hash];
   data: Hex;
   position: Hex;
+  topics: [Hash, Hash, Hash];
 }
 
 // TODO remove code below
 const issuer = privateKeyToAccount(v.parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
 function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: number; timestamp: number }) {
   return issuer.signTypedData({
-    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
+    domain: { chainId: chain.id, name: "IssuerChecker", verifyingContract: issuerCheckerAddress, version: "1" },
+    message: { account, amount: BigInt(Math.round(amount * 1e6)), timestamp },
+    primaryType: "Operation",
     types: {
       Operation: [
         { name: "account", type: "address" },
@@ -269,7 +272,5 @@ function signIssuerOp({ account, amount, timestamp }: { account: Address; amount
         { name: "timestamp", type: "uint40" },
       ],
     },
-    primaryType: "Operation",
-    message: { account, amount: BigInt(Math.round(amount * 1e6)), timestamp },
   });
 }

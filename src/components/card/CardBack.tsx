@@ -3,41 +3,38 @@ import { Platform } from "react-native";
 import { WebView } from "react-native-webview";
 import { Spinner } from "tamagui";
 
-import ISO7810_ASPECT_RATIO from "./ISO7810_ASPECT_RATIO";
 import View from "../shared/View";
+import ISO7810_ASPECT_RATIO from "./ISO7810_ASPECT_RATIO";
 
-export default function CardBack({ uri, flipped }: { uri: string; flipped: boolean }) {
+export default function CardBack({ flipped, uri }: { flipped: boolean; uri: string }) {
   const [loading, setLoading] = useState(true);
   const frameStyles = {
     aspectRatio: ISO7810_ASPECT_RATIO,
-    border: "none",
-    width: "100%",
-    height: "100%",
     backgroundColor: "$backgroundSoft",
+    border: "none",
+    height: "100%",
     opacity: loading ? 0 : 1,
     transition: "opacity 0.3s ease-in-out",
+    width: "100%",
   };
   useEffect(() => {
     if (!flipped) setLoading(true);
   }, [flipped]);
   return (
-    <View width="100%" height="100%" backgroundColor="transparent">
+    <View backgroundColor="transparent" height="100%" width="100%">
       {Platform.OS === "web" ? (
         <iframe
-          title="Card"
           allow="clipboard-write"
           id="card-iframe"
-          src={uri}
-          style={frameStyles}
           onLoad={() => {
             setLoading(false);
           }}
+          src={uri}
+          style={frameStyles}
+          title="Card"
         />
       ) : (
         <WebView
-          source={{ uri }}
-          renderLoading={LoadingIndicator}
-          style={{ backgroundColor: frameStyles.backgroundColor }}
           injectedJavaScript={`
             (function() {
               try {
@@ -86,12 +83,15 @@ export default function CardBack({ uri, flipped }: { uri: string; flipped: boole
               }
             })();
           `}
-          startInLoadingState
           onMessage={(event) => {
             if (event.nativeEvent.data === "stylesApplied") {
               setLoading(false);
             }
           }}
+          renderLoading={LoadingIndicator}
+          source={{ uri }}
+          startInLoadingState
+          style={{ backgroundColor: frameStyles.backgroundColor }}
         />
       )}
       {loading && <LoadingIndicator />}
@@ -102,15 +102,15 @@ export default function CardBack({ uri, flipped }: { uri: string; flipped: boole
 function LoadingIndicator() {
   return (
     <View
-      position="absolute"
-      top={0}
-      left={0}
-      right={0}
-      bottom={0}
       alignItems="center"
-      justifyContent="center"
-      zIndex={3}
       backgroundColor="$backgroundSoft"
+      bottom={0}
+      justifyContent="center"
+      left={0}
+      position="absolute"
+      right={0}
+      top={0}
+      zIndex={3}
     >
       <Spinner color="$interactiveBaseBrandDefault" />
     </View>

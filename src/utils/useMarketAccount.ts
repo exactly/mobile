@@ -1,6 +1,6 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
 import { useMemo } from "react";
-import { zeroAddress, type Address } from "viem";
+import { type Address, zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../generated/contracts";

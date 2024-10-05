@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import type { IntercomPluginProps } from "@intercom/intercom-react-native/lib/typescript/expo-plugins/@types";
 import type { withSentry } from "@sentry/react-native/expo";
 import type { ExpoConfig } from "expo/config";
@@ -7,6 +5,8 @@ import type { PluginConfigType as BuildPropertiesConfig } from "expo-build-prope
 import type withCamera from "expo-camera/plugin/build/withCamera";
 import type { FontProps } from "expo-font/plugin/build/withFonts";
 import type * as OneSignalPlugin from "onesignal-expo-plugin/types/types";
+
+import "dotenv/config";
 
 import metadata from "./package.json";
 import versionCode from "./src/generated/versionCode.js";
@@ -25,62 +25,61 @@ if (process.env.EAS_BUILD_RUNNER === "eas-build") {
 }
 
 export default {
-  name: "Exa",
-  slug: "exactly",
-  scheme: "exactly",
-  version: metadata.version,
-  orientation: "portrait",
   android: {
+    adaptiveIcon: { backgroundColor: "#1D1D1D", foregroundImage: "src/assets/icon.png" },
     package: "app.exactly",
-    adaptiveIcon: { foregroundImage: "src/assets/icon.png", backgroundColor: "#1D1D1D" },
     permissions: ["android.permission.CAMERA"],
-    userInterfaceStyle: "automatic",
-    versionCode,
     splash: {
       backgroundColor: "#FCFCFC",
-      image: "src/assets/splash.png",
-      mdpi: "src/assets/splash.png",
-      hdpi: "src/assets/splash@1.5x.png",
-      xhdpi: "src/assets/splash@2x.png",
-      xxhdpi: "src/assets/splash@3x.png",
-      xxxhdpi: "src/assets/splash@4x.png",
       dark: {
         backgroundColor: "#1D1D1D",
+        hdpi: "src/assets/splash-dark@1.5x.png",
         image: "src/assets/splash-dark.png",
         mdpi: "src/assets/splash-dark.png",
-        hdpi: "src/assets/splash-dark@1.5x.png",
         xhdpi: "src/assets/splash-dark@2x.png",
         xxhdpi: "src/assets/splash-dark@3x.png",
         xxxhdpi: "src/assets/splash-dark@4x.png",
       },
+      hdpi: "src/assets/splash@1.5x.png",
+      image: "src/assets/splash.png",
+      mdpi: "src/assets/splash.png",
+      xhdpi: "src/assets/splash@2x.png",
+      xxhdpi: "src/assets/splash@3x.png",
+      xxxhdpi: "src/assets/splash@4x.png",
     },
+    userInterfaceStyle: "automatic",
+    versionCode,
   },
+  experiments: { typedRoutes: true },
+  extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
   ios: {
-    icon: "src/assets/icon-ios.png",
-    bundleIdentifier: "app.exactly",
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
-    supportsTablet: true,
     buildNumber: String(versionCode),
+    bundleIdentifier: "app.exactly",
+    icon: "src/assets/icon-ios.png",
     infoPlist: {
       NSCameraUsageDescription: "This app uses the camera to verify your identity.",
       NSLocationWhenInUseUsageDescription: "This app uses your location to verify your identity.",
     },
-    userInterfaceStyle: "automatic",
     splash: {
       backgroundColor: "#FCFCFC",
-      image: "src/assets/splash.png",
       dark: { backgroundColor: "#1D1D1D", image: "src/assets/splash-dark.png" },
+      image: "src/assets/splash.png",
     },
+    supportsTablet: true,
+    userInterfaceStyle: "automatic",
   },
-  web: { output: "static", favicon: "src/assets/favicon.png" },
+  name: "Exa",
+  orientation: "portrait",
+  owner: "exactly",
   plugins: [
     [
       "expo-build-properties",
       {
         android: {
-          packagingOptions: { pickFirst: ["**/libcrypto.so"] },
           extraMavenRepos: ["https://sdk.withpersona.com/android/releases"],
           newArchEnabled: true,
+          packagingOptions: { pickFirst: ["**/libcrypto.so"] },
         },
         ios: { deploymentTarget: "15.0", newArchEnabled: true },
       } satisfies BuildPropertiesConfig,
@@ -107,8 +106,8 @@ export default {
     [
       "@intercom/intercom-react-native",
       {
-        appId: "eknd6y0s",
         androidApiKey: "android_sdk-d602d62cbdb9e8e0a6f426db847ddc74d2e26090",
+        appId: "eknd6y0s",
         iosApiKey: "ios_sdk-ad6831098d9c2d69bd98e92a5ad7a4f030472a92",
       } satisfies IntercomPluginProps,
     ],
@@ -119,15 +118,16 @@ export default {
     [
       "onesignal-expo-plugin",
       {
+        largeIcons: ["src/assets/notifications_default_large.png"],
         mode: process.env.NODE_ENV === "production" ? Mode.Prod : Mode.Dev,
         smallIcons: ["src/assets/notifications_default.png"],
-        largeIcons: ["src/assets/notifications_default_large.png"],
       } satisfies OneSignalPlugin.OneSignalPluginProps,
     ],
   ],
-  experiments: { typedRoutes: true },
-  extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },
-  updates: { url: "https://u.expo.dev/06bc0158-d23b-430b-a7e8-802df03c450b" },
   runtimeVersion: { policy: "fingerprint" },
-  owner: "exactly",
+  scheme: "exactly",
+  slug: "exactly",
+  updates: { url: "https://u.expo.dev/06bc0158-d23b-430b-a7e8-802df03c450b" },
+  version: metadata.version,
+  web: { favicon: "src/assets/favicon.png", output: "static" },
 } satisfies ExpoConfig;

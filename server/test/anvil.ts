@@ -1,3 +1,5 @@
+import type { GlobalSetupContext } from "vitest/node";
+
 import { Address } from "@exactly/common/validation";
 import { $ } from "execa";
 import { anvil } from "prool/instances";
@@ -5,12 +7,11 @@ import { literal, null_, object, parse, tuple } from "valibot";
 import { padHex, zeroAddress } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
-import type { GlobalSetupContext } from "vitest/node";
 
 import anvilClient from "./anvilClient";
 
 export default async function setup({ provide }: GlobalSetupContext) {
-  const instance = anvil({ codeSizeLimit: 42_000, blockBaseFeePerGas: 1n });
+  const instance = anvil({ blockBaseFeePerGas: 1n, codeSizeLimit: 42_000 });
   const initialize = await instance
     .start()
     .then(() => true)
@@ -22,10 +23,10 @@ export default async function setup({ provide }: GlobalSetupContext) {
   const shell = {
     cwd: "node_modules/@exactly/plugin",
     env: {
-      OPTIMISM_ETHERSCAN_KEY: "",
       COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
       ISSUER_ADDRESS: privateKeyToAddress(padHex("0x420")),
       KEEPER_ADDRESS: keeperAddress,
+      OPTIMISM_ETHERSCAN_KEY: "",
     } as Record<string, string>,
   };
   const deployer = await anvilClient
@@ -40,7 +41,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
     shell.env.OWNER_PLUGIN_ADDRESS = parse(
       object({
-        transactions: tuple([object({ contractName: literal("WebauthnOwnerPlugin"), contractAddress: Address })]),
+        transactions: tuple([object({ contractAddress: Address, contractName: literal("WebauthnOwnerPlugin") })]),
       }),
       await import(`@exactly/plugin/broadcast/Plugin.s.sol/${foundry.id}/run-latest.json`),
     ).transactions[0].contractAddress;
@@ -67,7 +68,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
 
   const [issuerChecker] = parse(
     object({
-      transactions: tuple([object({ contractName: literal("IssuerChecker"), contractAddress: Address })]),
+      transactions: tuple([object({ contractAddress: Address, contractName: literal("IssuerChecker") })]),
     }),
     await import(`@exactly/plugin/broadcast/IssuerChecker.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
@@ -81,8 +82,8 @@ export default async function setup({ provide }: GlobalSetupContext) {
   const [exaPlugin, exaAccountFactory] = parse(
     object({
       transactions: tuple([
-        object({ contractName: literal("ExaPlugin"), contractAddress: Address }),
-        object({ contractName: literal("ExaAccountFactory"), contractAddress: Address }),
+        object({ contractAddress: Address, contractName: literal("ExaPlugin") }),
+        object({ contractAddress: Address, contractName: literal("ExaAccountFactory") }),
       ]),
     }),
     await import(`@exactly/plugin/broadcast/Deploy.s.sol/${foundry.id}/run-latest.json`),
@@ -103,38 +104,38 @@ export default async function setup({ provide }: GlobalSetupContext) {
 
 const Protocol = object({
   transactions: tuple([
-    object({ transactionType: literal("CREATE"), contractName: literal("Auditor") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+    object({ contractName: literal("Auditor"), transactionType: literal("CREATE") }),
+    object({ contractAddress: Address, contractName: literal("ERC1967Proxy"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: null_(), contractAddress: Address }),
-    object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+    object({ contractAddress: Address, contractName: null_(), transactionType: literal("CREATE") }),
+    object({ contractName: literal("Market"), transactionType: literal("CREATE") }),
+    object({ contractAddress: Address, contractName: literal("ERC1967Proxy"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("InterestRateModel") }),
+    object({ contractName: literal("InterestRateModel"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
+    object({ contractName: literal("MockPriceFeed"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: null_(), contractAddress: Address }),
-    object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+    object({ contractAddress: Address, contractName: null_(), transactionType: literal("CREATE") }),
+    object({ contractName: literal("Market"), transactionType: literal("CREATE") }),
+    object({ contractAddress: Address, contractName: literal("ERC1967Proxy"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("InterestRateModel") }),
+    object({ contractName: literal("InterestRateModel"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
+    object({ contractName: literal("MockPriceFeed"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("MockWETH"), contractAddress: Address }),
-    object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
+    object({ contractAddress: Address, contractName: literal("MockWETH"), transactionType: literal("CREATE") }),
+    object({ contractName: literal("Market"), transactionType: literal("CREATE") }),
+    object({ contractAddress: Address, contractName: literal("ERC1967Proxy"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("InterestRateModel") }),
+    object({ contractName: literal("InterestRateModel"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
+    object({ contractName: literal("MockPriceFeed"), transactionType: literal("CREATE") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: literal("Previewer"), contractAddress: Address }),
+    object({ contractAddress: Address, contractName: literal("Previewer"), transactionType: literal("CREATE") }),
     object({
-      transactionType: literal("CREATE"),
-      contractName: literal("MockBalancerVault"),
       contractAddress: Address,
+      contractName: literal("MockBalancerVault"),
+      transactionType: literal("CREATE"),
     }),
   ]),
 });

@@ -9,28 +9,28 @@ export function createCard({
   account,
   cardholder,
   email,
-  phone,
   limits,
+  phone,
 }: {
   account: Address;
   cardholder: string;
   email: string;
+  limits: { daily: number; monthly: number; weekly: number };
   phone: { countryCode: string; number: string };
-  limits: { daily: number; weekly: number; monthly: number };
 }) {
   return request(
     CreateCardResponse,
     "/cards/virtual-cards/create",
     v.parse(CreateCardRequest, {
-      card_holder_name: cardholder,
-      email,
-      phone_country_code: phone.countryCode,
-      phone: phone.number,
       approval_method: "DEFI",
+      card_holder_name: cardholder,
       daily_limit: limits.daily,
-      weekly_limit: limits.weekly,
-      monthly_limit: limits.monthly,
+      email,
       metadata: { account },
+      monthly_limit: limits.monthly,
+      phone: phone.number,
+      phone_country_code: phone.countryCode,
+      weekly_limit: limits.weekly,
     }),
   );
 }
@@ -47,35 +47,35 @@ async function request<TInput, TOutput, TIssue extends v.BaseIssue<unknown>>(
   method: "GET" | "POST" = body === undefined ? "GET" : "POST",
 ) {
   const response = await fetch(`${baseURL}${url}`, {
-    method,
-    headers: { "Content-Type": "application/json", "X-API-KEY": apiKey },
     body: body ? JSON.stringify(body) : undefined,
+    headers: { "Content-Type": "application/json", "X-API-KEY": apiKey },
+    method,
   });
   if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
   return v.parse(schema, await response.json());
 }
 
 const CreateCardRequest = v.object({
-  card_holder_name: v.string(),
-  email: v.pipe(v.string(), v.email()),
-  phone_country_code: v.pipe(v.string(), v.regex(/^\d{1,4}$/)),
-  phone: v.pipe(v.string(), v.regex(/^\d+$/)),
   approval_method: v.literal("DEFI"),
+  card_holder_name: v.string(),
   daily_limit: v.number(),
-  weekly_limit: v.number(),
-  monthly_limit: v.number(),
+  email: v.pipe(v.string(), v.email()),
   metadata: v.object({ account: Address }),
+  monthly_limit: v.number(),
+  phone: v.pipe(v.string(), v.regex(/^\d+$/)),
+  phone_country_code: v.pipe(v.string(), v.regex(/^\d{1,4}$/)),
+  weekly_limit: v.number(),
 });
 
 const CreateCardResponse = v.object({
-  id: v.string(),
   card_holder_name: v.string(),
-  type: v.literal("Virtual"),
-  last4: v.pipe(v.string(), v.regex(/^\d{4}$/)),
-  status: v.literal("ACTIVE"),
   daily_limit: v.number(),
-  weekly_limit: v.number(),
+  id: v.string(),
+  last4: v.pipe(v.string(), v.regex(/^\d{4}$/)),
   monthly_limit: v.number(),
+  status: v.literal("ACTIVE"),
+  type: v.literal("Virtual"),
+  weekly_limit: v.number(),
 });
 
 const PANResponse = v.object({ url: v.pipe(v.string(), v.url()) });

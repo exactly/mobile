@@ -8,32 +8,32 @@ export const cardStatus = pgEnum("card_status", ["ACTIVE", "FROZEN", "DELETED"])
 export const credentials = pgTable(
   "credentials",
   {
-    id: text("id").primaryKey(),
-    publicKey: bytea("public_key").notNull(),
-    factory: text("factory").notNull(),
     account: text("account").notNull(),
-    transports: text("transports").array(),
     counter: integer("counter").notNull().default(0),
+    factory: text("factory").notNull(),
+    id: text("id").primaryKey(),
     kycId: text("kyc_id"),
+    publicKey: bytea("public_key").notNull(),
+    transports: text("transports").array(),
   },
   (table) => ({ accountIndex: uniqueIndex("account_index").on(table.account) }),
 );
 
 export const cards = pgTable("cards", {
-  id: text("id").primaryKey(),
   credentialId: text("credential_id")
     .references(() => credentials.id)
     .notNull(),
-  status: cardStatus("status").notNull().default("ACTIVE"),
+  id: text("id").primaryKey(),
   lastFour: text("last_four").notNull(),
+  status: cardStatus("status").notNull().default("ACTIVE"),
 });
 
 export const transactions = pgTable("transactions", {
-  id: text("id").primaryKey(),
   cardId: text("card_id")
     .references(() => cards.id)
     .notNull(),
   hash: text("hash").notNull(),
+  id: text("id").primaryKey(),
   payload: jsonb("payload").notNull(),
 });
 

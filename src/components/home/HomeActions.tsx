@@ -7,29 +7,29 @@ import View from "../shared/View";
 
 export default function HomeActions() {
   return (
-    <View flexDirection="row" display="flex" gap="$s4" justifyContent="center" alignItems="center">
+    <View alignItems="center" display="flex" flexDirection="row" gap="$s4" justifyContent="center">
       <Button
+        backgroundColor="$interactiveBaseBrandDefault"
+        color="$interactiveOnBaseBrandDefault"
+        iconAfter={<ArrowDownToLine color="$interactiveOnBaseBrandDefault" />}
         main
-        spaced
         onPress={() => {
           router.push("/add-funds/add-crypto");
         }}
-        iconAfter={<ArrowDownToLine color="$interactiveOnBaseBrandDefault" />}
-        backgroundColor="$interactiveBaseBrandDefault"
-        color="$interactiveOnBaseBrandDefault"
+        spaced
         {...contained}
       >
         Add funds
       </Button>
       <Button
+        backgroundColor="$interactiveBaseBrandSoftDefault"
+        color="$interactiveOnBaseBrandSoft"
+        iconAfter={<ArrowUpRight color="$interactiveOnBaseBrandSoft" />}
         main
-        spaced
         onPress={() => {
           router.push("/send-funds");
         }}
-        iconAfter={<ArrowUpRight color="$interactiveOnBaseBrandSoft" />}
-        backgroundColor="$interactiveBaseBrandSoftDefault"
-        color="$interactiveOnBaseBrandSoft"
+        spaced
         {...outlined}
       >
         Send

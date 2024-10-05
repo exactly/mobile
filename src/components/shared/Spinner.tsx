@@ -14,16 +14,16 @@ export default function Spinner() {
   });
   return (
     <AnimatedView
+      alignItems="center"
       backgroundColor="$backgroundStrong"
-      width={ms(88)}
+      borderRadius="$r_0"
       height={ms(88)}
       justifyContent="center"
-      alignItems="center"
-      borderRadius="$r_0"
       padding="$5"
       style={rStyle}
+      width={ms(88)}
     >
-      <Loader size={ms(56)} color="$uiBrandSecondary" />
+      <Loader color="$uiBrandSecondary" size={ms(56)} />
     </AnimatedView>
   );
 }

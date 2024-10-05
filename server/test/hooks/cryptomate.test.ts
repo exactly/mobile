@@ -19,19 +19,19 @@ const appClient = testClient(app);
 const authorization = {
   header: { "x-webhook-key": "cryptomate" },
   json: {
-    event_type: "AUTHORIZATION",
-    status: "PENDING",
-    product: "CARDS",
-    operation_id: "op",
     data: {
+      bill_amount: 0.01,
       bill_currency_code: "USD",
       bill_currency_number: "840",
-      bill_amount: 0.01,
       card_id: "card",
       created_at: new Date().toISOString(),
       metadata: { account: zeroAddress },
       signature: "0x",
     },
+    event_type: "AUTHORIZATION",
+    operation_id: "op",
+    product: "CARDS",
+    status: "PENDING",
   },
 } as const;
 
@@ -56,25 +56,25 @@ describe("authorization", () => {
 
   beforeAll(async () => {
     await keeper.writeContract({
+      abi: [{ inputs: [{ type: "address" }, { type: "uint256" }], name: "mint", type: "function" }],
       address: inject("USDC"),
-      abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
-      functionName: "mint",
       args: [account, 420e6],
+      functionName: "mint",
     });
     await keeper.writeContract({
-      address: inject("ExaAccountFactory"),
       abi: exaAccountFactoryAbi,
-      functionName: "createAccount",
+      address: inject("ExaAccountFactory"),
       args: [0n, [{ x: hexToBigInt(owner.address), y: 0n }]],
+      functionName: "createAccount",
     });
   });
 
   it("authorizes", async () => {
     await keeper.writeContract({
-      address: account,
       abi: exaPluginAbi,
-      functionName: "poke",
+      address: account,
       args: [inject("MarketUSDC")],
+      functionName: "poke",
     });
 
     const response = await appClient.index.$post({

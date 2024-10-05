@@ -2,6 +2,7 @@ import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ViewProperties } from "./View";
+
 import View from "./View";
 
 interface SafeViewProperties extends ViewProperties {
@@ -9,14 +10,14 @@ interface SafeViewProperties extends ViewProperties {
 }
 
 export default function SafeView({ children, ...rest }: SafeViewProperties) {
-  const { top, bottom, left, right } = useSafeAreaInsets();
+  const { bottom, left, right, top } = useSafeAreaInsets();
   return (
     <View
-      paddingTop={top}
+      backgroundColor="$backgroundMild"
       paddingBottom={bottom}
       paddingLeft={left}
       paddingRight={right}
-      backgroundColor="$backgroundMild"
+      paddingTop={top}
       {...rest}
     >
       {children}

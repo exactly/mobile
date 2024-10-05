@@ -15,20 +15,20 @@ export default function Beta() {
   const { canGoBack } = useRouter();
   return (
     <SafeView fullScreen tab>
-      <View fullScreen padded gap="$s5">
-        <View flexDirection="row" gap="$s3" justifyContent="space-around" alignItems="center">
-          <View position="absolute" left={0}>
+      <View fullScreen gap="$s5" padded>
+        <View alignItems="center" flexDirection="row" gap="$s3" justifyContent="space-around">
+          <View left={0} position="absolute">
             {canGoBack() && (
               <Pressable
                 onPress={() => {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft color="$uiNeutralPrimary" size={ms(24)} />
               </Pressable>
             )}
           </View>
-          <Text emphasized subHeadline color="$uiNeutralPrimary">
+          <Text color="$uiNeutralPrimary" emphasized subHeadline>
             Beta
           </Text>
         </View>

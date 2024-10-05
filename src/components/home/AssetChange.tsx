@@ -1,38 +1,38 @@
 import { Minus } from "@tamagui/lucide-icons";
 import React from "react";
-import { View, Text } from "tamagui";
+import { Text, View } from "tamagui";
 
 export default function AssetChange() {
   return (
-    <View display="flex" flexDirection="row" alignItems="center" justifyContent="center" gap={5}>
-      <Minus size={20} color="$uiNeutralSecondary" fontWeight="bold" />
+    <View alignItems="center" display="flex" flexDirection="row" gap={5} justifyContent="center">
+      <Minus color="$uiNeutralSecondary" fontWeight="bold" size={20} />
       <Text
-        fontSize={15}
-        fontFamily="$mono"
-        lineHeight={21}
-        fontWeight="bold"
-        textAlign="center"
         color="$uiNeutralSecondary"
+        fontFamily="$mono"
+        fontSize={15}
+        fontWeight="bold"
+        lineHeight={21}
+        textAlign="center"
       >
         $0
       </Text>
       <Text
-        fontSize={15}
-        fontFamily="$mono"
-        lineHeight={21}
-        fontWeight="bold"
-        textAlign="center"
         color="$uiNeutralSecondary"
+        fontFamily="$mono"
+        fontSize={15}
+        fontWeight="bold"
+        lineHeight={21}
+        textAlign="center"
       >
         (0%)
       </Text>
       <Text
-        fontSize={15}
-        fontFamily="$mono"
-        lineHeight={21}
-        fontWeight="bold"
-        textAlign="center"
         color="$uiNeutralSecondary"
+        fontFamily="$mono"
+        fontSize={15}
+        fontWeight="bold"
+        lineHeight={21}
+        textAlign="center"
       >
         7D
       </Text>

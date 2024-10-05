@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
 import { router, useRouter } from "expo-router";
 import React from "react";
-import { Alert, Pressable, type ColorSchemeName } from "react-native";
+import { Alert, type ColorSchemeName, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, XStack } from "tamagui";
 
@@ -25,39 +25,39 @@ export default function Settings() {
 
   return (
     <SafeView fullScreen tab>
-      <View fullScreen padded gap="$s5">
-        <View flexDirection="row" gap="$s3" justifyContent="space-around" alignItems="center">
-          <View position="absolute" left={0}>
+      <View fullScreen gap="$s5" padded>
+        <View alignItems="center" flexDirection="row" gap="$s3" justifyContent="space-around">
+          <View left={0} position="absolute">
             {canGoBack() && (
               <Pressable
                 onPress={() => {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft color="$uiNeutralPrimary" size={ms(24)} />
               </Pressable>
             )}
           </View>
-          <Text emphasized subHeadline color="$uiNeutralPrimary">
+          <Text color="$uiNeutralPrimary" emphasized subHeadline>
             Settings
           </Text>
         </View>
         <ScrollView flex={1}>
           <View gap="$s4_5">
-            <View borderRadius="$r3" borderWidth={1} borderColor="$borderNeutralSoft">
+            <View borderColor="$borderNeutralSoft" borderRadius="$r3" borderWidth={1}>
               <Pressable
                 onPress={() => {
                   router.push("/settings/theme");
                 }}
               >
-                <XStack justifyContent="space-between" alignItems="center" padding="$s4">
-                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                <XStack alignItems="center" justifyContent="space-between" padding="$s4">
+                  <XStack alignItems="center" gap="$s3" justifyContent="flex-start">
                     <SunMoon color="$backgroundBrand" />
-                    <Text subHeadline color="$uiNeutralPrimary">
+                    <Text color="$uiNeutralPrimary" subHeadline>
                       Theme
                     </Text>
                   </XStack>
-                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                  <XStack alignItems="center" gap="$s3" justifyContent="flex-start">
                     <Text caption color="$uiBrandSecondary">
                       {theme ? theme.charAt(0).toUpperCase() + theme.slice(1) : "System"}
                     </Text>
@@ -71,24 +71,24 @@ export default function Settings() {
                   router.push("/settings/beta");
                 }}
               >
-                <XStack justifyContent="space-between" alignItems="center" padding="$s4">
-                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                <XStack alignItems="center" justifyContent="space-between" padding="$s4">
+                  <XStack alignItems="center" gap="$s3" justifyContent="flex-start">
                     <FlaskConical color="$backgroundBrand" />
-                    <Text subHeadline color="$uiNeutralPrimary">
+                    <Text color="$uiNeutralPrimary" subHeadline>
                       Beta
                     </Text>
                   </XStack>
-                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                  <XStack alignItems="center" gap="$s3" justifyContent="flex-start">
                     <ChevronRight color="$iconSecondary" />
                   </XStack>
                 </XStack>
               </Pressable>
               <Separator borderColor="$borderNeutralSoft" />
               <Pressable onPress={handleSupport}>
-                <XStack justifyContent="space-between" alignItems="center" padding="$s4">
-                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                <XStack alignItems="center" justifyContent="space-between" padding="$s4">
+                  <XStack alignItems="center" gap="$s3" justifyContent="flex-start">
                     <HelpCircle color="$backgroundBrand" />
-                    <Text subHeadline color="$uiNeutralPrimary">
+                    <Text color="$uiNeutralPrimary" subHeadline>
                       Support
                     </Text>
                   </XStack>
@@ -103,7 +103,7 @@ export default function Settings() {
                 Alert.alert("Copied", "App version has been copied to the clipboard.");
               }}
             >
-              <Text footnote color="$uiNeutralSecondary" textAlign="center">
+              <Text color="$uiNeutralSecondary" footnote textAlign="center">
                 {release}
               </Text>
             </Pressable>

@@ -1,5 +1,6 @@
 import type * as IntercomNative from "@intercom/intercom-react-native";
 import type * as IntercomWeb from "@intercom/messenger-js-sdk";
+
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 

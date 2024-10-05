@@ -1,27 +1,28 @@
 import React from "react";
 import { ScrollView } from "tamagui";
 
-import Details from "./Details";
-import Values from "./Values";
 import type { WithdrawDetails } from "./Withdraw";
+
 import Spinner from "../shared/Spinner";
 import Text from "../shared/Text";
 import View from "../shared/View";
+import Details from "./Details";
+import Values from "./Values";
 
 interface PendingProperties {
   details: WithdrawDetails;
   hash?: string;
 }
 
-export default function Pending({ details: { assetName, amount, usdValue }, hash }: PendingProperties) {
+export default function Pending({ details: { amount, assetName, usdValue }, hash }: PendingProperties) {
   return (
     <View>
       <ScrollView>
         <View borderBottomColor="$borderNeutralSoft" borderBottomWidth={1}>
-          <View padded gap="$s5">
-            <View gap="$s4" alignItems="center">
+          <View gap="$s5" padded>
+            <View alignItems="center" gap="$s4">
               <Spinner />
-              <Text title3 color="$uiNeutralSecondary">
+              <Text color="$uiNeutralSecondary" title3>
                 Sending...
               </Text>
             </View>

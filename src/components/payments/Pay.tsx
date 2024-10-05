@@ -23,14 +23,14 @@ export default function PaymentModal() {
   const { account, market: USDCMarket, markets, queryKey: marketAccount } = useMarketAccount(marketUSDCAddress);
   const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
 
-  const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
+  const usdDue = new Map<bigint, { position: bigint; previewValue: bigint }>();
   if (USDCMarket) {
-    const { fixedBorrowPositions, usdPrice, decimals } = USDCMarket;
-    for (const { maturity, previewValue, position } of fixedBorrowPositions) {
+    const { decimals, fixedBorrowPositions, usdPrice } = USDCMarket;
+    for (const { maturity, position, previewValue } of fixedBorrowPositions) {
       if (!previewValue) continue;
       const preview = (previewValue * usdPrice) / 10n ** BigInt(decimals);
       const positionValue = ((position.principal + position.fee) * usdPrice) / 10n ** BigInt(decimals);
-      usdDue.set(maturity, { previewValue: preview, position: positionValue });
+      usdDue.set(maturity, { position: positionValue, previewValue: preview });
     }
   }
 
@@ -40,7 +40,7 @@ export default function PaymentModal() {
       symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
-    .filter(({ floatingDepositAssets, assetSymbol }) => floatingDepositAssets > 0 && assetSymbol !== "WBTC"); // TODO remove this limitation when new swap pool is available
+    .filter(({ assetSymbol, floatingDepositAssets }) => floatingDepositAssets > 0 && assetSymbol !== "WBTC"); // TODO remove this limitation when new swap pool is available
 
   const maturity = usdDue.keys().next().value;
 
@@ -49,10 +49,10 @@ export default function PaymentModal() {
     error: repayError,
     isPending: isSimulatingRepay,
   } = useSimulateContract({
-    address: account,
-    functionName: "repay",
-    args: [maturity ?? 0n],
     abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi],
+    address: account,
+    args: [maturity ?? 0n],
+    functionName: "repay",
     query: { enabled: !!account && !!USDCMarket },
   });
   const {
@@ -60,16 +60,16 @@ export default function PaymentModal() {
     error: crossRepayError,
     isPending: isSimulatingCrossRepay,
   } = useSimulateContract({
+    abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi, { name: "InsufficientOutputAmount", type: "error" }],
     address: account,
-    functionName: "crossRepay",
     args: [maturity ?? 0n, selectedMarket ?? zeroAddress],
-    abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi, { type: "error", name: "InsufficientOutputAmount" }],
+    functionName: "crossRepay",
     query: {
       enabled: !!maturity && !!account && !!selectedMarket && selectedMarket !== parse(Address, marketUSDCAddress),
     },
   });
 
-  const { writeContract: repay, isPending: isRepaying } = useWriteContract({
+  const { isPending: isRepaying, writeContract: repay } = useWriteContract({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: marketAccount }).catch(handleError);
@@ -77,7 +77,7 @@ export default function PaymentModal() {
       },
     },
   });
-  const { writeContract: crossRepay, isPending: isCrossRepaying } = useWriteContract({
+  const { isPending: isCrossRepaying, writeContract: crossRepay } = useWriteContract({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: marketAccount }).catch(handleError);
@@ -106,8 +106,8 @@ export default function PaymentModal() {
     }
   }, [isUSDCSelected, repaySimulation, crossRepaySimulation, repay, crossRepay]);
   return (
-    <SafeView fullScreen backgroundColor="$backgroundSoft">
-      <View fullScreen padded gap="$s5">
+    <SafeView backgroundColor="$backgroundSoft" fullScreen>
+      <View fullScreen gap="$s5" padded>
         <View alignSelf="flex-end">
           <Pressable
             onPress={() => {
@@ -126,7 +126,7 @@ export default function PaymentModal() {
             </View>
 
             <View>
-              <AssetSelector positions={positions} onSubmit={handleAssetSelect} />
+              <AssetSelector onSubmit={handleAssetSelect} positions={positions} />
             </View>
             <View>
               {currentError && (
@@ -138,11 +138,8 @@ export default function PaymentModal() {
             <View>
               <Button
                 alignSelf="flex-end"
-                onPress={handlePayment}
                 contained
                 disabled={!currentSimulation || !!currentError || isPaying || isSimulating}
-                main
-                spaced
                 fullwidth
                 iconAfter={
                   isPaying || isSimulating ? (
@@ -157,6 +154,9 @@ export default function PaymentModal() {
                     />
                   )
                 }
+                main
+                onPress={handlePayment}
+                spaced
               >
                 Pay
               </Button>

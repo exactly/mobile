@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { Platform } from "react-native";
 import type * as OneSignalNative from "react-native-onesignal";
 import type * as OneSignalWeb from "react-onesignal";
+
+import { useEffect, useState } from "react";
+import { Platform } from "react-native";
 
 import handleError from "./handleError";
 
@@ -13,7 +14,7 @@ const { initialization, login, logout } = (
         const { default: OneSignal } = require("react-onesignal") as typeof OneSignalWeb; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
         return {
           initialization: appId
-            ? OneSignal.init({ appId, allowLocalhostAsSecureOrigin: __DEV__ }).catch(handleError)
+            ? OneSignal.init({ allowLocalhostAsSecureOrigin: __DEV__, appId }).catch(handleError)
             : Promise.resolve(),
           login: (userId: string) => OneSignal.login(userId),
           logout: () => OneSignal.logout(),

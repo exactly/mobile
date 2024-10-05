@@ -2,13 +2,13 @@ const { extraErrorDataIntegration, init, sessionTimingIntegration } = require("@
 const { nodeProfilingIntegration } = require("@sentry/profiling-node");
 
 init({
-  release: require("@exactly/common/generated/release"),
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV === "production" ? "production" : "development",
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
-  profilesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
   attachStacktrace: true,
   autoSessionTracking: true,
-  normalizeDepth: 10,
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  environment: process.env.NODE_ENV === "production" ? "production" : "development",
   integrations: [nodeProfilingIntegration(), extraErrorDataIntegration({ depth: 10 }), sessionTimingIntegration()],
+  normalizeDepth: 10,
+  profilesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
+  release: require("@exactly/common/generated/release"),
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
 });

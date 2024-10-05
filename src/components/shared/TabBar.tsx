@@ -1,31 +1,32 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import type { NavigationRoute } from "@sentry/react-native/dist/js/tracing/reactnavigation";
+
 import React, { useCallback } from "react";
 import { ms } from "react-native-size-matters";
-import { ToggleGroup, ButtonIcon } from "tamagui";
+import { ButtonIcon, ToggleGroup } from "tamagui";
 
 import SafeView from "./SafeView";
 import Text from "./Text";
 
-export default function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export default function TabBar({ descriptors, navigation, state }: BottomTabBarProps) {
   const onPress = useCallback(
     (route: NavigationRoute, focused: boolean) => {
-      const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+      const event = navigation.emit({ canPreventDefault: true, target: route.key, type: "tabPress" });
       if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
     },
     [navigation],
   );
   return (
-    <SafeView flexDirection="row" width="100%" paddingTop={0} backgroundColor="$backgroundSoft" justifyContent="center">
+    <SafeView backgroundColor="$backgroundSoft" flexDirection="row" justifyContent="center" paddingTop={0} width="100%">
       <ToggleGroup
         borderRadius={0}
         borderTopColor="$borderNeutralSoft"
         borderTopWidth={1}
+        flex={1}
+        flexDirection="row"
+        justifyContent="space-evenly"
         type="single"
         unstyled
-        justifyContent="space-evenly"
-        flexDirection="row"
-        flex={1}
       >
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key] ?? { options: undefined };
@@ -35,20 +36,20 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
           const focused = state.index === index;
           return (
             <ToggleGroup.Item
-              key={route.key}
+              backgroundColor="transparent"
               borderWidth={0}
+              key={route.key}
               onPress={() => {
                 onPress(route, focused);
               }}
               paddingTop="$s3"
               role="button"
               value="center"
-              backgroundColor="transparent"
             >
               <ButtonIcon>
-                {icon?.({ size: ms(24), focused, color: focused ? "$uiBrandSecondary" : "$uiNeutralSecondary" })}
+                {icon?.({ color: focused ? "$uiBrandSecondary" : "$uiNeutralSecondary", focused, size: ms(24) })}
               </ButtonIcon>
-              <Text textAlign="center" color={focused ? "$uiBrandSecondary" : "$uiNeutralSecondary"}>
+              <Text color={focused ? "$uiBrandSecondary" : "$uiNeutralSecondary"} textAlign="center">
                 {label}
               </Text>
             </ToggleGroup.Item>

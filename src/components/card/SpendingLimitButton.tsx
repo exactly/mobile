@@ -6,42 +6,42 @@ import Text from "../shared/Text";
 
 interface SpendingLimitButtonProperties {
   amount?: number;
-  title: string;
   limit: number;
+  title: string;
 }
 
-export default function SpendingLimitButton({ title, limit }: SpendingLimitButtonProperties) {
+export default function SpendingLimitButton({ limit, title }: SpendingLimitButtonProperties) {
   return (
     <View
-      flexDirection="row"
-      flex={1}
+      alignItems="center"
       backgroundColor="$backgroundBrandSoft"
       borderRadius="$r3"
+      flex={1}
+      flexDirection="row"
       height={ms(46)}
-      alignItems="center"
     >
       <View
-        position="absolute"
-        width="0%"
-        height={ms(46)}
         backgroundColor="$interactiveBaseBrandDefault"
+        borderBottomRightRadius="$r0"
         borderRadius="$r3"
         borderTopRightRadius="$r0"
-        borderBottomRightRadius="$r0"
+        height={ms(46)}
         opacity={0.1}
+        position="absolute"
+        width="0%"
       />
 
-      <View flexDirection="row" justifyContent="space-between" flex={1} padding="$s3">
-        <View flexDirection="row" gap={ms(5)} alignItems="center">
+      <View flex={1} flexDirection="row" justifyContent="space-between" padding="$s3">
+        <View alignItems="center" flexDirection="row" gap={ms(5)}>
           <Text fontSize={ms(15)}>{title}</Text>
         </View>
-        <View flexDirection="row" justifyContent="space-around" alignItems="center" gap={ms(5)}>
-          <Text sensitive color="$uiBrandSecondary" fontSize={ms(15)}>
+        <View alignItems="center" flexDirection="row" gap={ms(5)} justifyContent="space-around">
+          <Text color="$uiBrandSecondary" fontSize={ms(15)} sensitive>
             {limit.toLocaleString(undefined, {
-              style: "currency",
               currency: "USD",
               currencyDisplay: "narrowSymbol",
               maximumFractionDigits: 0,
+              style: "currency",
             })}
           </Text>
         </View>

@@ -16,8 +16,8 @@ export default function CreditLimit() {
   const { address } = useAccount();
   const { presentContent } = useIntercom();
   const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
     account: address,
+    address: previewerAddress,
     args: [address ?? zeroAddress],
   });
   let creditLimit = 0n;
@@ -27,33 +27,33 @@ export default function CreditLimit() {
     creditLimit = (usdcMarket.maxBorrowAssets * usdcMarket.usdPrice) / 10n ** BigInt(usdcMarket.decimals);
   }
   return (
-    <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s4">
-      <View flexDirection="row" gap="$s3" alignItems="center" justifyContent="space-between">
-        <Text emphasized headline flex={1}>
+    <View backgroundColor="$backgroundSoft" borderRadius="$r3" gap="$s4" padding="$s4">
+      <View alignItems="center" flexDirection="row" gap="$s3" justifyContent="space-between">
+        <Text emphasized flex={1} headline>
           Credit card limit
         </Text>
       </View>
       <View gap="$s4">
         <View gap="$s3">
-          <Text sensitive color="$uiNeutralPrimary" fontFamily="$mono" fontSize={ms(30)}>
+          <Text color="$uiNeutralPrimary" fontFamily="$mono" fontSize={ms(30)} sensitive>
             {(Number(creditLimit) / 1e18).toLocaleString(undefined, {
-              style: "currency",
               currency: "USD",
               currencyDisplay: "narrowSymbol",
+              style: "currency",
             })}
           </Text>
           <Separator borderColor="$borderNeutralSoft" />
         </View>
 
         <XStack
-          justifyContent="space-between"
           alignItems="center"
           hitSlop={ms(15)}
+          justifyContent="space-between"
           onPress={() => {
             presentContent("9467331").catch(handleError);
           }}
         >
-          <Text secondary caption>
+          <Text caption secondary>
             Learn more about your credit card limit
           </Text>
           <ArrowRight color="$uiNeutralSecondary" size={ms(16)} />

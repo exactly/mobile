@@ -29,17 +29,17 @@ if (!exaPlugin || !factory || !issuerChecker) throw new Error("missing contracts
 
 export default defineConfig([
   {
-    out: "src/generated/contracts.ts",
     contracts: [
-      { name: "Auditor", abi: auditor.abi },
-      { name: "Market", abi: marketWETH.abi },
-      { name: "Previewer", abi: previewer.abi },
-      { name: "RatePreviewer", abi: ratePreviewer.abi },
+      { abi: auditor.abi, name: "Auditor" },
+      { abi: marketWETH.abi, name: "Market" },
+      { abi: previewer.abi, name: "Previewer" },
+      { abi: ratePreviewer.abi, name: "RatePreviewer" },
     ],
+    out: "src/generated/contracts.ts",
     plugins: [
       foundry({
-        project: "contracts",
         include: ["ExaPlugin.sol/ExaPlugin.json", "UpgradeableModularAccount.sol/UpgradeableModularAccount.json"],
+        project: "contracts",
       }),
       react(),
     ],
@@ -59,26 +59,26 @@ export default defineConfig([
         weth: weth.address,
       }),
       foundry({
-        project: "contracts",
         include: [
           "ExaAccountFactory.sol/ExaAccountFactory.json",
           "ExaPlugin.sol/ExaPlugin.json",
           "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
         ],
+        project: "contracts",
       }),
       chain(),
     ],
   },
   {
-    out: "server/generated/contracts.ts",
     contracts: [
-      { name: "Auditor", abi: auditor.abi },
-      { name: "Market", abi: marketWETH.abi },
-      { name: "Previewer", abi: previewer.abi },
+      { abi: auditor.abi, name: "Auditor" },
+      { abi: marketWETH.abi, name: "Market" },
+      { abi: previewer.abi, name: "Previewer" },
     ],
+    out: "server/generated/contracts.ts",
     plugins: [
       addresses({ issuerChecker: issuerChecker.contractAddress }),
-      foundry({ project: "contracts", include: ["IssuerChecker.sol/IssuerChecker.json"] }),
+      foundry({ include: ["IssuerChecker.sol/IssuerChecker.json"], project: "contracts" }),
     ],
   },
 ]);
@@ -106,7 +106,7 @@ function loadDeployment(contract: string) {
       `node_modules/@exactly/protocol/deployments/${chainId === optimism.id ? "optimism" : "op-sepolia"}/${contract}.json`,
       "utf8",
     ),
-  ) as { address: string; abi: Abi };
+  ) as { abi: Abi; address: string };
 }
 
 function loadBroadcast(script: string) {

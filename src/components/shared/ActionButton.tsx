@@ -1,5 +1,5 @@
 import React from "react";
-import { Spinner, type ButtonProps } from "tamagui";
+import { type ButtonProps, Spinner } from "tamagui";
 
 import Button from "./Button";
 

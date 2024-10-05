@@ -8,71 +8,71 @@ import { ScrollView, ToggleGroup, XStack } from "tamagui";
 import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
-import { ThemeContext, type AppTheme } from "../context/ThemeProvider";
+import { type AppTheme, ThemeContext } from "../context/ThemeProvider";
 
 const options: {
+  Icon: typeof Sun;
   name: string;
   value: AppTheme;
-  Icon: typeof Sun;
 }[] = [
-  { name: "Light", value: "light", Icon: Sun },
-  { name: "Dark", value: "dark", Icon: Moon },
-  { name: "System", value: "system", Icon: Smartphone },
+  { Icon: Sun, name: "Light", value: "light" },
+  { Icon: Moon, name: "Dark", value: "dark" },
+  { Icon: Smartphone, name: "System", value: "system" },
 ];
 
 export default function Theme() {
   const { canGoBack } = useRouter();
-  const { theme, setTheme } = useContext(ThemeContext);
+  const { setTheme, theme } = useContext(ThemeContext);
   return (
     <SafeView fullScreen tab>
-      <View fullScreen padded gap="$s5">
-        <View flexDirection="row" gap="$s3" justifyContent="space-around" alignItems="center">
-          <View position="absolute" left={0}>
+      <View fullScreen gap="$s5" padded>
+        <View alignItems="center" flexDirection="row" gap="$s3" justifyContent="space-around">
+          <View left={0} position="absolute">
             {canGoBack() && (
               <Pressable
                 onPress={() => {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft color="$uiNeutralPrimary" size={ms(24)} />
               </Pressable>
             )}
           </View>
-          <Text emphasized subHeadline color="$uiNeutralPrimary">
+          <Text color="$uiNeutralPrimary" emphasized subHeadline>
             Theme
           </Text>
         </View>
         <ScrollView flex={1}>
-          <ToggleGroup unstyled type="single" flexDirection="column" justifyContent="flex-start">
-            {options.map(({ name, value, Icon }, index) => {
+          <ToggleGroup flexDirection="column" justifyContent="flex-start" type="single" unstyled>
+            {options.map(({ Icon, name, value }, index) => {
               const active = theme === value;
               return (
                 <ToggleGroup.Item
-                  disabled={active}
-                  unstyled
-                  key={index}
-                  role="button"
-                  value="center"
                   backgroundColor="transparent"
                   borderWidth={0}
+                  disabled={active}
+                  key={index}
                   onPress={() => {
                     setTheme(value);
                   }}
+                  role="button"
+                  unstyled
+                  value="center"
                 >
                   <XStack
+                    alignItems="center"
+                    backgroundColor={active ? "$interactiveBaseBrandSoftDefault" : "transparent"}
                     borderRadius="$r3"
                     justifyContent="space-between"
-                    alignItems="center"
                     padding="$s4"
-                    backgroundColor={active ? "$interactiveBaseBrandSoftDefault" : "transparent"}
                   >
                     <XStack gap="$s3">
-                      <Icon size={ms(24)} color={active ? "$interactiveOnBaseBrandSoft" : "$uiNeutralPrimary"} />
-                      <Text subHeadline color={active ? "$interactiveOnBaseBrandSoft" : "$uiNeutralPrimary"}>
+                      <Icon color={active ? "$interactiveOnBaseBrandSoft" : "$uiNeutralPrimary"} size={ms(24)} />
+                      <Text color={active ? "$interactiveOnBaseBrandSoft" : "$uiNeutralPrimary"} subHeadline>
                         {name}
                       </Text>
                     </XStack>
-                    {active && <CheckCircle2 size={ms(24)} color="$interactiveOnBaseBrandSoft" />}
+                    {active && <CheckCircle2 color="$interactiveOnBaseBrandSoft" size={ms(24)} />}
                   </XStack>
                 </ToggleGroup.Item>
               );

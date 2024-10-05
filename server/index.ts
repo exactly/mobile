@@ -1,4 +1,5 @@
 import type { Base64URL } from "@exactly/common/validation";
+
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { sentry } from "@hono/sentry";
@@ -22,7 +23,7 @@ import appOrigin from "./utils/appOrigin";
 const app = new Hono();
 app.use(sentry());
 app.use(trimTrailingSlash());
-app.use("/api/*", cors({ origin: appOrigin, credentials: true }));
+app.use("/api/*", cors({ credentials: true, origin: appOrigin }));
 app.use("/.well-known/*", serveStatic());
 
 const api = app

@@ -28,7 +28,7 @@ function about() {
 // TODO remove limitation for next release
 const supportedAssets = Object.entries(assetLogos)
   .filter(([symbol]) => symbol !== "ETH" && symbol !== "USDC.e" && symbol !== "DAI")
-  .map(([symbol, image]) => ({ symbol, image }));
+  .map(([symbol, image]) => ({ image, symbol }));
 
 export default function AddCrypto() {
   const { canGoBack } = router;
@@ -44,15 +44,15 @@ export default function AddCrypto() {
   }, [address]);
   return (
     <SafeView fullScreen>
-      <View gap={ms(20)} fullScreen padded>
+      <View fullScreen gap={ms(20)} padded>
         <View gap={ms(20)}>
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+          <View alignItems="center" flexDirection="row" gap={ms(10)} justifyContent="space-between">
             {canGoBack() && (
               <Pressable onPress={back}>
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft color="$uiNeutralPrimary" size={ms(24)} />
               </Pressable>
             )}
-            <View flexDirection="row" alignItems="center">
+            <View alignItems="center" flexDirection="row">
               <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
                 {`Add Funds / `}
               </Text>
@@ -66,57 +66,57 @@ export default function AddCrypto() {
           </View>
         </View>
         <ScrollView flex={1}>
-          <View gap={ms(20)} flex={1}>
+          <View flex={1} gap={ms(20)}>
             <View
+              borderBottomColor="$borderNeutralSoft"
+              borderBottomWidth={1}
               flex={1}
               gap={ms(10)}
-              borderBottomWidth={1}
-              borderBottomColor="$borderNeutralSoft"
               paddingBottom={ms(20)}
             >
-              <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
+              <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
                 Your {chain.name} address
               </Text>
-              <View flexDirection="row" justifyContent="space-between" alignItems="center">
+              <View alignItems="center" flexDirection="row" justifyContent="space-between">
                 <View>
                   {address && (
-                    <Text fontSize={ms(14)} color="$uiNeutralSecondary" fontWeight="bold">
+                    <Text color="$uiNeutralSecondary" fontSize={ms(14)} fontWeight="bold">
                       {shortenAddress(address, 10, 10)}
                     </Text>
                   )}
                 </View>
-                <View gap={ms(10)} flexDirection="row">
-                  <Pressable onPress={copy} hitSlop={ms(15)}>
-                    <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
+                <View flexDirection="row" gap={ms(10)}>
+                  <Pressable hitSlop={ms(15)} onPress={copy}>
+                    <Files color="$interactiveBaseBrandDefault" size={ms(24)} />
                   </Pressable>
                   <Pressable
+                    hitSlop={ms(15)}
                     onPress={() => {
                       share().catch(handleError);
                     }}
-                    hitSlop={ms(15)}
                   >
-                    <ShareIcon size={ms(24)} color="$interactiveBaseBrandDefault" />
+                    <ShareIcon color="$interactiveBaseBrandDefault" size={ms(24)} />
                   </Pressable>
                 </View>
               </View>
             </View>
             <View
+              borderBottomColor="$borderNeutralSoft"
+              borderBottomWidth={1}
               flex={1}
               gap="$s4"
-              borderBottomWidth={1}
-              borderBottomColor="$borderNeutralSoft"
               paddingBottom={ms(20)}
             >
               <View flexDirection="row" justifyContent="space-between">
-                <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
+                <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
                   Supported Assets
                 </Text>
               </View>
               {supportedAssets.map((asset, index) => {
                 return (
-                  <View key={index} flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-                    <View flexDirection="row" alignItems="center" gap={ms(10)}>
-                      <AssetLogo uri={asset.image} width={ms(32)} height={ms(32)} />
+                  <View alignItems="center" flexDirection="row" gap={ms(10)} justifyContent="space-between" key={index}>
+                    <View alignItems="center" flexDirection="row" gap={ms(10)}>
+                      <AssetLogo height={ms(32)} uri={asset.image} width={ms(32)} />
                       <Text fontSize={ms(18)} fontWeight="bold">
                         {asset.symbol}
                       </Text>
@@ -126,17 +126,17 @@ export default function AddCrypto() {
               })}
             </View>
             <View flex={1} gap={ms(15)}>
-              <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
+              <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
                 Network
               </Text>
               <View
+                alignItems="center"
+                alignSelf="stretch"
                 flexDirection="row"
                 gap={ms(10)}
                 justifyContent="space-between"
-                alignItems="center"
-                alignSelf="stretch"
               >
-                <View flexDirection="row" alignItems="center" gap={ms(10)} flexGrow={1} maxHeight={ms(32)}>
+                <View alignItems="center" flexDirection="row" flexGrow={1} gap={ms(10)} maxHeight={ms(32)}>
                   <OptimismImage height={ms(32)} width={ms(32)} />
                   <Text fontSize={ms(18)} fontWeight="bold">
                     {chain.name}
@@ -150,8 +150,8 @@ export default function AddCrypto() {
                   <Text
                     color="$uiBrandSecondary"
                     fontSize={ms(13)}
-                    lineHeight={ms(16)}
                     fontWeight="bold"
+                    lineHeight={ms(16)}
                     onPress={about}
                   >
                     &nbsp;Learn more about adding funds.

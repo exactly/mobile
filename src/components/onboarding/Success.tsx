@@ -3,8 +3,8 @@ import { router } from "expo-router";
 import React from "react";
 import { StyleSheet } from "react-native";
 
-import AccountCreatedBlob from "../../assets/images/account-created-blob.svg";
 import AccountCreatedImage from "../../assets/images/account-created.svg";
+import AccountCreatedBlob from "../../assets/images/account-created-blob.svg";
 import ActionButton from "../shared/ActionButton";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -12,33 +12,33 @@ import View from "../shared/View";
 
 export default function Success() {
   return (
-    <SafeView fullScreen backgroundColor="$backgroundSoft">
+    <SafeView backgroundColor="$backgroundSoft" fullScreen>
       <View fullScreen padded>
-        <View justifyContent="center" alignItems="center" flexGrow={1} flexShrink={1}>
-          <View width="100%" aspectRatio={1} justifyContent="center" alignItems="center" flexShrink={1}>
-            <View width="100%" height="100%" aspectRatio={1}>
-              <AccountCreatedBlob width="100%" height="100%" />
+        <View alignItems="center" flexGrow={1} flexShrink={1} justifyContent="center">
+          <View alignItems="center" aspectRatio={1} flexShrink={1} justifyContent="center" width="100%">
+            <View aspectRatio={1} height="100%" width="100%">
+              <AccountCreatedBlob height="100%" width="100%" />
             </View>
-            <View width="100%" height="100%" aspectRatio={1} style={StyleSheet.absoluteFill}>
-              <AccountCreatedImage width="100%" height="100%" />
+            <View aspectRatio={1} height="100%" style={StyleSheet.absoluteFill} width="100%">
+              <AccountCreatedImage height="100%" width="100%" />
             </View>
           </View>
           <View gap="$s5" justifyContent="center">
-            <Text emphasized title brand centered>
+            <Text brand centered emphasized title>
               Account created successfully!
             </Text>
           </View>
         </View>
         <View>
-          <View flexDirection="row" alignSelf="stretch">
+          <View alignSelf="stretch" flexDirection="row">
             <ActionButton
-              marginTop="$s4"
+              iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" />}
               marginBottom="$s5"
+              marginTop="$s4"
               onPress={() => {
                 // TODO Implement account setup
                 router.replace("/(app)");
               }}
-              iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" />}
             >
               Start account setup
             </ActionButton>

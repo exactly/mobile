@@ -8,7 +8,7 @@ import publicClient from "./publicClient";
 export default createConfig({
   chains: [chain],
   connectors: [alchemyConnector],
-  transports: { [chain.id]: custom(publicClient) },
-  storage: createStorage({ storage: AsyncStorage }),
   multiInjectedProviderDiscovery: false,
+  storage: createStorage({ storage: AsyncStorage }),
+  transports: { [chain.id]: custom(publicClient) },
 });

@@ -9,7 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
 import React, { useCallback, useState } from "react";
 import { ms } from "react-native-size-matters";
-import { View, Spinner } from "tamagui";
+import { Spinner, View } from "tamagui";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, maxUint256, zeroAddress } from "viem";
 import { optimism } from "viem/chains";
 import { useAccount, useWriteContract } from "wagmi";
@@ -38,8 +38,8 @@ export default function ContractUtils() {
   const { address, chainId } = useAccount();
 
   const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
     account: address,
+    address: previewerAddress,
     args: [address ?? zeroAddress],
   });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
@@ -65,7 +65,7 @@ export default function ContractUtils() {
     query: { enabled: !!address && !!installedPlugins },
   });
 
-  const { writeContract: borrow, data: borrowHash, isPending: isBorrowing } = useWriteContract();
+  const { data: borrowHash, isPending: isBorrowing, writeContract: borrow } = useWriteContract();
 
   const borrowUSDC = useCallback(() => {
     if (!borrowUSDCSimulation) throw new Error("no borrow simulation");
@@ -74,8 +74,8 @@ export default function ContractUtils() {
 
   const {
     data: updatePluginHash,
-    mutateAsync: updatePlugin,
     isPending: isUpdating,
+    mutateAsync: updatePlugin,
   } = useMutation({
     mutationFn: async () => {
       if (!accountClient) throw new Error("no account client");
@@ -85,13 +85,10 @@ export default function ContractUtils() {
       if (!pluginManifest) throw new Error("invalid manifest");
       const hash = await accountClient.sendUserOperation({
         uo: [
-          { target: address, value: 0n, data: encodeFunctionData(uninstallPluginSimulation.request) },
+          { data: encodeFunctionData(uninstallPluginSimulation.request), target: address, value: 0n },
           {
-            target: address,
-            value: 0n,
             data: encodeFunctionData({
               abi: upgradeableModularAccountAbi,
-              functionName: "installPlugin",
               args: [
                 exaPluginAddress,
                 keccak256(
@@ -102,7 +99,10 @@ export default function ContractUtils() {
                 "0x",
                 [],
               ],
+              functionName: "installPlugin",
             }),
+            target: address,
+            value: 0n,
           },
         ],
       });
@@ -112,13 +112,13 @@ export default function ContractUtils() {
 
   return (
     <View gap="$s4">
-      <Text fontSize={ms(16)} subHeadline fontWeight="bold">
+      <Text fontSize={ms(16)} fontWeight="bold" subHeadline>
         Exactly
       </Text>
       {(isBorrowing || isUpdating) && <Spinner color="$interactiveBaseBrandDefault" />}
       {updatePluginHash && (
-        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
-          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+        <View borderColor="$borderNeutralSoft" borderRadius="$r4" borderWidth={2} padding={ms(10)}>
+          <Text fontFamily="$mono" fontSize={ms(14)} fontWeight="bold" textAlign="center" width="100%">
             {updatePluginHash}
           </Text>
         </View>
@@ -126,24 +126,24 @@ export default function ContractUtils() {
       <View flexDirection="row" gap="$s4">
         <Button
           contained
+          disabled={!uninstallPluginSimulation || exaPluginAddress === installedPlugins?.[0]}
+          flex={1}
           onPress={() => {
             updatePlugin().catch(handleError);
           }}
           padding={ms(10)}
-          disabled={!uninstallPluginSimulation || exaPluginAddress === installedPlugins?.[0]}
-          flex={1}
         >
           Upgrade Plugin
         </Button>
         {updatePluginHash && (
           <Button
-            outlined
             borderRadius="$r2"
+            flex={1}
             onPress={() => {
               copyHash(updatePluginHash);
             }}
+            outlined
             padding={ms(10)}
-            flex={1}
           >
             Copy
           </Button>
@@ -154,14 +154,14 @@ export default function ContractUtils() {
           <Text fontSize={ms(16)}>Borrow</Text>
           <Input
             inputMode="numeric"
-            value={borrowAmount.toString()}
             onChange={(event) => {
               setBorrowAmount(Number(event.nativeEvent.text));
             }}
+            value={borrowAmount.toString()}
           />
           {borrowHash && (
-            <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
-              <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+            <View borderColor="$borderNeutralSoft" borderRadius="$r4" borderWidth={2} padding={ms(10)}>
+              <Text fontFamily="$mono" fontSize={ms(14)} fontWeight="bold" textAlign="center" width="100%">
                 {borrowHash}
               </Text>
             </View>
@@ -169,22 +169,22 @@ export default function ContractUtils() {
           <View flexDirection="row" gap="$s4">
             <Button
               contained
-              onPress={borrowUSDC}
               disabled={floatingUSDCDeposit === 0n || !borrowUSDCSimulation}
-              padding={ms(10)}
               flex={1}
+              onPress={borrowUSDC}
+              padding={ms(10)}
             >
               Borrow USDC
             </Button>
             {borrowHash && (
               <Button
-                outlined
                 borderRadius="$r2"
+                flex={1}
                 onPress={() => {
                   copyHash(borrowHash);
                 }}
+                outlined
                 padding={ms(10)}
-                flex={1}
               >
                 Copy
               </Button>

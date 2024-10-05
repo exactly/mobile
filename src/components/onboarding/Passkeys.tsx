@@ -1,4 +1,5 @@
 import type { Passkey } from "@exactly/common/validation";
+
 import { Key, X } from "@tamagui/lucide-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -7,8 +8,8 @@ import { Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
 import { useConnect } from "wagmi";
 
-import PasskeysBlob from "../../assets/images/passkeys-blob.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
+import PasskeysBlob from "../../assets/images/passkeys-blob.svg";
 import alchemyConnector from "../../utils/alchemyConnector";
 import createPasskey from "../../utils/createPasskey";
 import handleError from "../../utils/handleError";
@@ -29,9 +30,9 @@ export default function Passkeys() {
   const queryClient = useQueryClient();
 
   const {
-    mutate: createAccount,
-    isSuccess,
     isPending,
+    isSuccess,
+    mutate: createAccount,
   } = useMutation<Passkey>({
     mutationFn: createPasskey,
     onError: handleError,
@@ -52,28 +53,28 @@ export default function Passkeys() {
   }, [connect, data, isSuccess]);
 
   return (
-    <SafeView fullScreen backgroundColor="$backgroundSoft">
+    <SafeView backgroundColor="$backgroundSoft" fullScreen>
       <View fullScreen padded>
         <View position="absolute" right="$s5" zIndex={1}>
           <Pressable onPress={close}>
-            <X size={ms(25)} color="$uiNeutralSecondary" />
+            <X color="$uiNeutralSecondary" size={ms(25)} />
           </Pressable>
         </View>
-        <View justifyContent="center" alignItems="center" flexGrow={1} flexShrink={1}>
-          <View width="100%" aspectRatio={1} justifyContent="center" alignItems="center" flexShrink={1}>
-            <View width="100%" height="100%" aspectRatio={1}>
-              <PasskeysBlob width="100%" height="100%" />
+        <View alignItems="center" flexGrow={1} flexShrink={1} justifyContent="center">
+          <View alignItems="center" aspectRatio={1} flexShrink={1} justifyContent="center" width="100%">
+            <View aspectRatio={1} height="100%" width="100%">
+              <PasskeysBlob height="100%" width="100%" />
             </View>
-            <View width="100%" height="100%" aspectRatio={1} style={StyleSheet.absoluteFill}>
-              <PasskeysImage width="100%" height="100%" />
+            <View aspectRatio={1} height="100%" style={StyleSheet.absoluteFill} width="100%">
+              <PasskeysImage height="100%" width="100%" />
             </View>
           </View>
 
           <View gap="$s5" justifyContent="center">
-            <Text emphasized title brand centered>
+            <Text brand centered emphasized title>
               A secure and easy way to access your account
             </Text>
-            <Text fontSize={ms(13)} color="$uiNeutralSecondary" textAlign="center">
+            <Text color="$uiNeutralSecondary" fontSize={ms(13)} textAlign="center">
               To keep your account secure, Exa App uses passkeys, a passwordless authentication method protected by your
               device biometric verification.
             </Text>
@@ -81,24 +82,24 @@ export default function Passkeys() {
         </View>
 
         <View alignItems="stretch" alignSelf="stretch">
-          <View flexDirection="row" alignSelf="stretch" justifyContent="center">
-            <Text fontSize={ms(11)} color="$uiNeutralPlaceholder">
+          <View alignSelf="stretch" flexDirection="row" justifyContent="center">
+            <Text color="$uiNeutralPlaceholder" fontSize={ms(11)}>
               {`By continuing, I accept the `}
             </Text>
-            <Text fontSize={ms(11)} color="$interactiveBaseBrandDefault">
+            <Text color="$interactiveBaseBrandDefault" fontSize={ms(11)}>
               Terms & Conditions
             </Text>
           </View>
 
           <View>
-            <View flexDirection="row" alignSelf="stretch">
+            <View alignSelf="stretch" flexDirection="row">
               <ActionButton
                 flex={1}
-                marginTop="$s4"
-                marginBottom="$s5"
+                iconAfter={<Key color="$interactiveOnBaseBrandDefault" fontWeight="bold" size={ms(20)} />}
                 isLoading={isPending || isConnecting}
                 loadingContent="Creating account..."
-                iconAfter={<Key size={ms(20)} color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
+                marginBottom="$s5"
+                marginTop="$s4"
                 onPress={() => {
                   createAccount();
                 }}
@@ -109,7 +110,7 @@ export default function Passkeys() {
 
             <View flexDirection="row" justifyContent="center">
               <Pressable onPress={learnMore}>
-                <Text textAlign="center" fontSize={ms(13)} fontWeight="bold" color="$interactiveBaseBrandDefault">
+                <Text color="$interactiveBaseBrandDefault" fontSize={ms(13)} fontWeight="bold" textAlign="center">
                   Learn more about passkeys
                 </Text>
               </Pressable>

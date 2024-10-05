@@ -6,15 +6,15 @@ import { Accordion, Square, View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import AssetList from "./AssetList";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
+import AssetList from "./AssetList";
 
 export default function Balance() {
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
     account: address,
+    address: previewerAddress,
     args: [address ?? zeroAddress],
   });
   let usdBalance = 0n;
@@ -26,49 +26,49 @@ export default function Balance() {
     }
   }
   return (
-    <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s4">
-      <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">
+    <View backgroundColor="$backgroundSoft" display="flex" gap="$s4" justifyContent="center">
+      <View alignItems="center" display="flex" flexDirection="row" justifyContent="space-between">
         <Text
-          fontSize={ms(15)}
-          lineHeight={ms(21)}
-          fontWeight="bold"
           color="$uiNeutralSecondary"
+          fontSize={ms(15)}
+          fontWeight="bold"
+          lineHeight={ms(21)}
           textAlign="center"
           width="100%"
         >
           Assets
         </Text>
       </View>
-      <Accordion overflow="hidden" type="multiple" borderRadius="$r3" padding="$s4" defaultValue={["balance"]}>
-        <Accordion.Item value="balance" flex={1}>
+      <Accordion borderRadius="$r3" defaultValue={["balance"]} overflow="hidden" padding="$s4" type="multiple">
+        <Accordion.Item flex={1} value="balance">
           <Accordion.Trigger
-            unstyled
-            flexDirection="row"
-            justifyContent="center"
+            alignItems="center"
             backgroundColor="transparent"
             borderWidth={0}
-            alignItems="center"
+            flexDirection="row"
             gap="$s3"
+            justifyContent="center"
+            unstyled
           >
             {({ open }: { open: boolean }) => {
               return (
                 <>
                   <Text
-                    sensitive
-                    textAlign="center"
                     fontFamily="$mono"
                     fontSize={ms(40)}
                     fontWeight="bold"
                     overflow="hidden"
+                    sensitive
+                    textAlign="center"
                   >
                     {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
-                      style: "currency",
                       currency: "USD",
                       currencyDisplay: "narrowSymbol",
+                      style: "currency",
                     })}
                   </Text>
                   <Square animation="quick" rotate={open ? "180deg" : "0deg"}>
-                    <ChevronDown size={ms(24)} color="$interactiveTextBrandDefault" />
+                    <ChevronDown color="$interactiveTextBrandDefault" size={ms(24)} />
                   </Square>
                 </>
               );

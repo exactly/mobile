@@ -3,6 +3,7 @@ import { ms } from "react-native-size-matters";
 import { XStack } from "tamagui";
 
 import type { WithdrawDetails } from "./Withdraw";
+
 import assetLogos from "../../utils/assetLogos";
 import AssetLogo from "../shared/AssetLogo";
 import Text from "../shared/Text";
@@ -13,18 +14,18 @@ export default function Values({ amount, assetName, usdValue }: WithdrawDetails)
     <View alignItems="center" justifyContent="center">
       <View alignItems="center" gap="$s3_5">
         <XStack alignItems="center" gap="$s3">
-          <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
-          <Text title color="$uiNeutralPrimary">
+          <AssetLogo height={ms(32)} uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(32)} />
+          <Text color="$uiNeutralPrimary" title>
             {amount} {assetName}
           </Text>
         </XStack>
         <Text body color="$uiNeutralSecondary">
           {Number(usdValue).toLocaleString(undefined, {
-            style: "currency",
             currency: "USD",
             currencyDisplay: "narrowSymbol",
-            minimumFractionDigits: 2,
             maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
+            style: "currency",
           })}
         </Text>
       </View>

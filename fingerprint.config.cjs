@@ -1,5 +1,6 @@
 /** @type {import('expo-updates/fingerprint').Config} */
 module.exports = {
+  ignorePaths: [".gitignore", "package.json", "patches/eslint-*", "src/generated/versionCode.js"],
   sourceSkips: [
     "ExpoConfigAndroidPackage",
     "ExpoConfigAssets",
@@ -10,5 +11,4 @@ module.exports = {
     "ExpoConfigVersions",
     "PackageJsonAndroidAndIosScriptsIfNotContainRun",
   ],
-  ignorePaths: [".gitignore", "package.json", "patches/eslint-*", "src/generated/versionCode.js"],
 };

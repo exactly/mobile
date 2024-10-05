@@ -2,7 +2,6 @@
 module.exports = function config(api) {
   /** @type {(ever: boolean) => void} */ (/** @type {unknown} */ (api.cache))(true);
   return {
-    presets: ["babel-preset-expo"],
     plugins: [
       [
         "module-resolver",
@@ -16,13 +15,14 @@ module.exports = function config(api) {
       [
         "@tamagui/babel-plugin",
         {
-          config: "tamagui.config.ts",
           components: ["tamagui"],
+          config: "tamagui.config.ts",
           disableExtraction: process.env.NODE_ENV === "development",
           logTimings: true,
         },
       ],
       "react-native-reanimated/plugin",
     ],
+    presets: ["babel-preset-expo"],
   };
 };

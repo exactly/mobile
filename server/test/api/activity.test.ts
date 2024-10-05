@@ -6,7 +6,7 @@ import "../mockSentry";
 import { Address } from "@exactly/common/validation";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
-import { parse, type InferInput } from "valibot";
+import { type InferInput, parse } from "valibot";
 import { zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
@@ -21,7 +21,7 @@ describe("validation", () => {
   beforeAll(async () => {
     await database
       .insert(credentials)
-      .values([{ id: "cred", publicKey: new Uint8Array(), account: zeroAddress, factory: zeroAddress }]);
+      .values([{ account: zeroAddress, factory: zeroAddress, id: "cred", publicKey: new Uint8Array() }]);
   });
 
   it("fails with no auth", async () => {
@@ -55,26 +55,26 @@ describe("authenticated", () => {
   beforeAll(async () => {
     await database
       .insert(credentials)
-      .values([{ id: account, publicKey: new Uint8Array(), account, factory: zeroAddress }]);
+      .values([{ account, factory: zeroAddress, id: account, publicKey: new Uint8Array() }]);
   });
 
   afterEach(() => captureException.mockClear());
 
   describe("card", () => {
     const payload: InferInput<typeof CardActivity> = {
-      operation_id: "0",
       data: {
-        created_at: new Date().toISOString(),
         bill_amount: 100 / 3,
+        created_at: new Date().toISOString(),
+        merchant_data: { city: "Buenos Aires", country: "ARG", name: "Merchant", state: "CABA" },
         transaction_amount: (1111.11 * 100) / 3,
         transaction_currency_code: "ARS",
-        merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "CABA" },
       },
+      operation_id: "0",
     };
 
     beforeAll(async () => {
-      await database.insert(cards).values([{ id: "card", credentialId: account, lastFour: "1234" }]);
-      await database.insert(transactions).values([{ id: "0", cardId: "card", hash: "0x0", payload }]);
+      await database.insert(cards).values([{ credentialId: account, id: "card", lastFour: "1234" }]);
+      await database.insert(transactions).values([{ cardId: "card", hash: "0x0", id: "0", payload }]);
     });
 
     it("returns the card transaction", async () => {
@@ -88,7 +88,7 @@ describe("authenticated", () => {
     });
 
     it("reports bad transaction", async () => {
-      await database.insert(transactions).values([{ id: "1", cardId: "card", hash: "0x1", payload: {} }]);
+      await database.insert(transactions).values([{ cardId: "card", hash: "0x1", id: "1", payload: {} }]);
       captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "card" } },
@@ -104,14 +104,14 @@ describe("authenticated", () => {
 
   describe("asset transfers", () => {
     const baseTransfer = {
-      hash: zeroHash,
-      blockNum: "0x0",
-      uniqueId: "0x0:log:0",
-      metadata: { blockTimestamp: new Date().toISOString() },
-      category: "erc20",
       asset: "USDC",
+      blockNum: "0x0",
+      category: "erc20",
+      hash: zeroHash,
+      metadata: { blockTimestamp: new Date().toISOString() },
+      rawContract: { address: inject("USDC"), decimal: "0x6", value: "0xf4240" },
+      uniqueId: "0x0:log:0",
       value: 1,
-      rawContract: { address: inject("USDC"), value: "0xf4240", decimal: "0x6" },
     } as const;
     const market = { decimals: 6, symbol: "exaUSDC", usdPrice: 10n ** 18n } as const;
     const getAssetTransfers = vi.spyOn(publicClient, "getAssetTransfers");
@@ -119,7 +119,7 @@ describe("authenticated", () => {
     afterEach(() => getAssetTransfers.mockClear());
 
     it("returns the received transfers", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      const transfer = parse(AssetTransfer, { ...baseTransfer, from: zeroAddress, to: account });
       getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer] });
       const response = await appClient.index.$get(
         { query: { include: "received" } },
@@ -145,21 +145,21 @@ describe("authenticated", () => {
     });
 
     it("works with eth transfer", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      const transfer = parse(AssetTransfer, { ...baseTransfer, from: zeroAddress, to: account });
       getAssetTransfers.mockResolvedValueOnce({
         transfers: [
           transfer,
           parse(AssetTransfer, {
-            to: account,
-            from: zeroAddress,
-            hash: zeroHash,
+            asset: "ETH",
             blockNum: "0x0",
             category: "external",
-            uniqueId: "0x0:external",
+            from: zeroAddress,
+            hash: zeroHash,
             metadata: { blockTimestamp: new Date().toISOString() },
-            asset: "ETH",
+            rawContract: { address: null, decimal: "0x12", value: "0xde0b6b3a7640000" },
+            to: account,
+            uniqueId: "0x0:external",
             value: 1,
-            rawContract: { address: null, value: "0xde0b6b3a7640000", decimal: "0x12" },
           }),
         ],
       });
@@ -175,9 +175,9 @@ describe("authenticated", () => {
     });
 
     it("ignores market transfers", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      const transfer = parse(AssetTransfer, { ...baseTransfer, from: zeroAddress, to: account });
       getAssetTransfers.mockResolvedValueOnce({
-        transfers: [transfer, parse(AssetTransfer, { ...baseTransfer, to: account, from: inject("MarketUSDC") })],
+        transfers: [transfer, parse(AssetTransfer, { ...baseTransfer, from: inject("MarketUSDC"), to: account })],
       });
       getAssetTransfers.mockResolvedValueOnce({
         transfers: [parse(AssetTransfer, { ...baseTransfer, from: account, to: inject("MarketUSDC") })],
@@ -194,15 +194,15 @@ describe("authenticated", () => {
     });
 
     it("ignores unknown asset", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      const transfer = parse(AssetTransfer, { ...baseTransfer, from: zeroAddress, to: account });
       getAssetTransfers.mockResolvedValueOnce({
         transfers: [
           transfer,
           parse(AssetTransfer, {
             ...baseTransfer,
-            to: account,
             from: zeroAddress,
             rawContract: { ...baseTransfer.rawContract, address: zeroAddress },
+            to: account,
           }),
         ],
       });
@@ -218,7 +218,7 @@ describe("authenticated", () => {
     });
 
     it("reports bad transfer", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
+      const transfer = parse(AssetTransfer, { ...baseTransfer, from: zeroAddress, to: account });
       getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer, { ...baseTransfer, from: zeroAddress } as any] }); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
       captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(

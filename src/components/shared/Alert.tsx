@@ -1,35 +1,35 @@
 import { Info } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { View, Text } from "tamagui";
+import { Text, View } from "tamagui";
 
 export default function Alert() {
   return (
     <View
-      borderRadius="$r3"
-      flexDirection="row"
-      backgroundColor="$backgroundSoft"
-      height={ms(41)}
       alignItems="center"
-      borderWidth={1}
+      backgroundColor="$backgroundSoft"
       borderColor="$borderSuccessSoft"
-      shadowOffset={{ width: 0, height: 2 }}
-      shadowRadius="$r3"
-      shadowColor="$interactiveOnBaseBrandDefault"
+      borderRadius="$r3"
+      borderWidth={1}
+      flexDirection="row"
       gap={ms(10)}
+      height={ms(41)}
+      shadowColor="$interactiveOnBaseBrandDefault"
+      shadowOffset={{ height: 2, width: 0 }}
+      shadowRadius="$r3"
     >
       <View
-        padding={ms(8)}
-        backgroundColor="$interactiveBaseSuccessSoftDefault"
-        justifyContent="center"
         alignItems="center"
-        borderTopLeftRadius="$r3"
+        backgroundColor="$interactiveBaseSuccessSoftDefault"
         borderBottomLeftRadius="$r3"
+        borderTopLeftRadius="$r3"
+        justifyContent="center"
+        padding={ms(8)}
       >
-        <Info size={ms(24)} color="$interactiveOnBaseSuccessSoft" />
+        <Info color="$interactiveOnBaseSuccessSoft" size={ms(24)} />
       </View>
 
-      <Text fontSize={ms(15)} color="$uiSuccessPrimary">
+      <Text color="$uiSuccessPrimary" fontSize={ms(15)}>
         Wallet address copied!
       </Text>
     </View>

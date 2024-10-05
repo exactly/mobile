@@ -7,10 +7,10 @@ import TabBar from "../../../components/shared/TabBar";
 import useIntercom from "../../../utils/useIntercom";
 
 const tabs = [
-  { name: "index", title: "Home", Icon: Home },
-  { name: "card", title: "Card", Icon: CreditCard },
-  { name: "payments", title: "Pay", Icon: CircleDollarSign },
-  { name: "activity", title: "Activity", Icon: FileText },
+  { Icon: Home, name: "index", title: "Home" },
+  { Icon: CreditCard, name: "card", title: "Card" },
+  { Icon: CircleDollarSign, name: "payments", title: "Pay" },
+  { Icon: FileText, name: "activity", title: "Activity" },
 ];
 
 export default function HomeLayout() {
@@ -18,13 +18,13 @@ export default function HomeLayout() {
   useIntercom(address);
   return (
     <Tabs screenOptions={{ headerShown: false }} tabBar={(properties) => <TabBar {...properties} />}>
-      {tabs.map(({ name, title, Icon }) => (
+      {tabs.map(({ Icon, name, title }) => (
         <Tabs.Screen
           key={name}
           name={name}
           options={{
+            tabBarIcon: ({ color }) => <Icon color={color} size={24} />,
             title,
-            tabBarIcon: ({ color }) => <Icon size={24} color={color} />,
           }}
         />
       ))}

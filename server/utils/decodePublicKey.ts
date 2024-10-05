@@ -3,7 +3,7 @@ import { bytesToHex, type Hex } from "viem";
 
 export default function decodePublicKey(bytes: Uint8Array): { x: Hex; y: Hex };
 export default function decodePublicKey<T>(bytes: Uint8Array, decoder: (input: Uint8Array) => T): { x: T; y: T };
-export default function decodePublicKey<T>(bytes: Uint8Array, decoder: (input: Uint8Array) => T | Hex = bytesToHex) {
+export default function decodePublicKey<T>(bytes: Uint8Array, decoder: (input: Uint8Array) => Hex | T = bytesToHex) {
   const publicKey = decodeCredentialPublicKey(bytes);
   if (!cose.isCOSEPublicKeyEC2(publicKey)) throw new Error("bad public key");
 

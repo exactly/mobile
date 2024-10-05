@@ -6,6 +6,7 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 
 import type { getActivity } from "../../utils/server";
+
 import InfoCard from "../home/InfoCard";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -18,7 +19,6 @@ interface LatestActivityProperties {
 export default function LatestActivity({ activity, title = "Latest activity" }: LatestActivityProperties) {
   return (
     <InfoCard
-      title={title}
       renderAction={
         <Pressable
           hitSlop={ms(15)}
@@ -26,35 +26,36 @@ export default function LatestActivity({ activity, title = "Latest activity" }: 
             router.push("/activity");
           }}
         >
-          <View flexDirection="row" gap="$s1" alignItems="center">
-            <Text color="$interactiveTextBrandDefault" emphasized footnote fontWeight="bold">
+          <View alignItems="center" flexDirection="row" gap="$s1">
+            <Text color="$interactiveTextBrandDefault" emphasized fontWeight="bold" footnote>
               View all
             </Text>
-            <ChevronRight size={ms(14)} color="$interactiveTextBrandDefault" fontWeight="bold" />
+            <ChevronRight color="$interactiveTextBrandDefault" fontWeight="bold" size={ms(14)} />
           </View>
         </Pressable>
       }
+      title={title}
     >
       {activity.slice(0, 4).map((item) => {
-        const { amount, id, usdAmount, currency, type, timestamp } = item;
+        const { amount, currency, id, timestamp, type, usdAmount } = item;
         return (
-          <View key={id} flexDirection="row" gap="$s4" alignItems="center">
+          <View alignItems="center" flexDirection="row" gap="$s4" key={id}>
             <View
-              width={ms(40)}
-              height={ms(40)}
+              alignItems="center"
               backgroundColor="$backgroundBrandMild"
               borderRadius="$r3"
+              height={ms(40)}
               justifyContent="center"
-              alignItems="center"
+              width={ms(40)}
             >
               {type === "card" && <CircleDollarSign color="$iconBrandDefault" />}
               {type === "received" && <ArrowDownToLine color="$iconBrandDefault" />}
               {type === "sent" && <ArrowUpFromLine color="$iconBrandDefault" />}
             </View>
             <View flex={1} gap="$s2">
-              <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
-                <View gap="$s2" flexShrink={1}>
-                  <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
+              <View alignItems="center" flexDirection="row" gap="$s4" justifyContent="space-between">
+                <View flexShrink={1} gap="$s2">
+                  <Text color="$uiNeutralPrimary" numberOfLines={1} subHeadline>
                     {type === "card" && item.merchant.name}
                     {type === "received" && "Received"}
                     {type === "sent" && "Sent"}
@@ -64,24 +65,24 @@ export default function LatestActivity({ activity, title = "Latest activity" }: 
                   </Text>
                 </View>
                 <View gap="$s2">
-                  <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                    <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
+                  <View alignItems="center" flexDirection="row" justifyContent="flex-end">
+                    <Text fontSize={ms(15)} fontWeight="bold" sensitive textAlign="right">
                       {usdAmount > 0.01
                         ? usdAmount.toLocaleString(undefined, {
-                            style: "currency",
                             currency: "USD",
-                            minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
+                            minimumFractionDigits: 2,
+                            style: "currency",
                           })
                         : `< ${(0.01).toLocaleString(undefined, {
-                            style: "currency",
                             currency: "USD",
-                            minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
+                            minimumFractionDigits: 2,
+                            style: "currency",
                           })}`}
                     </Text>
                   </View>
-                  <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                  <Text color="$uiNeutralSecondary" fontSize={ms(12)} sensitive textAlign="right">
                     {Number(amount).toLocaleString(undefined, {
                       maximumSignificantDigits: 2,
                       minimumSignificantDigits: 1,
