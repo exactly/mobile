@@ -14,7 +14,8 @@ RUN foundryup
 WORKDIR /usr/src/app
 COPY . .
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm run --filter server build && \
+RUN pnpm expo export --platform web --source-maps --output-dir server/app && \
+  pnpm run --filter server build && \
   pnpm deploy --filter server --prod /prod/server
 
 FROM base AS server
