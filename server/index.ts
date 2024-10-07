@@ -50,6 +50,17 @@ app.get("/.well-known/assetlinks.json", (c) =>
     },
   ]),
 );
+app.use(
+  "/*",
+  serveStatic({
+    root: "app",
+    rewriteRequestPath: (path) => {
+      if (path.endsWith("/")) return `${path}/index.html`;
+      if (path.includes(".")) return path;
+      return `${path}.html`;
+    },
+  }),
+);
 
 app.onError((error, c) => {
   captureException(error, { level: "error" });
