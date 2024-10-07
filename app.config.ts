@@ -23,6 +23,7 @@ if (process.env.EAS_BUILD_RUNNER === "eas-build") {
   process.env.EXPO_PUBLIC_SENTRY_DSN ??=
     "https://ac8875331e4cecd67dd0a7519a36dfeb@o1351734.ingest.us.sentry.io/4506186349674496";
 }
+process.env.EXPO_PUBLIC_INTERCOM_APP_ID ??= "eknd6y0s";
 
 export default {
   name: "Exa",
@@ -107,7 +108,7 @@ export default {
     [
       "@intercom/intercom-react-native",
       {
-        appId: "eknd6y0s",
+        appId: process.env.EXPO_PUBLIC_INTERCOM_APP_ID,
         androidApiKey: "android_sdk-d602d62cbdb9e8e0a6f426db847ddc74d2e26090",
         iosApiKey: "ios_sdk-ad6831098d9c2d69bd98e92a5ad7a4f030472a92",
       } satisfies IntercomPluginProps,
