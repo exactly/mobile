@@ -31,6 +31,7 @@ module.exports = {
     "unicorn/no-null": "off", // part of multiple apis
     "unicorn/no-useless-undefined": ["error", { checkArrowFunctionBody: false }], // @typescript-eslint/no-empty-function
     "unicorn/number-literal-case": "off", // incompatible with prettier
+    "unicorn/prefer-global-this": "off", // incompatible with react-native
     "unicorn/switch-case-braces": ["error", "avoid"], // consistently avoid braces
   },
   overrides: [
