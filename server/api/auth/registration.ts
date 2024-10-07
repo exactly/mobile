@@ -120,7 +120,7 @@ export default app
       }
 
       const expires = new Date(Date.now() + AUTH_EXPIRY);
-      const account = parse(Address, deriveAddress(exaAccountFactoryAddress, { x, y }));
+      const account = deriveAddress(parse(Address, exaAccountFactoryAddress), { x, y });
       setUser({ id: account });
       await Promise.all([
         setSignedCookie(c, "credential_id", credentialID, authSecret, { domain, expires, httpOnly: true }),
