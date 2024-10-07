@@ -1,4 +1,6 @@
-import { type Address, checksumAddress, encodeAbiParameters, encodePacked, type Hash, keccak256, slice } from "viem";
+import { Address } from "@exactly/common/validation";
+import { parse } from "valibot";
+import { encodeAbiParameters, encodePacked, type Hash, keccak256, slice } from "viem";
 
 const accountImplementation = "0x0046000000000151008789797b54fdb500E2a61e";
 const initCodeHashERC1967 = keccak256(
@@ -13,7 +15,8 @@ const initCodeHashERC1967 = keccak256(
 );
 
 export default function deriveAddress(factory: Address, { x, y }: { x: Hash; y: Hash }) {
-  return checksumAddress(
+  return parse(
+    Address,
     slice(
       keccak256(
         encodePacked(
