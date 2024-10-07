@@ -49,7 +49,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   }
 
   // eslint-disable-next-line unicorn/no-unreadable-array-destructuring
-  const [, auditor, , , , , , , , , , usdc, , marketUSDC, , , , , , , , marketWETH, , , , , , previewer, balancer] =
+  const [, auditor, , , , , , , , , , usdc, , marketUSDC, , , , , , weth, , marketWETH, , , , , , previewer, balancer] =
     parse(
       Protocol,
       await import(`@exactly/plugin/broadcast/Protocol.s.sol/${foundry.id}/run-latest.json`),
@@ -88,6 +88,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
     await import(`@exactly/plugin/broadcast/Deploy.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
 
+  provide("Auditor", auditor.contractAddress);
   provide("ExaAccountFactory", exaAccountFactory.contractAddress);
   provide("ExaPlugin", exaPlugin.contractAddress);
   provide("IssuerChecker", issuerChecker.contractAddress);
@@ -95,6 +96,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   provide("MarketWETH", marketWETH.contractAddress);
   provide("Previewer", previewer.contractAddress);
   provide("USDC", usdc.contractAddress);
+  provide("WETH", weth.contractAddress);
 
   return async function teardown() {
     await instance.stop();
@@ -141,6 +143,7 @@ const Protocol = object({
 
 declare module "vitest" {
   export interface ProvidedContext {
+    Auditor: Address;
     ExaAccountFactory: Address;
     ExaPlugin: Address;
     IssuerChecker: Address;
@@ -148,5 +151,6 @@ declare module "vitest" {
     MarketWETH: Address;
     Previewer: Address;
     USDC: Address;
+    WETH: Address;
   }
 }
