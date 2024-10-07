@@ -11,7 +11,8 @@ import handleError from "./handleError";
 export const persister = createAsyncStoragePersister({ serialize, deserialize, storage: AsyncStorage });
 const queryClient = new QueryClient({ defaultOptions: { queries: { structuralSharing } } });
 
-if (typeof window !== "undefined") {
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+if (globalThis.window) {
   persistQueryClientRestore({ queryClient, persister }).catch(handleError);
   persistQueryClientSubscribe({ queryClient, persister });
 }

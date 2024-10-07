@@ -8,7 +8,7 @@ import handleError from "./handleError";
 const appId = process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID;
 
 const { initialization, login, logout } = (
-  Platform.OS === "web" && typeof window !== "undefined"
+  Platform.OS === "web" && globalThis.window // eslint-disable-line @typescript-eslint/no-unnecessary-condition
     ? () => {
         const { default: OneSignal } = require("react-onesignal") as typeof OneSignalWeb; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
         return {
