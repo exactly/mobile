@@ -89,6 +89,7 @@ module.exports = {
           "warn",
           { onlyFunctionsWithExpectInLoop: true, onlyFunctionsWithExpectInCallback: true },
         ],
+        "@vitest/require-top-level-describe": "off",
       },
     },
   ],
