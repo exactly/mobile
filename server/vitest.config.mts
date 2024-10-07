@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     globalSetup: "test/anvil.ts",
     env: {
+      ALCHEMY_ACTIVITY_KEY: "alchemy",
       AUTH_SECRET: "auth",
       COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
       CRYPTOMATE_WEBHOOK_KEY: "cryptomate",

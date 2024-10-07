@@ -1,5 +1,5 @@
 import chain, {
-  auditorAddress,
+  previewerAddress,
   exaAccountFactoryAbi,
   exaPluginAbi,
   wethAddress,
@@ -10,20 +10,21 @@ import createDebug from "debug";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import * as v from "valibot";
-import { BaseError, bytesToBigInt, ContractFunctionRevertedError } from "viem";
+import { BaseError, bytesToBigInt, ContractFunctionRevertedError, zeroAddress } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
-import { auditorAbi, marketAbi } from "../generated/contracts";
+import { previewerAbi } from "../generated/contracts";
 import { headerValidator, jsonValidator } from "../utils/alchemy";
 import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
-import redis from "../utils/redis";
 import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.ALCHEMY_ACTIVITY_KEY) throw new Error("missing alchemy activity key");
 const signingKey = process.env.ALCHEMY_ACTIVITY_KEY;
+
+const ETH = v.parse(Address, "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 
 const debug = createDebug("exa:activity");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
@@ -45,7 +46,7 @@ export default app.post(
               v.object({
                 category: v.picklist(["external", "internal"]),
                 asset: v.literal("ETH"),
-                rawContract: v.object({ address: v.undefined() }),
+                rawContract: v.object({ address: v.optional(v.undefined()) }),
                 value: v.number(),
               }),
               v.object({
@@ -80,42 +81,32 @@ export default app.post(
           ),
         ),
       );
-    const pokes = new Map<Address, { publicKey: Uint8Array; factory: Address; markets: Set<Address> }>();
-    await Promise.all(
-      transfers.map(async ({ toAddress: account, rawContract }) => {
-        if (!accounts[account]) return;
-        const asset = rawContract.address ?? wethAddress;
-        const market = await redis.hgetall(`${chain.id}:${asset}`).then(async (found) => {
-          const parsed = v.safeParse(MarketEntry, found);
-          if (parsed.success) return parsed.output;
-          const markets = await publicClient.readContract({
-            address: auditorAddress,
-            functionName: "allMarkets",
-            abi: auditorAbi,
-          });
-          return Object.fromEntries(
-            await Promise.all(
-              markets.map(async (address, index) => {
-                const underlying = await publicClient.readContract({ address, functionName: "asset", abi: marketAbi });
-                redis
-                  .hset(`${chain.id}:${underlying}`, { market: address, index })
-                  .catch((error: unknown) => captureException(error));
-                return [underlying, { address: v.parse(Address, address), index }] as const;
-              }),
-            ),
-          )[asset];
-        });
-        if (!market) return;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        if (pokes.has(account)) pokes.get(account)!.markets.add(market.address);
-        else {
-          const { publicKey, factory } = accounts[account];
-          pokes.set(account, { publicKey, factory, markets: new Set([market.address]) });
-        }
-      }),
+    const exactly = await publicClient.readContract({
+      address: previewerAddress,
+      functionName: "exactly",
+      abi: previewerAbi,
+      args: [zeroAddress],
+    });
+    const marketsByAsset = new Map<Address, Address>(
+      exactly.map((market) => [v.parse(Address, market.asset), v.parse(Address, market.market)]),
     );
+    const pokes = new Map<Address, { publicKey: Uint8Array; factory: Address; assets: Set<Address> }>();
+    for (const { toAddress: account, rawContract } of transfers) {
+      if (!accounts[account]) continue;
+      const asset = rawContract.address ?? ETH;
+      const underlying = asset === ETH ? v.parse(Address, wethAddress) : asset;
+      if (!marketsByAsset.has(underlying)) continue;
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      if (pokes.has(account)) pokes.get(account)!.assets.add(asset);
+      else {
+        const { publicKey, factory } = accounts[account];
+        pokes.set(account, { publicKey, factory, assets: new Set([asset]) });
+      }
+    }
+
     Promise.allSettled(
-      [...pokes.entries()].map(([account, { publicKey, factory, markets }]) =>
+      [...pokes.entries()].map(([account, { publicKey, factory, assets }]) =>
         startSpan({ name: "account activity", op: "exa.activity", attributes: { account } }, async () => {
           if (
             !(await publicClient.getCode({ address: account })) &&
@@ -147,16 +138,20 @@ export default app.post(
             return;
           }
           await Promise.allSettled(
-            [...markets].map(async (market) => {
-              await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, market } }, async () => {
+            [...assets].map(async (asset) => {
+              await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, asset } }, async () => {
                 try {
                   const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
                     publicClient.simulateContract({
+                      abi: exaPluginAbi,
                       account: keeper.account,
                       address: account,
-                      functionName: "poke",
-                      args: [market],
-                      abi: exaPluginAbi,
+                      ...(asset === ETH
+                        ? { functionName: "pokeETH" }
+                        : {
+                            functionName: "poke",
+                            args: [marketsByAsset.get(asset)!], // eslint-disable-line @typescript-eslint/no-non-null-assertion
+                          }),
                     }),
                   );
                   setContext("tx", request);
@@ -188,5 +183,3 @@ export default app.post(
     return c.json({});
   },
 );
-
-const MarketEntry = v.object({ address: Address, index: v.pipe(v.string(), v.transform(Number)) });
