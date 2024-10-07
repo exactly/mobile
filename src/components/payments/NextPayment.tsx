@@ -1,4 +1,5 @@
 import { marketUSDCAddress } from "@exactly/common/generated/chain";
+import { WAD } from "@exactly/lib";
 import { Coins } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistance, intlFormat, isAfter } from "date-fns";
@@ -6,7 +7,6 @@ import { router } from "expo-router";
 import React from "react";
 import { ms } from "react-native-size-matters";
 
-import WAD from "../../utils/WAD";
 import useMarketAccount from "../../utils/useMarketAccount";
 import Button from "../shared/Button";
 import Text from "../shared/Text";

@@ -1,5 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import { withdrawLimit } from "@exactly/lib";
+import { withdrawLimit, WAD } from "@exactly/lib";
 import { ArrowLeft, ArrowRight, Coins, DollarSign, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,6 @@ import { bigint, check, pipe } from "valibot";
 import { zeroAddress } from "viem";
 
 import { useReadPreviewerExactly } from "../../generated/contracts";
-import WAD from "../../utils/WAD";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";

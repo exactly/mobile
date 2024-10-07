@@ -1,3 +1,4 @@
+import { WAD } from "@exactly/lib";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-adapter";
@@ -9,7 +10,6 @@ import { formatUnits, parseUnits } from "viem";
 
 import Input from "./Input";
 import View from "./View";
-import WAD from "../../utils/WAD";
 import type { Withdraw } from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
 

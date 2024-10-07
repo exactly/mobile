@@ -1,6 +1,7 @@
 import MATURITY_INTERVAL from "@exactly/common/MATURITY_INTERVAL";
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
+import { WAD } from "@exactly/lib";
 import { Calculator } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -11,7 +12,6 @@ import { formatUnits, parseUnits, zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
-import WAD from "../../utils/WAD";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
 import InfoCard from "../home/InfoCard";

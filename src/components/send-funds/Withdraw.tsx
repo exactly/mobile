@@ -1,4 +1,5 @@
 import { Address } from "@exactly/common/validation";
+import { WAD } from "@exactly/lib";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect } from "react";
 import { parse } from "valibot";
@@ -10,7 +11,6 @@ import Pending from "./Pending";
 import Review from "./Review";
 import Success from "./Success";
 import { useSimulateExaPluginPropose } from "../../generated/contracts";
-import WAD from "../../utils/WAD";
 import type { Withdraw as IWithdraw } from "../../utils/queryClient";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
