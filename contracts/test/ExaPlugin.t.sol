@@ -35,6 +35,7 @@ import {
   Unauthorized
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
+import { Refunder } from "../src/Refunder.sol";
 
 import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
@@ -61,6 +62,7 @@ contract ExaPluginTest is ForkTest {
   WebauthnOwnerPlugin internal ownerPlugin;
   IssuerChecker internal issuerChecker;
   bytes32 internal domainSeparator;
+  Refunder internal refunder;
 
   Auditor internal auditor;
   IMarket internal exaEXA;
@@ -89,6 +91,9 @@ contract ExaPluginTest is ForkTest {
     (issuer, issuerKey) = makeAddrAndKey("issuer");
 
     issuerChecker = new IssuerChecker(issuer);
+
+    refunder = new Refunder(exaUSDC, issuerChecker);
+    refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
 
     exaPlugin = new ExaPlugin(
       IAuditor(address(auditor)),
@@ -678,6 +683,15 @@ contract ExaPluginTest is ForkTest {
     address[] memory plugins = account.getInstalledPlugins();
     assertEq(plugins.length, 1);
     assertEq(plugins[0], address(ownerPlugin));
+  }
+
+  function test_refund_refunds() external {
+    vm.startPrank(keeper);
+
+    uint256 balance = exaUSDC.balanceOf(address(account));
+    deal(address(usdc), address(refunder), 100e6);
+    refunder.refund(address(account), 100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
+    assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
   }
 
   // solhint-enable func-name-mixedcase
