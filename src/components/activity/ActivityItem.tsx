@@ -84,8 +84,8 @@ export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProp
             </View>
             <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
               {Number(amount).toLocaleString(undefined, {
-                maximumSignificantDigits: 2,
-                minimumSignificantDigits: 1,
+                maximumFractionDigits: 8,
+                minimumFractionDigits: 0,
               })}
               &nbsp;
               {currency}

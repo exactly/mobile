@@ -83,8 +83,8 @@ export default function LatestActivity({ activity, title = "Latest activity" }: 
                   </View>
                   <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
                     {Number(amount).toLocaleString(undefined, {
-                      maximumSignificantDigits: 2,
-                      minimumSignificantDigits: 1,
+                      maximumFractionDigits: 8,
+                      minimumFractionDigits: 0,
                     })}
                     &nbsp;
                     {currency}
