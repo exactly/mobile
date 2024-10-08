@@ -101,6 +101,7 @@ module.exports = {
     "expo-env.d.ts",
     "generated/",
     "public/",
+    "server/app/",
     "server/drizzle/",
   ],
 };
