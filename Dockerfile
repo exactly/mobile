@@ -1,6 +1,13 @@
+# check=skip=SecretsUsedInArgOrEnv
+
 FROM node:22.9.0-slim AS base
 
+ARG APP_DOMAIN="sandbox.exactly.app"
 ARG CHAIN_ID="11155420"
+ARG EXPO_PUBLIC_ALCHEMY_API_KEY="YrH_56532-d48Mnz1QUwAIMdgyqVYU4C"
+ARG EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID="dc767b7d-9ce8-4512-ba67-ebe2cf7a1577"
+ARG EXPO_PUBLIC_ONE_SIGNAL_APP_ID=""
+ARG EXPO_PUBLIC_SENTRY_DSN="https://ac8875331e4cecd67dd0a7519a36dfeb@o1351734.ingest.us.sentry.io/4506186349674496"
 
 FROM base AS build
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
