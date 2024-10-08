@@ -1,6 +1,7 @@
 import { A } from "@expo/html-elements";
 import { User, Calendar, Hash, ExternalLink } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
@@ -24,17 +25,19 @@ export default function Details({ hash }: DetailsProperties) {
   const { data } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   return (
     <View padded gap="$s4">
-      <XStack justifyContent="space-between" alignItems="center">
-        <XStack alignItems="center" gap="$s3">
-          <Avatar size={ms(20)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-            <User size={ms(16)} color="$interactiveOnBaseBrandDefault" />
-          </Avatar>
-          <Text footnote color="$uiNeutralSecondary">
-            To
-          </Text>
+      {data?.receiver && (
+        <XStack justifyContent="space-between" alignItems="center">
+          <XStack alignItems="center" gap="$s3">
+            <Avatar size={ms(20)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+              <User size={ms(16)} color="$interactiveOnBaseBrandDefault" />
+            </Avatar>
+            <Text footnote color="$uiNeutralSecondary">
+              To
+            </Text>
+          </XStack>
+          <Text>{shortenAddress(data.receiver ?? "", 7, 7)}</Text>
         </XStack>
-        <Text>{shortenAddress(data?.receiver ?? "", 7, 7)}</Text>
-      </XStack>
+      )}
       <XStack justifyContent="space-between" alignItems="center">
         <XStack alignItems="center" gap="$s3">
           <Calendar size={ms(20)} color="$uiBrandPrimary" />
@@ -42,16 +45,7 @@ export default function Details({ hash }: DetailsProperties) {
             Date
           </Text>
         </XStack>
-        <Text>
-          {new Date().toLocaleString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })}
-        </Text>
+        <Text>{format(new Date(), "yyyy-MM-dd")}</Text>
       </XStack>
       {hash && (
         <>
