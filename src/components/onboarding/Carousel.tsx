@@ -1,4 +1,6 @@
+import { Passkey } from "@exactly/common/validation";
 import { ArrowRight } from "@tamagui/lucide-icons";
+import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { StyleProp, ViewStyle, ViewToken } from "react-native";
@@ -12,6 +14,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import type { SvgProps } from "react-native-svg";
+import { parse } from "valibot";
 import { useConnect } from "wagmi";
 
 import ListItem from "./ListItem";
@@ -67,7 +70,7 @@ const pages: [Page, ...Page[]] = [
 
 export default function Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const { connect } = useConnect();
+  const { connect, isPending: isConnecting } = useConnect();
 
   const flatListReference = useRef<Animated.FlatList<Page>>(null);
   const offsetX = useSharedValue(0);
@@ -106,11 +109,15 @@ export default function Carousel() {
     });
   }, [activeIndex]);
 
-  const handleRecovery = useCallback(async () => {
-    queryClient.setQueryData(["passkey"], await getPasskey());
-    connect({ connector: alchemyConnector });
-    router.push("/onboarding/success");
-  }, [connect]);
+  const { mutate: recoverAccount, isPending } = useMutation({
+    mutationFn: getPasskey,
+    onError: handleError,
+    onSuccess(passkey) {
+      queryClient.setQueryData<Passkey>(["passkey"], parse(Passkey, passkey));
+      connect({ connector: alchemyConnector });
+      router.push("/onboarding/success");
+    },
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -183,6 +190,8 @@ export default function Carousel() {
           <View alignItems="stretch" alignSelf="stretch" gap="$s5">
             <View flexDirection="row" alignSelf="stretch">
               <ActionButton
+                isLoading={isPending || isConnecting}
+                loadingContent="Logging in..."
                 onPress={() => {
                   router.push("../onboarding/(passkeys)/passkeys");
                 }}
@@ -196,7 +205,7 @@ export default function Carousel() {
               <Pressable
                 hitSlop={ms(10)}
                 onPress={() => {
-                  handleRecovery().catch(handleError);
+                  recoverAccount();
                 }}
               >
                 <Text fontSize={ms(13)} textAlign="center" fontWeight="bold" color="$interactiveBaseBrandDefault">
