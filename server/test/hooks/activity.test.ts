@@ -5,11 +5,12 @@ import "../mockSentry";
 
 import { exaAccountFactoryAbi, previewerAddress, wethAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
+import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { parse } from "valibot";
-import { hexToBigInt, padHex, parseEther, zeroHash, parseEventLogs } from "viem";
+import { hexToBigInt, padHex, parseEther, zeroHash, parseEventLogs, zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { beforeEach, describe, expect, inject, it } from "vitest";
+import { beforeEach, describe, expect, inject, it, vi, afterEach } from "vitest";
 
 import database, { credentials } from "../../database";
 import { previewerAbi, marketAbi } from "../../generated/contracts";
@@ -55,28 +56,41 @@ const activityPayload = {
   },
 } as const;
 
-const waitForDeposit = async (caller: Address, quantity: number) => {
-  let counter = quantity;
-  return new Promise((resolve) => {
-    const unwatch = publicClient.watchEvent({
-      onLogs: (logs) => {
-        const deposit = parseEventLogs({
-          abi: marketAbi,
-          logs,
-        }).filter((log) => log.eventName === "Deposit" && parse(Address, `0x${log.topics[1].slice(26)}`) === caller);
-        counter -= deposit.length;
-        if (counter <= 0) {
-          unwatch();
-          resolve(deposit);
-        }
-      },
-    });
-  });
+const waitForDeposit = async (caller: Address, quantity: number, timeout = 5000) => {
+  let deposits = parseEventLogs({ abi: marketAbi, logs: [] });
+  return Promise.race([
+    new Promise((resolve) => {
+      const unwatch = publicClient.watchEvent({
+        onLogs: (logs) => {
+          deposits = [
+            ...deposits,
+            ...parseEventLogs({
+              abi: marketAbi,
+              logs,
+            }).filter(
+              (log) => log.eventName === "Deposit" && parse(Address, `0x${log.topics[1].slice(26)}`) === caller,
+            ),
+          ];
+          if (deposits.length >= quantity) {
+            unwatch();
+            resolve(deposits);
+          }
+        },
+      });
+    }),
+    new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error("Timeout waiting for deposits"));
+      }, timeout);
+    }),
+  ]);
 };
 
 describe("addresses", () => {
   let owner;
   let account: Address;
+
+  const captureException = vi.spyOn(sentry, "captureException");
 
   beforeEach(async () => {
     owner = privateKeyToAccount(generatePrivateKey());
@@ -91,6 +105,8 @@ describe("addresses", () => {
       .insert(credentials)
       .values([{ id: account, publicKey: new Uint8Array(), account, factory: inject("ExaAccountFactory") }]);
   });
+
+  afterEach(() => captureException.mockClear());
 
   it("pokes eth", async () => {
     const deposit = parseEther("5");
@@ -173,5 +189,41 @@ describe("addresses", () => {
     expect(market?.floatingDepositAssets).toBe(eth + weth);
     expect(market?.isCollateral).toBeTruthy();
     expect(response.status).toBe(200);
+  });
+
+  it("pokes unavailable market", async () => {
+    const readContract = vi.spyOn(publicClient, "readContract");
+
+    const response = await appClient.index.$post({
+      ...activityPayload,
+      json: {
+        ...activityPayload.json,
+        event: {
+          ...activityPayload.json.event,
+          activity: [
+            {
+              ...activityPayload.json.event.activity[1],
+              toAddress: account as string,
+              rawContract: {
+                ...activityPayload.json.event.activity[1].rawContract,
+                address: "0x6262639c533813f4aa9d7837caf62653d0976262",
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    await expect(waitForDeposit(account, 1, 200)).rejects.toThrow("Timeout waiting for deposits");
+    expect(readContract).toHaveBeenCalledWith({
+      address: previewerAddress,
+      functionName: "exactly",
+      abi: previewerAbi,
+      args: [zeroAddress],
+    });
+    expect(captureException).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+
+    readContract.mockClear();
   });
 });
