@@ -1,4 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
+import { healthFactor, WAD } from "@exactly/lib";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { RefreshControl } from "react-native";
@@ -11,6 +12,7 @@ import HomeActions from "./HomeActions";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import { getActivity } from "../../utils/server";
+import AlertBadge from "../shared/AlertBadge";
 import LatestActivity from "../shared/LatestActivity";
 import ProfileHeader from "../shared/ProfileHeader";
 import SafeView from "../shared/SafeView";
@@ -23,11 +25,14 @@ export default function Home() {
     isFetching,
   } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
   const { address } = useAccount();
-  const { refetch: refetchMarkets } = useReadPreviewerExactly({
+  const { data: markets, refetch: refetchMarkets } = useReadPreviewerExactly({
     address: previewerAddress,
     account: address,
     args: [address ?? zeroAddress],
   });
+
+  const accountHealth = markets ? healthFactor(markets, Math.floor(new Date(Date.now()).getTime() / 1000)) : 0n;
+
   return (
     <SafeView fullScreen tab>
       <ProfileHeader />
@@ -45,6 +50,7 @@ export default function Home() {
       >
         <View gap="$s4_5" flex={1}>
           <View backgroundColor="$backgroundSoft" padded gap="$s4">
+            {Number(accountHealth / WAD) < 1.1 && <AlertBadge />}
             <Balance />
             <HomeActions />
           </View>

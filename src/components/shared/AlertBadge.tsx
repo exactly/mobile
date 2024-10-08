@@ -1,4 +1,5 @@
 import { ChevronRight, AlertTriangle } from "@tamagui/lucide-icons";
+import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -30,9 +31,13 @@ export default function AlertBadge() {
 
       <View gap={ms(10)} padding={ms(25)} flex={1}>
         <Text fontSize={ms(15)} color="$interactiveOnBaseErrorSoft">
-          Up to 10% of your total balance is at high risk of being liquidated.
+          Some of your assets are at risk of being liquidated.
         </Text>
-        <Pressable>
+        <Pressable
+          onPress={() => {
+            router.push("/add-funds/add-crypto");
+          }}
+        >
           <View flexDirection="row" gap={ms(2)} alignItems="center">
             <Text color="$interactiveOnBaseErrorSoft" fontSize={ms(15)} lineHeight={18} fontWeight="bold">
               Manage
