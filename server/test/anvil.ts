@@ -82,6 +82,19 @@ export default async function setup({ provide }: GlobalSetupContext) {
 
   if (initialize) {
     shell.env.ISSUER_CHECKER_ADDRESS = issuerChecker.contractAddress;
+    await $(shell)`forge script script/Refunder.s.sol
+      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
+  }
+
+  const [refunder] = parse(
+    object({
+      transactions: tuple([object({ contractName: literal("Refunder"), contractAddress: Address })]),
+    }),
+    await import(`@exactly/plugin/broadcast/Refunder.s.sol/${foundry.id}/run-latest.json`),
+  ).transactions;
+
+  if (initialize) {
+    shell.env.REFUNDER_ADDRESS = refunder.contractAddress;
     await $(shell)`forge script script/Deploy.s.sol
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow`;
   }
@@ -104,6 +117,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   provide("MarketUSDC", marketUSDC.contractAddress);
   provide("MarketWETH", marketWETH.contractAddress);
   provide("Previewer", previewer.contractAddress);
+  provide("Refunder", refunder.contractAddress);
   provide("USDC", usdc.contractAddress);
   provide("WETH", weth.contractAddress);
 
@@ -165,6 +179,7 @@ declare module "vitest" {
     MarketUSDC: Address;
     MarketWETH: Address;
     Previewer: Address;
+    Refunder: Address;
     USDC: Address;
     WETH: Address;
   }

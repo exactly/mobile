@@ -14,6 +14,7 @@ import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.s
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+import { LibString } from "solady/utils/LibString.sol";
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
@@ -37,6 +38,9 @@ import {
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { Refunder } from "../src/Refunder.sol";
 
+import { DeployIssuerChecker } from "../script/IssuerChecker.s.sol";
+import { DeployRefunder } from "../script/Refunder.s.sol";
+
 import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
@@ -47,6 +51,7 @@ import { DeployProtocol } from "./mocks/Protocol.s.sol";
 contract ExaPluginTest is ForkTest {
   using FixedPointMathLib for uint256;
   using OwnersLib for address[];
+  using LibString for address;
   using ECDSA for bytes32;
 
   address internal owner;
@@ -72,6 +77,14 @@ contract ExaPluginTest is ForkTest {
   MockERC20 internal usdc;
 
   function setUp() external {
+    collector = payable(makeAddr("collector"));
+    (owner, ownerKey) = makeAddrAndKey("owner");
+    owners = new address[](1);
+    owners[0] = owner;
+    (keeper, keeperKey) = makeAddrAndKey("keeper");
+    (issuer, issuerKey) = makeAddrAndKey("issuer");
+    vm.setEnv("ISSUER_ADDRESS", issuer.toHexString());
+
     new DeployAccount().run();
     DeployProtocol p = new DeployProtocol();
     p.run();
@@ -82,17 +95,19 @@ contract ExaPluginTest is ForkTest {
     exaWETH = IMarket(address(p.exaWETH()));
     exa = p.exa();
     usdc = p.usdc();
+    vm.setEnv("PROTOCOL_MARKETUSDC_ADDRESS", address(exaUSDC).toHexString());
 
-    collector = payable(makeAddr("collector"));
-    (owner, ownerKey) = makeAddrAndKey("owner");
-    owners = new address[](1);
-    owners[0] = owner;
-    (keeper, keeperKey) = makeAddrAndKey("keeper");
-    (issuer, issuerKey) = makeAddrAndKey("issuer");
+    DeployIssuerChecker ic = new DeployIssuerChecker();
+    ic.run();
+    issuerChecker = ic.issuerChecker();
+    vm.setEnv("ISSUER_CHECKER_ADDRESS", address(issuerChecker).toHexString());
 
-    issuerChecker = new IssuerChecker(issuer);
+    DeployRefunder r = new DeployRefunder();
+    r.setUp();
+    r.run();
+    refunder = r.refunder();
+    vm.setEnv("REFUNDER_ADDRESS", address(refunder).toHexString());
 
-    refunder = new Refunder(exaUSDC, issuerChecker);
     refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
 
     exaPlugin = new ExaPlugin(

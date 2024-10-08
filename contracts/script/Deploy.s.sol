@@ -11,6 +11,7 @@ import {
   ExaPlugin, IAuditor, IBalancerVault, IInstallmentsRouter, IMarket, IVelodromeFactory
 } from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
+import { Refunder } from "../src/Refunder.sol";
 
 import { BaseScript, stdJson } from "./Base.s.sol";
 
@@ -26,6 +27,7 @@ contract DeployScript is BaseScript {
   IMarket public exaUSDC;
   IMarket public exaWETH;
   IInstallmentsRouter public installmentsRouter;
+  Refunder public refunder;
   IBalancerVault public balancerVault;
   IVelodromeFactory public velodromeFactory;
 
@@ -52,6 +54,14 @@ contract DeployScript is BaseScript {
     exaUSDC = IMarket(protocol("MarketUSDC"));
     exaWETH = IMarket(protocol("MarketWETH"));
     installmentsRouter = IInstallmentsRouter(protocol("InstallmentsRouter"));
+    refunder = Refunder(vm.envOr("REFUNDER_ADDRESS", address(0)));
+    if (address(refunder) == address(0)) {
+      refunder = Refunder(
+        vm.readFile(string.concat("broadcast/Refunder.s.sol/", block.chainid.toString(), "/run-latest.json"))
+          .readAddress(".transactions[0].contractAddress")
+      );
+    }
+
     balancerVault = IBalancerVault(protocol("BalancerVault"));
     velodromeFactory = IVelodromeFactory(protocol("VelodromePoolFactory"));
   }
