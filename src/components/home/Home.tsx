@@ -1,10 +1,14 @@
+import { previewerAddress } from "@exactly/common/generated/chain";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { RefreshControl } from "react-native";
 import { ScrollView } from "tamagui";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
 import Balance from "./Balance";
 import HomeActions from "./HomeActions";
+import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import { getActivity } from "../../utils/server";
 import LatestActivity from "../shared/LatestActivity";
@@ -18,6 +22,12 @@ export default function Home() {
     refetch: refetchActivity,
     isFetching,
   } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
+  const { address } = useAccount();
+  const { refetch: refetchMarkets } = useReadPreviewerExactly({
+    address: previewerAddress,
+    account: address,
+    args: [address ?? zeroAddress],
+  });
   return (
     <SafeView fullScreen tab>
       <ProfileHeader />
@@ -27,6 +37,7 @@ export default function Home() {
             refreshing={isFetching}
             onRefresh={() => {
               refetchActivity().catch(handleError);
+              refetchMarkets().catch(handleError);
             }}
           />
         }
