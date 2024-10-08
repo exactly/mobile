@@ -12,7 +12,7 @@ import Text from "../shared/Text";
 
 // TODO remove limitation for next release
 const supportedAssets = Object.entries(assetLogos)
-  .filter(([symbol]) => symbol !== "ETH" && symbol !== "USDC.e" && symbol !== "DAI")
+  .filter(([symbol]) => symbol !== "USDC.e" && symbol !== "DAI")
   .map(([symbol, image]) => ({ symbol, image }));
 
 function navigate() {
