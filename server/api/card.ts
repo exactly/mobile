@@ -2,7 +2,7 @@ import { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { setUser } from "@sentry/node";
 import { Mutex } from "async-mutex";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
 import { literal, object, parse, union } from "valibot";
@@ -105,7 +105,7 @@ export default app
           const credential = await database.query.credentials.findFirst({
             where: eq(credentials.id, credentialId),
             with: {
-              cards: { columns: { id: true, status: true }, where: inArray(cards.status, ["ACTIVE", "FROZEN"]) },
+              cards: { columns: { id: true, status: true }, where: ne(cards.status, "DELETED") },
             },
           });
           if (!credential) return c.json({ error: "credential not found" }, 401);
