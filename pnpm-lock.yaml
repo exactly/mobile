@@ -61,8 +61,8 @@ importers:
         specifier: workspace:*
         version: link:common
       '@exactly/lib':
-        specifier: exactly/lib#62df893
-        version: https://codeload.github.com/exactly/lib/tar.gz/62df893
+        specifier: exactly/lib#63ce662
+        version: https://codeload.github.com/exactly/lib/tar.gz/63ce662
       '@exactly/plugin':
         specifier: workspace:*
         version: link:contracts
@@ -465,8 +465,8 @@ importers:
         specifier: ^3.19.0
         version: 3.19.0(typescript@5.6.3)(viem@2.21.19(bufferutil@4.0.8)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.23.8))
       '@exactly/lib':
-        specifier: exactly/lib#62df893
-        version: https://codeload.github.com/exactly/lib/tar.gz/62df893
+        specifier: exactly/lib#63ce662
+        version: https://codeload.github.com/exactly/lib/tar.gz/63ce662
       '@hono/node-server':
         specifier: ^1.13.1
         version: 1.13.1(hono@4.6.3)
@@ -2267,8 +2267,8 @@ packages:
   '@ethersproject/wordlists@5.7.0':
     resolution: {integrity: sha512-S2TFNJNfHWVHNE6cNDjbVlZ6MgE17MIxMbMg2zv3wn+3XSJGosL1m9ZVv3GXCf/2ymSsQ+hRI5IzoMJTG6aoVA==}
 
-  '@exactly/lib@https://codeload.github.com/exactly/lib/tar.gz/62df893':
-    resolution: {tarball: https://codeload.github.com/exactly/lib/tar.gz/62df893}
+  '@exactly/lib@https://codeload.github.com/exactly/lib/tar.gz/63ce662':
+    resolution: {tarball: https://codeload.github.com/exactly/lib/tar.gz/63ce662}
     version: 0.0.1
     engines: {node: '>=20'}
 
@@ -11848,7 +11848,7 @@ snapshots:
       '@ethersproject/strings': 5.7.0
     optional: true
 
-  '@exactly/lib@https://codeload.github.com/exactly/lib/tar.gz/62df893': {}
+  '@exactly/lib@https://codeload.github.com/exactly/lib/tar.gz/63ce662': {}
 
   '@exactly/protocol@https://codeload.github.com/exactly/protocol/tar.gz/894df5b':
     dependencies:
