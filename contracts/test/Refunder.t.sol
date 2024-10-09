@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
+pragma solidity ^0.8.0;
 
 import { ForkTest } from "./Fork.t.sol";
 
@@ -139,6 +139,4 @@ contract RefunderTest is ForkTest {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
     return abi.encodePacked(r, s, v);
   }
-
-  receive() external payable { } // solhint-disable-line no-empty-blocks
 }
