@@ -30,12 +30,13 @@ const app = new Hono();
 export default app
   .get("/", async (c) => {
     const timeout = 5 * 60_000;
+    const userName = new Date().toISOString().slice(0, 16);
     const [options, sessionId] = await Promise.all([
       generateRegistrationOptions({
         rpID: domain,
         rpName: "exactly",
-        userName: "user", // TODO change username
-        userDisplayName: "user", // TODO change display name
+        userName,
+        userDisplayName: userName,
         supportedAlgorithmIDs: [cose.COSEALG.ES256],
         authenticatorSelection: { residentKey: "required", userVerification: "preferred" },
         // TODO excludeCredentials?
