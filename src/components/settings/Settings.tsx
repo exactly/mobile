@@ -1,10 +1,9 @@
 import release from "@exactly/common/generated/release";
-import { ArrowLeft, ChevronRight, FlaskConical, HelpCircle, SunMoon } from "@tamagui/lucide-icons";
-import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ChevronRight, FlaskConical, HelpCircle } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
 import { router, useRouter } from "expo-router";
 import React from "react";
-import { Alert, Pressable, type ColorSchemeName } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, XStack } from "tamagui";
 
@@ -16,7 +15,6 @@ import View from "../shared/View";
 
 export default function Settings() {
   const { canGoBack } = useRouter();
-  const { data: theme } = useQuery<ColorSchemeName>({ queryKey: ["settings", "theme"] });
   const { present } = useIntercom();
 
   function handleSupport() {
@@ -45,27 +43,6 @@ export default function Settings() {
         <ScrollView flex={1}>
           <View gap="$s4_5">
             <View borderRadius="$r3" borderWidth={1} borderColor="$borderNeutralSoft">
-              <Pressable
-                onPress={() => {
-                  router.push("/settings/theme");
-                }}
-              >
-                <XStack justifyContent="space-between" alignItems="center" padding="$s4">
-                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
-                    <SunMoon color="$backgroundBrand" />
-                    <Text subHeadline color="$uiNeutralPrimary">
-                      Theme
-                    </Text>
-                  </XStack>
-                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
-                    <Text caption color="$uiBrandSecondary">
-                      {theme ? theme.charAt(0).toUpperCase() + theme.slice(1) : "System"}
-                    </Text>
-                    <ChevronRight color="$iconSecondary" />
-                  </XStack>
-                </XStack>
-              </Pressable>
-              <Separator borderColor="$borderNeutralSoft" />
               <Pressable
                 onPress={() => {
                   router.push("/settings/beta");
