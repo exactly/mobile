@@ -101,25 +101,27 @@ export default new Hono().post(
     setTag("cryptomate.status", payload.status);
     const jsonBody = await c.req.json(); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     setContext("cryptomate", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
-    const result = await database.query.cards.findFirst({
-      columns: {},
+    const card = await database.query.cards.findFirst({
+      columns: { mode: true },
       where: and(eq(cards.id, payload.data.card_id), eq(cards.status, "ACTIVE")),
       with: { credential: { columns: { account: true } } },
     });
-    if (!result) return c.json("not found", 404);
-    const account = v.parse(Address, result.credential.account);
+    if (!card) return c.json("card not found", 404);
+    const account = v.parse(Address, card.credential.account);
     setUser({ id: account });
-    const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
-    const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
-    const call = {
-      functionName: "collectCredit",
-      args: [
-        BigInt(nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
-        BigInt(Math.round(payload.data.bill_amount * 1e6)),
-        BigInt(timestamp),
-        await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }), // TODO replace with payload signature
-      ],
-    } as const;
+    const call = await (async () => {
+      const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
+      const amount = BigInt(Math.round(payload.data.bill_amount * 1e6));
+      const signature = await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }); // TODO replace with payload signature
+      if (card.mode === 0) {
+        return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
+      }
+      const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
+      const firstMaturity = BigInt(
+        nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity,
+      );
+      return { functionName: "collectCredit", args: [firstMaturity, amount, BigInt(timestamp), signature] } as const;
+    })();
     const transaction = {
       from: keeper.account.address,
       to: account,
@@ -169,6 +171,7 @@ export default new Hono().post(
       case "CLEARING":
         if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
+        console.log(call.functionName === "collectDebit" ? call : call);
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
           try {
             const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
