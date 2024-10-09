@@ -38,7 +38,6 @@ export default function Card() {
 
   const {
     data: cardDetails,
-    refetch: refetchCard,
     error: cardError,
     isFetching: isFetchingCardDetails,
   } = useQuery({
@@ -73,32 +72,32 @@ export default function Card() {
       }
       try {
         await kycStatus();
-        const { error } = await refetchCard();
-        if (error) {
-          await createCard();
-          await refetchCard();
-        }
+        await getCard();
+        await queryClient.invalidateQueries({ queryKey: ["card, details"] });
         setDetailsShown(true);
         flipped.value = true;
       } catch (error) {
-        if (error instanceof APIError && (error.code === 403 || error.code === 404)) {
-          if (Platform.OS !== "web") {
-            Inquiry.fromTemplate(templateId)
-              .environment(environment)
-              .referenceId(passkey.credentialId)
-              .onComplete((inquiryId) => {
-                if (!inquiryId) throw new Error("no inquiry id");
-                kyc(inquiryId).catch(handleError);
-              })
-              .onError(handleError)
-              .build()
-              .start();
+        if (!(error instanceof APIError)) return handleError(error);
+        if (error.code === 403 && error.message === "kyc required") {
+          if (Platform.OS === "web") {
+            const otl = await kyc();
+            window.open(otl, "_self");
             return;
           }
-          const otl = await kyc();
-          window.open(otl, "_self");
-        } else {
-          handleError(error);
+          Inquiry.fromTemplate(templateId)
+            .environment(environment)
+            .referenceId(passkey.credentialId)
+            .onComplete((inquiryId) => {
+              if (!inquiryId) throw new Error("no inquiry id");
+              kyc(inquiryId).catch(handleError);
+            })
+            .onError(handleError)
+            .build()
+            .start();
+        }
+        if (error.code === 404 && error.message === "card not found") {
+          await createCard();
+          await queryClient.invalidateQueries({ queryKey: ["card, details"] });
         }
       }
     },
@@ -134,7 +133,7 @@ export default function Card() {
                 }
               />
 
-              {(cardError ?? revealError) && (
+              {(cardError ?? revealError) && !isRevealing && (
                 <Text color="$uiErrorPrimary" fontWeight="bold">
                   {cardError ? cardError.message : revealError ? revealError.message : "Error"}
                 </Text>
@@ -298,7 +297,6 @@ export default function Card() {
 
 const exitStyle = { opacity: 0 };
 const StyledAction = styled(View, {
-  flex: 1,
   minHeight: ms(140),
   borderWidth: 1,
   padding: ms(16),
