@@ -35,6 +35,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run --recursive --aggregate-output --no-bail build
+      - run: ls -lahR node_modules/@exactly/lib/
       - run: pnpm test --recursive --aggregate-output --no-bail
 
       - uses: codecov/codecov-action@v4
