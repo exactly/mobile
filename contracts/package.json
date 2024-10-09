@@ -1,5 +1,6 @@
 {
   "name": "@exactly/plugin",
+  "private": true,
   "scripts": {
     "build": "forge build",
     "snapshot": "FOUNDRY_PROFILE=snapshot forge snapshot",

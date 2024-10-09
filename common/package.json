@@ -1,5 +1,6 @@
 {
   "name": "@exactly/common",
+  "private": true,
   "engines": {
     "node": ">=22.9.0"
   },
