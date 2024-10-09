@@ -306,5 +306,5 @@ const StyledAction = styled(View, {
   backgroundColor: "$backgroundSoft",
   borderColor: "$borderNeutralSoft",
   justifyContent: "space-between",
-  width: "100%",
+  flex: 1,
 });
