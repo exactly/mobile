@@ -11,6 +11,7 @@ import {
   ExaPlugin, IAuditor, IBalancerVault, IInstallmentsRouter, IMarket, IVelodromeFactory
 } from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
+import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
 import { Refunder } from "../src/Refunder.sol";
 
 import { BaseScript, stdJson } from "./Base.s.sol";
@@ -22,6 +23,7 @@ contract DeployScript is BaseScript {
   ExaAccountFactory public factory;
   ExaPlugin public exaPlugin;
   IssuerChecker public issuerChecker;
+  KeeperFeeModel public keeperFeeModel;
   WebauthnOwnerPlugin public ownerPlugin;
   IAuditor public auditor;
   IMarket public exaUSDC;
@@ -61,6 +63,13 @@ contract DeployScript is BaseScript {
           .readAddress(".transactions[0].contractAddress")
       );
     }
+    keeperFeeModel = KeeperFeeModel(vm.envOr("KFM_ADDRESS", address(0)));
+    if (address(keeperFeeModel) == address(0)) {
+      keeperFeeModel = KeeperFeeModel(
+        vm.readFile(string.concat("broadcast/KeeperFeeModel.s.sol/", block.chainid.toString(), "/run-latest.json"))
+          .readAddress(".transactions[0].contractAddress")
+      );
+    }
 
     balancerVault = IBalancerVault(protocol("BalancerVault"));
     velodromeFactory = IVelodromeFactory(protocol("VelodromePoolFactory"));
@@ -79,7 +88,8 @@ contract DeployScript is BaseScript {
       installmentsRouter,
       velodromeFactory,
       issuerChecker,
-      vm.envAddress("COLLECTOR_ADDRESS")
+      vm.envAddress("COLLECTOR_ADDRESS"),
+      keeperFeeModel
     );
     factory = new ExaAccountFactory(msg.sender, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 
