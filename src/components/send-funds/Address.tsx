@@ -1,16 +1,15 @@
 import chain from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
-import { ArrowLeft, ArrowRight, QrCode, SwitchCamera } from "@tamagui/lucide-icons";
+import { ArrowLeft, ArrowRight, QrCode } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-adapter";
-import { CameraView, useCameraPermissions } from "expo-camera";
-import { router } from "expo-router";
-import React, { useState } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import React from "react";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ButtonIcon, ScrollView, Separator, XStack, YStack } from "tamagui";
-import { parse } from "valibot";
+import { parse, safeParse } from "valibot";
 
 import Contacts from "./Contacts";
 import RecentContacts from "./RecentContacts";
@@ -23,8 +22,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function AddressSelection() {
-  const [cameraOn, setCameraOn] = useState(false);
-  const [cameraFacing, setCameraFacing] = useState<"front" | "back">("back");
+  const parameters = useLocalSearchParams();
   const { data: recentContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
     queryKey: ["contacts", "recent"],
   });
@@ -32,7 +30,6 @@ export default function AddressSelection() {
     queryKey: ["contacts", "saved"],
   });
   const { canGoBack } = router;
-  const [permission, requestPermission] = useCameraPermissions();
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { Field, Subscribe, handleSubmit, setFieldValue, validateAllFields } = useForm<
     { receiver: string },
@@ -47,6 +44,14 @@ export default function AddressSelection() {
       router.push("/send-funds/asset");
     },
   });
+
+  const result = safeParse(Address, parameters.receiver);
+  if (result.success) {
+    setFieldValue("receiver", result.output);
+    validateAllFields("change").catch(handleError);
+  } else {
+    // TODO show warning toast
+  }
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>
@@ -91,11 +96,7 @@ export default function AddressSelection() {
                       borderBottomLeftRadius={0}
                       borderLeftWidth={0}
                       onPress={() => {
-                        if (permission?.granted) setCameraOn(!cameraOn);
-                        if (!permission?.granted) {
-                          requestPermission().catch(handleError);
-                          setCameraOn(true);
-                        }
+                        router.push("/send-funds/qr");
                       }}
                     >
                       <ButtonIcon>
@@ -111,36 +112,6 @@ export default function AddressSelection() {
                 </YStack>
               )}
             </Field>
-
-            {permission && permission.granted && cameraOn && (
-              <View minHeight={ms(300)}>
-                <CameraView
-                  barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                  onBarcodeScanned={({ data: address }) => {
-                    setFieldValue("receiver", address);
-                    validateAllFields("change").catch(handleError);
-                    setCameraOn(false);
-                  }}
-                  facing={cameraFacing}
-                  style={styles.cameraView}
-                  autofocus="on"
-                >
-                  <Button
-                    position="absolute"
-                    borderRadius="$r_0"
-                    backgroundColor="$interactiveBaseBrandDefault"
-                    bottom="$s4"
-                    right="$s4"
-                    padding="$s3"
-                    onPress={() => {
-                      setCameraFacing(cameraFacing === "back" ? "front" : "back");
-                    }}
-                  >
-                    <SwitchCamera size={ms(24)} color="$interactiveOnBaseBrandDefault" />
-                  </Button>
-                </CameraView>
-              </View>
-            )}
 
             {(recentContacts ?? savedContacts) && (
               <ScrollView maxHeight={350} space="$s4">
@@ -198,5 +169,3 @@ export default function AddressSelection() {
     </SafeView>
   );
 }
-
-const styles = StyleSheet.create({ cameraView: { flex: 1 } });

@@ -8,6 +8,7 @@ export default function AddFundsLayout() {
   return (
     <Stack initialRouteName="index" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="qr" options={{ presentation: "modal" }} />
       <Stack.Screen name="asset" />
       <Stack.Screen name="amount" />
       <Stack.Screen name="withdraw" options={{ presentation: "modal" }} />
