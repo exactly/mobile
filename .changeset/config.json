@@ -2,6 +2,8 @@
   "$schema": "https://unpkg.com/@changesets/config@3.0.3/schema.json",
   "changelog": "@changesets/cli/changelog",
   "baseBranch": "main",
-  "access": "public",
+  "access": "restricted",
+  "privatePackages": { "version": true, "tag": true },
+  "linked": [["@exactly/mobile", "@exactly/common", "@exactly/server"]],
   "commit": "./commit.js"
 }
