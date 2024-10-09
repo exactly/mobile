@@ -35,15 +35,15 @@ export default app
         },
       },
     });
-    if (!credential) return c.json({ error: "credential not found" }, 401);
+    if (!credential) return c.json("credential not found", 401);
     const account = parse(Address, credential.account);
     setUser({ id: account });
-    if (!credential.kycId) return c.json({ error: "kyc required" }, 403);
+    if (!credential.kycId) return c.json("kyc required", 403);
     if (credential.cards.length > 0 && credential.cards[0]) {
       const { id, lastFour, status } = credential.cards[0];
       return c.json({ url: await getPAN(id), lastFour, status });
     } else {
-      return c.json({ error: "card not found" }, 404);
+      return c.json("card not found", 404);
     }
   })
   .post("/", async (c) => {
@@ -58,14 +58,14 @@ export default app
             cards: { columns: { status: true }, where: inArray(cards.status, ["ACTIVE", "FROZEN"]) },
           },
         });
-        if (!credential) return c.json({ error: "credential not found" }, 401);
+        if (!credential) return c.json("credential not found", 401);
         const account = parse(Address, credential.account);
         setUser({ id: account });
         if (!credential.kycId) return c.json({ error: "kyc required" }, 403);
         const { data } = await getInquiry(credential.kycId);
         if (data.attributes.status !== "approved") return c.json({ error: "kyc not approved" }, 403);
         if (credential.cards.length > 0) {
-          return c.json({ error: "card already exists" }, 400);
+          return c.json("card already exists", 400);
         }
         const phone = parsePhoneNumberWithError(
           data.attributes["phone-number"].startsWith("+")
@@ -108,10 +108,10 @@ export default app
               cards: { columns: { id: true, status: true }, where: ne(cards.status, "DELETED") },
             },
           });
-          if (!credential) return c.json({ error: "credential not found" }, 401);
+          if (!credential) return c.json("credential not found", 401);
           if (credential.cards.length === 0 || !credential.cards[0]) return c.json({ error: "no card found" }, 404);
           const card = credential.cards[0];
-          if (card.status === status) return c.json({ error: `card is already ${status.toLowerCase()}` }, 400);
+          if (card.status === status) return c.json(`card is already ${status.toLowerCase()}`, 400);
           await database.update(cards).set({ status }).where(eq(cards.id, card.id));
           return c.json({ status });
         })
