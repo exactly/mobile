@@ -6,7 +6,6 @@ import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
 import ContractUtils from "../../components/settings/ContractUtils";
-import PasskeyUtils from "../../components/settings/PasskeyUtils";
 import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
@@ -34,7 +33,6 @@ export default function Beta() {
         </View>
         <ScrollView flex={1}>
           <View gap="$s3">
-            <PasskeyUtils />
             <ContractUtils />
           </View>
         </ScrollView>
