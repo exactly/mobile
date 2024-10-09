@@ -50,7 +50,7 @@ export default function Home() {
       >
         <View gap="$s4_5" flex={1}>
           <View backgroundColor="$backgroundSoft" padded gap="$s4">
-            {Number(accountHealth / WAD) < 1.1 && <AlertBadge />}
+            {Number(accountHealth / WAD) < 1.1 && accountHealth !== 0n && <AlertBadge />}
             <Balance />
             <HomeActions />
           </View>

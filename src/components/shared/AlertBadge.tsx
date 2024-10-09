@@ -1,11 +1,14 @@
 import { ChevronRight, AlertTriangle } from "@tamagui/lucide-icons";
-import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View, Text } from "tamagui";
 
+import handleError from "../../utils/handleError";
+import useIntercom from "../../utils/useIntercom";
+
 export default function AlertBadge() {
+  const { presentContent } = useIntercom();
   return (
     <View
       borderRadius="$r6"
@@ -35,14 +38,14 @@ export default function AlertBadge() {
         </Text>
         <Pressable
           onPress={() => {
-            router.push("/add-funds/add-crypto");
+            presentContent("9975910").catch(handleError);
           }}
         >
           <View flexDirection="row" gap={ms(2)} alignItems="center">
             <Text color="$interactiveOnBaseErrorSoft" fontSize={ms(15)} lineHeight={18} fontWeight="bold">
-              Manage
+              Learn more
             </Text>
-            <ChevronRight size={14} color="$interactiveOnBaseErrorSoft" fontWeight="bold" />
+            <ChevronRight size={ms(14)} color="$interactiveOnBaseErrorSoft" fontWeight="bold" />
           </View>
         </Pressable>
       </View>
