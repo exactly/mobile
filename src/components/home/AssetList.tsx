@@ -27,7 +27,7 @@ export default function AssetList() {
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0)
     .sort((a, b) => Number(b.usdValue) - Number(a.usdValue));
   const { data: snapshots } = useReadRatePreviewerSnapshot({ address: ratePreviewerAddress, account: address });
-  const rates = snapshots ? floatingDepositRates(snapshots, Math.floor(new Date(Date.now()).getTime() / 1000)) : [];
+  const rates = snapshots ? floatingDepositRates(snapshots, Math.floor(Date.now() / 1000)) : [];
   return (
     <View width="100%">
       {positions?.map(({ symbol, floatingDepositAssets, decimals, usdValue, market }, index) => (
