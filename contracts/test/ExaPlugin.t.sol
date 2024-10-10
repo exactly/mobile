@@ -26,6 +26,7 @@ import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
 import { ExaPlugin, FunctionId, IInstallmentsRouter, ZeroAddress } from "../src/ExaPlugin.sol";
 import {
+  CollectorSet,
   Expired,
   IAuditor,
   IExaAccount,
@@ -730,6 +731,13 @@ contract ExaPluginTest is ForkTest {
   function test_setCollector_reverts_whenAddressZero() external {
     vm.expectRevert(ZeroAddress.selector);
     exaPlugin.setCollector(address(0));
+  }
+
+  function test_setCollector_emitsCollectorSet() external {
+    address newCollector = address(0x1);
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit CollectorSet(newCollector, address(this));
+    exaPlugin.setCollector(newCollector);
   }
 
   // solhint-enable func-name-mixedcase

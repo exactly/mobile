@@ -22,6 +22,8 @@ interface IExaAccount {
   function withdraw() external;
 }
 
+event CollectorSet(address indexed collector, address indexed account);
+
 event Proposed(
   address indexed account, IMarket indexed market, address indexed receiver, uint256 amount, uint256 unlock
 );
