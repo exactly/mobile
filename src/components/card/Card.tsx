@@ -78,7 +78,10 @@ export default function Card() {
         flipped.value = true;
       } catch (error) {
         if (!(error instanceof APIError)) return handleError(error);
-        if (error.code === 403 && error.message === "kyc required") {
+        if (
+          (error.code === 403 && error.text === "kyc required") ||
+          (error.code === 404 && error.text === "kyc not found")
+        ) {
           if (Platform.OS === "web") {
             const otl = await kyc();
             window.open(otl, "_self");
@@ -95,7 +98,7 @@ export default function Card() {
             .build()
             .start();
         }
-        if (error.code === 404 && error.message === "card not found") {
+        if (error.code === 404 && error.text === "card not found") {
           await createCard();
           await queryClient.invalidateQueries({ queryKey: ["card, details"] });
         }
