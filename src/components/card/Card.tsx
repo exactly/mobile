@@ -73,7 +73,7 @@ export default function Card() {
       try {
         await kycStatus();
         await getCard();
-        await queryClient.invalidateQueries({ queryKey: ["card, details"] });
+        await queryClient.refetchQueries({ queryKey: ["card, details"] });
         setDetailsShown(true);
         flipped.value = true;
       } catch (error) {
