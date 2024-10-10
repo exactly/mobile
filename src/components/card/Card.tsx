@@ -40,10 +40,13 @@ export default function Card() {
     data: cardDetails,
     error: cardError,
     isFetching: isFetchingCardDetails,
+    refetch: refetchCard,
   } = useQuery({
     queryKey: ["card", "details"],
     queryFn: getCard,
     retry: false,
+    gcTime: 0,
+    staleTime: 0,
   });
 
   const { mutateAsync: changeCardStatus, isPending: isSettingCardStatus } = useMutation({
@@ -71,11 +74,13 @@ export default function Card() {
         return;
       }
       try {
+        const { isSuccess } = await refetchCard();
+        if (isSuccess) {
+          setDetailsShown(true);
+          flipped.value = true;
+          return;
+        }
         await kycStatus();
-        await getCard();
-        await queryClient.refetchQueries({ queryKey: ["card, details"] });
-        setDetailsShown(true);
-        flipped.value = true;
       } catch (error) {
         if (!(error instanceof APIError)) return handleError(error);
         if (
@@ -100,12 +105,11 @@ export default function Card() {
         }
         if (error.code === 404 && error.text === "card not found") {
           await createCard();
-          await queryClient.invalidateQueries({ queryKey: ["card, details"] });
+          await queryClient.refetchQueries({ queryKey: ["card, details"] });
         }
       }
     },
   });
-
   return (
     <SafeView fullScreen tab>
       <ScrollView

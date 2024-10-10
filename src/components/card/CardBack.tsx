@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/react-native";
 import React, { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { WebView } from "react-native-webview";
@@ -41,7 +42,6 @@ export default function CardBack({ uri, flipped }: { uri: string; flipped: boole
           injectedJavaScript={`
             (function() {
               try {
-                document.body.style.opacity = '0';
                 document.body.style.backgroundColor = 'transparent';
                 document.documentElement.style.backgroundColor = 'transparent';
                 document.body.style.overflow = 'hidden';
@@ -71,12 +71,8 @@ export default function CardBack({ uri, flipped }: { uri: string; flipped: boole
                   };
                   Object.assign(cardData.style, styles);
                   cardData.style.transform = "none";
-                  setTimeout(() => {
-                    document.body.style.opacity = "1";
-                    window.ReactNativeWebView.postMessage("stylesApplied");
-                  }, 100);
+                  window.ReactNativeWebView.postMessage("stylesApplied");
                 } else {
-                  document.body.style.opacity = "1";
                   window.ReactNativeWebView.postMessage("cardDataNotFound");
                 }
                 document.body.offsetHeight;
@@ -90,6 +86,9 @@ export default function CardBack({ uri, flipped }: { uri: string; flipped: boole
           onMessage={(event) => {
             if (event.nativeEvent.data === "stylesApplied") {
               setLoading(false);
+            }
+            if (event.nativeEvent.data === "iframeError") {
+              captureException(event.nativeEvent.data);
             }
           }}
         />
