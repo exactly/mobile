@@ -10,7 +10,6 @@ import { safeParse } from "valibot";
 
 import handleError from "../../utils/handleError";
 import Button from "../shared/Button";
-import SafeView from "../shared/SafeView";
 import View from "../shared/View";
 
 export default function Qr() {
@@ -24,52 +23,50 @@ export default function Qr() {
     });
   }
   return (
-    <SafeView fullScreen>
-      <View fullScreen>
-        <CameraView
-          barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-          onBarcodeScanned={({ data: receiver }) => {
-            const result = safeParse(Address, receiver);
-            if (result.success) {
-              router.navigate({ pathname: "/send-funds", params: { receiver: result.output } });
-            }
+    <View fullScreen>
+      <CameraView
+        barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+        onBarcodeScanned={({ data: receiver }) => {
+          const result = safeParse(Address, receiver);
+          if (result.success) {
+            router.navigate({ pathname: "/send-funds", params: { receiver: result.output } });
+          }
+        }}
+        facing={cameraFacing}
+        style={styles.cameraView}
+        autofocus="on"
+      >
+        <Button
+          position="absolute"
+          borderRadius="$r_0"
+          backgroundColor="$interactiveBaseBrandDefault"
+          bottom="$s4"
+          right="$s4"
+          padding="$s3"
+          onPress={() => {
+            setCameraFacing(cameraFacing === "back" ? "front" : "back");
           }}
-          facing={cameraFacing}
-          style={styles.cameraView}
-          autofocus="on"
         >
-          <Button
-            position="absolute"
-            borderRadius="$r_0"
-            backgroundColor="$interactiveBaseBrandDefault"
-            bottom="$s4"
-            right="$s4"
-            padding="$s3"
-            onPress={() => {
-              setCameraFacing(cameraFacing === "back" ? "front" : "back");
-            }}
-          >
-            <SwitchCamera size={ms(24)} color="$interactiveOnBaseBrandDefault" />
-          </Button>
-          <View
-            position="absolute"
-            borderRadius="$r_0"
-            backgroundColor="transparent"
-            top="$s4"
-            left="$s4"
-            padding="$s3"
-            onPress={() => {
-              router.back();
-            }}
-          >
-            <ArrowLeft size={ms(24)} color="white" />
-          </View>
-          <View position="absolute" fullScreen justifyContent="center" alignItems="center">
-            <BoxSelect size={ms(Math.min(width, height) * 0.5)} color="white" />
-          </View>
-        </CameraView>
-      </View>
-    </SafeView>
+          <SwitchCamera size={ms(24)} color="$interactiveOnBaseBrandDefault" />
+        </Button>
+        <View
+          position="absolute"
+          borderRadius="$r_0"
+          backgroundColor="transparent"
+          top="$s4"
+          left="$s4"
+          padding="$s3"
+          onPress={() => {
+            router.back();
+          }}
+        >
+          <ArrowLeft size={ms(24)} color="white" />
+        </View>
+        <View position="absolute" fullScreen justifyContent="center" alignItems="center">
+          <BoxSelect size={ms(Math.min(width, height) * 0.5)} color="white" />
+        </View>
+      </CameraView>
+    </View>
   );
 }
 
