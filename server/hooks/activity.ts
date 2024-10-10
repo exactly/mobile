@@ -33,7 +33,7 @@ const app = new Hono();
 
 export default app.post(
   "/",
-  headerValidator(signingKey),
+  headerValidator(new Set([signingKey])),
   jsonValidator(
     v.object({
       type: v.literal("ADDRESS_ACTIVITY"),

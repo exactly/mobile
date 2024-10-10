@@ -13,6 +13,7 @@ import { any, array, check, literal, nullish, object, optional, parse, pipe, str
 import type { Hex } from "viem";
 
 import database, { credentials } from "../../database";
+import { webhooksKey } from "../../utils/alchemy";
 import androidOrigin from "../../utils/android/origin";
 import appOrigin from "../../utils/appOrigin";
 import authSecret from "../../utils/authSecret";
@@ -21,9 +22,7 @@ import deriveAddress from "../../utils/deriveAddress";
 import redis from "../../utils/redis";
 
 if (!process.env.ALCHEMY_ACTIVITY_ID) throw new Error("missing alchemy activity id");
-if (!process.env.ALCHEMY_WEBHOOKS_KEY) throw new Error("missing alchemy webhooks key");
 const webhookId = process.env.ALCHEMY_ACTIVITY_ID;
-const webhooksKey = process.env.ALCHEMY_WEBHOOKS_KEY;
 
 const app = new Hono();
 

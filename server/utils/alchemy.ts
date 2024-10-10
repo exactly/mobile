@@ -5,16 +5,22 @@ import { validator } from "hono/validator";
 import { createHmac } from "node:crypto";
 import type { BaseIssue, BaseSchema } from "valibot";
 
-export function headerValidator(signingKey: string) {
+if (!process.env.ALCHEMY_WEBHOOKS_KEY) throw new Error("missing alchemy webhooks key");
+export const webhooksKey = process.env.ALCHEMY_WEBHOOKS_KEY;
+
+export function headerValidator(signingKeys: Set<string> | (() => Set<string>)) {
   return validator("header", async ({ "x-alchemy-signature": signature }, c) => {
-    if (
-      signature !==
-      createHmac("sha256", signingKey)
-        .update(Buffer.from(await c.req.arrayBuffer()))
-        .digest("hex")
-    ) {
-      return c.text("unauthorized", 401);
+    for (const signingKey of typeof signingKeys === "function" ? signingKeys() : signingKeys) {
+      if (
+        signature ===
+        createHmac("sha256", signingKey)
+          .update(Buffer.from(await c.req.arrayBuffer()))
+          .digest("hex")
+      ) {
+        return;
+      }
     }
+    return c.text("unauthorized", 401);
   });
 }
 

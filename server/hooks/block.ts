@@ -1,21 +1,24 @@
-import { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain";
+import chain, { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/validation";
 import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
 import { deserialize, serialize } from "@wagmi/core";
 import createDebug from "debug";
+import { parse, visit, type StringValueNode } from "graphql";
 import { Hono } from "hono";
 import { setTimeout } from "node:timers/promises";
 import * as v from "valibot";
 import { decodeEventLog } from "viem";
+import { optimism, optimismSepolia } from "viem/chains";
 
-import { headerValidator, jsonValidator } from "../utils/alchemy";
+import { headerValidator, jsonValidator, webhooksKey } from "../utils/alchemy";
 import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
 import redis from "../utils/redis";
 import transactionOptions from "../utils/transactionOptions";
+import appOrigin from "../utils/appOrigin";
 
 if (!process.env.ALCHEMY_BLOCK_KEY) throw new Error("missing alchemy block key");
-const signingKey = process.env.ALCHEMY_BLOCK_KEY;
+const signingKeys = new Set([process.env.ALCHEMY_BLOCK_KEY]);
 
 const debug = createDebug("exa:block");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
@@ -39,7 +42,7 @@ const app = new Hono();
 
 export default app.post(
   "/",
-  headerValidator(signingKey),
+  headerValidator(() => signingKeys),
   jsonValidator(
     v.object({
       type: v.literal("GRAPHQL"),
@@ -113,18 +116,90 @@ async function scheduleWithdraw({ account, market, receiver, amount, unlock }: v
   );
 }
 
-export const query = `#graphql
-{
-  block {
-    timestamp
-    logs(
-      filter: {
-        addresses: ["${exaPluginAddress}"]
-        topics: ["0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0"] # Proposed
-      }
-    ) {
-      topics
-      data
-    }
-  }
-}`;
+const alchemyInit = { headers: { "Content-Type": "application/json", "X-Alchemy-Token": webhooksKey } };
+fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
+  .then(async (webhooksResponse) => {
+    if (!webhooksResponse.ok) throw new Error(`${webhooksResponse.status} ${await webhooksResponse.text()}`);
+
+    const url = `${appOrigin}/hooks/block`;
+    const network = { [optimism.id]: "OPT_MAINNET", [optimismSepolia.id]: "OPT_SEPOLIA" }[chain.id];
+
+    const { data: webhooks } = (await webhooksResponse.json()) as {
+      data: [
+        {
+          id: string;
+          network: string;
+          webhook_type: string;
+          webhook_url: string;
+          signing_key: string;
+          is_active: boolean;
+        },
+      ];
+    };
+    const currentHook = webhooks.find(
+      (hook) =>
+        hook.is_active && hook.webhook_type === "GRAPHQL" && hook.network === network && hook.webhook_url === url,
+    );
+    if (!currentHook) throw new Error("missing webhook");
+    signingKeys.add(currentHook.signing_key);
+
+    const queryResponse = await fetch(
+      `https://dashboard.alchemy.com/api/dashboard-webhook-graphql-query?webhook_id=${currentHook.id}`,
+      alchemyInit,
+    );
+    if (!queryResponse.ok) throw new Error(`${queryResponse.status} ${await queryResponse.text()}`);
+    const { data: query } = (await queryResponse.json()) as { data: { graphql_query: string } };
+    let currentPlugins: string[] = [];
+    visit(parse(query.graphql_query), {
+      Field(node) {
+        if (node.name.value === "logs") {
+          const filterArg = node.arguments?.find(({ name }) => name.value === "filter");
+          if (filterArg?.value.kind === "ObjectValue") {
+            const addressesField = filterArg.value.fields.find(({ name }) => name.value === "addresses");
+            if (addressesField && addressesField.value.kind === "ListValue") {
+              currentPlugins = addressesField.value.values
+                .filter((value): value is StringValueNode => value.kind === "StringValue")
+                .map(({ value }) => v.parse(Address, value));
+            }
+          }
+        }
+      },
+    });
+    if (currentPlugins.includes(exaPluginAddress)) return;
+
+    const createResponse = await fetch("https://dashboard.alchemy.com/api/create-webhook", {
+      ...alchemyInit,
+      method: "POST",
+      body: JSON.stringify({
+        network,
+        webhook_type: "GRAPHQL",
+        webhook_url: url,
+        graphql_query: `#graphql
+          {
+            block {
+              timestamp
+              logs(
+                filter: {
+                  addresses: ${JSON.stringify([...currentPlugins, exaPluginAddress])}
+                  topics: ["0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0"] # Proposed
+                }
+              ) {
+                topics
+                data
+              }
+            }
+          }`,
+      }),
+    });
+    if (!createResponse.ok) throw new Error(`${createResponse.status} ${await createResponse.text()}`);
+    const { data: newHook } = (await createResponse.json()) as { data: { signing_key: string } };
+    signingKeys.add(newHook.signing_key);
+    const deleteResponse = await fetch(
+      `https://dashboard.alchemy.com/api/delete-webhook?webhook_id=${currentHook.id}`,
+      { ...alchemyInit, method: "DELETE" },
+    );
+    if (!deleteResponse.ok) throw new Error(`${deleteResponse.status} ${await deleteResponse.text()}`);
+    await setTimeout(5000);
+    signingKeys.delete(currentHook.signing_key);
+  })
+  .catch((error: unknown) => captureException(error));
