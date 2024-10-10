@@ -61,9 +61,9 @@ export default app
         if (!credential) return c.json("credential not found", 401);
         const account = parse(Address, credential.account);
         setUser({ id: account });
-        if (!credential.kycId) return c.json({ error: "kyc required" }, 403);
+        if (!credential.kycId) return c.json("kyc required", 403);
         const { data } = await getInquiry(credential.kycId);
-        if (data.attributes.status !== "approved") return c.json({ error: "kyc not approved" }, 403);
+        if (data.attributes.status !== "approved") return c.json("kyc not approved", 403);
         if (credential.cards.length > 0) {
           return c.json("card already exists", 400);
         }
@@ -109,7 +109,7 @@ export default app
             },
           });
           if (!credential) return c.json("credential not found", 401);
-          if (credential.cards.length === 0 || !credential.cards[0]) return c.json({ error: "no card found" }, 404);
+          if (credential.cards.length === 0 || !credential.cards[0]) return c.json("no card found", 404);
           const card = credential.cards[0];
           if (card.status === status) return c.json(`card is already ${status.toLowerCase()}`, 400);
           await database.update(cards).set({ status }).where(eq(cards.id, card.id));
