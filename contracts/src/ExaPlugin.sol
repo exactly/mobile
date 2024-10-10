@@ -26,6 +26,7 @@ import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 
 import {
+  CollectorSet,
   FixedPool,
   FixedPosition,
   IAuditor,
@@ -255,6 +256,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   function setCollector(address collector_) public onlyRole(DEFAULT_ADMIN_ROLE) {
     if (collector_ == address(0)) revert ZeroAddress();
     collector = collector_;
+    emit CollectorSet(collector_, msg.sender);
   }
 
   /// @inheritdoc BasePlugin
