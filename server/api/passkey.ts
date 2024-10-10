@@ -19,5 +19,5 @@ export default app.get("/", async (c) => {
   });
   if (!credential) return c.text("credential not found", 401);
   setUser({ id: parse(Address, credential.account) });
-  return c.json({ credentialId, factory: credential.factory, ...decodePublicKey(credential.publicKey) });
+  return c.json({ credentialId, factory: credential.factory, ...decodePublicKey(credential.publicKey) }, 200);
 });

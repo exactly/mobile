@@ -41,7 +41,7 @@ export default app
     if (!credential.kycId) return c.json("kyc required", 403);
     if (credential.cards.length > 0 && credential.cards[0]) {
       const { id, lastFour, status } = credential.cards[0];
-      return c.json({ url: await getPAN(id), lastFour, status });
+      return c.json({ url: await getPAN(id), lastFour, status }, 200);
     } else {
       return c.json("card not found", 404);
     }
@@ -82,7 +82,7 @@ export default app
           limits: { daily: 1000, weekly: 3000, monthly: 5000 },
         });
         await database.insert(cards).values([{ id: card.id, credentialId, lastFour: card.last4 }]);
-        return c.json({ url: await getPAN(card.id), lastFour: card.last4, status: card.status }); // TODO review if necessary
+        return c.json({ url: await getPAN(card.id), lastFour: card.last4, status: card.status }, 200); // TODO review if necessary
       })
       .finally(() => {
         if (!mutex.isLocked()) mutexes.delete(credentialId);
@@ -113,7 +113,7 @@ export default app
           const card = credential.cards[0];
           if (card.status === status) return c.json(`card is already ${status.toLowerCase()}`, 400);
           await database.update(cards).set({ status }).where(eq(cards.id, card.id));
-          return c.json({ status });
+          return c.json({ status }, 200);
         })
         .finally(() => {
           if (!mutex.isLocked()) mutexes.delete(credentialId);

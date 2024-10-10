@@ -23,7 +23,7 @@ export default app
   .get(
     "/",
     vValidator("query", object({ credentialId: optional(Base64URL) }), ({ success }, c) => {
-      if (!success) return c.text("bad credential", 400);
+      if (!success) return c.json("bad credential", 400);
     }),
     async (c) => {
       const timeout = 5 * 60_000;
@@ -38,7 +38,7 @@ export default app
       ]);
       setCookie(c, "session_id", sessionId, { domain, expires: new Date(Date.now() + timeout), httpOnly: true });
       await redis.set(sessionId, options.challenge, "PX", timeout);
-      return c.json({ ...options, extensions: options.extensions as Record<string, unknown> | undefined });
+      return c.json({ ...options, extensions: options.extensions as Record<string, unknown> | undefined }, 200);
     },
   )
   .post(
@@ -118,6 +118,6 @@ export default app
         database.update(credentials).set({ counter: newCounter }).where(eq(credentials.id, credentialID)),
       ]);
 
-      return c.json({ expires: expires.getTime() });
+      return c.json({ expires: expires.getTime() }, 200);
     },
   );

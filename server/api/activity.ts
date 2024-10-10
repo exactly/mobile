@@ -130,6 +130,7 @@ export default app.get(
         ...transfers("received", received),
         ...transfers("sent", sent),
       ].sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
+      200,
     );
   },
 );

@@ -46,7 +46,7 @@ export default app
     ]);
     setCookie(c, "session_id", sessionId, { domain, expires: new Date(Date.now() + timeout), httpOnly: true });
     await redis.set(sessionId, options.challenge, "PX", timeout);
-    return c.json({ ...options, extensions: options.extensions as Record<string, unknown> | undefined });
+    return c.json({ ...options, extensions: options.extensions as Record<string, unknown> | undefined }, 200);
   })
   .post(
     "/",
@@ -146,6 +146,9 @@ export default app
           .catch((error: unknown) => captureException(error)),
       ]);
 
-      return c.json({ credentialId: credentialID, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() });
+      return c.json(
+        { credentialId: credentialID, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() },
+        200,
+      );
     },
   );
