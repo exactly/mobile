@@ -1,15 +1,16 @@
-import { A } from "@expo/html-elements";
+import chain from "@exactly/common/generated/chain";
 import { User, Calendar, Hash, ExternalLink } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
+import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
-import { Pressable } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack, Avatar } from "tamagui";
-import { optimism } from "viem/chains";
-import { useAccount } from "wagmi";
 
+import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
 import Button from "../shared/Button";
@@ -21,7 +22,6 @@ interface DetailsProperties {
 }
 
 export default function Details({ hash }: DetailsProperties) {
-  const { chainId } = useAccount();
   const { data } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   return (
     <View padded gap="$s4">
@@ -49,7 +49,15 @@ export default function Details({ hash }: DetailsProperties) {
       </XStack>
       {hash && (
         <>
-          <XStack justifyContent="space-between" alignItems="center">
+          <XStack
+            hitSlop={ms(15)}
+            justifyContent="space-between"
+            alignItems="center"
+            onPress={() => {
+              setStringAsync(hash).catch(handleError);
+              Alert.alert("Copied", "The transaction hash has been copied to the clipboard.");
+            }}
+          >
             <XStack alignItems="center" gap="$s3">
               <Hash size={ms(20)} color="$uiBrandPrimary" />
               <Text footnote color="$uiNeutralSecondary">
@@ -58,13 +66,19 @@ export default function Details({ hash }: DetailsProperties) {
             </XStack>
             <Text>{shortenAddress(hash, 7, 7)}</Text>
           </XStack>
-          <A
-            href={`${chainId === optimism.id ? "https://optimistic.etherscan.io" : "https://sepolia-optimism.etherscan.io"}/tx/${hash}`}
+
+          <Button
+            onPress={() => {
+              openBrowserAsync(`${chain.blockExplorers?.default.url}tx/${hash}`).catch(handleError);
+            }}
+            contained
+            main
+            spaced
+            fullwidth
+            iconAfter={<ExternalLink color="$interactiveOnBaseBrandDefault" />}
           >
-            <Button contained main spaced fullwidth iconAfter={<ExternalLink color="$interactiveOnBaseBrandDefault" />}>
-              View on explorer
-            </Button>
-          </A>
+            View on explorer
+          </Button>
 
           <View padded alignItems="center">
             <Pressable
