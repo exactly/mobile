@@ -28,7 +28,6 @@
     "@exactly/lib": "exactly/lib#63ce662",
     "@exactly/plugin": "workspace:*",
     "@exactly/server": "workspace:*",
-    "@expo/html-elements": "^0.10.1",
     "@expo/metro-runtime": "~3.2.3",
     "@intercom/intercom-react-native": "^8.0.0",
     "@intercom/messenger-js-sdk": "^0.0.14",
