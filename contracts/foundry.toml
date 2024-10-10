@@ -11,6 +11,7 @@ fs_permissions = [
   { access = "read", path = "broadcast" },
   { access = "read", path = "../node_modules" },
 ]
+ffi = true
 
 [fmt]
 tab_width = 2
