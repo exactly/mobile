@@ -17,13 +17,12 @@ queryClient.setQueryDefaults(["auth"], {
   queryFn: async () => {
     const credentialId = queryClient.getQueryData<Passkey>(["passkey"])?.credentialId;
     const get = await client.api.auth.authentication.$get({ query: { credentialId } });
-    if (!get.ok) throw new APIError(get.status, await get.text());
     const options = await get.json();
     if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
     const assertion = await assert(options);
     if (!assertion) throw new Error("bad assertion");
     const post = await client.api.auth.authentication.$post({ query: { credentialId: assertion.id }, json: assertion });
-    if (!post.ok) throw new APIError(post.status, await post.text());
+    if (!post.ok) throw new APIError(post.status, await post.json());
     const { expires } = await post.json();
     return parse(Auth, expires);
   },
@@ -35,13 +34,12 @@ const client = hc<ExaServer>(domain === "localhost" ? "http://localhost:3000/" :
 
 export async function registrationOptions() {
   const response = await client.api.auth.registration.$get();
-  if (!response.ok) throw new APIError(response.status, await response.text());
   return response.json();
 }
 
 export async function verifyRegistration(attestation: RegistrationResponseJSON) {
   const response = await client.api.auth.registration.$post({ json: attestation });
-  if (!response.ok) throw new APIError(response.status, await response.text());
+  if (!response.ok) throw new APIError(response.status, await response.json());
   const { auth: expires, ...passkey } = await response.json();
   await queryClient.setQueryData(["auth"], parse(Auth, expires));
   return parse(Passkey, passkey);
@@ -50,14 +48,14 @@ export async function verifyRegistration(attestation: RegistrationResponseJSON) 
 export async function getCard() {
   await auth();
   const response = await client.api.card.$get();
-  if (!response.ok) throw new APIError(response.status, await response.text());
+  if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
 export async function createCard() {
   await auth();
   const response = await client.api.card.$post();
-  if (!response.ok) throw new APIError(response.status, await response.text());
+  if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
@@ -66,28 +64,28 @@ export async function setCardStatus(
 ) {
   await auth();
   const response = await client.api.card.$patch({ json: { status } });
-  if (!response.ok) throw new APIError(response.status, await response.text());
+  if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
 export async function kyc(inquiryId?: string) {
   await auth();
   const response = await client.api.kyc.$post({ json: { inquiryId } });
-  if (!response.ok) throw new APIError(response.status, await response.text());
+  if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
 export async function kycStatus() {
   await auth();
   const response = await client.api.kyc.$get();
-  if (!response.ok) throw new APIError(response.status, await response.text());
+  if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
 export async function getPasskey() {
   await auth();
   const response = await client.api.passkey.$get();
-  if (!response.ok) throw new APIError(response.status, await response.text());
+  if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
@@ -96,7 +94,7 @@ export async function getActivity(parameters?: NonNullable<Parameters<typeof cli
   const response = await client.api.activity.$get(
     parameters?.include === undefined ? undefined : { query: { include: parameters.include } },
   );
-  if (!response.ok) throw new APIError(response.status, await response.text());
+  if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
