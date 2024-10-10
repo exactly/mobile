@@ -221,35 +221,44 @@ export default function Card() {
                   </Pressable>
                 </StyledAction>
                 <StyledAction>
-                  <View gap="$s3_5">
-                    <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
-                    <Text fontSize={ms(15)} color="$uiNeutralPrimary">
-                      Freeze
-                    </Text>
-                    <XStack alignItems="center" gap="$s3">
-                      <View>
-                        <Switch
-                          disabled={isFetchingCardDetails || isSettingCardStatus}
-                          checked={cardDetails?.status === "FROZEN"}
-                          onCheckedChange={(checked) => {
-                            changeCardStatus(checked ? "FROZEN" : "ACTIVE").catch(handleError);
-                          }}
-                          backgroundColor="$backgroundMild"
-                          borderColor="$borderNeutralSoft"
-                        >
-                          <Switch.Thumb
+                  <Pressable
+                    onPress={() => {
+                      changeCardStatus(cardDetails?.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
+                    }}
+                  >
+                    <View gap="$s3_5">
+                      <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                      <Text fontSize={ms(15)} color="$uiNeutralPrimary">
+                        {cardDetails?.status === "FROZEN" ? "Unfreeze" : "Freeze"}
+                      </Text>
+                      <XStack alignItems="center" gap="$s3">
+                        <View>
+                          <Switch
                             disabled={isFetchingCardDetails || isSettingCardStatus}
-                            animation="quicker"
-                            backgroundColor="$interactiveBaseBrandDefault"
-                            shadowColor="$uiNeutralSecondary"
-                          />
-                        </Switch>
-                      </View>
-                      <View>
-                        {isSettingCardStatus && <Spinner color="$interactiveBaseBrandDefault" alignSelf="flex-start" />}
-                      </View>
-                    </XStack>
-                  </View>
+                            checked={cardDetails?.status === "FROZEN"}
+                            backgroundColor="$backgroundMild"
+                            borderColor="$borderNeutralSoft"
+                          >
+                            <Switch.Thumb
+                              disabled={isFetchingCardDetails || isSettingCardStatus}
+                              animation="quicker"
+                              backgroundColor={
+                                cardDetails?.status === "ACTIVE"
+                                  ? "$interactiveDisabled"
+                                  : "$interactiveBaseBrandDefault"
+                              }
+                              shadowColor="$uiNeutralSecondary"
+                            />
+                          </Switch>
+                        </View>
+                        <View>
+                          {isSettingCardStatus && (
+                            <Spinner color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
+                          )}
+                        </View>
+                      </XStack>
+                    </View>
+                  </Pressable>
                 </StyledAction>
               </View>
             </View>
