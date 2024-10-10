@@ -168,6 +168,9 @@ importers:
       expo-updates:
         specifier: ~0.25.27
         version: 0.25.27(expo@51.0.37(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
+      expo-web-browser:
+        specifier: ~13.0.3
+        version: 13.0.3(expo@51.0.37(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(bufferutil@4.0.8)(utf-8-validate@5.0.10))
       fast-text-encoding:
         specifier: ^1.0.6
         version: 1.0.6
@@ -2279,7 +2282,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {'0': node >=0.10.0}
+    engines: {node: '>=0.10.0'}
 
   '@expo/cli@0.18.30':
     resolution: {integrity: sha512-V90TUJh9Ly8stYo8nwqIqNWCsYjE28GlVFWEhAFCUOp99foiQr8HSTpiiX5GIrprcPoWmlGoY+J5fQA29R4lFg==}
@@ -6236,6 +6239,11 @@ packages:
   expo-updates@0.25.27:
     resolution: {integrity: sha512-1hyYZqBEXcAiEuSRPJ6dINTndGlWi6/bwlyYGjSnyoYfu/vzZQrJ+XA8JUP4EvJ3b0g8a0UOIjlDJ9ke9kMcfg==}
     hasBin: true
+    peerDependencies:
+      expo: '*'
+
+  expo-web-browser@13.0.3:
+    resolution: {integrity: sha512-HXb7y82ApVJtqk8tManyudtTrCtx8xcUnVzmJECeHCB0SsWSQ+penVLZxJkcyATWoJOsFMnfVSVdrTcpKKGszQ==}
     peerDependencies:
       expo: '*'
 
@@ -17457,6 +17465,10 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
+
+  expo-web-browser@13.0.3(expo@51.0.37(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(bufferutil@4.0.8)(utf-8-validate@5.0.10)):
+    dependencies:
+      expo: 51.0.37(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(bufferutil@4.0.8)(utf-8-validate@5.0.10)
 
   expo@51.0.37(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(bufferutil@4.0.8)(utf-8-validate@5.0.10):
     dependencies:

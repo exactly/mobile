@@ -20,6 +20,7 @@
     "expo-status-bar",
     "expo-system-ui",
     "expo-updates",
+    "expo-web-browser",
     "react",
     "react-dom",
     "react-native",
