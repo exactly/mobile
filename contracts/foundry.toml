@@ -2,7 +2,7 @@
 solc_version = "0.8.27"
 evm_version = "cancun"
 optimizer = true
-optimizer_runs = 6_900
+optimizer_runs = 5_000
 deny_warnings = true
 verbosity = 3
 isolate = true
