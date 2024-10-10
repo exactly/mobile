@@ -79,11 +79,20 @@ export default function AddCrypto() {
               </Text>
               <View flexDirection="row" justifyContent="space-between" alignItems="center">
                 <View>
-                  {address && (
-                    <Text fontSize={ms(14)} color="$uiNeutralSecondary" fontWeight="bold">
-                      {shortenAddress(address, 10, 10)}
-                    </Text>
-                  )}
+                  <Pressable
+                    hitSlop={ms(15)}
+                    onPress={() => {
+                      if (!address) return;
+                      setStringAsync(address).catch(handleError);
+                      Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
+                    }}
+                  >
+                    {address && (
+                      <Text fontSize={ms(18)} color="$uiNeutralPrimary" fontWeight="bold">
+                        {shortenAddress(address, 8, 8)}
+                      </Text>
+                    )}
+                  </Pressable>
                 </View>
                 <View gap={ms(10)} flexDirection="row">
                   <Pressable onPress={copy} hitSlop={ms(15)}>
