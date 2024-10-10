@@ -10,6 +10,7 @@ import { UpgradeableModularAccount } from "modular-account/src/account/Upgradeab
 
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
 
+import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
@@ -23,7 +24,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
-import { ExaPlugin, FunctionId, IInstallmentsRouter } from "../src/ExaPlugin.sol";
+import { ExaPlugin, FunctionId, IInstallmentsRouter, ZeroAddress } from "../src/ExaPlugin.sol";
 import {
   Expired,
   IAuditor,
@@ -708,6 +709,27 @@ contract ExaPluginTest is ForkTest {
     deal(address(usdc), address(refunder), 100e6);
     refunder.refund(address(account), 100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
     assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
+  }
+
+  function test_setCollector_sets_whenAdmin() external {
+    exaPlugin.setCollector(address(0x1));
+    assertEq(exaPlugin.collector(), address(0x1));
+  }
+
+  function test_setCollector_reverts_whenNotAdmin() external {
+    address nonAdmin = address(0x1);
+    vm.startPrank(nonAdmin);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    exaPlugin.setCollector(address(0x2));
+  }
+
+  function test_setCollector_reverts_whenAddressZero() external {
+    vm.expectRevert(ZeroAddress.selector);
+    exaPlugin.setCollector(address(0));
   }
 
   // solhint-enable func-name-mixedcase
