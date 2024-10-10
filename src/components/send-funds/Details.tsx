@@ -69,7 +69,7 @@ export default function Details({ hash }: DetailsProperties) {
 
           <Button
             onPress={() => {
-              openBrowserAsync(`${chain.blockExplorers?.default.url}tx/${hash}`).catch(handleError);
+              openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${hash}`).catch(handleError);
             }}
             contained
             main
