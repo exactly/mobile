@@ -31,6 +31,14 @@ export default styled(Button, {
     disabled: {
       true: { backgroundColor: "$interactiveDisabled", color: "$interactiveOnDisabled", borderColor: "transparent" },
     },
+    danger: {
+      true: {
+        backgroundColor: "$interactiveBaseErrorDefault",
+        color: "$interactiveOnBaseErrorDefault",
+        hoverStyle: { backgroundColor: "$interactiveBaseErrorHover" },
+        pressStyle: { backgroundColor: "$interactiveBaseErrorPressed" },
+      },
+    },
     main: {
       true: {
         flex: 1,

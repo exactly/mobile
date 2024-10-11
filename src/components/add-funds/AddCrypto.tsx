@@ -2,8 +2,8 @@ import chain from "@exactly/common/generated/chain";
 import { ArrowLeft, Files, Info, Share as ShareIcon } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
-import React, { useCallback } from "react";
-import { Alert, Pressable, Share } from "react-native";
+import React, { useCallback, useState } from "react";
+import { Pressable, Share } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 import { useAccount } from "wagmi";
@@ -12,18 +12,11 @@ import OptimismImage from "../../assets/images/optimism.svg";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
 import shortenAddress from "../../utils/shortenAddress";
+import AddressDialog from "../shared/AddressDialog";
 import AssetLogo from "../shared/AssetLogo";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
-
-function back() {
-  router.back();
-}
-
-function about() {
-  router.push("../add-funds/add-crypto-about");
-}
 
 // TODO remove limitation for next release
 const supportedAssets = Object.entries(assetLogos)
@@ -31,13 +24,16 @@ const supportedAssets = Object.entries(assetLogos)
   .map(([symbol, image]) => ({ symbol, image }));
 
 export default function AddCrypto() {
-  const { canGoBack } = router;
+  const [alertShown, setAlertShown] = useState(false);
   const { address } = useAccount();
+  const { canGoBack } = router;
+
   function copy() {
     if (!address) return;
     setStringAsync(address).catch(handleError);
-    Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
+    setAlertShown(false);
   }
+
   const share = useCallback(async () => {
     if (!address) return;
     await Share.share({ message: address, title: `Share ${chain.name} address` });
@@ -48,7 +44,11 @@ export default function AddCrypto() {
         <View gap={ms(20)}>
           <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
-              <Pressable onPress={back}>
+              <Pressable
+                onPress={() => {
+                  router.back();
+                }}
+              >
                 <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
               </Pressable>
             )}
@@ -82,9 +82,7 @@ export default function AddCrypto() {
                   <Pressable
                     hitSlop={ms(15)}
                     onPress={() => {
-                      if (!address) return;
-                      setStringAsync(address).catch(handleError);
-                      Alert.alert("Address Copied", "Your wallet address has been copied to the clipboard.");
+                      setAlertShown(true);
                     }}
                   >
                     {address && (
@@ -95,7 +93,12 @@ export default function AddCrypto() {
                   </Pressable>
                 </View>
                 <View gap={ms(10)} flexDirection="row">
-                  <Pressable onPress={copy} hitSlop={ms(15)}>
+                  <Pressable
+                    onPress={() => {
+                      setAlertShown(true);
+                    }}
+                    hitSlop={ms(15)}
+                  >
                     <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
                   </Pressable>
                   <Pressable
@@ -109,6 +112,9 @@ export default function AddCrypto() {
                 </View>
               </View>
             </View>
+
+            <AddressDialog open={alertShown} onActionPress={copy} />
+
             <View
               flex={1}
               gap="$s4"
@@ -161,7 +167,9 @@ export default function AddCrypto() {
                     fontSize={ms(13)}
                     lineHeight={ms(16)}
                     fontWeight="bold"
-                    onPress={about}
+                    onPress={() => {
+                      router.push("../add-funds/add-crypto-about");
+                    }}
                   >
                     &nbsp;Learn more about adding funds.
                   </Text>
