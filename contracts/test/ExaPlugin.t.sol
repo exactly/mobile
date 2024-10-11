@@ -83,6 +83,7 @@ contract ExaPluginTest is ForkTest {
     owners[0] = owner;
     (keeper, keeperKey) = makeAddrAndKey("keeper");
     (issuer, issuerKey) = makeAddrAndKey("issuer");
+    vm.setEnv("KEEPER_ADDRESS", keeper.toHexString());
     vm.setEnv("ISSUER_ADDRESS", issuer.toHexString());
 
     new DeployAccount().run();
