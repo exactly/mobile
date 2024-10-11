@@ -51,6 +51,8 @@ module.exports = {
           {
             skip: [
               "ActionButton",
+              "AlertDialog.Description",
+              "AlertDialog.Title",
               "Button",
               "Heading",
               "Link",
