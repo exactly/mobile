@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0;
 
-import { MockWETH } from "@exactly/protocol/mocks/MockWETH.sol";
-
 import { Previewer } from "@exactly/protocol/periphery/Previewer.sol";
 import { FixedLib } from "@exactly/protocol/utils/FixedLib.sol";
 
@@ -18,7 +16,7 @@ import { BaseScript, stdJson } from "../../script/Base.s.sol";
 import { ExaAccountFactory } from "../../src/ExaAccountFactory.sol";
 import { IExaAccount, IMarket } from "../../src/IExaAccount.sol";
 import { IssuerChecker } from "../../src/IssuerChecker.sol";
-import { MockVelodromeFactory, MockVelodromePool } from "./MockVelodromeFactory.sol";
+import { MockVelodromeFactory } from "./MockVelodromeFactory.sol";
 
 contract BobScript is BaseScript {
   using OwnersLib for address[];
