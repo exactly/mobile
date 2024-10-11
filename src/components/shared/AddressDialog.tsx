@@ -30,7 +30,7 @@ export default function AddressDialog({ open, onActionPress }: { open: boolean; 
           scale={1}
           opacity={1}
           borderWidth={0}
-          margin="$s3"
+          margin="$s5"
         >
           <YStack
             backgroundColor="$interactiveBaseErrorSoftDefault"
