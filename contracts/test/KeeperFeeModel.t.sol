@@ -5,7 +5,7 @@ import { ForkTest } from "./Fork.t.sol";
 import { FixedLib } from "@exactly/protocol/Market.sol";
 
 import { DeployKeeperFeeModel } from "../script/KeeperFeeModel.s.sol";
-import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
+import { InvalidRange, KeeperFeeModel } from "../src/KeeperFeeModel.sol";
 
 contract KeeperFeeModelTest is ForkTest {
   KeeperFeeModel internal model;
@@ -48,6 +48,29 @@ contract KeeperFeeModelTest is ForkTest {
     uint256 fee = model.calculateFee(amounts, firstMaturity);
 
     assertApproxEqRel(fee, refFee, 0.002e16, "fee != refFee");
+  }
+
+  function test_invalidRangeDeploy_reverts() external {
+    model = deployDefault();
+    uint256 durationStart = model.DURATION_START();
+    uint256 durationEnd = model.DURATION_END();
+    uint256 durationGrowth = model.DURATION_GROWTH();
+    uint256 feeStart = model.FEE_START();
+    uint256 feeEnd = model.FEE_END();
+    uint256 minFee = model.MIN_FEE();
+    uint256 linearProportion = model.LINEAR_PROPORTION();
+
+    vm.expectRevert(InvalidRange.selector);
+    model = new KeeperFeeModel(durationStart, durationStart, durationGrowth, feeStart, feeEnd, minFee, linearProportion);
+
+    vm.expectRevert(InvalidRange.selector);
+    model = new KeeperFeeModel(durationStart, durationEnd, 10e18 + 1, feeStart, feeEnd, minFee, linearProportion);
+
+    vm.expectRevert(InvalidRange.selector);
+    model = new KeeperFeeModel(durationStart, durationEnd, durationGrowth, feeStart, feeStart, minFee, linearProportion);
+
+    vm.expectRevert(InvalidRange.selector);
+    model = new KeeperFeeModel(durationStart, durationEnd, durationGrowth, feeStart, feeStart, minFee, 1e18 + 1);
   }
 
   function encodeHex(bytes memory raw) internal pure returns (string memory) {
