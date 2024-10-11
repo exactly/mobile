@@ -29,7 +29,12 @@ contract DeployRefunder is BaseScript {
   function run() external {
     assert(msg.sender != DEFAULT_SENDER);
 
-    vm.broadcast(msg.sender);
+    vm.startBroadcast(msg.sender);
+
     refunder = new Refunder(exaUSDC, issuerChecker);
+
+    refunder.grantRole(refunder.KEEPER_ROLE(), vm.envAddress("KEEPER_ADDRESS"));
+
+    vm.stopBroadcast();
   }
 }
