@@ -10,7 +10,7 @@ import type { GlobalSetupContext } from "vitest/node";
 import anvilClient from "./anvilClient";
 
 export default async function setup({ provide }: GlobalSetupContext) {
-  const instance = anvil({ codeSizeLimit: 42_000, blockBaseFeePerGas: 1n });
+  const instance = anvil({ codeSizeLimit: 69_000, blockBaseFeePerGas: 1n });
   const initialize = await instance
     .start()
     .then(() => true)
@@ -34,7 +34,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
     .catch(() => zeroAddress);
 
   if (initialize) {
-    await $(shell)`forge script test/mocks/Account.s.sol --code-size-limit 42000
+    await $(shell)`forge script test/mocks/Account.s.sol --code-size-limit 69000
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script node_modules/webauthn-owner-plugin/script/Plugin.s.sol
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
@@ -44,7 +44,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
       }),
       await import(`@exactly/plugin/broadcast/Plugin.s.sol/${foundry.id}/run-latest.json`),
     ).transactions[0].contractAddress;
-    await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 42000
+    await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 69000
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
