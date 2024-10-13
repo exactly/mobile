@@ -3,7 +3,7 @@ import { Address, Hash, Hex } from "@exactly/common/validation";
 import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
 import { deserialize, serialize } from "@wagmi/core";
 import createDebug from "debug";
-import { parse, visit, type StringValueNode } from "graphql";
+import { Kind, parse, visit, type StringValueNode } from "graphql";
 import { Hono } from "hono";
 import { setTimeout } from "node:timers/promises";
 import * as v from "valibot";
@@ -11,11 +11,11 @@ import { decodeEventLog } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
 import { headerValidator, jsonValidator, webhooksKey } from "../utils/alchemy";
+import appOrigin from "../utils/appOrigin";
 import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
 import redis from "../utils/redis";
 import transactionOptions from "../utils/transactionOptions";
-import appOrigin from "../utils/appOrigin";
 
 if (!process.env.ALCHEMY_BLOCK_KEY) throw new Error("missing alchemy block key");
 const signingKeys = new Set([process.env.ALCHEMY_BLOCK_KEY]);
@@ -153,12 +153,12 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
     visit(parse(query.graphql_query), {
       Field(node) {
         if (node.name.value === "logs") {
-          const filterArg = node.arguments?.find(({ name }) => name.value === "filter");
-          if (filterArg?.value.kind === "ObjectValue") {
-            const addressesField = filterArg.value.fields.find(({ name }) => name.value === "addresses");
-            if (addressesField && addressesField.value.kind === "ListValue") {
+          const filterArguments = node.arguments?.find(({ name }) => name.value === "filter");
+          if (filterArguments?.value.kind === Kind.OBJECT) {
+            const addressesField = filterArguments.value.fields.find(({ name }) => name.value === "addresses");
+            if (addressesField && addressesField.value.kind === Kind.LIST) {
               currentPlugins = addressesField.value.values
-                .filter((value): value is StringValueNode => value.kind === "StringValue")
+                .filter((value): value is StringValueNode => value.kind === Kind.STRING)
                 .map(({ value }) => v.parse(Address, value));
             }
           }
