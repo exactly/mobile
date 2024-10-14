@@ -38,7 +38,6 @@ export default function Card() {
 
   const {
     data: cardDetails,
-    error: cardError,
     isFetching: isFetchingCardDetails,
     refetch: refetchCard,
   } = useQuery({
@@ -140,9 +139,9 @@ export default function Card() {
                 }
               />
 
-              {(cardError ?? revealError) && !isRevealing && (
+              {revealError && (
                 <Text color="$uiErrorPrimary" fontWeight="bold">
-                  {cardError ? cardError.message : revealError ? revealError.message : "Error"}
+                  {revealError.message}
                 </Text>
               )}
 
