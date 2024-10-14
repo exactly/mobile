@@ -17,7 +17,7 @@ contract KeeperFeeModel {
   uint256 public immutable MIN_FEE;
   uint256 public immutable FEE_START;
   uint256 public immutable FEE_END;
-  uint256 public immutable LINEAR_PROPORTION;
+  uint256 public immutable LINEAR_RATIO;
 
   constructor(
     uint256 _durationStart,
@@ -26,9 +26,9 @@ contract KeeperFeeModel {
     uint256 _feeStart,
     uint256 _feeEnd,
     uint256 _minFee,
-    uint256 _linearProportion
+    uint256 _linearRatio
   ) {
-    if (_durationStart >= _durationEnd || _durationGrowth > 10e18 || _feeStart >= _feeEnd || _linearProportion > 1e18) {
+    if (_durationStart >= _durationEnd || _durationGrowth > 10e18 || _feeStart >= _feeEnd || _linearRatio > 1e18) {
       revert InvalidRange();
     }
     DURATION_START = _durationStart;
@@ -37,7 +37,7 @@ contract KeeperFeeModel {
     FEE_START = _feeStart;
     FEE_END = _feeEnd;
     MIN_FEE = _minFee;
-    LINEAR_PROPORTION = _linearProportion;
+    LINEAR_RATIO = _linearRatio;
   }
 
   /// @dev amounts values should have 18 decimals
@@ -61,7 +61,7 @@ contract KeeperFeeModel {
         )
       );
 
-    return MIN_FEE + linearFee.mulWad(LINEAR_PROPORTION) + nonLinearFee.mulWad(1e18 - LINEAR_PROPORTION);
+    return MIN_FEE + linearFee.mulWad(LINEAR_RATIO) + nonLinearFee.mulWad(1e18 - LINEAR_RATIO);
   }
 }
 

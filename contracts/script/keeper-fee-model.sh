@@ -12,7 +12,7 @@ fee=$(BC_LINE_LENGTH=666 bc -l <<< "
   feestart    = ${input[3]} / wad
   feeend      = ${input[4]} / wad
   minfee      = ${input[5]} / wad
-  linearp     = ${input[6]} / wad
+  linearr     = ${input[6]} / wad
   amountstime = ${input[7]} / wad
   total       = ${input[8]} / wad
 
@@ -20,7 +20,7 @@ fee=$(BC_LINE_LENGTH=666 bc -l <<< "
   linearfee = minfee + (feeend - feestart) * (avgduration - dstart) / (dend - dstart)
 
   nonlinearfee = feestart + (feeend - feestart) * e(dgrowth * l((avgduration - dstart) / (dend - dstart)))
-  fee = minfee + linearfee * linearp + nonlinearfee * (1 - linearp)
+  fee = minfee + linearfee * linearr + nonlinearfee * (1 - linearr)
 
   scale     = 0
   print fee * wad / 1

@@ -38,7 +38,7 @@ contract KeeperFeeModelTest is ForkTest {
         model.FEE_START(),
         model.FEE_END(),
         model.MIN_FEE(),
-        model.LINEAR_PROPORTION(),
+        model.LINEAR_RATIO(),
         amountsByTime,
         total
       )
@@ -58,16 +58,16 @@ contract KeeperFeeModelTest is ForkTest {
     uint256 feeStart = model.FEE_START();
     uint256 feeEnd = model.FEE_END();
     uint256 minFee = model.MIN_FEE();
-    uint256 linearProportion = model.LINEAR_PROPORTION();
+    uint256 linearRatio = model.LINEAR_RATIO();
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperFeeModel(durationStart, durationStart, durationGrowth, feeStart, feeEnd, minFee, linearProportion);
+    model = new KeeperFeeModel(durationStart, durationStart, durationGrowth, feeStart, feeEnd, minFee, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperFeeModel(durationStart, durationEnd, 10e18 + 1, feeStart, feeEnd, minFee, linearProportion);
+    model = new KeeperFeeModel(durationStart, durationEnd, 10e18 + 1, feeStart, feeEnd, minFee, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperFeeModel(durationStart, durationEnd, durationGrowth, feeStart, feeStart, minFee, linearProportion);
+    model = new KeeperFeeModel(durationStart, durationEnd, durationGrowth, feeStart, feeStart, minFee, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
     model = new KeeperFeeModel(durationStart, durationEnd, durationGrowth, feeStart, feeStart, minFee, 1e18 + 1);

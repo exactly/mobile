@@ -19,7 +19,7 @@ contract DeployKeeperFeeModel is BaseScript {
       vm.envUint("KFM_FEE_START"),
       vm.envUint("KFM_FEE_END"),
       vm.envUint("KFM_MIN_FEE"),
-      vm.envUint("KFM_LINEAR_PROPORTION")
+      vm.envUint("KFM_LINEAR_RATIO")
     );
   }
 }
