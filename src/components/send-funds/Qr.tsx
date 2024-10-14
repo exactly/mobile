@@ -35,37 +35,36 @@ export default function Qr() {
         facing={cameraFacing}
         style={styles.cameraView}
         autofocus="on"
+      />
+      <Button
+        position="absolute"
+        borderRadius="$r_0"
+        backgroundColor="$interactiveBaseBrandDefault"
+        bottom="$s4"
+        right="$s4"
+        padding="$s3"
+        onPress={() => {
+          setCameraFacing(cameraFacing === "back" ? "front" : "back");
+        }}
       >
-        <Button
-          position="absolute"
-          borderRadius="$r_0"
-          backgroundColor="$interactiveBaseBrandDefault"
-          bottom="$s4"
-          right="$s4"
-          padding="$s3"
-          onPress={() => {
-            setCameraFacing(cameraFacing === "back" ? "front" : "back");
-          }}
-        >
-          <SwitchCamera size={ms(24)} color="$interactiveOnBaseBrandDefault" />
-        </Button>
-        <View
-          position="absolute"
-          borderRadius="$r_0"
-          backgroundColor="transparent"
-          top="$s4"
-          left="$s4"
-          padding="$s3"
-          onPress={() => {
-            router.back();
-          }}
-        >
-          <ArrowLeft size={ms(24)} color="white" />
-        </View>
-        <View position="absolute" fullScreen justifyContent="center" alignItems="center">
-          <BoxSelect size={ms(Math.min(width, height) * 0.5)} color="white" />
-        </View>
-      </CameraView>
+        <SwitchCamera size={ms(24)} color="$interactiveOnBaseBrandDefault" />
+      </Button>
+      <View
+        position="absolute"
+        borderRadius="$r_0"
+        backgroundColor="transparent"
+        top="$s4"
+        left="$s4"
+        padding="$s3"
+        onPress={() => {
+          router.back();
+        }}
+      >
+        <ArrowLeft size={ms(24)} color="white" />
+      </View>
+      <View position="absolute" fullScreen justifyContent="center" alignItems="center">
+        <BoxSelect size={ms(Math.min(width, height) * 0.5)} color="white" />
+      </View>
     </View>
   );
 }
