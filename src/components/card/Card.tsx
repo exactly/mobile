@@ -48,13 +48,18 @@ export default function Card() {
     staleTime: 0,
   });
 
-  const { mutateAsync: changeCardStatus, isPending: isSettingCardStatus } = useMutation({
+  const {
+    mutateAsync: changeCardStatus,
+    isPending: isSettingCardStatus,
+    variables: optimisticCardStatus,
+  } = useMutation({
     mutationKey: ["card", "status"],
     mutationFn: setCardStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["card", "details"] }).catch(handleError);
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
     },
   });
+  const displayStatus = isSettingCardStatus ? optimisticCardStatus : cardDetails?.status;
 
   const [detailsShown, setDetailsShown] = useState(false);
   const flipped = useSharedValue(false);
@@ -109,6 +114,7 @@ export default function Card() {
       }
     },
   });
+
   return (
     <SafeView fullScreen tab>
       <ScrollView
@@ -222,19 +228,20 @@ export default function Card() {
                 <StyledAction>
                   <Pressable
                     onPress={() => {
+                      if (isSettingCardStatus) return;
                       changeCardStatus(cardDetails?.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
                     }}
                   >
                     <View gap="$s3_5">
                       <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
                       <Text fontSize={ms(15)} color="$uiNeutralPrimary">
-                        {cardDetails?.status === "FROZEN" ? "Unfreeze" : "Freeze"}
+                        {displayStatus === "FROZEN" ? "Unfreeze" : "Freeze"}
                       </Text>
                       <XStack alignItems="center" gap="$s3">
-                        <View>
+                        <View pointerEvents="none">
                           <Switch
                             disabled={isFetchingCardDetails || isSettingCardStatus}
-                            checked={cardDetails?.status === "FROZEN"}
+                            checked={displayStatus === "FROZEN"}
                             backgroundColor="$backgroundMild"
                             borderColor="$borderNeutralSoft"
                           >
@@ -242,9 +249,7 @@ export default function Card() {
                               disabled={isFetchingCardDetails || isSettingCardStatus}
                               animation="quicker"
                               backgroundColor={
-                                cardDetails?.status === "ACTIVE"
-                                  ? "$interactiveDisabled"
-                                  : "$interactiveBaseBrandDefault"
+                                displayStatus === "ACTIVE" ? "$interactiveDisabled" : "$interactiveBaseBrandDefault"
                               }
                               shadowColor="$uiNeutralSecondary"
                             />
