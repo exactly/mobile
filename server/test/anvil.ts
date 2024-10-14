@@ -19,6 +19,10 @@ export default async function setup({ provide }: GlobalSetupContext) {
   const keeper = privateKeyToAddress(padHex("0x69"));
   if (initialize) await anvilClient.setBalance({ address: keeper, value: 10n ** 24n });
 
+  const deployer = await anvilClient
+    .getAddresses()
+    .then(([address]) => address ?? zeroAddress)
+    .catch(() => zeroAddress);
   const shell = {
     cwd: "node_modules/@exactly/plugin",
     env: {
@@ -26,26 +30,23 @@ export default async function setup({ provide }: GlobalSetupContext) {
       COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
       ISSUER_ADDRESS: privateKeyToAddress(padHex("0x420")),
       KEEPER_ADDRESS: keeper,
+      DEPLOYER_ADDRESS: deployer,
     } as Record<string, string>,
   };
-  const deployer = await anvilClient
-    .getAddresses()
-    .then(([address]) => address ?? zeroAddress)
-    .catch(() => zeroAddress);
 
   if (initialize) {
     await $(shell)`forge script test/mocks/Account.s.sol --code-size-limit 69000
-      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script node_modules/webauthn-owner-plugin/script/Plugin.s.sol
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
-    shell.env.OWNER_PLUGIN_ADDRESS = parse(
+    shell.env.BROADCAST_WEBAUTHNOWNERPLUGIN_ADDRESS = parse(
       object({
         transactions: tuple([object({ contractName: literal("WebauthnOwnerPlugin"), contractAddress: Address })]),
       }),
       await import(`@exactly/plugin/broadcast/Plugin.s.sol/${foundry.id}/run-latest.json`),
     ).transactions[0].contractAddress;
     await $(shell)`forge script test/mocks/Protocol.s.sol --code-size-limit 69000
-      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
   const protocol = parse(
@@ -78,7 +79,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
     shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
     shell.env.PROTOCOL_VELODROMEPOOLFACTORY_ADDRESS = velodromeFactory.contractAddress;
     await $(shell)`forge script script/IssuerChecker.s.sol
-      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
   const [issuerChecker] = parse(
@@ -89,9 +90,9 @@ export default async function setup({ provide }: GlobalSetupContext) {
   ).transactions;
 
   if (initialize) {
-    shell.env.ISSUER_CHECKER_ADDRESS = issuerChecker.contractAddress;
+    shell.env.BROADCAST_ISSUERCHECKER_ADDRESS = issuerChecker.contractAddress;
     await $(shell)`forge script script/Refunder.s.sol
-      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
   const [refunder] = parse(
@@ -102,9 +103,22 @@ export default async function setup({ provide }: GlobalSetupContext) {
   ).transactions;
 
   if (initialize) {
-    shell.env.REFUNDER_ADDRESS = refunder.contractAddress;
+    shell.env.BROADCAST_REFUNDER_ADDRESS = refunder.contractAddress;
+    await $(shell)`forge script script/KeeperFeeModel.s.sol
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+  }
+
+  const [keeperFeeModel] = parse(
+    object({
+      transactions: tuple([object({ contractName: literal("KeeperFeeModel"), contractAddress: Address })]),
+    }),
+    await import(`@exactly/plugin/broadcast/KeeperFeeModel.s.sol/${foundry.id}/run-latest.json`),
+  ).transactions;
+
+  if (initialize) {
+    shell.env.BROADCAST_KEEPERFEEMODEL_ADDRESS = keeperFeeModel.contractAddress;
     await $(shell)`forge script script/Deploy.s.sol
-      --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
   const [exaPlugin, exaAccountFactory] = parse(
@@ -124,7 +138,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
       anvilClient.impersonateAccount({ address: keeper }),
     ]);
     await $(shell)`forge script test/mocks/Bob.s.sol
-      --sender ${keeper} --unlocked ${keeper},${bob} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+      --unlocked ${keeper},${bob} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await Promise.all([
       anvilClient.stopImpersonatingAccount({ address: bob }),
       anvilClient.stopImpersonatingAccount({ address: keeper }),
@@ -137,6 +151,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   provide("ExaPlugin", exaPlugin.contractAddress);
   provide("InstallmentsRouter", installmentsRouter.contractAddress);
   provide("IssuerChecker", issuerChecker.contractAddress);
+  provide("KeeperFeeModel", keeperFeeModel.contractAddress);
   provide("MarketEXA", marketEXA.contractAddress);
   provide("MarketUSDC", marketUSDC.contractAddress);
   provide("MarketWETH", marketWETH.contractAddress);
@@ -208,6 +223,7 @@ declare module "vitest" {
     ExaPlugin: Address;
     InstallmentsRouter: Address;
     IssuerChecker: Address;
+    KeeperFeeModel: Address;
     MarketEXA: Address;
     MarketUSDC: Address;
     MarketWETH: Address;

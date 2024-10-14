@@ -9,6 +9,7 @@ isolate = true
 libs = ["../node_modules", "node_modules"]
 fs_permissions = [
   { access = "read", path = "broadcast" },
+  { access = "read", path = "deploy.json" },
   { access = "read", path = "../node_modules" },
 ]
 ffi = true

@@ -32,6 +32,7 @@ contract BobScript is BaseScript {
   IssuerChecker internal issuerChecker;
   ExaAccountFactory public factory;
 
+  address public keeper;
   address public bob;
   uint256 public bobKey = 0xb0b;
   IExaAccount public bobAccount;
@@ -45,24 +46,8 @@ contract BobScript is BaseScript {
     exaUSDC = IMarket(protocol("MarketUSDC"));
     previewer = Previewer(protocol("Previewer"));
 
-    issuerChecker = IssuerChecker(vm.envOr("ISSUER_CHECKER_ADDRESS", address(0)));
-    if (address(issuerChecker) == address(0)) {
-      issuerChecker = IssuerChecker(
-        vm.readFile(string.concat("broadcast/IssuerChecker.s.sol/", block.chainid.toString(), "/run-latest.json"))
-          .readAddress(".transactions[0].contractAddress")
-      );
-    }
-    vm.label(address(issuerChecker), "IssuerChecker");
-    factory = ExaAccountFactory(payable(vm.envOr("ACCOUNT_FACTORY_ADDRESS", address(0))));
-    if (address(factory) == address(0)) {
-      factory = ExaAccountFactory(
-        payable(
-          vm.readFile(string.concat("broadcast/Deploy.s.sol/", block.chainid.toString(), "/run-latest.json"))
-            .readAddress(".transactions[1].contractAddress")
-        )
-      );
-    }
-    vm.label(address(factory), "ExaAccountFactory");
+    issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
+    factory = ExaAccountFactory(payable(broadcast("ExaAccountFactory", "Deploy", 1)));
     vm.label(address(factory.EXA_PLUGIN()), "ExaPlugin");
     vm.label(address(factory.ENTRYPOINT()), "EntryPoint");
     vm.label(factory.WEBAUTHN_OWNER_PLUGIN(), "WebauthnOwnerPlugin");
@@ -71,6 +56,7 @@ contract BobScript is BaseScript {
     vm.label(address(velodromeFactory), "VelodromeFactory");
     vm.label(velodromeFactory.getPool(address(exa), address(usdc), false), "EXA/USDC");
 
+    keeper = acct("keeper");
     bob = vm.addr(bobKey);
     vm.label(bob, "bob");
 
@@ -89,7 +75,7 @@ contract BobScript is BaseScript {
     amounts[2] = 11e6;
     amounts[3] = 10e6;
 
-    vm.startBroadcast(msg.sender);
+    vm.startBroadcast(keeper);
     bobAccount = IExaAccount(factory.createAccount(0, owners.toPublicKeys()));
     vm.label(address(bobAccount), "bobAccount");
     _deal(address(bob), 1 ether);

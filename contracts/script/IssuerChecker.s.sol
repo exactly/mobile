@@ -9,9 +9,7 @@ contract DeployIssuerChecker is BaseScript {
   IssuerChecker public issuerChecker;
 
   function run() external {
-    assert(msg.sender != DEFAULT_SENDER);
-
-    vm.broadcast(msg.sender);
-    issuerChecker = new IssuerChecker(vm.envAddress("ISSUER_ADDRESS"));
+    vm.broadcast(acct("deployer"));
+    issuerChecker = new IssuerChecker(acct("issuer"));
   }
 }

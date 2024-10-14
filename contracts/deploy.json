@@ -1,0 +1,28 @@
+{
+  "accounts": {
+    "deployer": {
+      "10": "0xe61Bdef3FFF4C3CF7A07996DCB8802b5C85B665a",
+      "default": "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400"
+    },
+    "keeper": {
+      "10": "0xcDdB23654595C224A563f62943D9Ff189138c04e",
+      "default": "0xEbFa3f3306B2F62400D644714A20F6eF32c63C6B"
+    },
+    "collector": {
+      "10": "0x0f25bA5b8B0BA4Ff4dF645fDE030652da60BabA6",
+      "default": "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400"
+    },
+    "issuer": {
+      "default": "0xe2D63e18Fb136ef84557f79052BFE8EFa90F69Bd"
+    }
+  },
+  "keeperFeeModel": {
+    "durationStart": 0.083333333333333333e18,
+    "durationEnd": 1e18,
+    "durationGrowth": 1.5e18,
+    "feeStart": 0,
+    "feeEnd": 5e16,
+    "minFee": 0.25e16,
+    "linearRatio": 0.5e18
+  }
+}

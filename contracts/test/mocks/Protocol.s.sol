@@ -35,7 +35,7 @@ contract DeployProtocol is BaseScript {
   MockVelodromeFactory public velodromeFactory;
 
   function run() external {
-    vm.startBroadcast();
+    vm.startBroadcast(acct("deployer"));
 
     auditor = Auditor(address(new ERC1967Proxy(address(new Auditor(18)), "")));
     auditor.initialize(Auditor.LiquidationIncentive(0.09e18, 0.01e18));

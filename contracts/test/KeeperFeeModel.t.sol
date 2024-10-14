@@ -71,6 +71,8 @@ contract KeeperFeeModelTest is ForkTest {
 
     vm.expectRevert(InvalidRange.selector);
     model = new KeeperFeeModel(durationStart, durationEnd, durationGrowth, feeStart, feeStart, minFee, 1e18 + 1);
+
+    // solhint-enable func-name-mixedcase
   }
 
   function encodeHex(bytes memory raw) internal pure returns (string memory) {

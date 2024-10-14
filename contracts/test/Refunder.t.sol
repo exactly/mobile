@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import { ForkTest } from "./Fork.t.sol";
 
+import { LibString } from "solady/utils/LibString.sol";
+
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { IMarket, Unauthorized } from "../src/IExaAccount.sol";
@@ -11,6 +13,8 @@ import { Refunder } from "../src/Refunder.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
 contract RefunderTest is ForkTest {
+  using LibString for address;
+
   address internal keeper;
   uint256 internal keeperKey;
   address internal issuer;
@@ -24,6 +28,7 @@ contract RefunderTest is ForkTest {
   address internal bob = address(0xb0b);
 
   function setUp() external {
+    vm.setEnv("DEPLOYER_ADDRESS", address(this).toHexString());
     DeployProtocol p = new DeployProtocol();
     p.run();
 
@@ -117,6 +122,8 @@ contract RefunderTest is ForkTest {
     refunder.refund(bob, amount, timestamp, _issuerOp(bob, amount, timestamp));
     assertEq(exaUSDC.balanceOf(bob), amount);
   }
+
+  // solhint-enable func-name-mixedcase
 
   function _issuerOp(address account, uint256 amount, uint256 timestamp) internal view returns (bytes memory signature) {
     return _sign(

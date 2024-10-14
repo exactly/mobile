@@ -83,6 +83,8 @@ contract ExaPluginTest is ForkTest {
   MockERC20 internal usdc;
 
   function setUp() external {
+    vm.setEnv("DEPLOYER_ADDRESS", address(this).toHexString());
+
     collector = payable(makeAddr("collector"));
     (owner, ownerKey) = makeAddrAndKey("owner");
     owners = new address[](1);
@@ -107,18 +109,18 @@ contract ExaPluginTest is ForkTest {
     DeployIssuerChecker ic = new DeployIssuerChecker();
     ic.run();
     issuerChecker = ic.issuerChecker();
-    vm.setEnv("ISSUER_CHECKER_ADDRESS", address(issuerChecker).toHexString());
+    vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", address(issuerChecker).toHexString());
 
     DeployKeeperFeeModel kfm = new DeployKeeperFeeModel();
     kfm.run();
     keeperFeeModel = kfm.keeperFeeModel();
-    vm.setEnv("KFM_ADDRESS", address(keeperFeeModel).toHexString());
+    vm.setEnv("BROADCAST_KEEPERFEEMODEL_ADDRESS", address(keeperFeeModel).toHexString());
 
     DeployRefunder r = new DeployRefunder();
     r.setUp();
     r.run();
     refunder = r.refunder();
-    vm.setEnv("REFUNDER_ADDRESS", address(refunder).toHexString());
+    vm.setEnv("BROADCAST_REFUNDER_ADDRESS", address(refunder).toHexString());
 
     refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
 

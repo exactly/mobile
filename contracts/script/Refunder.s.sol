@@ -15,25 +15,23 @@ contract DeployRefunder is BaseScript {
   IssuerChecker public issuerChecker;
   Refunder public refunder;
 
+  address public keeper;
+  address public deployer;
+
   function setUp() external {
     exaUSDC = IMarket(protocol("MarketUSDC"));
-    issuerChecker = IssuerChecker(vm.envOr("ISSUER_CHECKER_ADDRESS", address(0)));
-    if (address(issuerChecker) == address(0)) {
-      issuerChecker = IssuerChecker(
-        vm.readFile(string.concat("broadcast/IssuerChecker.s.sol/", block.chainid.toString(), "/run-latest.json"))
-          .readAddress(".transactions[0].contractAddress")
-      );
-    }
+    issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
+
+    keeper = acct("keeper");
+    deployer = acct("deployer");
   }
 
   function run() external {
-    assert(msg.sender != DEFAULT_SENDER);
-
-    vm.startBroadcast(msg.sender);
+    vm.startBroadcast(deployer);
 
     refunder = new Refunder(exaUSDC, issuerChecker);
 
-    refunder.grantRole(refunder.KEEPER_ROLE(), vm.envAddress("KEEPER_ADDRESS"));
+    refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
 
     vm.stopBroadcast();
   }
