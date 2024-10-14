@@ -47,7 +47,7 @@ contract KeeperFeeModelTest is ForkTest {
     uint256 refFee = abi.decode(vm.ffi(ffi), (uint256));
     uint256 fee = model.calculateFee(amounts, firstMaturity);
 
-    assertApproxEqRel(fee, refFee, 0.002e16, "fee != refFee");
+    assertApproxEqRel(fee, refFee, 1e2, "fee != refFee");
   }
 
   function test_invalidRangeDeploy_reverts() external {
