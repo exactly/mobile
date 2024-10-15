@@ -64,9 +64,7 @@ export default app
         if (!credential.kycId) return c.json("kyc required", 403);
         const { data } = await getInquiry(credential.kycId);
         if (data.attributes.status !== "approved") return c.json("kyc not approved", 403);
-        if (credential.cards.length > 0) {
-          return c.json("card already exists", 400);
-        }
+        if (credential.cards.length > 0) return c.json("card already exists", 400);
         const phone = parsePhoneNumberWithError(
           data.attributes["phone-number"].startsWith("+")
             ? data.attributes["phone-number"]
