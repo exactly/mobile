@@ -1,3 +1,4 @@
+import { createAnimations } from "@tamagui/animations-moti";
 import { config } from "@tamagui/config/v3";
 import { createFont, createTamagui, createTokens } from "tamagui";
 
@@ -237,6 +238,14 @@ const tamagui = createTamagui({
       weight: { 600: 600, 700: 700 },
     }),
   },
+  animations: createAnimations({
+    bouncy: { type: "spring", damping: 9, mass: 0.9, stiffness: 150 },
+    lazy: { type: "spring", damping: 18, stiffness: 50 },
+    slow: { type: "spring", damping: 15, stiffness: 40 },
+    moderate: { type: "spring", damping: 15, mass: 0.2, stiffness: 100 },
+    quick: { type: "spring", damping: 25, mass: 1.2, stiffness: 250 },
+    tooltip: { type: "spring", damping: 10, mass: 0.9, stiffness: 100 },
+  }),
   settings: { ...config.settings, fastSchemeChange: false },
   themes: {
     light: {
