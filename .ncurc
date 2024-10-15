@@ -21,6 +21,7 @@
     "expo-system-ui",
     "expo-updates",
     "expo-web-browser",
+    "metro-config",
     "react",
     "react-dom",
     "react-native",
