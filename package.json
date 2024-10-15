@@ -25,7 +25,7 @@
     "@alchemy/aa-alchemy": "^3.19.0",
     "@alchemy/aa-core": "^3.19.0",
     "@exactly/common": "workspace:*",
-    "@exactly/lib": "exactly/lib#63ce662",
+    "@exactly/lib": "exactly/lib#d3cc3ee",
     "@exactly/plugin": "workspace:*",
     "@exactly/server": "workspace:*",
     "@expo/metro-runtime": "~3.2.3",

@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.19.0",
-    "@exactly/lib": "exactly/lib#63ce662",
+    "@exactly/lib": "exactly/lib#d3cc3ee",
     "@hono/node-server": "^1.13.1",
     "@hono/sentry": "^1.2.0",
     "@hono/valibot-validator": "^0.4.0",
