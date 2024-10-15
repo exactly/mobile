@@ -93,9 +93,9 @@ export default app
           expectedRPID: domain,
           expectedOrigin: [appOrigin, androidOrigin],
           expectedChallenge: challenge,
-          authenticator: {
-            credentialID: credentialId,
-            credentialPublicKey: credential.publicKey,
+          credential: {
+            id: credentialId,
+            publicKey: credential.publicKey,
             transports: credential.transports ? (credential.transports as AuthenticatorTransportFuture[]) : undefined,
             counter: credential.counter,
           },

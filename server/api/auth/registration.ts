@@ -109,12 +109,12 @@ export default app
       const { verified, registrationInfo } = verification;
       if (!verified || !registrationInfo) return c.text("bad registration", 400);
 
-      const { credentialID, credentialPublicKey, credentialDeviceType, counter } = registrationInfo;
+      const { credential, credentialDeviceType } = registrationInfo;
       if (credentialDeviceType !== "multiDevice") return c.text("backup eligibility required", 400); // TODO improve ux
 
       let x: Hex, y: Hex;
       try {
-        ({ x, y } = decodePublicKey(credentialPublicKey));
+        ({ x, y } = decodePublicKey(credential.publicKey));
       } catch (error) {
         return c.text(error instanceof Error ? error.message : String(error), 400);
       }
@@ -123,15 +123,15 @@ export default app
       const account = deriveAddress(parse(Address, exaAccountFactoryAddress), { x, y });
       setUser({ id: account });
       await Promise.all([
-        setSignedCookie(c, "credential_id", credentialID, authSecret, { domain, expires, httpOnly: true }),
+        setSignedCookie(c, "credential_id", credential.id, authSecret, { domain, expires, httpOnly: true }),
         database.insert(credentials).values([
           {
             account,
-            id: credentialID,
-            publicKey: credentialPublicKey,
+            id: credential.id,
+            publicKey: credential.publicKey,
             factory: exaAccountFactoryAddress,
             transports: attestation.response.transports,
-            counter,
+            counter: credential.counter,
           },
         ]),
         fetch("https://dashboard.alchemy.com/api/update-webhook-addresses", {
@@ -146,7 +146,7 @@ export default app
       ]);
 
       return c.json(
-        { credentialId: credentialID, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() },
+        { credentialId: credential.id, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() },
         200,
       );
     },
