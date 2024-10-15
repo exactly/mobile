@@ -40,7 +40,6 @@ contract KeeperFeeModel {
     LINEAR_RATIO = _linearRatio;
   }
 
-  /// @dev amounts values should have 18 decimals
   function calculateFee(uint256[] memory amounts, uint256 firstMaturity) external view returns (uint256) {
     uint256 amountsByTime = 0;
     uint256 totalAmount = 0;
