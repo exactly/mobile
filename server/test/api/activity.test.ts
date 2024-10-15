@@ -3,19 +3,33 @@ import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/sentry";
 
+import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
+import chain from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { parse, type InferInput } from "valibot";
-import { zeroAddress, zeroHash } from "viem";
+import { zeroAddress, zeroHash, padHex, createPublicClient, http } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import app, { AssetReceivedActivity, AssetSentActivity, CardActivity } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
+import deriveAddress from "../../utils/deriveAddress";
 import publicClient, { AssetTransfer } from "../../utils/publicClient";
 
 const appClient = testClient(app);
+
+function closeTo(expected: number, precision = 2) {
+  return {
+    asymmetricMatch(actual: number) {
+      return Math.abs(expected - actual) < Math.pow(10, -precision) / 2;
+    },
+    toString() {
+      return `Number close to ${expected} (±${Math.pow(10, -precision) / 2})`;
+    },
+  };
+}
 
 describe("validation", () => {
   beforeAll(async () => {
@@ -231,6 +245,57 @@ describe("authenticated", () => {
       expect(captureException).toHaveBeenCalledWith(new Error("bad transfer"));
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
+    });
+  });
+
+  describe("asset repay", () => {
+    it("returns repays", async () => {
+      const bob = privateKeyToAddress(padHex("0xb0b"));
+      const bobAccount = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
+
+      await database
+        .insert(credentials)
+        .values([{ id: bobAccount, publicKey: new Uint8Array(), account: bobAccount, factory: zeroAddress }]);
+
+      const response = await appClient.index.$get(
+        { query: { include: "repay" } },
+        { headers: { "test-credential-id": bobAccount } },
+      );
+
+      expect(response.status).toBe(200);
+
+      await expect(response.json()).resolves.toMatchObject([
+        {
+          amount: closeTo(81, 1),
+          type: "repay",
+          symbol: "USDC",
+          usdAmount: closeTo(81, 1),
+        },
+      ]);
+    });
+
+    it("batch get block requests", async () => {
+      let requests = 0;
+      const client = createPublicClient({
+        chain,
+        cacheTime: 60_000,
+        transport: http(`${chain.rpcUrls.alchemy?.http[0]}/${alchemyAPIKey}`, {
+          batch: true,
+          onFetchRequest(request) {
+            requests++;
+          },
+        }),
+      });
+
+      let time = Date.now();
+      await client.getBlock({ blockNumber: 1n });
+      console.log(`1 block  ${Date.now() - time}ms number of requests: ${requests}`); // eslint-disable-line no-console
+
+      time = Date.now();
+      await Promise.all(Array.from({ length: 3 }, (_, index) => client.getBlock({ blockNumber: BigInt(index + 2) })));
+      console.log(`3 blocks  ${Date.now() - time}ms number of requests: ${requests}`); // eslint-disable-line no-console
+
+      expect(requests).toBe(2);
     });
   });
 });

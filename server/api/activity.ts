@@ -1,4 +1,4 @@
-import { previewerAddress } from "@exactly/common/generated/chain";
+import { previewerAddress, exaPluginAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser, withScope } from "@sentry/node";
@@ -22,10 +22,10 @@ import {
   transform,
   union,
 } from "valibot";
-import { zeroAddress } from "viem";
+import { zeroAddress, decodeEventLog } from "viem";
 
 import database, { credentials } from "../database";
-import { previewerAbi } from "../generated/contracts";
+import { previewerAbi, marketAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
 import publicClient, { type AssetTransfer, ERC20Transfer } from "../utils/publicClient";
 
@@ -34,7 +34,7 @@ const WAD = 10n ** 18n;
 const app = new Hono();
 app.use(auth);
 
-const activityTypes = picklist(["card", "received", "sent"]);
+const activityTypes = picklist(["card", "received", "repay", "sent"]);
 
 export default app.get(
   "/",
@@ -66,9 +66,14 @@ export default app.get(
       abi: previewerAbi,
       args: [zeroAddress],
     });
+
+    const marketsByAddress = new Map<Address, (typeof exactly)[number]>(
+      exactly.map((market) => [parse(Address, market.market), market]),
+    );
     const marketsByAsset = new Map<Address, (typeof exactly)[number]>(
       exactly.map((market) => [parse(Address, market.asset), market]),
     );
+
     const [received, sent] = await Promise.all(
       (["received", "sent"] as const).map((type) => {
         if (ignore(type)) return;
@@ -112,6 +117,47 @@ export default app.get(
         .filter(<T>(value: T | undefined): value is T => value !== undefined);
     }
 
+    async function repays() {
+      if (ignore("repay")) return [];
+      const logs = await publicClient.getLogs({
+        event: marketAbi.find((item) => item.type === "event" && item.name === "RepayAtMaturity"),
+        address: [...marketsByAddress.keys()],
+        args: {
+          maturity: null,
+          caller: exaPluginAddress,
+          borrower: account,
+        },
+      });
+
+      const blocks = await Promise.all(
+        [...new Set(logs.map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
+          publicClient.getBlock({ blockNumber }),
+        ),
+      );
+
+      const timestampByBlock = new Map(
+        blocks.map(({ number: n, timestamp }) => [n, new Date(Number(timestamp) * 1000).toISOString()]),
+      );
+
+      return logs
+        .map(({ address, blockNumber, data, topics }) => {
+          const currentMarket = marketsByAddress.get(parse(Address, address));
+          const event = decodeEventLog({ abi: marketAbi, eventName: "RepayAtMaturity", topics, data });
+          const result = safeParse(RepayActivity, {
+            ...event,
+            market: currentMarket,
+            timestamp: timestampByBlock.get(blockNumber),
+          });
+          if (result.success) return result.output;
+          withScope((scope) => {
+            scope.setLevel("error");
+            scope.setContext("validation", result);
+            captureException(new Error("bad repay"));
+          });
+        })
+        .filter(<T>(value: T | undefined): value is T => value !== undefined);
+    }
+
     return c.json(
       [
         ...credential.cards.flatMap(({ transactions }) =>
@@ -129,6 +175,7 @@ export default app.get(
         ),
         ...transfers("received", received),
         ...transfers("sent", sent),
+        ...(await repays()),
       ].sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
       200,
     );
@@ -190,4 +237,24 @@ export const AssetReceivedActivity = pipe(
 export const AssetSentActivity = pipe(
   AssetActivity,
   transform((activity) => ({ type: "sent" as const, ...activity })),
+);
+
+export const RepayActivity = pipe(
+  object({
+    args: object({
+      assets: bigint(),
+    }),
+    market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
+    timestamp: pipe(string(), isoTimestamp()),
+  }),
+  transform(({ args: { assets: value }, market: { decimals, symbol, usdPrice }, timestamp }) => {
+    const baseUnit = 10 ** decimals;
+    return {
+      amount: Number(value) / baseUnit,
+      symbol: symbol.slice(3),
+      timestamp,
+      type: "repay" as const,
+      usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+    };
+  }),
 );

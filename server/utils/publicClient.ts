@@ -33,7 +33,7 @@ if (!chain.rpcUrls.alchemy?.http[0]) throw new Error("missing alchemy rpc url");
 export default createPublicClient({
   chain,
   rpcSchema: rpcSchema<RpcSchema>(),
-  transport: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`),
+  transport: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`, { batch: true }),
 }).extend((client) => ({
   traceCall: async ({ blockNumber, blockTag = "latest", ...call }: CallParameters) =>
     client.request({

@@ -5,6 +5,7 @@ vi.mock("@exactly/common/generated/chain", async () => ({
   ...(await import("@exactly/common/generated/chain")),
   default: { ...foundry, rpcUrls: { ...foundry.rpcUrls, alchemy: foundry.rpcUrls.default } },
   auditorAddress: inject("Auditor"),
+  exaPluginAddress: inject("ExaPlugin"),
   marketUSDCAddress: inject("MarketUSDC"),
   previewerAddress: inject("Previewer"),
   usdcAddress: inject("USDC"),
