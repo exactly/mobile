@@ -1,7 +1,8 @@
 import chain, {
-  previewerAddress,
   exaAccountFactoryAbi,
   exaPluginAbi,
+  previewerAddress,
+  upgradeableModularAccountAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
 import { Address, Hash } from "@exactly/common/validation";
@@ -14,7 +15,7 @@ import { BaseError, bytesToBigInt, ContractFunctionRevertedError, zeroAddress } 
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
-import { previewerAbi } from "../generated/contracts";
+import { auditorAbi, marketAbi, previewerAbi } from "../generated/contracts";
 import { headerValidator, jsonValidator } from "../utils/alchemy";
 import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";
@@ -143,7 +144,7 @@ export default app.post(
                 try {
                   const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
                     publicClient.simulateContract({
-                      abi: exaPluginAbi,
+                      abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
                       account: keeper.account,
                       address: account,
                       ...(asset === ETH

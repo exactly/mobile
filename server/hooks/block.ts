@@ -1,4 +1,4 @@
-import chain, { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain";
+import chain, { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/validation";
 import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
 import { deserialize, serialize } from "@wagmi/core";
@@ -96,7 +96,7 @@ async function scheduleWithdraw({ account, market, receiver, amount, unlock }: v
             account: keeper.account,
             address: account,
             functionName: "withdraw",
-            abi: exaPluginAbi,
+            abi: [...exaPluginAbi, ...upgradeableModularAccountAbi],
             ...transactionOptions,
           }),
         );
