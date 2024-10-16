@@ -26,6 +26,7 @@ export const cards = pgTable("cards", {
     .notNull(),
   status: cardStatus("status").notNull().default("ACTIVE"),
   lastFour: text("last_four").notNull(),
+  mode: integer("mode").notNull().default(1),
 });
 
 export const transactions = pgTable("transactions", {
