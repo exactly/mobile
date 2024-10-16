@@ -1,3 +1,4 @@
+import MAX_INSTALLMENTS from "@exactly/common/MAX_INSTALLMENTS";
 import { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { setUser } from "@sentry/node";
@@ -5,7 +6,7 @@ import { Mutex } from "async-mutex";
 import { eq, inArray, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
-import { literal, object, parse, union } from "valibot";
+import { integer, maxValue, minValue, number, parse, picklist, pipe, strictObject, transform, union } from "valibot";
 
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
@@ -92,12 +93,19 @@ export default app
     "/",
     vValidator(
       "json",
-      object({
-        status: union([literal("ACTIVE"), literal("FROZEN")]),
-      }),
+      union([
+        pipe(
+          strictObject({ mode: pipe(number(), integer(), minValue(0), maxValue(MAX_INSTALLMENTS)) }),
+          transform((patch) => ({ ...patch, type: "mode" as const })),
+        ),
+        pipe(
+          strictObject({ status: picklist(["ACTIVE", "FROZEN"]) }),
+          transform((patch) => ({ ...patch, type: "status" as const })),
+        ),
+      ]),
     ),
     async (c) => {
-      const { status } = c.req.valid("json");
+      const patch = c.req.valid("json");
       const credentialId = c.get("credentialId");
       const mutex = mutexes.get(credentialId) ?? createMutex(credentialId);
       return mutex
@@ -105,15 +113,26 @@ export default app
           const credential = await database.query.credentials.findFirst({
             where: eq(credentials.id, credentialId),
             with: {
-              cards: { columns: { id: true, status: true }, where: ne(cards.status, "DELETED") },
+              cards: { columns: { id: true, mode: true, status: true }, where: ne(cards.status, "DELETED") },
             },
           });
           if (!credential) return c.json("credential not found", 401);
           if (credential.cards.length === 0 || !credential.cards[0]) return c.json("no card found", 404);
           const card = credential.cards[0];
-          if (card.status === status) return c.json(`card is already ${status.toLowerCase()}`, 400);
-          await database.update(cards).set({ status }).where(eq(cards.id, card.id));
-          return c.json({ status }, 200);
+          switch (patch.type) {
+            case "mode": {
+              const { mode } = patch;
+              if (card.mode === mode) return c.json(`card mode is already ${mode}`, 400);
+              await database.update(cards).set({ mode }).where(eq(cards.id, card.id));
+              return c.json({ mode }, 200);
+            }
+            case "status": {
+              const { status } = patch;
+              if (card.status === status) return c.json(`card is already ${status.toLowerCase()}`, 400);
+              await database.update(cards).set({ status }).where(eq(cards.id, card.id));
+              return c.json({ status }, 200);
+            }
+          }
         })
         .finally(() => {
           if (!mutex.isLocked()) mutexes.delete(credentialId);

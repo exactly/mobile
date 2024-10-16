@@ -59,9 +59,7 @@ export async function createCard() {
   return response.json();
 }
 
-export async function setCardStatus(
-  status: NonNullable<Parameters<typeof client.api.card.$patch>[0]>["json"]["status"],
-) {
+export async function setCardStatus(status: "ACTIVE" | "FROZEN") {
   await auth();
   const response = await client.api.card.$patch({ json: { status } });
   if (!response.ok) throw new APIError(response.status, await response.json());
