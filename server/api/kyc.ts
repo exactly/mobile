@@ -24,7 +24,7 @@ export default app
     if (!credential.kycId) return c.json("kyc not found", 404);
     const { data } = await getInquiry(credential.kycId);
     if (data.attributes.status !== "approved") return c.json("kyc not approved", 403);
-    return c.json("ok");
+    return c.json("ok", 200);
   })
   .post(
     "/",
