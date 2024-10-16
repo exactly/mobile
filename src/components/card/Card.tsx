@@ -36,11 +36,7 @@ export default function Card() {
     queryFn: () => getActivity({ include: "card" }),
   });
 
-  const {
-    data: cardDetails,
-    isFetching: isFetchingCardDetails,
-    refetch: refetchCard,
-  } = useQuery({
+  const { data: cardDetails, isFetching: isFetchingCardDetails } = useQuery({
     queryKey: ["card", "details"],
     queryFn: getCard,
     retry: false,
@@ -78,12 +74,12 @@ export default function Card() {
         return;
       }
       try {
-        const { isSuccess, data } = await refetchCard();
-        if (isSuccess && data.url) {
+        await kycStatus();
+        const card = await getCard();
+        if (card.url) {
+          queryClient.setQueryData(["card", "details"], card);
           setDetailsShown(true);
           flipped.value = true;
-        } else {
-          await kycStatus();
         }
       } catch (error) {
         if (!(error instanceof APIError)) return handleError(error);
