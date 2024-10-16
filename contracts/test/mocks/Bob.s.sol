@@ -99,6 +99,9 @@ contract BobScript is BaseScript {
     IStandardExecutor(address(bobAccount)).execute(
       address(bobAccount), 0, abi.encodeCall(IExaAccount.crossRepay, (maturity + FixedLib.INTERVAL, exaEXA))
     );
+    IStandardExecutor(address(bobAccount)).execute(
+      address(bobAccount), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, 69e6, address(0x69)))
+    );
     vm.stopBroadcast();
   }
 

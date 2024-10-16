@@ -1,13 +1,15 @@
+import { exaPluginAbi } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { $ } from "execa";
 import { anvil } from "prool/instances";
 import { literal, null_, object, parse, tuple } from "valibot";
-import { padHex, zeroAddress } from "viem";
-import { privateKeyToAddress } from "viem/accounts";
+import { createWalletClient, http, padHex, zeroAddress, zeroHash } from "viem";
+import { privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
 import type { GlobalSetupContext } from "vitest/node";
 
 import anvilClient from "./anvilClient";
+import deriveAddress from "../utils/deriveAddress";
 
 export default async function setup({ provide }: GlobalSetupContext) {
   const instance = anvil({ codeSizeLimit: 69_000, blockBaseFeePerGas: 1n });
@@ -16,8 +18,8 @@ export default async function setup({ provide }: GlobalSetupContext) {
     .then(() => true)
     .catch(() => false);
 
-  const keeper = privateKeyToAddress(padHex("0x69"));
-  if (initialize) await anvilClient.setBalance({ address: keeper, value: 10n ** 24n });
+  const keeper = privateKeyToAccount(padHex("0x69"));
+  if (initialize) await anvilClient.setBalance({ address: keeper.address, value: 10n ** 24n });
 
   const deployer = await anvilClient
     .getAddresses()
@@ -29,7 +31,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
       OPTIMISM_ETHERSCAN_KEY: "",
       COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
       ISSUER_ADDRESS: privateKeyToAddress(padHex("0x420")),
-      KEEPER_ADDRESS: keeper,
+      KEEPER_ADDRESS: keeper.address,
       DEPLOYER_ADDRESS: deployer,
     } as Record<string, string>,
   };
@@ -135,14 +137,18 @@ export default async function setup({ provide }: GlobalSetupContext) {
     const bob = privateKeyToAddress(padHex("0xb0b"));
     await Promise.all([
       anvilClient.impersonateAccount({ address: bob }),
-      anvilClient.impersonateAccount({ address: keeper }),
+      anvilClient.impersonateAccount({ address: keeper.address }),
     ]);
     await $(shell)`forge script test/mocks/Bob.s.sol
-      --unlocked ${keeper},${bob} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+      --unlocked ${bob},${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await Promise.all([
       anvilClient.stopImpersonatingAccount({ address: bob }),
-      anvilClient.stopImpersonatingAccount({ address: keeper }),
+      anvilClient.stopImpersonatingAccount({ address: keeper.address }),
     ]);
+    await anvilClient.increaseTime({ seconds: 10 * 60 });
+    const bobAccount = deriveAddress(exaAccountFactory.contractAddress, { x: padHex(bob), y: zeroHash });
+    const keeperClient = createWalletClient({ chain: foundry, account: keeper, transport: http() });
+    await keeperClient.writeContract({ address: bobAccount, functionName: "withdraw", abi: exaPluginAbi });
   }
 
   provide("Auditor", auditor.contractAddress);
