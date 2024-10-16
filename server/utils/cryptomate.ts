@@ -1,4 +1,5 @@
 import { Address } from "@exactly/common/validation";
+import removeAccents from "remove-accents";
 import * as v from "valibot";
 
 if (!process.env.CRYPTOMATE_URL || !process.env.CRYPTOMATE_API_KEY) throw new Error("missing cryptomate vars");
@@ -7,23 +8,25 @@ const apiKey = process.env.CRYPTOMATE_API_KEY;
 
 export function createCard({
   account,
-  cardholder,
   email,
+  name,
   phone,
   limits,
 }: {
   account: Address;
-  cardholder: string;
   email: string;
+  name: { first: string; middle: string | null; last: string };
   phone: { countryCode: string; number: string };
   limits: { daily: number; weekly: number; monthly: number };
 }) {
+  let cardholder = [name.first, name.middle, name.last].filter(Boolean).join(" ");
+  if (cardholder.length > 26 && name.middle) cardholder = `${name.first} ${name.last}`;
   return request(
     CreateCardResponse,
     "/cards/virtual-cards/create",
     v.parse(CreateCardRequest, {
-      card_holder_name: cardholder,
       email,
+      card_holder_name: removeAccents(cardholder.slice(0, 26)),
       phone_country_code: phone.countryCode,
       phone: phone.number,
       approval_method: "DEFI",

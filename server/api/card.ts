@@ -72,10 +72,12 @@ export default app
         );
         const card = await createCard({
           account,
-          cardholder: [data.attributes["name-first"], data.attributes["name-middle"], data.attributes["name-last"]]
-            .filter(Boolean)
-            .join(" "),
           email: data.attributes["email-address"],
+          name: {
+            first: data.attributes["name-first"],
+            middle: data.attributes["name-middle"],
+            last: data.attributes["name-last"],
+          },
           phone: { countryCode: phone.countryCallingCode, number: phone.nationalNumber },
           limits: { daily: 1000, weekly: 3000, monthly: 5000 },
         });
