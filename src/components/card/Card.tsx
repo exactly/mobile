@@ -78,13 +78,13 @@ export default function Card() {
         return;
       }
       try {
-        const { isSuccess } = await refetchCard();
-        if (isSuccess) {
+        const { isSuccess, data } = await refetchCard();
+        if (isSuccess && data.url) {
           setDetailsShown(true);
           flipped.value = true;
-          return;
+        } else {
+          await kycStatus();
         }
-        await kycStatus();
       } catch (error) {
         if (!(error instanceof APIError)) return handleError(error);
         if (
@@ -111,6 +111,7 @@ export default function Card() {
           await createCard();
           await queryClient.refetchQueries({ queryKey: ["card, details"] });
         }
+        handleError(error);
       }
     },
   });
