@@ -573,6 +573,9 @@ importers:
       prool:
         specifier: ^0.0.16
         version: 0.0.16(debug@4.3.7)
+      remove-accents:
+        specifier: ^0.5.0
+        version: 0.5.0
       tsx:
         specifier: ^4.19.1
         version: 4.19.1
@@ -8630,6 +8633,9 @@ packages:
   regjsparser@0.11.1:
     resolution: {integrity: sha512-1DHODs4B8p/mQHU9kr+jv8+wIC9mtG4eBHxWxIq5mhjE3D5oORhCc6deRKzTjs9DcfRFmj9BHSDguZklqCGFWQ==}
     hasBin: true
+
+  remove-accents@0.5.0:
+    resolution: {integrity: sha512-8g3/Otx1eJaVD12e31UbJj1YzdtVvzH85HV7t+9MJYk/u3XmkOUJ5Ys9wQrf9PCPK8+xn4ymzqYCiZl6QWKn+A==}
 
   remove-trailing-slash@0.1.1:
     resolution: {integrity: sha512-o4S4Qh6L2jpnCy83ysZDau+VORNvnFw07CKSAymkd6ICNVEPisMyzlc00KlvvicsxKck94SEwhDnMNdICzO+tA==}
@@ -19969,6 +19975,8 @@ snapshots:
   regjsparser@0.11.1:
     dependencies:
       jsesc: 3.0.2
+
+  remove-accents@0.5.0: {}
 
   remove-trailing-slash@0.1.1: {}
 
