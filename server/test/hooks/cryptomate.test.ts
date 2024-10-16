@@ -76,20 +76,35 @@ describe("authorization", () => {
     });
   });
 
-  it("authorizes", async () => {
-    await keeper.writeContract({
-      address: account,
-      abi: exaPluginAbi,
-      functionName: "poke",
-      args: [inject("MarketUSDC")],
+  describe("with collateral", () => {
+    beforeAll(async () => {
+      await keeper.writeContract({
+        address: account,
+        abi: exaPluginAbi,
+        functionName: "poke",
+        args: [inject("MarketUSDC")],
+      });
     });
 
-    const response = await appClient.index.$post({
-      ...authorization,
-      json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
+    it("authorizes credit", async () => {
+      const response = await appClient.index.$post({
+        ...authorization,
+        json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
+      });
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
     });
 
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+    it("authorizes debit", async () => {
+      await database.insert(cards).values([{ id: "debit", credentialId: "cred", lastFour: "5678", mode: 0 }]);
+      const response = await appClient.index.$post({
+        ...authorization,
+        json: { ...authorization.json, data: { ...authorization.json.data, card_id: "debit", metadata: { account } } },
+      });
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+    });
   });
 });

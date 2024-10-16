@@ -101,25 +101,30 @@ export default new Hono().post(
     setTag("cryptomate.status", payload.status);
     const jsonBody = await c.req.json(); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     setContext("cryptomate", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
-    const result = await database.query.cards.findFirst({
-      columns: {},
+    const card = await database.query.cards.findFirst({
+      columns: { mode: true },
       where: and(eq(cards.id, payload.data.card_id), eq(cards.status, "ACTIVE")),
       with: { credential: { columns: { account: true } } },
     });
-    if (!result) return c.json("not found", 404);
-    const account = v.parse(Address, result.credential.account);
+    if (!card) return c.json("card not found", 404);
+    const account = v.parse(Address, card.credential.account);
     setUser({ id: account });
-    const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
-    const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
-    const call = {
-      functionName: "collectCredit",
-      args: [
-        BigInt(nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity),
-        BigInt(Math.round(payload.data.bill_amount * 1e6)),
-        BigInt(timestamp),
-        await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }), // TODO replace with payload signature
-      ],
-    } as const;
+    const amount = BigInt(Math.round(payload.data.bill_amount * 1e6));
+    const call = await (async () => {
+      const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
+      const signature = await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }); // TODO replace with payload signature
+      if (card.mode === 0) {
+        return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
+      }
+      const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
+      const firstMaturity = BigInt(
+        nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity,
+      );
+      if (card.mode === 1) {
+        return { functionName: "collectCredit", args: [firstMaturity, amount, BigInt(timestamp), signature] } as const;
+      }
+      throw new Error("unimplemented");
+    })();
     const transaction = {
       from: keeper.account.address,
       to: account,
@@ -157,7 +162,7 @@ export default new Hono().post(
           }
           const [{ topics, data }] = transfers as [TransferLog];
           const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
-          if (args.value !== call.args[1]) {
+          if (args.value !== amount) {
             debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "wrong amount");
             return c.json({ response_code: "51" });
           }
@@ -171,18 +176,20 @@ export default new Hono().post(
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
           try {
+            const collect = {
+              account: keeper.account,
+              address: account,
+              abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi],
+              ...transactionOptions,
+            };
             const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-              publicClient.simulateContract({
-                account: keeper.account,
-                address: account,
-                abi: [...exaPluginAbi, ...issuerCheckerAbi],
-                ...transactionOptions,
-                ...call,
-              }),
+              call.functionName === "collectDebit"
+                ? publicClient.simulateContract({ ...collect, ...call })
+                : publicClient.simulateContract({ ...collect, ...call }),
             );
             setContext("tx", request);
             const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-              keeper.writeContract(request),
+              keeper.writeContract(request as Parameters<typeof keeper.writeContract>[0]),
             );
             setContext("tx", { ...request, transactionHash: hash });
             await database
