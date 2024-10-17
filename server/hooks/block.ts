@@ -1,6 +1,14 @@
 import chain, { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/validation";
-import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
+import {
+  captureException,
+  continueTrace,
+  getActiveSpan,
+  getTraceData,
+  SEMANTIC_ATTRIBUTE_SENTRY_OP,
+  setContext,
+  startSpan,
+} from "@sentry/node";
 import { deserialize, serialize } from "@wagmi/core";
 import createDebug from "debug";
 import { Kind, parse, visit, type StringValueNode } from "graphql";
@@ -23,19 +31,30 @@ const signingKeys = new Set([process.env.ALCHEMY_BLOCK_KEY]);
 const debug = createDebug("exa:block");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
-const Withdraw = v.object({
-  account: Address,
-  market: Address,
-  receiver: Address,
-  amount: v.bigint(),
-  unlock: v.bigint(),
-});
+const Withdraw = v.pipe(
+  v.object({
+    account: Address,
+    market: Address,
+    receiver: Address,
+    amount: v.bigint(),
+    unlock: v.bigint(),
+    timestamp: v.optional(v.number()),
+    sentryTrace: v.optional(v.string()),
+    sentryBaggage: v.optional(v.string()),
+  }),
+  v.transform((withdraw) => ({
+    id: `${withdraw.account}:${withdraw.market}:${withdraw.timestamp ?? Date.now() / 1000}`,
+    ...withdraw,
+  })),
+);
 
 redis
   .zrange("withdraw", 0, Infinity, "BYSCORE")
-  .then((results) =>
-    Promise.allSettled(results.map((withdraw) => scheduleWithdraw(v.parse(Withdraw, deserialize(withdraw))))),
-  )
+  .then((results) => {
+    for (const withdraw of results) {
+      scheduleWithdraw(v.parse(Withdraw, deserialize(withdraw)));
+    }
+  })
   .catch((error: unknown) => captureException(error));
 
 const app = new Hono();
@@ -59,7 +78,7 @@ export default app.post(
     ({ event }) => event.data.block.logs.length > 0,
   ),
   async (c) => {
-    const { logs } = c.req.valid("json").event.data.block;
+    const { timestamp, logs } = c.req.valid("json").event.data.block;
     if (logs.length === 0) {
       getActiveSpan()?.setAttribute("exa.ignore", false);
       return c.json({}, 200);
@@ -70,14 +89,31 @@ export default app.post(
     Promise.allSettled(
       events.map(async (event) => {
         switch (event.eventName) {
-          case "Proposed":
-            await redis.zadd("withdraw", Number(event.args.unlock), serialize(v.parse(Withdraw, event.args)));
-            return scheduleWithdraw({
-              ...event.args,
-              account: v.parse(Address, event.args.account),
-              market: v.parse(Address, event.args.market),
-              receiver: v.parse(Address, event.args.receiver),
-            });
+          case "Proposed": {
+            const withdraw = v.parse(Withdraw, { ...event.args, timestamp });
+            return startSpan(
+              {
+                name: "schedule withdraw",
+                op: "queue.publish",
+                attributes: {
+                  account: withdraw.account,
+                  market: withdraw.market,
+                  receiver: withdraw.receiver,
+                  amount: String(withdraw.amount),
+                  unlock: Number(withdraw.unlock),
+                  "messaging.message.id": withdraw.id,
+                  "messaging.destination.name": "withdraw",
+                },
+              },
+              () => {
+                const { "sentry-trace": sentryTrace, baggage: sentryBaggage } = getTraceData();
+                withdraw.sentryTrace = sentryTrace;
+                withdraw.sentryBaggage = sentryBaggage;
+                scheduleWithdraw(withdraw);
+                return redis.zadd("withdraw", Number(event.args.unlock), serialize(withdraw));
+              },
+            );
+          }
         }
       }),
     ).catch((error: unknown) => captureException(error));
@@ -85,38 +121,68 @@ export default app.post(
   },
 );
 
-async function scheduleWithdraw({ account, market, receiver, amount, unlock }: v.InferOutput<typeof Withdraw>) {
-  return setTimeout((Number(unlock) + 10) * 1000 - Date.now()).then(() =>
-    startSpan(
-      {
-        name: "exa.withdraw",
-        op: "exa.withdraw",
-        attributes: { account, market, receiver, amount: String(amount), unlock: Number(unlock) },
-      },
-      async () => {
-        const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-          publicClient.simulateContract({
-            account: keeper.account,
-            address: account,
-            functionName: "withdraw",
-            abi: [...exaPluginAbi, ...upgradeableModularAccountAbi],
-            ...transactionOptions,
+function scheduleWithdraw({
+  id,
+  account,
+  market,
+  receiver,
+  amount,
+  unlock,
+  sentryTrace,
+  sentryBaggage,
+}: v.InferOutput<typeof Withdraw>) {
+  setTimeout((Number(unlock) + 10) * 1000 - Date.now())
+    .then(() =>
+      continueTrace({ sentryTrace, baggage: sentryBaggage }, () =>
+        startSpan({ name: "exa.withdraw", op: "exa.withdraw" }, (parent) =>
+          startSpan(
+            {
+              name: "process withdraw",
+              op: "queue.process",
+              attributes: {
+                account,
+                market,
+                receiver,
+                amount: String(amount),
+                unlock: Number(unlock),
+                "messaging.message.id": id,
+                "messaging.destination.name": "withdraw",
+                "messaging.message.receive.latency": Date.now() - Number(unlock) * 1000,
+              },
+            },
+            async () => {
+              const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                publicClient.simulateContract({
+                  account: keeper.account,
+                  address: account,
+                  functionName: "withdraw",
+                  abi: [...exaPluginAbi, ...upgradeableModularAccountAbi],
+                  ...transactionOptions,
+                }),
+              );
+              setContext("tx", request);
+              const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+                keeper.writeContract(request),
+              );
+              setContext("tx", { ...request, transactionHash: hash });
+              const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+                publicClient.waitForTransactionReceipt({ hash }),
+              );
+              setContext("tx", { ...request, ...receipt });
+              if (receipt.status !== "success") throw new Error("tx reverted");
+              return redis.zrem(
+                "withdraw",
+                serialize(v.parse(Withdraw, { account, market, receiver, amount, unlock })),
+              );
+            },
+          ).catch((error: unknown) => {
+            parent.setStatus({ code: 2, message: "failed_precondition" });
+            throw error;
           }),
-        );
-        setContext("tx", request);
-        const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-          keeper.writeContract(request),
-        );
-        setContext("tx", { ...request, transactionHash: hash });
-        const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-          publicClient.waitForTransactionReceipt({ hash }),
-        );
-        setContext("tx", { ...request, ...receipt });
-        if (receipt.status !== "success") captureException(new Error("tx reverted"));
-        return redis.zrem("withdraw", serialize(v.parse(Withdraw, { account, market, receiver, amount, unlock })));
-      },
-    ).catch((error: unknown) => captureException(error)),
-  );
+        ),
+      ),
+    )
+    .catch((error: unknown) => captureException(error));
 }
 
 const alchemyInit = { headers: { "Content-Type": "application/json", "X-Alchemy-Token": webhooksKey } };
