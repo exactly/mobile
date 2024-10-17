@@ -11,4 +11,5 @@ init({
   autoSessionTracking: true,
   normalizeDepth: 10,
   integrations: [nodeProfilingIntegration(), extraErrorDataIntegration({ depth: 10 }), sessionTimingIntegration()],
+  spotlight: !process.env.APP_DOMAIN || process.env.APP_DOMAIN === "localhost",
 });
