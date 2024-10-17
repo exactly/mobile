@@ -1,7 +1,7 @@
-import MATURITY_INTERVAL from "@exactly/common/MATURITY_INTERVAL";
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import chain, { exaPluginAbi, upgradeableModularAccountAbi, usdcAddress } from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/validation";
+import { MATURITY_INTERVAL } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import {
   captureException,
