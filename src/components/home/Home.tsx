@@ -17,6 +17,7 @@ import LatestActivity from "../shared/LatestActivity";
 import ProfileHeader from "../shared/ProfileHeader";
 import SafeView from "../shared/SafeView";
 import View from "../shared/View";
+import { TimeToFullDisplay } from "@sentry/react-native";
 
 export default function Home() {
   const {
@@ -57,6 +58,7 @@ export default function Home() {
           <View padded>{activity && activity.length > 0 && <LatestActivity activity={activity} />}</View>
         </View>
       </ScrollView>
+      <TimeToFullDisplay record={!!markets && !!activity} />
     </SafeView>
   );
 }
