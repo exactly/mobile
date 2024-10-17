@@ -32,7 +32,7 @@ export default function Card() {
   const {
     data: purchases,
     refetch: refetchPurchases,
-    isFetching,
+    isPending,
   } = useQuery({
     queryKey: ["activity", "card"],
     queryFn: () => getActivity({ include: "card" }),
@@ -112,7 +112,7 @@ export default function Card() {
         <ScrollView
           refreshControl={
             <RefreshControl
-              refreshing={isFetching}
+              refreshing={isPending}
               onRefresh={() => {
                 refetchPurchases().catch(handleError);
               }}

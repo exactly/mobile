@@ -17,7 +17,7 @@ import View from "../shared/View";
 
 export default function Payments() {
   const { market, account } = useMarketAccount(marketUSDCAddress);
-  const { refetch, isFetching } = useReadPreviewerExactly({
+  const { refetch, isPending } = useReadPreviewerExactly({
     address: previewerAddress,
     args: [account ?? zeroAddress],
   });
@@ -33,7 +33,7 @@ export default function Payments() {
         flex={1}
         refreshControl={
           <RefreshControl
-            refreshing={isFetching}
+            refreshing={isPending}
             onRefresh={() => {
               refetch().catch(handleError);
               queryClient.refetchQueries({ queryKey: ["activity"] }).catch(handleError);
