@@ -1,7 +1,6 @@
-import MATURITY_INTERVAL from "@exactly/common/MATURITY_INTERVAL";
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
-import { WAD } from "@exactly/lib";
+import { MATURITY_INTERVAL, WAD } from "@exactly/lib";
 import { Calculator } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
