@@ -1,7 +1,7 @@
 const { getSentryExpoConfig } = require("@sentry/react-native/metro");
 const path = require("node:path");
 
-const config = getSentryExpoConfig(__dirname);
+const config = getSentryExpoConfig(__dirname, { annotateReactComponents: true });
 
 /** @type {import('metro-config').InputConfigT} */
 module.exports = {
