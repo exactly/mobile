@@ -1,6 +1,6 @@
-import "../mockDeployments";
-import "../mockSentry";
-import "../mockDatabase";
+import "../mocks/database";
+import "../mocks/deployments";
+import "../mocks/sentry";
 
 import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
 import { testClient } from "hono/testing";

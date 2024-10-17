@@ -1,7 +1,7 @@
-import "../mockAlchemy";
-import "../mockDatabase";
-import "../mockDeployments";
-import "../mockSentry";
+import "../mocks/alchemy";
+import "../mocks/database";
+import "../mocks/deployments";
+import "../mocks/sentry";
 
 import { exaAccountFactoryAbi, previewerAddress, wethAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";

@@ -10,7 +10,7 @@ vi.mock("@exactly/common/generated/chain", async () => ({
   usdcAddress: inject("USDC"),
   wethAddress: inject("WETH"),
 }));
-vi.mock("../generated/contracts", async () => ({
-  ...(await import("../generated/contracts")),
+vi.mock("../../generated/contracts", async () => ({
+  ...(await import("../../generated/contracts")),
   issuerCheckerAddress: inject("IssuerChecker"),
 }));

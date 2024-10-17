@@ -1,7 +1,7 @@
-import "../mockAuth";
-import "../mockDatabase";
-import "../mockDeployments";
-import "../mockSentry";
+import "../mocks/auth";
+import "../mocks/database";
+import "../mocks/deployments";
+import "../mocks/sentry";
 
 import { Address } from "@exactly/common/validation";
 import * as sentry from "@sentry/node";
