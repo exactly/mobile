@@ -1,20 +1,18 @@
 import "../mocks/database";
 import "../mocks/deployments";
+import "../mocks/redis";
 import "../mocks/sentry";
 
 import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
 import { testClient } from "hono/testing";
-import Redis from "ioredis-mock";
 import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { beforeAll, describe, expect, inject, it, vi } from "vitest";
+import { beforeAll, describe, expect, inject, it } from "vitest";
 
 import database, { cards, credentials } from "../../database";
 import app from "../../hooks/cryptomate";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
-
-vi.mock("ioredis", () => ({ Redis }));
 
 const appClient = testClient(app);
 
