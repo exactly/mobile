@@ -10,32 +10,31 @@ import View from "../shared/View";
 export default function DismissableAlert({ text, onDismiss }: { text: string; onDismiss: () => void }) {
   return (
     <XStack
-      borderWidth={1}
       borderRadius="$r3"
-      backgroundColor="$backgroundSoft"
-      borderColor="$borderSuccessSoft"
+      backgroundColor="$interactiveBaseInformationDefault"
+      borderColor="$borderInformationSoft"
       width="100%"
     >
       <View
         padding="$s4"
-        backgroundColor="$interactiveBaseSuccessSoftDefault"
+        backgroundColor="$interactiveBaseInformationSoftDefault"
         justifyContent="center"
         alignItems="center"
         borderTopLeftRadius="$r3"
         borderBottomLeftRadius="$r3"
         flex={1}
       >
-        <Info size={ms(24)} color="$interactiveOnBaseSuccessSoft" />
+        <Info size={ms(24)} color="$interactiveOnBaseInformationSoft" />
       </View>
       <View flex={6} padding="$s4">
-        <Text fontSize={ms(15)} color="$uiSuccessPrimary" paddingRight="$s4">
+        <Text fontSize={ms(15)} color="$interactiveOnBaseInformationDefault" paddingRight="$s4">
           {text}
         </Text>
         <View
           position="absolute"
           right="$s3"
           top="$s3"
-          backgroundColor="$interactiveBaseSuccessSoftDefault"
+          backgroundColor="$interactiveBaseInformationSoftDefault"
           borderRadius="$r_0"
           width={ms(24)}
           height={ms(24)}
@@ -43,7 +42,7 @@ export default function DismissableAlert({ text, onDismiss }: { text: string; on
           justifyContent="center"
         >
           <Pressable hitSlop={ms(10)} onPress={onDismiss}>
-            <X size={ms(18)} color="$interactiveOnBaseSuccessSoft" />
+            <X size={ms(18)} color="$interactiveOnBaseInformationSoft" />
           </Pressable>
         </View>
       </View>
