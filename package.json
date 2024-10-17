@@ -96,6 +96,7 @@
     "@expo/image-utils": "^0.5.1",
     "@react-navigation/bottom-tabs": "*",
     "@simplewebauthn/types": "^11.0.0",
+    "@spotlightjs/spotlight": "^2.5.0",
     "@tamagui/babel-plugin": "^1.115.5",
     "@tanstack/eslint-plugin-query": "^5.59.7",
     "@types/babel__core": "^7.20.5",
