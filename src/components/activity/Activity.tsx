@@ -14,7 +14,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Activity() {
-  const { data: activity, refetch, isFetching } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
+  const { data: activity, refetch, isPending } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
   const { queryKey } = useMarketAccount();
   const groupedActivity = useMemo(() => {
     if (!activity) return [];
@@ -40,7 +40,7 @@ export default function Activity() {
           <FlatList
             refreshControl={
               <RefreshControl
-                refreshing={isFetching}
+                refreshing={isPending}
                 onRefresh={() => {
                   refetch().catch(handleError);
                   queryClient.refetchQueries({ queryKey }).catch(handleError);

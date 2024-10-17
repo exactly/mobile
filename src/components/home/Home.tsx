@@ -22,16 +22,21 @@ export default function Home() {
   const {
     data: activity,
     refetch: refetchActivity,
-    isFetching,
+    isPending: isPendingActivity,
   } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
   const { address } = useAccount();
-  const { data: markets, refetch: refetchMarkets } = useReadPreviewerExactly({
+  const {
+    data: markets,
+    refetch: refetchMarkets,
+    isPending: isPendingPreviewer,
+  } = useReadPreviewerExactly({
     address: previewerAddress,
     account: address,
     args: [address ?? zeroAddress],
   });
 
   const accountHealth = markets ? healthFactor(markets, Math.floor(new Date(Date.now()).getTime() / 1000)) : 0n;
+  const isPending = isPendingActivity || isPendingPreviewer;
 
   return (
     <SafeView fullScreen tab>
@@ -39,11 +44,11 @@ export default function Home() {
       <ScrollView
         refreshControl={
           <RefreshControl
-            refreshing={isFetching}
             onRefresh={() => {
               refetchActivity().catch(handleError);
               refetchMarkets().catch(handleError);
             }}
+            refreshing={isPending}
           />
         }
         backgroundColor="$backgroundMild"
