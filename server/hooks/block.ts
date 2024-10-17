@@ -60,7 +60,10 @@ export default app.post(
   ),
   async (c) => {
     const { logs } = c.req.valid("json").event.data.block;
-    if (logs.length === 0) return c.json({});
+    if (logs.length === 0) {
+      getActiveSpan()?.setAttribute("exa.ignore", false);
+      return c.json({}, 200);
+    }
     setContext("alchemy", await c.req.json());
     getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
     const events = logs.map(({ topics, data }) => decodeEventLog({ topics, data, abi: exaPluginAbi }));

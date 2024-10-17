@@ -5,7 +5,7 @@ init({
   release: require("@exactly/common/generated/release"),
   dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV === "production" ? "production" : "development",
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
+  tracesSampler: ({ attributes }) => (attributes?.["exa.ignore"] ? 0 : 1),
   profilesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
   attachStacktrace: true,
   autoSessionTracking: true,
