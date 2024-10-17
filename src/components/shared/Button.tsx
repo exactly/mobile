@@ -20,7 +20,6 @@ export default styled(Button, {
       true: {
         backgroundColor: "$interactiveBaseBrandSoftDefault",
         color: "$interactiveOnBaseBrandSoft",
-        borderColor: "$borderBrandSoft",
         hoverStyle: { backgroundColor: "$interactiveBaseBrandSoftHover" },
         pressStyle: {
           backgroundColor: "$interactiveBaseBrandSoftPressed",
