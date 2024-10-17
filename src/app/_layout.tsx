@@ -1,7 +1,7 @@
 import "../utils/polyfill";
 
 import release from "@exactly/common/generated/release";
-import { init, reactNavigationIntegration, wrap } from "@sentry/react-native";
+import { init, mobileReplayIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { isRunningInExpoGo } from "expo";
 import { type FontSource, useFonts } from "expo-font";
@@ -35,7 +35,8 @@ init({
   autoSessionTracking: true,
   enableNativeFramesTracking: !isRunningInExpoGo(),
   enableUserInteractionTracing: true,
-  integrations: [routingInstrumentation],
+  integrations: [routingInstrumentation, ...(__DEV__ ? [] : [mobileReplayIntegration()])],
+  _experiments: __DEV__ ? undefined : { replaysOnErrorSampleRate: 1, replaysSessionSampleRate: 0.01 },
   spotlight: __DEV__,
 });
 const useServerFonts = typeof window === "undefined" ? useFonts : () => undefined;
