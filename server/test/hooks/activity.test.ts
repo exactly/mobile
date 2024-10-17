@@ -94,10 +94,7 @@ describe.todo("address activity", () => {
 
   it("pokes eth", async () => {
     const deposit = parseEther("5");
-    await anvilClient.setBalance({
-      address: account,
-      value: deposit,
-    });
+    await anvilClient.setBalance({ address: account, value: deposit });
 
     const response = await appClient.index.$post({
       ...activityPayload,
@@ -128,10 +125,7 @@ describe.todo("address activity", () => {
 
   it("pokes weth and eth", async () => {
     const eth = parseEther("5");
-    await anvilClient.setBalance({
-      address: account,
-      value: eth,
-    });
+    await anvilClient.setBalance({ address: account, value: eth });
 
     const weth = parseEther("2");
     await keeper.writeContract({
