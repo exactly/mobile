@@ -105,7 +105,7 @@ describe.todo("address activity", () => {
         ...activityPayload.json,
         event: {
           ...activityPayload.json.event,
-          activity: [{ ...activityPayload.json.event.activity[0], toAddress: account as string }],
+          activity: [{ ...activityPayload.json.event.activity[0], toAddress: account }],
         },
       },
     });
@@ -148,10 +148,10 @@ describe.todo("address activity", () => {
         event: {
           ...activityPayload.json.event,
           activity: [
-            { ...activityPayload.json.event.activity[0], toAddress: account as string },
+            { ...activityPayload.json.event.activity[0], toAddress: account },
             {
               ...activityPayload.json.event.activity[1],
-              toAddress: account as string,
+              toAddress: account,
               rawContract: { ...activityPayload.json.event.activity[1].rawContract, address: wethAddress },
             },
           ],
