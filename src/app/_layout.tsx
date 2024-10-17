@@ -36,6 +36,7 @@ init({
   enableNativeFramesTracking: !isRunningInExpoGo(),
   enableUserInteractionTracing: true,
   integrations: [routingInstrumentation],
+  spotlight: __DEV__,
 });
 const useServerFonts = typeof window === "undefined" ? useFonts : () => undefined;
 
