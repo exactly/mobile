@@ -31,6 +31,7 @@
     "@expo/metro-runtime": "~3.2.3",
     "@intercom/intercom-react-native": "^8.0.0",
     "@intercom/messenger-js-sdk": "^0.0.14",
+    "@lifi/sdk": "^3.3.0",
     "@onesignal/node-onesignal": "5.0.0-alpha-01",
     "@peculiar/asn1-ecc": "^2.3.14",
     "@peculiar/asn1-schema": "^2.3.13",
