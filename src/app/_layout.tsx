@@ -1,5 +1,3 @@
-import "../utils/polyfill";
-
 import release from "@exactly/common/generated/release";
 import { init, mobileReplayIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
 import { ToastProvider } from "@tamagui/toast";
