@@ -28,6 +28,7 @@ module.exports = {
     "no-restricted-imports": ["error", { patterns: ["./server/"] }],
     "no-shadow": "off", // @typescript-eslint/no-shadow
     "unicorn/filename-case": "off", // use default export name
+    "unicorn/no-array-reduce": "off",
     "unicorn/no-null": "off", // part of multiple apis
     "unicorn/no-useless-undefined": ["error", { checkArrowFunctionBody: false }], // @typescript-eslint/no-empty-function
     "unicorn/number-literal-case": "off", // incompatible with prettier
