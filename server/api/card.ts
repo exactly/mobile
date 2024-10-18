@@ -31,7 +31,7 @@ export default app
       columns: { account: true, kycId: true },
       with: {
         cards: {
-          columns: { id: true, lastFour: true, status: true },
+          columns: { id: true, lastFour: true, status: true, mode: true },
           where: inArray(cards.status, ["ACTIVE", "FROZEN"]),
         },
       },
@@ -41,8 +41,8 @@ export default app
     setUser({ id: account });
     if (!credential.kycId) return c.json("kyc required", 403);
     if (credential.cards.length > 0 && credential.cards[0]) {
-      const { id, lastFour, status } = credential.cards[0];
-      return c.json({ url: await getPAN(id), lastFour, status }, 200);
+      const { id, lastFour, status, mode } = credential.cards[0];
+      return c.json({ url: await getPAN(id), lastFour, status, mode }, 200);
     } else {
       return c.json("card not found", 404);
     }
