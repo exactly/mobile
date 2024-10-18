@@ -34,10 +34,11 @@ export default app
     async (c) => {
       const credentialId = c.get("credentialId");
       const credential = await database.query.credentials.findFirst({
-        columns: { id: true, kycId: true },
+        columns: { id: true, account: true, kycId: true },
         where: eq(credentials.id, credentialId),
       });
       if (!credential) return c.json("credential not found", 404);
+      setUser({ id: parse(Address, credential.account) });
       const { inquiryId } = c.req.valid("json");
       if (inquiryId) {
         const { data } = await getInquiry(inquiryId);

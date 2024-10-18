@@ -111,12 +111,14 @@ export default app
       return mutex
         .runExclusive(async () => {
           const credential = await database.query.credentials.findFirst({
+            columns: { account: true },
             where: eq(credentials.id, credentialId),
             with: {
               cards: { columns: { id: true, mode: true, status: true }, where: ne(cards.status, "DELETED") },
             },
           });
           if (!credential) return c.json("credential not found", 401);
+          setUser({ id: parse(Address, credential.account) });
           if (credential.cards.length === 0 || !credential.cards[0]) return c.json("no card found", 404);
           const card = credential.cards[0];
           switch (patch.type) {
