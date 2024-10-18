@@ -15,7 +15,14 @@ import { Kind, parse, visit, type StringValueNode } from "graphql";
 import { Hono } from "hono";
 import { setTimeout } from "node:timers/promises";
 import * as v from "valibot";
-import { BaseError, ContractFunctionRevertedError, decodeEventLog, encodeErrorResult } from "viem";
+import {
+  BaseError,
+  CallExecutionError,
+  ContractFunctionRevertedError,
+  decodeEventLog,
+  encodeErrorResult,
+  ExecutionRevertedError,
+} from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
 import { headerValidator, jsonValidator, webhooksKey } from "../utils/alchemy";
@@ -181,6 +188,14 @@ function scheduleWithdraw(message: string) {
             }
             parent.setStatus({ code: 2, message: "failed_precondition" });
             captureException(error);
+            if (
+              chain.id === optimismSepolia.id &&
+              error instanceof BaseError &&
+              error.cause instanceof CallExecutionError &&
+              error.cause.cause instanceof ExecutionRevertedError
+            ) {
+              return redis.zrem("withdraw", message);
+            }
           }),
         ),
       ),
