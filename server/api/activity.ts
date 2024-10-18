@@ -120,33 +120,38 @@ export default app.get(
         .filter(<T>(value: T | undefined): value is T => value !== undefined);
     }
 
-    const repays = ignore("repay")
-      ? []
-      : await publicClient.getLogs({
-          event: marketAbi.find((item) => item.type === "event" && item.name === "RepayAtMaturity"),
-          address: [...marketsByAddress.keys()],
-          args: { caller: exaPluginAddress, borrower: account },
-          toBlock: "latest",
-          fromBlock: 0n,
-        });
-
-    const withdraws = ignore("withdraw")
-      ? []
-      : await publicClient
-          .getLogs({
-            event: marketAbi.find((item) => item.type === "event" && item.name === "Withdraw"),
+    const [repays, withdraws] = await Promise.all([
+      ignore("repay")
+        ? []
+        : await publicClient.getLogs({
+            event: marketAbi.find((item) => item.type === "event" && item.name === "RepayAtMaturity"),
             address: [...marketsByAddress.keys()],
-            args: { caller: account, owner: account },
+            args: { caller: exaPluginAddress, borrower: account },
             toBlock: "latest",
             fromBlock: 0n,
-          })
-          .then((logs) =>
-            logs.filter(
-              ({ topics, data }) =>
-                decodeEventLog({ abi: marketAbi, eventName: "Withdraw", topics, data }).args.receiver.toLowerCase() !==
-                collector,
+          }),
+      ignore("withdraw")
+        ? []
+        : await publicClient
+            .getLogs({
+              event: marketAbi.find((item) => item.type === "event" && item.name === "Withdraw"),
+              address: [...marketsByAddress.keys()],
+              args: { caller: account, owner: account },
+              toBlock: "latest",
+              fromBlock: 0n,
+            })
+            .then((logs) =>
+              logs.filter(
+                ({ topics, data }) =>
+                  decodeEventLog({
+                    abi: marketAbi,
+                    eventName: "Withdraw",
+                    topics,
+                    data,
+                  }).args.receiver.toLowerCase() !== collector,
+              ),
             ),
-          );
+    ]);
 
     const blocks = await Promise.all(
       [...new Set([...repays, ...withdraws].map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
