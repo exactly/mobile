@@ -122,10 +122,9 @@ export default app.get(
       : await publicClient.getLogs({
           event: marketAbi.find((item) => item.type === "event" && item.name === "RepayAtMaturity"),
           address: [...marketsByAddress.keys()],
-          args: {
-            caller: exaPluginAddress,
-            borrower: account,
-          },
+          args: { caller: exaPluginAddress, borrower: account },
+          toBlock: "latest",
+          fromBlock: 0n,
         });
 
     const withdraws = ignore("withdraw")
@@ -133,10 +132,9 @@ export default app.get(
       : await publicClient.getLogs({
           event: marketAbi.find((item) => item.type === "event" && item.name === "Withdraw"),
           address: [...marketsByAddress.keys()],
-          args: {
-            caller: account,
-            owner: account,
-          },
+          args: { caller: account, owner: account },
+          toBlock: "latest",
+          fromBlock: 0n,
         });
 
     const blocks = await Promise.all(
