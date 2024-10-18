@@ -781,6 +781,20 @@ contract ExaPluginTest is ForkTest {
     exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0)));
   }
 
+  function test_repay_partiallyRepays() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    account.poke(exaEXA);
+    assertEq(exaUSDC.maxWithdraw(address(account)), 100_000e6);
+    account.collectCredit(FixedLib.INTERVAL, 100_000e6 + 1, block.timestamp, _issuerOp(100_000e6 + 1, block.timestamp));
+    vm.stopPrank();
+
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
+    // FIXME
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+  }
+
   // solhint-enable func-name-mixedcase
 
   function _op(bytes memory callData, uint256 privateKey) internal view returns (UserOperation memory op) {
