@@ -280,14 +280,7 @@ describe("authenticated", () => {
       expect(response.status).toBe(200);
 
       await expect(response.json()).resolves.toMatchObject([
-        { amount: 69, symbol: "USDC", type: "withdraw", usdAmount: 69, receiver: padHex("0x69") },
-        {
-          amount: 666,
-          symbol: "USDC",
-          type: "withdraw",
-          usdAmount: 666,
-          receiver: "0x3aEc41183547F36F7E65Ed213ce34073bc93503E",
-        },
+        { amount: 69, symbol: "USDC", type: "withdraw", usdAmount: 69, receiver: padHex("0x69", { size: 20 }) },
       ]);
     });
 

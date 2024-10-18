@@ -27,6 +27,7 @@ import { zeroAddress, decodeEventLog, type GetLogsReturnType } from "viem";
 import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
+import COLLECTOR from "../utils/COLLECTOR";
 import publicClient, { type AssetTransfer, ERC20Transfer } from "../utils/publicClient";
 
 const WAD = 10n ** 18n;
@@ -35,6 +36,8 @@ const app = new Hono();
 app.use(auth);
 
 const activityTypes = picklist(["card", "received", "repay", "sent", "withdraw"]);
+
+const collector = COLLECTOR.toLowerCase();
 
 export default app.get(
   "/",
@@ -129,13 +132,21 @@ export default app.get(
 
     const withdraws = ignore("withdraw")
       ? []
-      : await publicClient.getLogs({
-          event: marketAbi.find((item) => item.type === "event" && item.name === "Withdraw"),
-          address: [...marketsByAddress.keys()],
-          args: { caller: account, owner: account },
-          toBlock: "latest",
-          fromBlock: 0n,
-        });
+      : await publicClient
+          .getLogs({
+            event: marketAbi.find((item) => item.type === "event" && item.name === "Withdraw"),
+            address: [...marketsByAddress.keys()],
+            args: { caller: account, owner: account },
+            toBlock: "latest",
+            fromBlock: 0n,
+          })
+          .then((logs) =>
+            logs.filter(
+              ({ topics, data }) =>
+                decodeEventLog({ abi: marketAbi, eventName: "Withdraw", topics, data }).args.receiver.toLowerCase() !==
+                collector,
+            ),
+          );
 
     const blocks = await Promise.all(
       [...new Set([...repays, ...withdraws].map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
