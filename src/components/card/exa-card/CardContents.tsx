@@ -1,7 +1,7 @@
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import { borrowLimit, withdrawLimit } from "@exactly/lib";
 import React from "react";
-import { AnimatePresence, XStack, YStack } from "tamagui";
+import { AnimatePresence, Spinner, XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -10,7 +10,15 @@ import { useReadPreviewerExactly } from "../../../generated/contracts";
 import Text from "../../shared/Text";
 import View from "../../shared/View";
 
-export default function CardContents({ isCredit }: { isCredit: boolean }) {
+export default function CardContents({
+  isCredit,
+  isLoading,
+  disabled,
+}: {
+  isCredit: boolean;
+  isLoading: boolean;
+  disabled: boolean;
+}) {
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({
     address: previewerAddress,
@@ -18,10 +26,27 @@ export default function CardContents({ isCredit }: { isCredit: boolean }) {
     args: [address ?? zeroAddress],
   });
   return (
-    <XStack height={88} justifyContent="space-between" alignItems="center" padding="$s5">
+    <XStack
+      height={88}
+      animation="moderate"
+      animateOnly={["opacity"]}
+      justifyContent="space-between"
+      alignItems="center"
+      padding="$s5"
+      opacity={disabled ? 0.5 : 1}
+    >
       <YStack justifyContent="center">
         <AnimatePresence exitBeforeEnter>
-          {isCredit ? (
+          {isLoading ? (
+            <View
+              key="loading"
+              animation="quick"
+              enterStyle={{ opacity: 0 }} // eslint-disable-line react-native/no-inline-styles
+              exitStyle={{ opacity: 0 }} // eslint-disable-line react-native/no-inline-styles
+            >
+              <Spinner color="white" />
+            </View>
+          ) : isCredit ? (
             <View
               key="credit"
               animation="moderate"
@@ -83,6 +108,7 @@ export default function CardContents({ isCredit }: { isCredit: boolean }) {
         </AnimatePresence>
       </YStack>
       <XStack
+        animation="moderate"
         position="absolute"
         right={0}
         left={0}
@@ -91,7 +117,7 @@ export default function CardContents({ isCredit }: { isCredit: boolean }) {
         backgroundColor="transparent"
         justifyContent="flex-end"
       >
-        <Card preserveAspectRatio="xMidYMid slice" height="100%" width="50%" />
+        <Card preserveAspectRatio="xMidYMid slice" height="100%" width="50%" shouldRasterizeIOS />
       </XStack>
     </XStack>
   );
