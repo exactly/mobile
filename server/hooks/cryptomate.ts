@@ -1,7 +1,12 @@
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
-import chain, { exaPluginAbi, upgradeableModularAccountAbi, usdcAddress } from "@exactly/common/generated/chain";
+import chain, {
+  exaPluginAbi,
+  previewerAddress,
+  upgradeableModularAccountAbi,
+  usdcAddress,
+} from "@exactly/common/generated/chain";
 import { Address, Hash, Hex } from "@exactly/common/validation";
-import { MATURITY_INTERVAL } from "@exactly/lib";
+import { fixedUtilization, globalUtilization, MATURITY_INTERVAL, splitInstallments } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import {
   captureException,
@@ -27,12 +32,14 @@ import {
   encodeFunctionData,
   erc20Abi,
   isHash,
+  maxUint256,
   padHex,
+  zeroAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, transactions } from "../database/index";
-import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
+import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi, previewerAbi } from "../generated/contracts";
 import keeper from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 import transactionOptions from "../utils/transactionOptions";
@@ -117,13 +124,44 @@ export default new Hono().post(
         return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
       }
       const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
-      const firstMaturity = BigInt(
-        nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity,
-      );
+      const firstMaturity =
+        nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
       if (card.mode === 1) {
-        return { functionName: "collectCredit", args: [firstMaturity, amount, BigInt(timestamp), signature] } as const;
+        return {
+          functionName: "collectCredit",
+          args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
+        } as const;
       }
-      throw new Error("unimplemented");
+      const exactly = await publicClient.readContract({
+        address: previewerAddress,
+        functionName: "exactly",
+        args: [zeroAddress],
+        abi: previewerAbi,
+      });
+      const market = exactly.find(({ asset }) => asset === usdcAddress);
+      if (!market) throw new Error("usdc market not found");
+      const { amounts } = splitInstallments(
+        amount,
+        market.totalFloatingDepositAssets,
+        firstMaturity,
+        market.fixedPools.length,
+        market.fixedPools
+          .filter(
+            ({ maturity }) => maturity >= firstMaturity && maturity < firstMaturity + card.mode * MATURITY_INTERVAL,
+          )
+          .map(({ supplied, borrowed }) => fixedUtilization(supplied, borrowed, market.totalFloatingDepositAssets)),
+        market.floatingUtilization,
+        globalUtilization(
+          market.totalFloatingDepositAssets,
+          market.totalFloatingBorrowAssets,
+          market.floatingBackupBorrowed,
+        ),
+        market.interestRateModel.parameters,
+      );
+      return {
+        functionName: "collectInstallments",
+        args: [BigInt(firstMaturity), amounts, maxUint256, BigInt(timestamp), signature],
+      } as const;
     })();
     const transaction = {
       from: keeper.account.address,
@@ -155,15 +193,14 @@ export default new Hono().post(
             captureException(new Error(error));
             return c.json({ response_code: "69" });
           }
-          const transfers = usdcTransfersToCollector(trace);
-          if (transfers.length !== 1) {
-            debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "no collection");
-            return c.json({ response_code: "51" });
-          }
-          const [{ topics, data }] = transfers as [TransferLog];
-          const { args } = decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data });
-          if (args.value !== amount) {
-            debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "wrong amount");
+          if (
+            usdcTransfersToCollector(trace).reduce(
+              (total, { topics, data }) =>
+                total + decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data }).args.value,
+              0n,
+            ) !== amount
+          ) {
+            debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "bad collection");
             return c.json({ response_code: "51" });
           }
           return c.json({ response_code: "00" });
@@ -182,11 +219,11 @@ export default new Hono().post(
               abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi],
               ...transactionOptions,
             };
-            const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-              call.functionName === "collectDebit"
-                ? publicClient.simulateContract({ ...collect, ...call })
-                : publicClient.simulateContract({ ...collect, ...call }),
-            );
+            const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () => {
+              if (call.functionName === "collectDebit") return publicClient.simulateContract({ ...collect, ...call });
+              if (call.functionName === "collectCredit") return publicClient.simulateContract({ ...collect, ...call });
+              return publicClient.simulateContract({ ...collect, ...call });
+            });
             setContext("tx", request);
             const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
               keeper.writeContract(request as Parameters<typeof keeper.writeContract>[0]),

@@ -26,7 +26,7 @@ const authorization = {
     data: {
       bill_currency_code: "USD",
       bill_currency_number: "840",
-      bill_amount: 0.01,
+      bill_amount: 100,
       card_id: "card",
       created_at: new Date().toISOString(),
       metadata: { account: zeroAddress },
@@ -101,6 +101,17 @@ describe("authorization", () => {
       const response = await appClient.index.$post({
         ...authorization,
         json: { ...authorization.json, data: { ...authorization.json.data, card_id: "debit", metadata: { account } } },
+      });
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+    });
+
+    it("authorizes installments", async () => {
+      await database.insert(cards).values([{ id: "inst", credentialId: "cred", lastFour: "5678", mode: 6 }]);
+      const response = await appClient.index.$post({
+        ...authorization,
+        json: { ...authorization.json, data: { ...authorization.json.data, card_id: "inst", metadata: { account } } },
       });
 
       expect(response.status).toBe(200);
