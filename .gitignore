@@ -1,5 +1,6 @@
 node_modules/
 .tamagui/
+.sentry/
 .gradle/
 .expo/
 build/
