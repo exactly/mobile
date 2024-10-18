@@ -266,8 +266,8 @@ describe("authenticated", () => {
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toMatchObject([
-        { amount: closeTo(433, 1), symbol: "USDC", type: "repay", usdAmount: closeTo(433, 1) },
-        { amount: closeTo(81, 1), symbol: "USDC", type: "repay", usdAmount: closeTo(81, 1) },
+        { amount: closeTo(433, 1), currency: "USDC", type: "repay", usdAmount: closeTo(433, 1) },
+        { amount: closeTo(81, 1), currency: "USDC", type: "repay", usdAmount: closeTo(81, 1) },
       ]);
     });
 
@@ -280,7 +280,7 @@ describe("authenticated", () => {
       expect(response.status).toBe(200);
 
       await expect(response.json()).resolves.toMatchObject([
-        { amount: 69, symbol: "USDC", type: "withdraw", usdAmount: 69, receiver: padHex("0x69", { size: 20 }) },
+        { amount: 69, currency: "USDC", type: "withdraw", usdAmount: 69, receiver: padHex("0x69", { size: 20 }) },
       ]);
     });
 

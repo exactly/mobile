@@ -1,5 +1,5 @@
 import { previewerAddress, exaPluginAddress } from "@exactly/common/generated/chain";
-import { Address } from "@exactly/common/validation";
+import { Address, Hex } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser, withScope } from "@sentry/node";
 import { eq } from "drizzle-orm";
@@ -160,7 +160,7 @@ export default app.get(
 
     function events(eventName: "RepayAtMaturity" | "Withdraw", logs: GetLogsReturnType) {
       return logs
-        .map(({ address, blockNumber, data, topics }) => {
+        .map(({ address, blockNumber, data, topics, transactionHash, logIndex }) => {
           const event = decodeEventLog({
             abi: marketAbi,
             eventName,
@@ -169,6 +169,8 @@ export default app.get(
           });
           const result = safeParse({ RepayAtMaturity: RepayActivity, Withdraw: WithdrawActivity }[eventName], {
             ...event,
+            transactionHash,
+            logIndex,
             market: marketsByAddress.get(parse(Address, address)),
             timestamp: timestampByBlock.get(blockNumber),
           });
@@ -266,42 +268,53 @@ export const AssetSentActivity = pipe(
 
 export const RepayActivity = pipe(
   object({
-    args: object({
-      assets: bigint(),
-    }),
+    args: object({ assets: bigint() }),
     market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
     timestamp: pipe(string(), isoTimestamp()),
+    transactionHash: Hex,
+    logIndex: number(),
   }),
-  transform(({ args: { assets: value }, market: { decimals, symbol, usdPrice }, timestamp }) => {
-    const baseUnit = 10 ** decimals;
-    return {
-      amount: Number(value) / baseUnit,
-      symbol: symbol.slice(3),
-      timestamp,
-      type: "repay" as const,
-      usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-    };
-  }),
+  transform(
+    ({ args: { assets: value }, market: { decimals, symbol, usdPrice }, timestamp, transactionHash, logIndex }) => {
+      const baseUnit = 10 ** decimals;
+      return {
+        id: `${transactionHash}:${logIndex}`,
+        amount: Number(value) / baseUnit,
+        currency: symbol.slice(3),
+        timestamp,
+        type: "repay" as const,
+        usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+      };
+    },
+  ),
 );
 
 export const WithdrawActivity = pipe(
   object({
-    args: object({
-      assets: bigint(),
-      receiver: Address,
-    }),
+    args: object({ assets: bigint(), receiver: Address }),
     market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
     timestamp: pipe(string(), isoTimestamp()),
+    transactionHash: Hex,
+    logIndex: number(),
   }),
-  transform(({ args: { assets: value, receiver }, market: { decimals, symbol, usdPrice }, timestamp }) => {
-    const baseUnit = 10 ** decimals;
-    return {
-      amount: Number(value) / baseUnit,
-      symbol: symbol.slice(3),
+  transform(
+    ({
+      args: { assets: value, receiver },
+      market: { decimals, symbol, usdPrice },
       timestamp,
-      receiver,
-      type: "withdraw" as const,
-      usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-    };
-  }),
+      transactionHash,
+      logIndex,
+    }) => {
+      const baseUnit = 10 ** decimals;
+      return {
+        id: `${transactionHash}:${logIndex}`,
+        amount: Number(value) / baseUnit,
+        currency: symbol.slice(3),
+        timestamp,
+        receiver,
+        type: "withdraw" as const,
+        usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+      };
+    },
+  ),
 );
