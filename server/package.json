@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.19.0",
-    "@exactly/lib": "exactly/lib#e7d1f54",
+    "@exactly/lib": "exactly/lib#6f4eea8",
     "@hono/node-server": "^1.13.2",
     "@hono/sentry": "^1.2.0",
     "@hono/valibot-validator": "^0.4.0",
@@ -55,7 +55,7 @@
     "@types/pg": "^8.11.10",
     "@vitest/coverage-v8": "^2.1.3",
     "@vitest/ui": "^2.1.3",
-    "@wagmi/core": "^2.13.8",
+    "@wagmi/core": "^2.13.9",
     "drizzle-kit": "^0.26.2",
     "execa": "^9.4.1",
     "ioredis-mock": "^8.9.0",
