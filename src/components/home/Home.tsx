@@ -1,5 +1,6 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
 import { healthFactor, WAD } from "@exactly/lib";
+import { TimeToFullDisplay } from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { RefreshControl } from "react-native";
@@ -17,9 +18,8 @@ import LatestActivity from "../shared/LatestActivity";
 import ProfileHeader from "../shared/ProfileHeader";
 import SafeView from "../shared/SafeView";
 import View from "../shared/View";
-import { TimeToFullDisplay } from "@sentry/react-native";
 
-const HEALTH_FACTOR_THRESHOLD = WAD * 11n / 10n;
+const HEALTH_FACTOR_THRESHOLD = (WAD * 11n) / 10n;
 
 export default function Home() {
   const {
