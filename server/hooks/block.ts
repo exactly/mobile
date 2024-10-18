@@ -86,7 +86,7 @@ export default app.post(
     setContext("alchemy", await c.req.json());
     getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
     const events = logs.map(({ topics, data }) => decodeEventLog({ topics, data, abi: exaPluginAbi }));
-    Promise.allSettled(
+    await Promise.all(
       events.map(async (event) => {
         switch (event.eventName) {
           case "Proposed": {
@@ -116,7 +116,7 @@ export default app.post(
           }
         }
       }),
-    ).catch((error: unknown) => captureException(error));
+    );
     return c.json({});
   },
 );
