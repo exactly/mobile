@@ -29,7 +29,7 @@ export default function SimulatePurchase() {
   const { address } = useAccount();
   const [input, setInput] = useState("100");
 
-  const timestamp = Math.floor(new Date(Date.now()).getTime() / 1000);
+  const timestamp = Math.floor(Date.now() / 1000);
   const maturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
 
   const { data: borrowPreview, isLoading } = useReadPreviewerPreviewBorrowAtMaturity({

@@ -31,10 +31,7 @@ export default function CreditLimit() {
       <View gap="$s4">
         <View gap="$s3">
           <Text sensitive color="$uiNeutralPrimary" fontFamily="$mono" fontSize={ms(30)}>
-            {(markets
-              ? Number(borrowLimit(markets, marketUSDCAddress, Math.floor(Date.now() / 1000))) / 1e6
-              : 0
-            ).toLocaleString(undefined, {
+            {(markets ? Number(borrowLimit(markets, marketUSDCAddress)) / 1e6 : 0).toLocaleString(undefined, {
               style: "currency",
               currency: "USD",
               currencyDisplay: "narrowSymbol",

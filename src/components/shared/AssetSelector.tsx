@@ -63,10 +63,8 @@ export default function AssetSelector({ positions, onSubmit }: AssetSelectorProp
         }}
         value={selectedMarket}
       >
-        {positions.map(({ symbol, assetName, floatingDepositAssets, decimals, usdValue, market }, index) => {
-          const available = markets
-            ? withdrawLimit(markets, market, Math.floor(new Date(Date.now()).getTime() / 1000))
-            : 0n;
+        {positions.map(({ symbol, assetName, decimals, usdValue, market }, index) => {
+          const available = markets ? withdrawLimit(markets, market) : 0n;
           return (
             <ToggleGroup.Item
               key={index}

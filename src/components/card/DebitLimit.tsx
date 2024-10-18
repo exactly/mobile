@@ -24,15 +24,14 @@ export default function CreditLimit() {
       <View gap="$s4">
         <View gap="$s3">
           <Text sensitive color="$uiNeutralPrimary" fontFamily="$mono" fontSize={ms(30)}>
-            {(market
-              ? Number(withdrawLimit([market], marketUSDCAddress, Math.floor(new Date(Date.now()).getTime() / 1000))) /
-                10 ** market.decimals
-              : 0
-            ).toLocaleString(undefined, {
-              style: "currency",
-              currency: "USD",
-              currencyDisplay: "narrowSymbol",
-            })}
+            {(market ? Number(withdrawLimit([market], marketUSDCAddress)) / 10 ** market.decimals : 0).toLocaleString(
+              undefined,
+              {
+                style: "currency",
+                currency: "USD",
+                currencyDisplay: "narrowSymbol",
+              },
+            )}
           </Text>
           <Separator borderColor="$borderNeutralSoft" />
         </View>

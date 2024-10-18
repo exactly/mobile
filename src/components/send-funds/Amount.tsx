@@ -39,10 +39,7 @@ export default function Amount() {
       router.push("/send-funds/withdraw");
     },
   });
-  const available =
-    markets && withdraw?.market
-      ? withdrawLimit(markets, withdraw.market, Math.floor(new Date(Date.now()).getTime() / 1000))
-      : 0n;
+  const available = markets && withdraw?.market ? withdrawLimit(markets, withdraw.market) : 0n;
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>
