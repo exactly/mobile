@@ -15,7 +15,7 @@ import { Kind, parse, visit, type StringValueNode } from "graphql";
 import { Hono } from "hono";
 import { setTimeout } from "node:timers/promises";
 import * as v from "valibot";
-import { decodeEventLog } from "viem";
+import { BaseError, ContractFunctionRevertedError, decodeEventLog, encodeErrorResult } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
 import { headerValidator, jsonValidator, webhooksKey } from "../utils/alchemy";
@@ -120,6 +120,8 @@ export default app.post(
   },
 );
 
+const noProposal = encodeErrorResult({ errorName: "NoProposal", abi: exaPluginAbi });
+
 function scheduleWithdraw(message: string) {
   const { id, account, market, receiver, amount, unlock, sentryTrace, sentryBaggage } = v.parse(
     Withdraw,
@@ -168,6 +170,15 @@ function scheduleWithdraw(message: string) {
               return redis.zrem("withdraw", message);
             },
           ).catch((error: unknown) => {
+            if (
+              error instanceof BaseError &&
+              error.cause instanceof ContractFunctionRevertedError &&
+              error.cause.data?.errorName === "PreExecHookReverted" &&
+              error.cause.data.args?.[2] === noProposal
+            ) {
+              parent.setStatus({ code: 2, message: "aborted" });
+              return redis.zrem("withdraw", message);
+            }
             parent.setStatus({ code: 2, message: "failed_precondition" });
             captureException(error);
           }),
