@@ -50,10 +50,8 @@ const Withdraw = v.pipe(
 
 redis
   .zrange("withdraw", 0, Infinity, "BYSCORE")
-  .then((results) => {
-    for (const withdraw of results) {
-      scheduleWithdraw(v.parse(Withdraw, deserialize(withdraw)));
-    }
+  .then((messages) => {
+    for (const message of messages) scheduleWithdraw(message);
   })
   .catch((error: unknown) => captureException(error));
 
@@ -109,8 +107,9 @@ export default app.post(
                 const { "sentry-trace": sentryTrace, baggage: sentryBaggage } = getTraceData();
                 withdraw.sentryTrace = sentryTrace;
                 withdraw.sentryBaggage = sentryBaggage;
-                scheduleWithdraw(withdraw);
-                return redis.zadd("withdraw", Number(event.args.unlock), serialize(withdraw));
+                const message = serialize(withdraw);
+                scheduleWithdraw(message);
+                return redis.zadd("withdraw", Number(event.args.unlock), message);
               },
             );
           }
@@ -121,16 +120,11 @@ export default app.post(
   },
 );
 
-function scheduleWithdraw({
-  id,
-  account,
-  market,
-  receiver,
-  amount,
-  unlock,
-  sentryTrace,
-  sentryBaggage,
-}: v.InferOutput<typeof Withdraw>) {
+function scheduleWithdraw(message: string) {
+  const { id, account, market, receiver, amount, unlock, sentryTrace, sentryBaggage } = v.parse(
+    Withdraw,
+    deserialize(message),
+  );
   setTimeout((Number(unlock) + 10) * 1000 - Date.now())
     .then(() =>
       continueTrace({ sentryTrace, baggage: sentryBaggage }, () =>
@@ -171,10 +165,7 @@ function scheduleWithdraw({
               setContext("tx", { ...request, ...receipt });
               if (receipt.status !== "success") throw new Error("tx reverted");
               parent.setStatus({ code: 1, message: "ok" });
-              return redis.zrem(
-                "withdraw",
-                serialize(v.parse(Withdraw, { account, market, receiver, amount, unlock })),
-              );
+              return redis.zrem("withdraw", message);
             },
           ).catch((error: unknown) => {
             parent.setStatus({ code: 2, message: "failed_precondition" });
