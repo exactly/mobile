@@ -5,7 +5,7 @@ import chain, {
   upgradeableModularAccountAbi,
   usdcAddress,
 } from "@exactly/common/generated/chain";
-import { Address, Hash, Hex } from "@exactly/common/validation";
+import { Address, Hash, type Hex } from "@exactly/common/validation";
 import { fixedUtilization, globalUtilization, MATURITY_INTERVAL, splitInstallments } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -40,12 +40,12 @@ import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi, previewerAbi } from "../generated/contracts";
+import COLLECTOR from "../utils/COLLECTOR";
 import keeper from "../utils/keeper";
 import publicClient, { type CallFrame } from "../utils/publicClient";
 import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
-if (!process.env.COLLECTOR_ADDRESS) throw new Error("missing collector address");
 
 const debug = createDebug("exa:cryptomate");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
@@ -273,7 +273,7 @@ export default new Hono().post(
   },
 );
 
-const collectorTopic = padHex(v.parse(Hex, process.env.COLLECTOR_ADDRESS.toLowerCase()));
+const collectorTopic = padHex(COLLECTOR);
 const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
 const usdcLowercase = usdcAddress.toLowerCase() as Hex;
 function usdcTransfersToCollector({ calls, logs }: CallFrame): TransferLog[] {
