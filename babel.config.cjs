@@ -18,7 +18,7 @@ module.exports = function config(api) {
         {
           config: "tamagui.config.ts",
           components: ["tamagui"],
-          disableExtraction: process.env.NODE_ENV === "development",
+          disableExtraction: process.env.NODE_ENV !== "production",
           logTimings: true,
         },
       ],
