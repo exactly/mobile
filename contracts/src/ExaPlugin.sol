@@ -114,8 +114,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     tokens[0] = IERC20(EXA_USDC.asset());
 
     uint256 positionAssets;
+    uint256 maxRepay;
     uint256[] memory amounts = new uint256[](1);
-    (positionAssets, amounts[0]) = _previewRepay(maturity);
+    (positionAssets, maxRepay) = _previewRepay(maturity);
+
+    amounts[0] = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender));
+    positionAssets = positionAssets.min(EXA_USDC.maxWithdraw(msg.sender));
+
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amounts[0])))
     );
@@ -470,8 +475,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     BalancerCallbackData memory b = abi.decode(data, (BalancerCallbackData));
 
-    uint256 actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower);
-    assert(actualRepay == b.maxRepay);
+    uint256 actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower).min(
+      EXA_USDC.maxWithdraw(b.borrower)
+    );
+    assert(actualRepay <= b.maxRepay);
+    if (actualRepay < b.maxRepay) EXA_USDC.deposit(b.maxRepay - actualRepay, b.borrower);
+
     EXA_USDC.withdraw(b.maxRepay, address(BALANCER_VAULT), b.borrower);
   }
 
