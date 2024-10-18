@@ -1,8 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-
+import type * as crypto from "@peculiar/webcrypto";
+import type * as buffer from "buffer"; // eslint-disable-line unicorn/prefer-node-protocol -- polyfill module
 import "fast-text-encoding";
 
-global.crypto ??= new (require("@peculiar/webcrypto").Crypto)(); // eslint-disable-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, unicorn/prefer-module
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
+global.Buffer ??= (require("buffer") as typeof buffer).Buffer; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module, unicorn/prefer-node-protocol
+global.crypto ??= new (require("@peculiar/webcrypto") as typeof crypto).Crypto(); // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
 
 if (global.window) {
   // @ts-expect-error -- enough for mipd
