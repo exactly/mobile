@@ -19,6 +19,8 @@ import SafeView from "../shared/SafeView";
 import View from "../shared/View";
 import { TimeToFullDisplay } from "@sentry/react-native";
 
+const HEALTH_FACTOR_THRESHOLD = WAD * 11n / 10n;
+
 export default function Home() {
   const {
     data: activity,
@@ -31,8 +33,6 @@ export default function Home() {
     account: address,
     args: [address ?? zeroAddress],
   });
-
-  const accountHealth = markets ? healthFactor(markets, Math.floor(new Date(Date.now()).getTime() / 1000)) : 0n;
 
   return (
     <SafeView fullScreen tab>
@@ -51,7 +51,7 @@ export default function Home() {
       >
         <View gap="$s4_5" flex={1}>
           <View backgroundColor="$backgroundSoft" padded gap="$s4">
-            {Number(accountHealth / WAD) < 1.1 && accountHealth !== 0n && <AlertBadge />}
+            {markets && healthFactor(markets) < HEALTH_FACTOR_THRESHOLD && <AlertBadge />}
             <Balance />
             <HomeActions />
           </View>
