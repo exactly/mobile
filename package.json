@@ -207,6 +207,11 @@
         "sharp-cli"
       ]
     },
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2024-48948"
+      ]
+    },
     "peerDependencyRules": {
       "ignoreMissing": [
         "hardhat",
