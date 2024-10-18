@@ -1,4 +1,8 @@
+import { optimism } from "@alchemy/aa-core";
+import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
+import chain from "@exactly/common/generated/chain";
 import release from "@exactly/common/generated/release";
+import { createConfig } from "@lifi/sdk";
 import { init, mobileReplayIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -16,6 +20,7 @@ import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
 import ThemeProvider from "../components/context/ThemeProvider";
 import handleError from "../utils/handleError";
+import publicClient from "../utils/publicClient";
 import queryClient, { persister } from "../utils/queryClient";
 import useOneSignal from "../utils/useOneSignal";
 import wagmiConfig from "../utils/wagmi";
@@ -40,6 +45,13 @@ init({
 });
 const useServerFonts = typeof window === "undefined" ? useFonts : () => undefined;
 const devtools = !!JSON.parse(process.env.EXPO_PUBLIC_DEVTOOLS ?? "false");
+createConfig({
+  integrator: "Exa",
+  rpcUrls: {
+    [optimism.id]: [`${optimism.rpcUrls.alchemy?.http[0]}/${alchemyAPIKey}`],
+    [chain.id]: [publicClient.transport.url],
+  },
+});
 
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
