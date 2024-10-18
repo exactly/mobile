@@ -2,6 +2,7 @@ import "../utils/polyfill";
 
 import release from "@exactly/common/generated/release";
 import { init, mobileReplayIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { isRunningInExpoGo } from "expo";
 import { type FontSource, useFonts } from "expo-font";
@@ -40,6 +41,7 @@ init({
   spotlight: __DEV__,
 });
 const useServerFonts = typeof window === "undefined" ? useFonts : () => undefined;
+const devtools = !!JSON.parse(process.env.EXPO_PUBLIC_DEVTOOLS ?? "false");
 
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
@@ -67,6 +69,7 @@ export default wrap(function RootLayout() {
             </Stack>
           </ThemeProvider>
         </SafeAreaProvider>
+        {devtools && <ReactQueryDevtools initialIsOpen={false} />}
       </PersistQueryClientProvider>
     </WagmiProvider>
   );
