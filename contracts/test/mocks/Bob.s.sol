@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { Previewer } from "@exactly/protocol/periphery/Previewer.sol";
 import { FixedLib } from "@exactly/protocol/utils/FixedLib.sol";
 
-import { IStandardExecutor } from "modular-account-libs/interfaces/IStandardExecutor.sol";
+import { Call, IStandardExecutor } from "modular-account-libs/interfaces/IStandardExecutor.sol";
 
 import { LibString } from "solady/utils/LibString.sol";
 
@@ -92,17 +92,13 @@ contract BobScript is BaseScript {
       maturity, amounts, type(uint256).max, block.timestamp, _issuerOp(46e6, block.timestamp)
     );
     vm.stopBroadcast();
-    vm.startBroadcast(bob);
-    IStandardExecutor(address(bobAccount)).execute(
-      address(bobAccount), 0, abi.encodeCall(IExaAccount.repay, (maturity))
-    );
-    IStandardExecutor(address(bobAccount)).execute(
-      address(bobAccount), 0, abi.encodeCall(IExaAccount.crossRepay, (maturity + FixedLib.INTERVAL, exaEXA))
-    );
-    IStandardExecutor(address(bobAccount)).execute(
-      address(bobAccount), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, 69e6, address(0x69)))
-    );
-    vm.stopBroadcast();
+    Call[] memory calls = new Call[](3);
+    calls[0] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.repay, (maturity)));
+    calls[1] =
+      Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.crossRepay, (maturity + FixedLib.INTERVAL, exaEXA)));
+    calls[2] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, 69e6, address(0x69))));
+    vm.broadcast(bob);
+    IStandardExecutor(address(bobAccount)).executeBatch(calls);
   }
 
   function _deal(address account, uint256 amount) internal {
