@@ -1,52 +1,35 @@
 import { WAD } from "@exactly/lib";
 import { Calculator } from "@tamagui/lucide-icons";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import React, { useEffect, useState } from "react";
 import { ms } from "react-native-size-matters";
 import { Spinner, XStack, YStack } from "tamagui";
-import { formatUnits, parseUnits, zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
 
-import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
-import queryClient from "../../utils/queryClient";
-import useMarketAccount from "../../utils/useMarketAccount";
 import InfoCard from "../home/InfoCard";
 import TamaguiInput from "../shared/TamaguiInput";
 import Text from "../shared/Text";
 
-export default function SimulatePurchase() {
-  const { data: assets } = useQuery<bigint>({
-    queryKey: ["purchase", "simulation"],
-    initialData: 100n,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  });
-  const { market } = useMarketAccount(marketUSDCAddress);
-  const { address } = useAccount();
+interface SimulatePurchaseProperties {
+  borrowPreview?: { maturity: bigint; assets: bigint; utilization: bigint };
+  timestamp: number;
+  onAssetsChange: (assets: bigint) => void;
+  isLoading: boolean;
+}
+
+export default function SimulatePurchase({
+  borrowPreview,
+  timestamp,
+  onAssetsChange,
+  isLoading,
+}: SimulatePurchaseProperties) {
   const [input, setInput] = useState("100");
-
-  const timestamp = Math.floor(Date.now() / 1000);
-  const maturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
-
-  const { data: borrowPreview, isLoading } = useReadPreviewerPreviewBorrowAtMaturity({
-    address: previewerAddress,
-    account: address,
-    args: [
-      market?.market ?? zeroAddress,
-      BigInt(maturity - timestamp < MIN_BORROW_INTERVAL ? maturity + MATURITY_INTERVAL : maturity),
-      assets,
-    ],
-    query: { enabled: !!market && !!address && !!maturity && assets > 0n },
-  });
-
+  const [assets, setAssets] = useState(100n);
   useEffect(() => {
-    queryClient.setQueryData<bigint>(
-      ["purchase", "simulation"],
-      parseUnits(input.replaceAll(/\D/g, ".").replaceAll(/\.(?=.*\.)/g, ""), market?.decimals ?? 18),
-    );
-  }, [input, market?.decimals]);
-
+    const value = parseUnits(input.replaceAll(/\D/g, ".").replaceAll(/\.(?=.*\.)/g, ""), 6);
+    setAssets(value);
+    onAssetsChange(value);
+  }, [input, onAssetsChange]);
   return (
     <InfoCard
       title="Simulate purchase"
@@ -109,7 +92,7 @@ export default function SimulatePurchase() {
             </Text>
             <Text headline primary textAlign="right">
               {borrowPreview
-                ? Number(formatUnits(borrowPreview.assets, market?.decimals ?? 18)).toLocaleString(undefined, {
+                ? Number(formatUnits(borrowPreview.assets, 6)).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
                   })

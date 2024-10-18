@@ -1,4 +1,7 @@
+import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
+import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/validation";
+import { MATURITY_INTERVAL } from "@exactly/lib";
 import { ChevronDown, Eye, EyeOff, Info, Snowflake, CreditCard } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
@@ -6,16 +9,20 @@ import { Platform, Pressable, RefreshControl } from "react-native";
 import { Inquiry } from "react-native-persona";
 import { ms } from "react-native-size-matters";
 import { ScrollView, styled, Spinner, XStack, Accordion, Square } from "tamagui";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
 import CardDetails from "./CardDetails";
 import SimulatePurchase from "./SimulatePurchase";
 import SpendingLimitButton from "./SpendingLimitButton";
 import ExaCard from "./exa-card/ExaCard";
+import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import { environment, templateId } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
 import { APIError, getActivity, getCard, createCard, kyc, kycStatus, setCardStatus } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
+import useMarketAccount from "../../utils/useMarketAccount";
 import LatestActivity from "../shared/LatestActivity";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -36,6 +43,28 @@ export default function Card() {
   } = useQuery({
     queryKey: ["activity", "card"],
     queryFn: () => getActivity({ include: "card" }),
+  });
+
+  const { address } = useAccount();
+  const { market } = useMarketAccount(marketUSDCAddress);
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const maturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
+  const [borrowAssets, setBorrowAssets] = useState<bigint>(0n);
+
+  const {
+    data: borrowPreview,
+    isFetching: isLoadingBorrowPreview,
+    refetch: refetchBorrowPreview,
+  } = useReadPreviewerPreviewBorrowAtMaturity({
+    address: previewerAddress,
+    account: address,
+    args: [
+      market?.market ?? zeroAddress,
+      BigInt(maturity - timestamp < MIN_BORROW_INTERVAL ? maturity + MATURITY_INTERVAL : maturity),
+      borrowAssets,
+    ],
+    query: { enabled: !!market && !!address && !!maturity && borrowAssets > 0n },
   });
 
   const { data: cardDetails, refetch: refetchCard } = useQuery({
@@ -115,6 +144,7 @@ export default function Card() {
               refreshing={isPending}
               onRefresh={() => {
                 refetchPurchases().catch(handleError);
+                refetchBorrowPreview().catch(handleError);
               }}
             />
           }
@@ -141,7 +171,7 @@ export default function Card() {
                   </View>
                 </XStack>
 
-                <ExaCard />
+                <ExaCard disabled={cardDetails?.status === "FROZEN"} />
 
                 {revealError && (
                   <Text color="$uiErrorPrimary" fontWeight="bold">
@@ -198,7 +228,14 @@ export default function Card() {
               </View>
 
               <View padded gap="$s5">
-                <SimulatePurchase />
+                <SimulatePurchase
+                  borrowPreview={borrowPreview}
+                  timestamp={timestamp}
+                  isLoading={isLoadingBorrowPreview}
+                  onAssetsChange={(assets) => {
+                    setBorrowAssets(assets);
+                  }}
+                />
                 {purchases && purchases.length > 0 && <LatestActivity activity={purchases} title="Latest purchases" />}
                 <View>
                   <Accordion
