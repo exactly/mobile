@@ -249,14 +249,16 @@ describe("authenticated", () => {
   });
 
   describe("asset repay", () => {
-    it("returns repays", async () => {
-      const bob = privateKeyToAddress(padHex("0xb0b"));
-      const bobAccount = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
+    const bob = privateKeyToAddress(padHex("0xb0b"));
+    const bobAccount = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
 
+    beforeAll(async () => {
       await database
         .insert(credentials)
         .values([{ id: bobAccount, publicKey: new Uint8Array(), account: bobAccount, factory: zeroAddress }]);
+    });
 
+    it("returns repays", async () => {
       const response = await appClient.index.$get(
         { query: { include: "repay" } },
         { headers: { "test-credential-id": bobAccount } },
@@ -270,6 +272,25 @@ describe("authenticated", () => {
           type: "repay",
           symbol: "USDC",
           usdAmount: closeTo(81, 1),
+        },
+      ]);
+    });
+
+    it("returns withdraw", async () => {
+      const response = await appClient.index.$get(
+        { query: { include: "withdraw" } },
+        { headers: { "test-credential-id": bobAccount } },
+      );
+
+      expect(response.status).toBe(200);
+
+      await expect(response.json()).resolves.toMatchObject([
+        {
+          amount: closeTo(69, 1),
+          symbol: "USDC",
+          type: "withdraw",
+          usdAmount: closeTo(69, 1),
+          receiver: "0x0000000000000000000000000000000000000069",
         },
       ]);
     });

@@ -22,7 +22,7 @@ import {
   transform,
   union,
 } from "valibot";
-import { zeroAddress, decodeEventLog } from "viem";
+import { zeroAddress, decodeEventLog, type GetLogsReturnType } from "viem";
 
 import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
@@ -34,7 +34,7 @@ const WAD = 10n ** 18n;
 const app = new Hono();
 app.use(auth);
 
-const activityTypes = picklist(["card", "received", "repay", "sent"]);
+const activityTypes = picklist(["card", "received", "repay", "sent", "withdraw"]);
 
 export default app.get(
   "/",
@@ -117,42 +117,57 @@ export default app.get(
         .filter(<T>(value: T | undefined): value is T => value !== undefined);
     }
 
-    async function repays() {
-      if (ignore("repay")) return [];
-      const logs = await publicClient.getLogs({
-        event: marketAbi.find((item) => item.type === "event" && item.name === "RepayAtMaturity"),
-        address: [...marketsByAddress.keys()],
-        args: {
-          maturity: null,
-          caller: exaPluginAddress,
-          borrower: account,
-        },
-      });
+    const repays = ignore("repay")
+      ? []
+      : await publicClient.getLogs({
+          event: marketAbi.find((item) => item.type === "event" && item.name === "RepayAtMaturity"),
+          address: [...marketsByAddress.keys()],
+          args: {
+            caller: exaPluginAddress,
+            borrower: account,
+          },
+        });
 
-      const blocks = await Promise.all(
-        [...new Set(logs.map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
-          publicClient.getBlock({ blockNumber }),
-        ),
-      );
+    const withdraws = ignore("withdraw")
+      ? []
+      : await publicClient.getLogs({
+          event: marketAbi.find((item) => item.type === "event" && item.name === "Withdraw"),
+          address: [...marketsByAddress.keys()],
+          args: {
+            caller: account,
+            owner: account,
+          },
+        });
 
-      const timestampByBlock = new Map(
-        blocks.map(({ number: n, timestamp }) => [n, new Date(Number(timestamp) * 1000).toISOString()]),
-      );
+    const blocks = await Promise.all(
+      [...new Set([...repays, ...withdraws].map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
+        publicClient.getBlock({ blockNumber }),
+      ),
+    );
 
+    const timestampByBlock = new Map(
+      blocks.map(({ number: n, timestamp }) => [n, new Date(Number(timestamp) * 1000).toISOString()]),
+    );
+
+    function events(eventName: "RepayAtMaturity" | "Withdraw", logs: GetLogsReturnType) {
       return logs
         .map(({ address, blockNumber, data, topics }) => {
-          const currentMarket = marketsByAddress.get(parse(Address, address));
-          const event = decodeEventLog({ abi: marketAbi, eventName: "RepayAtMaturity", topics, data });
-          const result = safeParse(RepayActivity, {
+          const event = decodeEventLog({
+            abi: marketAbi,
+            eventName,
+            data,
+            topics,
+          });
+          const result = safeParse({ RepayAtMaturity: RepayActivity, Withdraw: WithdrawActivity }[eventName], {
             ...event,
-            market: currentMarket,
+            market: marketsByAddress.get(parse(Address, address)),
             timestamp: timestampByBlock.get(blockNumber),
           });
           if (result.success) return result.output;
           withScope((scope) => {
             scope.setLevel("error");
             scope.setContext("validation", result);
-            captureException(new Error("bad repay"));
+            captureException(new Error(`bad ${eventName}`));
           });
         })
         .filter(<T>(value: T | undefined): value is T => value !== undefined);
@@ -175,7 +190,8 @@ export default app.get(
         ),
         ...transfers("received", received),
         ...transfers("sent", sent),
-        ...(await repays()),
+        ...events("RepayAtMaturity", repays),
+        ...events("Withdraw", withdraws),
       ].sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
       200,
     );
@@ -254,6 +270,28 @@ export const RepayActivity = pipe(
       symbol: symbol.slice(3),
       timestamp,
       type: "repay" as const,
+      usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+    };
+  }),
+);
+
+export const WithdrawActivity = pipe(
+  object({
+    args: object({
+      assets: bigint(),
+      receiver: Address,
+    }),
+    market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
+    timestamp: pipe(string(), isoTimestamp()),
+  }),
+  transform(({ args: { assets: value, receiver }, market: { decimals, symbol, usdPrice }, timestamp }) => {
+    const baseUnit = 10 ** decimals;
+    return {
+      amount: Number(value) / baseUnit,
+      symbol: symbol.slice(3),
+      timestamp,
+      receiver,
+      type: "withdraw" as const,
       usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
     };
   }),
