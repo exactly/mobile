@@ -69,7 +69,7 @@ export default wrap(function RootLayout() {
             </Stack>
           </ThemeProvider>
         </SafeAreaProvider>
-        {devtools && <ReactQueryDevtools initialIsOpen={false} />}
+        {devtools && <ReactQueryDevtools initialIsOpen={false} client={queryClient} />}
       </PersistQueryClientProvider>
     </WagmiProvider>
   );
