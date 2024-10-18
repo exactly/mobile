@@ -52,6 +52,7 @@
     "@tanstack/valibot-form-adapter": "^0.34.0",
     "@wagmi/core": "^2.13.9",
     "abitype": "^1.0.6",
+    "buffer": "^6.0.3",
     "date-fns": "^4.1.0",
     "expo": "~51.0.38",
     "expo-camera": "^15.0.16",
