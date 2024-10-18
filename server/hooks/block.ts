@@ -170,6 +170,7 @@ function scheduleWithdraw({
               );
               setContext("tx", { ...request, ...receipt });
               if (receipt.status !== "success") throw new Error("tx reverted");
+              parent.setStatus({ code: 1, message: "ok" });
               return redis.zrem(
                 "withdraw",
                 serialize(v.parse(Withdraw, { account, market, receiver, amount, unlock })),
@@ -177,7 +178,7 @@ function scheduleWithdraw({
             },
           ).catch((error: unknown) => {
             parent.setStatus({ code: 2, message: "failed_precondition" });
-            throw error;
+            captureException(error);
           }),
         ),
       ),
