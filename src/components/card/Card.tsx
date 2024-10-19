@@ -103,6 +103,8 @@ export default function Card() {
           setCardDetailsOpen(true);
         } else {
           await kycStatus();
+          await createCard();
+          await queryClient.refetchQueries({ queryKey: ["card, details"] });
         }
       } catch (error) {
         if (!(error instanceof APIError)) return handleError(error);
