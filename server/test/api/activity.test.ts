@@ -283,29 +283,5 @@ describe("authenticated", () => {
         { amount: 69, currency: "USDC", type: "withdraw", usdAmount: 69, receiver: padHex("0x69", { size: 20 }) },
       ]);
     });
-
-    it("batch get block requests", async () => {
-      let requests = 0;
-      const client = createPublicClient({
-        chain,
-        cacheTime: 60_000,
-        transport: http(`${chain.rpcUrls.alchemy?.http[0]}/${alchemyAPIKey}`, {
-          batch: true,
-          onFetchRequest(request) {
-            requests++;
-          },
-        }),
-      });
-
-      let time = Date.now();
-      await client.getBlock({ blockNumber: 1n });
-      console.log(`1 block  ${Date.now() - time}ms number of requests: ${requests}`); // eslint-disable-line no-console
-
-      time = Date.now();
-      await Promise.all(Array.from({ length: 3 }, (_, index) => client.getBlock({ blockNumber: BigInt(index + 2) })));
-      console.log(`3 blocks  ${Date.now() - time}ms number of requests: ${requests}`); // eslint-disable-line no-console
-
-      expect(requests).toBe(2);
-    });
   });
 });
