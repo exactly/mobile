@@ -3,20 +3,17 @@ import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/sentry";
 
-import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
-import chain from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { parse, type InferInput } from "valibot";
-import { zeroAddress, zeroHash, padHex, createPublicClient, http } from "viem";
+import { zeroAddress, zeroHash, padHex } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import app, { AssetReceivedActivity, AssetSentActivity, CardActivity } from "../../api/activity";
+import app, { CardActivity } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
 import deriveAddress from "../../utils/deriveAddress";
-import publicClient, { AssetTransfer } from "../../utils/publicClient";
 
 const appClient = testClient(app);
 
@@ -116,139 +113,7 @@ describe("authenticated", () => {
     });
   });
 
-  describe("asset transfers", () => {
-    const baseTransfer = {
-      hash: zeroHash,
-      blockNum: "0x0",
-      uniqueId: "0x0:log:0",
-      metadata: { blockTimestamp: new Date().toISOString() },
-      category: "erc20",
-      asset: "USDC",
-      value: 1,
-      rawContract: { address: inject("USDC"), value: "0xf4240", decimal: "0x6" },
-    } as const;
-    const market = { decimals: 6, symbol: "exaUSDC", usdPrice: 10n ** 18n } as const;
-    const getAssetTransfers = vi.spyOn(publicClient, "getAssetTransfers");
-
-    afterEach(() => getAssetTransfers.mockClear());
-
-    it("returns the received transfers", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
-      getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer] });
-      const response = await appClient.index.$get(
-        { query: { include: "received" } },
-        { headers: { "test-credential-id": account } },
-      );
-
-      expect(getAssetTransfers).toHaveBeenCalledOnce();
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
-    });
-
-    it("returns the sent transfers", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, from: account, to: zeroAddress });
-      getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer] });
-      const response = await appClient.index.$get(
-        { query: { include: "sent" } },
-        { headers: { "test-credential-id": account } },
-      );
-
-      expect(getAssetTransfers).toHaveBeenCalledOnce();
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual([parse(AssetSentActivity, { ...transfer, market })]);
-    });
-
-    it("works with eth transfer", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
-      getAssetTransfers.mockResolvedValueOnce({
-        transfers: [
-          transfer,
-          parse(AssetTransfer, {
-            to: account,
-            from: zeroAddress,
-            hash: zeroHash,
-            blockNum: "0x0",
-            category: "external",
-            uniqueId: "0x0:external",
-            metadata: { blockTimestamp: new Date().toISOString() },
-            asset: "ETH",
-            value: 1,
-            rawContract: { address: null, value: "0xde0b6b3a7640000", decimal: "0x12" },
-          }),
-        ],
-      });
-      const response = await appClient.index.$get(
-        { query: { include: "received" } },
-        { headers: { "test-credential-id": account } },
-      );
-
-      expect(getAssetTransfers).toHaveBeenCalledOnce();
-      expect(captureException).toHaveBeenCalledTimes(0);
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
-    });
-
-    it("ignores market transfers", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
-      getAssetTransfers.mockResolvedValueOnce({
-        transfers: [transfer, parse(AssetTransfer, { ...baseTransfer, to: account, from: inject("MarketUSDC") })],
-      });
-      getAssetTransfers.mockResolvedValueOnce({
-        transfers: [parse(AssetTransfer, { ...baseTransfer, from: account, to: inject("MarketUSDC") })],
-      });
-      const response = await appClient.index.$get(
-        { query: { include: ["received", "sent"] } },
-        { headers: { "test-credential-id": account } },
-      );
-
-      expect(getAssetTransfers).toHaveBeenCalledTimes(2);
-      expect(captureException).toHaveBeenCalledTimes(0);
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
-    });
-
-    it("ignores unknown asset", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
-      getAssetTransfers.mockResolvedValueOnce({
-        transfers: [
-          transfer,
-          parse(AssetTransfer, {
-            ...baseTransfer,
-            to: account,
-            from: zeroAddress,
-            rawContract: { ...baseTransfer.rawContract, address: zeroAddress },
-          }),
-        ],
-      });
-      const response = await appClient.index.$get(
-        { query: { include: "received" } },
-        { headers: { "test-credential-id": account } },
-      );
-
-      expect(getAssetTransfers).toHaveBeenCalledOnce();
-      expect(captureException).toHaveBeenCalledTimes(0);
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
-    });
-
-    it("reports bad transfer", async () => {
-      const transfer = parse(AssetTransfer, { ...baseTransfer, to: account, from: zeroAddress });
-      getAssetTransfers.mockResolvedValueOnce({ transfers: [transfer, { ...baseTransfer, from: zeroAddress } as any] }); // eslint-disable-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-      captureException.mockImplementationOnce(() => "");
-      const response = await appClient.index.$get(
-        { query: { include: "received" } },
-        { headers: { "test-credential-id": account } },
-      );
-
-      expect(getAssetTransfers).toHaveBeenCalledOnce();
-      expect(captureException).toHaveBeenCalledOnce();
-      expect(captureException).toHaveBeenCalledWith(new Error("bad transfer"));
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual([parse(AssetReceivedActivity, { ...transfer, market })]);
-    });
-  });
-
-  describe("asset repay", () => {
+  describe("onchain", () => {
     const bob = privateKeyToAddress(padHex("0xb0b"));
     const bobAccount = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
 
@@ -256,6 +121,20 @@ describe("authenticated", () => {
       await database
         .insert(credentials)
         .values([{ id: bobAccount, publicKey: new Uint8Array(), account: bobAccount, factory: zeroAddress }]);
+    });
+
+    it("returns deposits", async () => {
+      const response = await appClient.index.$get(
+        { query: { include: "received" } },
+        { headers: { "test-credential-id": bobAccount } },
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject([
+        { type: "received", currency: "WETH", amount: 1, usdAmount: 2500 },
+        { type: "received", currency: "USDC", amount: 69_420, usdAmount: 69_420 },
+        { type: "received", currency: "EXA", amount: 666, usdAmount: 3330 },
+      ]);
     });
 
     it("returns repays", async () => {
@@ -266,21 +145,21 @@ describe("authenticated", () => {
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toMatchObject([
-        { amount: closeTo(433, 1), currency: "USDC", type: "repay", usdAmount: closeTo(433, 1) },
-        { amount: closeTo(81, 1), currency: "USDC", type: "repay", usdAmount: closeTo(81, 1) },
+        { amount: closeTo(433, 0.1), currency: "USDC", type: "repay", usdAmount: closeTo(433, 0.1) },
+        { amount: closeTo(81, 0.1), currency: "USDC", type: "repay", usdAmount: closeTo(81, 0.1) },
       ]);
     });
 
-    it("returns withdraw", async () => {
+    it("returns withdraws", async () => {
       const response = await appClient.index.$get(
-        { query: { include: "withdraw" } },
+        { query: { include: "sent" } },
         { headers: { "test-credential-id": bobAccount } },
       );
 
       expect(response.status).toBe(200);
 
       await expect(response.json()).resolves.toMatchObject([
-        { amount: 69, currency: "USDC", type: "withdraw", usdAmount: 69, receiver: padHex("0x69", { size: 20 }) },
+        { amount: 69, currency: "USDC", type: "sent", usdAmount: 69, receiver: padHex("0x69", { size: 20 }) },
       ]);
     });
   });

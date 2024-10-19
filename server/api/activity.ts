@@ -1,5 +1,6 @@
 import { previewerAddress, exaPluginAddress } from "@exactly/common/generated/chain";
 import { Address, Hex } from "@exactly/common/validation";
+import { WAD } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser, withScope } from "@sentry/node";
 import { eq } from "drizzle-orm";
@@ -8,7 +9,6 @@ import {
   array,
   bigint,
   type InferInput,
-  intersect,
   isoTimestamp,
   nullable,
   number,
@@ -28,23 +28,21 @@ import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
 import COLLECTOR from "../utils/COLLECTOR";
-import publicClient, { type AssetTransfer, ERC20Transfer } from "../utils/publicClient";
-
-const WAD = 10n ** 18n;
+import publicClient from "../utils/publicClient";
 
 const app = new Hono();
 app.use(auth);
 
-const activityTypes = picklist(["card", "received", "repay", "sent", "withdraw"]);
+const ActivityTypes = picklist(["card", "received", "repay", "sent"]);
 
 const collector = COLLECTOR.toLowerCase();
 
 export default app.get(
   "/",
-  vValidator("query", optional(object({ include: optional(union([activityTypes, array(activityTypes)])) }), {})),
+  vValidator("query", optional(object({ include: optional(union([ActivityTypes, array(ActivityTypes)])) }), {})),
   async (c) => {
     const { include } = c.req.valid("query");
-    function ignore(type: InferInput<typeof activityTypes>) {
+    function ignore(type: InferInput<typeof ActivityTypes>) {
       return include && (Array.isArray(include) ? !include.includes(type) : include !== type);
     }
 
@@ -63,79 +61,39 @@ export default app.get(
     if (!credential) return c.json("credential not found", 401);
     const account = parse(Address, credential.account);
     setUser({ id: account });
+
     const exactly = await publicClient.readContract({
       address: previewerAddress,
       functionName: "exactly", // TODO cache
       abi: previewerAbi,
       args: [zeroAddress],
     });
-
-    const marketsByAddress = new Map<Address, (typeof exactly)[number]>(
-      exactly.map((market) => [parse(Address, market.market), market]),
-    );
-    const marketsByAsset = new Map<Address, (typeof exactly)[number]>(
-      exactly.map((market) => [parse(Address, market.asset), market]),
-    );
-
-    const [received, sent] = await Promise.all(
-      (["received", "sent"] as const).map((type) => {
-        if (ignore(type)) return;
-        return publicClient.getAssetTransfers({
-          category: ["erc20"] as const,
-          contractAddresses: [...marketsByAsset.keys()],
-          withMetadata: true,
-          excludeZeroValue: true,
-          ...{
-            received: { toAddress: account },
-            sent: { fromAddress: account },
-          }[type],
-        });
-      }),
-    );
-    function transfers(type: "received" | "sent", response: { transfers: readonly AssetTransfer[] } | undefined) {
-      if (!response || ignore(type)) return [];
-      return response.transfers
-        .map((transfer) => {
-          if (transfer.category !== "erc20") return;
-          const market = marketsByAsset.get(parse(Address, transfer.rawContract.address));
-          if (!market) return;
-          const marketLowercase = market.market.toLowerCase();
-          if (
-            (type === "received" && transfer.from.toLowerCase() === marketLowercase) ||
-            (type === "sent" && transfer.to.toLowerCase() === marketLowercase)
-          ) {
-            return;
-          }
-          const result = safeParse({ received: AssetReceivedActivity, sent: AssetSentActivity }[type], {
-            market,
-            ...transfer,
-          });
-          if (result.success) return result.output;
-          withScope((scope) => {
-            scope.setLevel("error");
-            scope.setContext("validation", result);
-            captureException(new Error("bad transfer"));
-          });
-        })
-        .filter(<T>(value: T | undefined): value is T => value !== undefined);
-    }
-
-    const [repays, withdraws] = await Promise.all([
+    const markets = new Map<Address, (typeof exactly)[number]>(exactly.map((m) => [parse(Address, m.market), m]));
+    const [deposits, repays, withdraws] = await Promise.all([
+      ignore("received")
+        ? []
+        : await publicClient.getLogs({
+            event: marketAbi.find((item) => item.type === "event" && item.name === "Deposit"),
+            address: [...markets.keys()],
+            args: { caller: account, owner: account },
+            toBlock: "latest",
+            fromBlock: 0n,
+          }),
       ignore("repay")
         ? []
         : await publicClient.getLogs({
             event: marketAbi.find((item) => item.type === "event" && item.name === "RepayAtMaturity"),
-            address: [...marketsByAddress.keys()],
+            address: [...markets.keys()],
             args: { caller: exaPluginAddress, borrower: account },
             toBlock: "latest",
             fromBlock: 0n,
           }),
-      ignore("withdraw")
+      ignore("sent")
         ? []
         : await publicClient
             .getLogs({
               event: marketAbi.find((item) => item.type === "event" && item.name === "Withdraw"),
-              address: [...marketsByAddress.keys()],
+              address: [...markets.keys()],
               args: { caller: account, owner: account },
               toBlock: "latest",
               fromBlock: 0n,
@@ -152,18 +110,16 @@ export default app.get(
               ),
             ),
     ]);
-
     const blocks = await Promise.all(
-      [...new Set([...repays, ...withdraws].map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
+      [...new Set([...deposits, ...repays, ...withdraws].map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
         publicClient.getBlock({ blockNumber }),
       ),
     );
-
-    const timestampByBlock = new Map(
-      blocks.map(({ number: n, timestamp }) => [n, new Date(Number(timestamp) * 1000).toISOString()]),
+    const timestamps = new Map(
+      blocks.map(({ number: block, timestamp }) => [block, new Date(Number(timestamp) * 1000).toISOString()]),
     );
 
-    function events(eventName: "RepayAtMaturity" | "Withdraw", logs: GetLogsReturnType) {
+    function events(eventName: "Deposit" | "RepayAtMaturity" | "Withdraw", logs: GetLogsReturnType) {
       return logs
         .map(({ address, blockNumber, data, topics, transactionHash, logIndex }) => {
           const event = decodeEventLog({
@@ -172,13 +128,16 @@ export default app.get(
             data,
             topics,
           });
-          const result = safeParse({ RepayAtMaturity: RepayActivity, Withdraw: WithdrawActivity }[eventName], {
-            ...event,
-            transactionHash,
-            logIndex,
-            market: marketsByAddress.get(parse(Address, address)),
-            timestamp: timestampByBlock.get(blockNumber),
-          });
+          const result = safeParse(
+            { Deposit: DepositActivity, RepayAtMaturity: RepayActivity, Withdraw: WithdrawActivity }[eventName],
+            {
+              ...event,
+              transactionHash,
+              logIndex,
+              market: markets.get(parse(Address, address)),
+              timestamp: timestamps.get(blockNumber),
+            },
+          );
           if (result.success) return result.output;
           withScope((scope) => {
             scope.setLevel("error");
@@ -204,8 +163,7 @@ export default app.get(
             })
             .filter(<T>(value: T | undefined): value is T => value !== undefined),
         ),
-        ...transfers("received", received),
-        ...transfers("sent", sent),
+        ...events("Deposit", deposits),
         ...events("RepayAtMaturity", repays),
         ...events("Withdraw", withdraws),
       ].sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
@@ -246,62 +204,49 @@ export const CardActivity = pipe(
   })),
 );
 
-export const AssetActivity = pipe(
-  intersect([ERC20Transfer, object({ market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }) })]),
-  transform(({ uniqueId, metadata, rawContract, market: { decimals, symbol, usdPrice } }) => {
-    const value = BigInt(rawContract.value);
-    const baseUnit = 10 ** decimals;
-    return {
-      id: uniqueId,
-      timestamp: metadata.blockTimestamp,
-      currency: symbol.slice(3),
-      amount: Number(value) / baseUnit,
-      usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-    };
-  }),
-);
+const OnchainActivity = object({
+  market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
+  timestamp: pipe(string(), isoTimestamp()),
+  transactionHash: Hex,
+  logIndex: number(),
+});
 
-export const AssetReceivedActivity = pipe(
-  AssetActivity,
-  transform((activity) => ({ type: "received" as const, ...activity })),
-);
-
-export const AssetSentActivity = pipe(
-  AssetActivity,
-  transform((activity) => ({ type: "sent" as const, ...activity })),
-);
-
-export const RepayActivity = pipe(
-  object({
-    args: object({ assets: bigint() }),
-    market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
-    timestamp: pipe(string(), isoTimestamp()),
-    transactionHash: Hex,
-    logIndex: number(),
-  }),
+export const DepositActivity = pipe(
+  object({ args: object({ assets: bigint() }), ...OnchainActivity.entries }),
   transform(
     ({ args: { assets: value }, market: { decimals, symbol, usdPrice }, timestamp, transactionHash, logIndex }) => {
       const baseUnit = 10 ** decimals;
       return {
+        type: "received" as const,
         id: `${transactionHash}:${logIndex}`,
-        amount: Number(value) / baseUnit,
         currency: symbol.slice(3),
-        timestamp,
-        type: "repay" as const,
+        amount: Number(value) / baseUnit,
         usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+        timestamp,
+      };
+    },
+  ),
+);
+
+export const RepayActivity = pipe(
+  object({ args: object({ assets: bigint() }), ...OnchainActivity.entries }),
+  transform(
+    ({ args: { assets: value }, market: { decimals, symbol, usdPrice }, timestamp, transactionHash, logIndex }) => {
+      const baseUnit = 10 ** decimals;
+      return {
+        type: "repay" as const,
+        id: `${transactionHash}:${logIndex}`,
+        currency: symbol.slice(3),
+        amount: Number(value) / baseUnit,
+        usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+        timestamp,
       };
     },
   ),
 );
 
 export const WithdrawActivity = pipe(
-  object({
-    args: object({ assets: bigint(), receiver: Address }),
-    market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
-    timestamp: pipe(string(), isoTimestamp()),
-    transactionHash: Hex,
-    logIndex: number(),
-  }),
+  object({ args: object({ assets: bigint(), receiver: Address }), ...OnchainActivity.entries }),
   transform(
     ({
       args: { assets: value, receiver },
@@ -312,13 +257,13 @@ export const WithdrawActivity = pipe(
     }) => {
       const baseUnit = 10 ** decimals;
       return {
+        type: "sent" as const,
         id: `${transactionHash}:${logIndex}`,
-        amount: Number(value) / baseUnit,
         currency: symbol.slice(3),
+        amount: Number(value) / baseUnit,
+        usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
         timestamp,
         receiver,
-        type: "withdraw" as const,
-        usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
       };
     },
   ),
