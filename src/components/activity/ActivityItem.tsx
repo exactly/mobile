@@ -11,13 +11,15 @@ import View from "../shared/View";
 
 registerLocale(require("i18n-iso-countries/langs/en.json") as LocaleData); // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
 
-interface ActivityItemProperties {
+export default function ActivityItem({
+  item,
+  isFirst,
+  isLast,
+}: {
   item: Awaited<ReturnType<typeof getActivity>>[number];
   isFirst: boolean;
   isLast: boolean;
-}
-
-export default function ActivityItem({ item, isFirst, isLast }: ActivityItemProperties) {
+}) {
   const { amount, id, usdAmount, currency, type, timestamp } = item;
   return (
     <View

@@ -11,12 +11,13 @@ import type { WithdrawDetails } from "./Withdraw";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface FailureProperties {
+export default function Failure({
+  details: { assetName, amount, usdValue },
+  hash,
+}: {
   details: WithdrawDetails;
   hash?: string;
-}
-
-export default function Failure({ details: { assetName, amount, usdValue }, hash }: FailureProperties) {
+}) {
   return (
     <View>
       <ScrollView>

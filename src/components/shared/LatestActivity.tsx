@@ -10,12 +10,13 @@ import InfoCard from "../home/InfoCard";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface LatestActivityProperties {
+export default function LatestActivity({
+  activity,
+  title = "Latest activity",
+}: {
   activity: Awaited<ReturnType<typeof getActivity>>;
   title?: string;
-}
-
-export default function LatestActivity({ activity, title = "Latest activity" }: LatestActivityProperties) {
+}) {
   return (
     <InfoCard
       title={title}

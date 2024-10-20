@@ -7,14 +7,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 // TODO remove once payment history is retrieved
-interface Payment {
-  status: string;
-  date: string;
-  usdValue: number;
-  amount: number;
-  asset: string;
-}
-const payments: Payment[] = [];
+const payments: { status: string; date: string; usdValue: number; amount: number; asset: string }[] = [];
 export default function PaymentHistory() {
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s4">

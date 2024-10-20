@@ -17,11 +17,7 @@ import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface DetailsProperties {
-  hash?: string;
-}
-
-export default function Details({ hash }: DetailsProperties) {
+export default function Details({ hash }: { hash?: string }) {
   const { data } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   return (
     <View padded gap="$s4">

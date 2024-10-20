@@ -3,13 +3,15 @@ import { View } from "tamagui";
 
 import Text from "../shared/Text";
 
-interface InfoCardProperties {
+export default function InfoCard({
+  children,
+  title,
+  renderAction,
+}: {
   title: string;
   children?: React.ReactNode;
   renderAction?: React.ReactNode;
-}
-
-export default function InfoCard({ children, title, renderAction }: InfoCardProperties) {
+}) {
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s4">
       <View flexDirection="row" gap="$s3" alignItems="center" justifyContent="space-between">

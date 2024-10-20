@@ -8,12 +8,13 @@ import Spinner from "../shared/Spinner";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface PendingProperties {
+export default function Pending({
+  details: { assetName, amount, usdValue },
+  hash,
+}: {
   details: WithdrawDetails;
   hash?: string;
-}
-
-export default function Pending({ details: { assetName, amount, usdValue }, hash }: PendingProperties) {
+}) {
   return (
     <View>
       <ScrollView>

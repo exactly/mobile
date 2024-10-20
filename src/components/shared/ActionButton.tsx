@@ -3,16 +3,11 @@ import { Spinner, type ButtonProps } from "tamagui";
 
 import Button from "./Button";
 
-interface ActionButtonProperties extends ButtonProps {
-  isLoading?: boolean;
-  loadingContent?: string;
-}
-
 export default function ActionButton({
   isLoading = false,
   loadingContent = "Loading...",
   ...rest
-}: ActionButtonProperties) {
+}: ButtonProps & { isLoading?: boolean; loadingContent?: string }) {
   return (
     <Button
       contained

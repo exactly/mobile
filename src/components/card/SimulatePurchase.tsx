@@ -10,19 +10,17 @@ import InfoCard from "../home/InfoCard";
 import TamaguiInput from "../shared/TamaguiInput";
 import Text from "../shared/Text";
 
-interface SimulatePurchaseProperties {
-  borrowPreview?: { maturity: bigint; assets: bigint; utilization: bigint };
-  timestamp: number;
-  onAssetsChange: (assets: bigint) => void;
-  isLoading: boolean;
-}
-
 export default function SimulatePurchase({
   borrowPreview,
   timestamp,
   onAssetsChange,
   isLoading,
-}: SimulatePurchaseProperties) {
+}: {
+  borrowPreview?: { maturity: bigint; assets: bigint; utilization: bigint };
+  timestamp: number;
+  onAssetsChange: (assets: bigint) => void;
+  isLoading: boolean;
+}) {
   const [input, setInput] = useState("100");
   const [assets, setAssets] = useState(100n);
   useEffect(() => {

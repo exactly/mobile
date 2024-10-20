@@ -13,10 +13,6 @@ import View from "./View";
 import type { Withdraw } from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
 
-interface AmountSelectorProperties {
-  onChange: (value: bigint) => void;
-}
-
 const AmountInput = styled(Input, {
   focusStyle: { borderColor: "$borderBrandStrong", borderWidth: 1 },
   backgroundColor: "$backgroundSoft",
@@ -28,7 +24,7 @@ const AmountInput = styled(Input, {
   flex: 1,
 });
 
-export default function AmountSelector({ onChange }: AmountSelectorProperties) {
+export default function AmountSelector({ onChange }: { onChange: (value: bigint) => void }) {
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { market } = useMarketAccount(withdraw?.market);
   const { Field, setFieldValue } = useForm<{ assetInput: string; usdInput: string }, ValibotValidator>({

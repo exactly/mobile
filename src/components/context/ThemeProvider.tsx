@@ -4,11 +4,7 @@ import { TamaguiProvider } from "tamagui";
 
 import tamagui from "../../../tamagui.config";
 
-interface ThemeProviderProperties {
-  children: React.ReactNode;
-}
-
-export default function ThemeProvider({ children }: ThemeProviderProperties) {
+export default function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <TamaguiProvider config={tamagui} defaultTheme={Appearance.getColorScheme() ?? "light"}>
       {children}

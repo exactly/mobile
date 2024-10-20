@@ -17,14 +17,17 @@ import Text from "../../shared/Text";
 
 const AnimatedXStack = Animated.createAnimatedComponent(XStack);
 
-interface InstallmentsSelectorProperties {
+export default function InstallmentsSelector({
+  value,
+  onChange,
+  onExpand,
+  expanded,
+}: {
   value: number;
   onChange: (installments: number) => void;
   onExpand: () => void;
   expanded: boolean;
-}
-
-export default function InstallmentsSelector({ value, onChange, onExpand, expanded }: InstallmentsSelectorProperties) {
+}) {
   const rContainer = useAnimatedStyle(() => {
     return { height: withTiming(expanded ? 140 : 79) };
   });
@@ -72,15 +75,19 @@ export default function InstallmentsSelector({ value, onChange, onExpand, expand
   );
 }
 
-interface InstallmentProperties {
+function Installment({
+  index,
+  value,
+  onChange,
+  onExpand,
+  expanded,
+}: {
   index: number;
   value: number;
   onChange: (installments: number) => void;
   onExpand: () => void;
   expanded: boolean;
-}
-
-function Installment({ index, value, onChange, onExpand, expanded }: InstallmentProperties) {
+}) {
   const rInstallment = useAnimatedStyle(() => {
     const isSelected = index + 1 === value;
     return {

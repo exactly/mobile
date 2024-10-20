@@ -4,13 +4,7 @@ import { View } from "tamagui";
 
 import Text from "../shared/Text";
 
-interface SpendingLimitButtonProperties {
-  amount?: number;
-  title: string;
-  limit: number;
-}
-
-export default function SpendingLimitButton({ title, limit }: SpendingLimitButtonProperties) {
+export default function SpendingLimitButton({ title, limit }: { amount?: number; title: string; limit: number }) {
   return (
     <View
       flexDirection="row"

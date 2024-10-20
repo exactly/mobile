@@ -10,12 +10,13 @@ import shortenAddress from "../../utils/shortenAddress";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface ContactProperties {
+export default function Contact({
+  contact: { address, ens },
+  onContactPress,
+}: {
   contact: { address: Address; ens: string };
   onContactPress: (address: Address) => void;
-}
-
-export default function Contact({ contact: { address, ens }, onContactPress }: ContactProperties) {
+}) {
   return (
     <XStack
       borderRadius="$r3"

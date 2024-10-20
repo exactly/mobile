@@ -9,12 +9,13 @@ import type { WithdrawDetails } from "./Withdraw";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface SuccessProperties {
+export default function Success({
+  details: { assetName, amount, usdValue },
+  hash,
+}: {
   details: WithdrawDetails;
   hash?: string;
-}
-
-export default function Success({ details: { assetName, amount, usdValue }, hash }: SuccessProperties) {
+}) {
   return (
     <View>
       <ScrollView>

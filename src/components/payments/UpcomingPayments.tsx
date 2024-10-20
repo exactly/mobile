@@ -8,11 +8,6 @@ import { useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface Payment {
-  maturity: bigint;
-  amount: bigint;
-}
-
 export default function UpcomingPayments() {
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({
@@ -53,7 +48,7 @@ export default function UpcomingPayments() {
   );
 }
 
-function ListItem({ maturity, amount }: Payment) {
+function ListItem({ maturity, amount }: { maturity: bigint; amount: bigint }) {
   return (
     <View flexDirection="row" justifyContent="space-between" alignItems="center">
       <View>

@@ -7,13 +7,7 @@ import { View, useWindowDimensions } from "tamagui";
 import type { Page } from "./Carousel";
 import AnimatedView from "../shared/AnimatedView";
 
-interface ListItemProperties {
-  item: Page;
-  index: number;
-  x: SharedValue<number>;
-}
-
-export default memo(function ListItem({ item, index, x }: ListItemProperties) {
+export default memo(function ListItem({ item, index, x }: { item: Page; index: number; x: SharedValue<number> }) {
   const { width: itemWidth } = useWindowDimensions();
 
   const rBackgroundStyle = useAnimatedStyle(() => {

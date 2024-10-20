@@ -14,21 +14,20 @@ import assetLogos from "../../utils/assetLogos";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface Position {
-  symbol: string;
-  assetName: string;
-  floatingDepositAssets: bigint;
-  decimals: number;
-  usdValue: bigint;
-  market: string;
-}
-
-interface AssetSelectorProperties {
-  positions: Position[] | undefined;
+export default function AssetSelector({
+  positions,
+  onSubmit,
+}: {
+  positions?: {
+    symbol: string;
+    assetName: string;
+    floatingDepositAssets: bigint;
+    decimals: number;
+    usdValue: bigint;
+    market: string;
+  }[];
   onSubmit: (market: Address) => void;
-}
-
-export default function AssetSelector({ positions, onSubmit }: AssetSelectorProperties) {
+}) {
   const [selectedMarket, setSelectedMarket] = React.useState<Address | undefined>();
 
   const { address } = useAccount();

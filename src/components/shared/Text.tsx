@@ -26,11 +26,11 @@ const StyledText = styled(TamaguiText, {
   } as const,
 });
 
-interface TextProperties extends React.ComponentPropsWithoutRef<typeof StyledText> {
-  sensitive?: boolean;
-}
-
-export default function Text({ children, sensitive, ...rest }: TextProperties) {
+export default function Text({
+  children,
+  sensitive,
+  ...rest
+}: React.ComponentPropsWithoutRef<typeof StyledText> & { sensitive?: boolean }) {
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   return <StyledText {...rest}>{sensitive && hidden ? "***" : children}</StyledText>;
 }

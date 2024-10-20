@@ -15,19 +15,17 @@ import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface ReviewProperties {
-  canSend: boolean;
-  details: WithdrawDetails;
-  isFirstSend: boolean;
-  onSend: () => void;
-}
-
 export default function Review({
   details: { amount, usdValue, assetName },
   canSend,
   isFirstSend,
   onSend,
-}: ReviewProperties) {
+}: {
+  canSend: boolean;
+  details: WithdrawDetails;
+  isFirstSend: boolean;
+  onSend: () => void;
+}) {
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { canGoBack } = router;
   return (

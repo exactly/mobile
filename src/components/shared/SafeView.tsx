@@ -4,11 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ViewProperties } from "./View";
 import View from "./View";
 
-interface SafeViewProperties extends ViewProperties {
-  children: React.ReactNode;
-}
-
-export default function SafeView({ children, ...rest }: SafeViewProperties) {
+export default function SafeView({ children, ...rest }: ViewProperties & { children: React.ReactNode }) {
   const { top, bottom, left, right } = useSafeAreaInsets();
   return (
     <View
