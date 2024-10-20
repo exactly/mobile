@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
+import React, { type ComponentPropsWithoutRef } from "react";
 import { ms } from "react-native-size-matters";
 import { Text as TamaguiText, styled } from "tamagui";
 
@@ -30,7 +30,7 @@ export default function Text({
   children,
   sensitive,
   ...rest
-}: React.ComponentPropsWithoutRef<typeof StyledText> & { sensitive?: boolean }) {
+}: ComponentPropsWithoutRef<typeof StyledText> & { sensitive?: boolean }) {
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   return <StyledText {...rest}>{sensitive && hidden ? "***" : children}</StyledText>;
 }

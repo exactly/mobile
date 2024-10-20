@@ -3,7 +3,7 @@ import { Address } from "@exactly/common/validation";
 import { ArrowLeft, ArrowRight, User, UserMinus, UserPlus } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack } from "tamagui";
@@ -24,7 +24,7 @@ export default function AssetSelection() {
   const { canGoBack } = router;
   const { address } = useAccount();
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
-  const [selectedMarket, setSelectedMarket] = React.useState<Address | undefined>();
+  const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
   const { data: savedContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
     queryKey: ["contacts", "saved"],
   });

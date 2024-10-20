@@ -1,7 +1,7 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { withdrawLimit } from "@exactly/lib";
-import React from "react";
+import React, { useState } from "react";
 import { ms, vs } from "react-native-size-matters";
 import { ToggleGroup, YStack } from "tamagui";
 import { safeParse } from "valibot";
@@ -28,7 +28,7 @@ export default function AssetSelector({
   }[];
   onSubmit: (market: Address) => void;
 }) {
-  const [selectedMarket, setSelectedMarket] = React.useState<Address | undefined>();
+  const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
 
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({

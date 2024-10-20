@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 import { View } from "tamagui";
 
 import Text from "../shared/Text";
@@ -9,8 +9,8 @@ export default function InfoCard({
   renderAction,
 }: {
   title: string;
-  children?: React.ReactNode;
-  renderAction?: React.ReactNode;
+  children?: ReactNode;
+  renderAction?: ReactNode;
 }) {
   return (
     <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s4">

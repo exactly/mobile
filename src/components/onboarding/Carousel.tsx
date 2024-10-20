@@ -2,7 +2,7 @@ import { Passkey } from "@exactly/common/validation";
 import { ArrowRight } from "@tamagui/lucide-icons";
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { type FC, useCallback, useEffect, useRef, useState } from "react";
 import type { StyleProp, ViewStyle, ViewToken } from "react-native";
 import { Platform, Pressable } from "react-native";
 import Animated, {
@@ -37,8 +37,8 @@ import View from "../shared/View";
 
 export interface Page {
   title: string;
-  image: React.FC<SvgProps>;
-  backgroundImage: React.FC<SvgProps>;
+  image: FC<SvgProps>;
+  backgroundImage: FC<SvgProps>;
   disabled?: boolean;
 }
 
