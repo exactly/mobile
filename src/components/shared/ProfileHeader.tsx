@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Pressable } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Image, styled } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
@@ -45,6 +45,7 @@ export default function ProfileHeader() {
   function copy() {
     if (!address) return;
     setStringAsync(address).catch(handleError);
+    Alert.alert("Copied", "Your address has been copied to the clipboard.");
     setAlertShown(false);
   }
   return (

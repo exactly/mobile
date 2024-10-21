@@ -3,7 +3,7 @@ import { ArrowLeft, Files, Info, Share as ShareIcon } from "@tamagui/lucide-icon
 import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { Pressable, Share } from "react-native";
+import { Alert, Pressable, Share } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 import { useAccount } from "wagmi";
@@ -31,6 +31,7 @@ export default function AddCrypto() {
   function copy() {
     if (!address) return;
     setStringAsync(address).catch(handleError);
+    Alert.alert("Copied", "Your address has been copied to the clipboard.");
     setAlertShown(false);
   }
 
