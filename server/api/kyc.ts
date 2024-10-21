@@ -43,11 +43,10 @@ export default app
       if (inquiryId) {
         const { data } = await getInquiry(inquiryId);
         if (data.attributes["reference-id"] !== credentialId) return c.json("unauthorized", 403);
-        if (data.attributes.status === "completed" || data.attributes.status === "approved") {
+        if (credential.kycId !== data.id) {
           await database.update(credentials).set({ kycId: data.id }).where(eq(credentials.id, credentialId));
-          return c.json("ok");
         }
-        return c.json("kyc not approved", 403);
+        return c.json("ok", 200);
       }
       if (credential.kycId) {
         const { data } = await getInquiry(credential.kycId);
@@ -63,7 +62,7 @@ export default app
             return c.json(meta["one-time-link"]);
           }
           case "approved":
-            return c.json("ok");
+            return c.json("ok", 200);
           default:
             return c.json("kyc not approved", 403);
         }
