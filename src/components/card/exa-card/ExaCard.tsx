@@ -12,7 +12,6 @@ import View from "../../shared/View";
 
 export default function ExaCard({ disabled }: { disabled: boolean }) {
   const { data: card, isFetching: isFetchingCardMode } = useQuery({ queryKey: ["card", "mode"], queryFn: getCard });
-
   const { mutateAsync: mutateCardMode, isPending: isMutatingCardMode } = useMutation({
     mutationKey: ["card", "mode"],
     mutationFn: setCardMode,

@@ -177,7 +177,7 @@ export default function Card() {
                   </View>
                 </XStack>
 
-                <ExaCard disabled={cardDetails?.status === "FROZEN"} />
+                <ExaCard disabled={!cardDetails || cardDetails.status === "FROZEN"} />
 
                 {revealError && (
                   <Text color="$uiErrorPrimary" fontWeight="bold">
