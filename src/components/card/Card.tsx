@@ -122,6 +122,10 @@ export default function Card() {
           Inquiry.fromTemplate(templateId)
             .environment(environment)
             .referenceId(passkey.credentialId)
+            .onCanceled((inquiryId) => {
+              if (!inquiryId) throw new Error("no inquiry id");
+              kyc(inquiryId).catch(handleError);
+            })
             .onComplete((inquiryId) => {
               if (!inquiryId) throw new Error("no inquiry id");
               kyc(inquiryId).catch(handleError);
