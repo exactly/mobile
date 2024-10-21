@@ -22,7 +22,7 @@
     "webauthn-sol": "base-org/webauthn-sol#v1.0.0"
   },
   "devDependencies": {
-    "@exactly/protocol": "exactly/protocol#894df5b",
+    "@exactly/protocol": "exactly/protocol#16a172a",
     "@openzeppelin/contracts": "^5.1.0",
     "@openzeppelin/contracts-upgradeable-v4": "npm:@openzeppelin/contracts-upgradeable@^4.9.6",
     "@openzeppelin/contracts-upgradeable": "^5.1.0",
