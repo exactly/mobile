@@ -42,6 +42,7 @@ export default function ActivityItem({
         {type === "card" && <CircleDollarSign color="$iconBrandDefault" />}
         {type === "received" && <ArrowDownToLine color="$iconBrandDefault" />}
         {type === "sent" && <ArrowUpFromLine color="$iconBrandDefault" />}
+        {type === "repay" && <CircleDollarSign color="$iconBrandDefault" />}
       </View>
       <View flex={1} gap="$s2">
         <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
@@ -50,6 +51,7 @@ export default function ActivityItem({
               {type === "card" && item.merchant.name}
               {type === "received" && "Received"}
               {type === "sent" && "Sent"}
+              {type === "repay" && "Debt Paid"}
             </Text>
             <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
               {type === "card" &&
