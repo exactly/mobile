@@ -3,7 +3,7 @@ import domain from "@exactly/common/domain";
 import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
 import { Address, Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setContext, setUser } from "@sentry/node";
+import { captureException, setUser } from "@sentry/node";
 import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { cose, generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
@@ -77,10 +77,9 @@ export default app
         clientExtensionResults: any(),
         type: literal("public-key"),
       }),
-      (result, c) => {
-        if (!result.success) {
-          setContext("validation", result);
-          captureException(new Error("bad registration"));
+      (validation, c) => {
+        if (!validation.success) {
+          captureException(new Error("bad registration"), { contexts: { validation } });
           return c.text("bad registration", 400);
         }
       },

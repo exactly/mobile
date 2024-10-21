@@ -2,7 +2,7 @@ import { previewerAddress, exaPluginAddress } from "@exactly/common/generated/ch
 import { Address, Hex } from "@exactly/common/validation";
 import { WAD } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setUser, withScope } from "@sentry/node";
+import { captureException, setUser } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import {
@@ -146,19 +146,18 @@ export default app.get(
       [
         ...credential.cards.flatMap(({ transactions }) =>
           transactions.map(({ payload }) => {
-            const result = safeParse(CardActivity, payload);
-            if (result.success) return result.output;
-            withScope((scope) => {
-              scope.setLevel("error");
-              scope.setContext("validation", result);
-              captureException(new Error("bad transaction"));
-            });
+            const validation = safeParse(CardActivity, payload);
+            if (validation.success) return validation.output;
+            captureException(new Error("bad transaction"), { level: "error", contexts: { validation } });
           }),
         ),
         ...events.map(({ blockNumber, ...event }) => {
           const found = timestamps.get(blockNumber);
           if (found) return { ...event, timestamp: found };
-          captureException(new Error("block not found"));
+          captureException(new Error("block not found"), {
+            level: "error",
+            contexts: { event: { ...event, timestamp: found } },
+          });
         }),
       ]
         .filter(<T>(value: T | undefined): value is T => value !== undefined)

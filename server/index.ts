@@ -2,7 +2,7 @@ import type { Base64URL } from "@exactly/common/validation";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { sentry } from "@hono/sentry";
-import { captureException, withScope } from "@sentry/node";
+import { captureException } from "@sentry/node";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { trimTrailingSlash } from "hono/trailing-slash";
@@ -52,10 +52,7 @@ app.get("/.well-known/assetlinks.json", (c) =>
 );
 
 app.onError((error, c) => {
-  withScope((scope) => {
-    scope.setLevel("error");
-    captureException(error);
-  });
+  captureException(error, { level: "error" });
   return c.text(error instanceof Error ? error.message : String(error), 500);
 });
 

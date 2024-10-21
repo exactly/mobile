@@ -17,17 +17,6 @@ import deriveAddress from "../../utils/deriveAddress";
 
 const appClient = testClient(app);
 
-function closeTo(expected: number, precision = 2) {
-  return {
-    asymmetricMatch(actual: number) {
-      return Math.abs(expected - actual) < Math.pow(10, -precision) / 2;
-    },
-    toString() {
-      return `Number close to ${expected} (±${Math.pow(10, -precision) / 2})`;
-    },
-  };
-}
-
 describe("validation", () => {
   beforeAll(async () => {
     await database
@@ -107,7 +96,12 @@ describe("authenticated", () => {
       );
 
       expect(captureException).toHaveBeenCalledOnce();
-      expect(captureException).toHaveBeenCalledWith(new Error("bad transaction"));
+      expect(captureException).toHaveBeenCalledWith(
+        new Error("bad transaction"),
+        expect.objectContaining({
+          contexts: expect.objectContaining({ validation: expect.objectContaining({ issues: expect.anything() }) }), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        }),
+      );
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toStrictEqual([parse(CardActivity, payload)]);
     });
@@ -145,8 +139,8 @@ describe("authenticated", () => {
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toMatchObject([
-        { amount: closeTo(433, 0.1), currency: "USDC", type: "repay", usdAmount: closeTo(433, 0.1) },
-        { amount: closeTo(81, 0.1), currency: "USDC", type: "repay", usdAmount: closeTo(81, 0.1) },
+        { amount: expect.closeTo(433, 1), currency: "USDC", type: "repay", usdAmount: expect.closeTo(433, 1) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        { amount: expect.closeTo(81, 1), currency: "USDC", type: "repay", usdAmount: expect.closeTo(81, 1) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       ]);
     });
 

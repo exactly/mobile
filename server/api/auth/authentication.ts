@@ -2,7 +2,7 @@ import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { Address, Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setContext, setUser } from "@sentry/node";
+import { captureException, setUser } from "@sentry/node";
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
@@ -64,10 +64,9 @@ export default app
         clientExtensionResults: any(),
         type: literal("public-key"),
       }),
-      (result, c) => {
-        if (!result.success) {
-          setContext("validation", result);
-          captureException(new Error("bad authentication"));
+      (validation, c) => {
+        if (!validation.success) {
+          captureException(new Error("bad authentication"), { contexts: { validation } });
           return c.text("bad authentication", 400);
         }
       },

@@ -16,7 +16,6 @@ import {
   setTag,
   setUser,
   startSpan,
-  withScope,
 } from "@sentry/node";
 import createDebug from "debug";
 import { and, eq } from "drizzle-orm";
@@ -89,16 +88,15 @@ export default new Hono().post(
       ]),
       v.object({ product: v.literal("CARDS"), operation_id: v.string(), data: OperationData }),
     ]),
-    (result, c) => {
+    (validation, c) => {
       if (debug.enabled) {
         c.req
           .text()
           .then(debug)
           .catch((error: unknown) => captureException(error));
       }
-      if (!result.success) {
-        setContext("validation", result);
-        captureException(new Error("bad cryptomate"));
+      if (!validation.success) {
+        captureException(new Error("bad cryptomate"), { contexts: { validation } });
         return c.text("bad request", 400);
       }
     },
@@ -191,7 +189,7 @@ export default new Hono().post(
                 ],
               }).errorName;
             } catch {} // eslint-disable-line no-empty
-            captureException(new Error(error));
+            captureException(new Error(error), { contexts: { tx: { trace } } });
             return c.json({ response_code: "69" });
           }
           if (
@@ -235,13 +233,11 @@ export default new Hono().post(
               .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]);
             startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
               .then((receipt) => {
-                setContext("tx", { ...request, ...receipt });
-                if (receipt.status !== "success") {
-                  withScope((scope) => {
-                    scope.setLevel("fatal");
-                    captureException(new Error("tx reverted"));
-                  });
-                }
+                if (receipt.status === "success") return;
+                captureException(new Error("tx reverted"), {
+                  level: "fatal",
+                  contexts: { tx: { ...request, ...receipt } },
+                });
               })
               .catch((error: unknown) => captureException(error));
             return c.json({});
@@ -261,10 +257,7 @@ export default new Hono().post(
                 if (receipt?.status === "success") return c.json({});
               }
             }
-            withScope((scope) => {
-              scope.setLevel("fatal");
-              captureException(error);
-            });
+            captureException(error, { level: "fatal" });
             return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
           }
         });
