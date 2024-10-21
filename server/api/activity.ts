@@ -208,51 +208,38 @@ const OnchainActivity = object({
   logIndex: number(),
 });
 
-const transformActivity = <T extends InferOutput<typeof ActivityTypes>>(type: T) =>
-  transform(
-    ({
-      args: { assets: value },
-      market: { decimals, symbol, usdPrice },
-      blockNumber,
-      transactionHash,
-      logIndex,
-    }: InferOutput<typeof OnchainActivity>) => {
-      const baseUnit = 10 ** decimals;
-      return {
-        type,
-        id: `${transactionHash}:${logIndex}`,
-        currency: symbol.slice(3),
-        amount: Number(value) / baseUnit,
-        usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-        blockNumber,
-      };
-    },
-  );
+const transformActivity = ({
+  args: { assets: value },
+  market: { decimals, symbol, usdPrice },
+  blockNumber,
+  transactionHash,
+  logIndex,
+}: InferOutput<typeof OnchainActivity>) => {
+  const baseUnit = 10 ** decimals;
+  return {
+    id: `${transactionHash}:${logIndex}`,
+    currency: symbol.slice(3),
+    amount: Number(value) / baseUnit,
+    usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
+    blockNumber,
+  };
+};
 
-export const DepositActivity = pipe(OnchainActivity, transformActivity("received" as const));
+export const DepositActivity = pipe(
+  OnchainActivity,
+  transform((activity) => ({ ...transformActivity(activity), type: "received" as const })),
+);
 
-export const RepayActivity = pipe(OnchainActivity, transformActivity("repay" as const));
+export const RepayActivity = pipe(
+  OnchainActivity,
+  transform((activity) => ({ ...transformActivity(activity), type: "repay" as const })),
+);
 
 export const WithdrawActivity = pipe(
   object({ ...OnchainActivity.entries, args: object({ assets: bigint(), receiver: Address }) }),
-  transform(
-    ({
-      args: { assets: value, receiver },
-      market: { decimals, symbol, usdPrice },
-      blockNumber,
-      transactionHash,
-      logIndex,
-    }) => {
-      const baseUnit = 10 ** decimals;
-      return {
-        type: "sent" as const,
-        id: `${transactionHash}:${logIndex}`,
-        currency: symbol.slice(3),
-        amount: Number(value) / baseUnit,
-        usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-        blockNumber,
-        receiver,
-      };
-    },
-  ),
+  transform((activity) => ({
+    ...transformActivity(activity),
+    receiver: activity.args.receiver,
+    type: "sent" as const,
+  })),
 );
