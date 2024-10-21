@@ -65,7 +65,7 @@ export default function Review({
             <XStack alignItems="center" gap="$s3">
               <Image backgroundColor="$backgroundBrand" width={ms(40)} height={ms(40)} borderRadius="$r_0" />
               <YStack>
-                <Text title color="$uiNeutralPrimary">
+                <Text title color="$uiNeutralPrimary" fontFamily="$mono">
                   {shortenAddress(withdraw?.receiver ?? "", 5, 5)}
                 </Text>
                 {isFirstSend && (

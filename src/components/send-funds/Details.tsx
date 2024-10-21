@@ -31,7 +31,7 @@ export default function Details({ hash }: { hash?: string }) {
               To
             </Text>
           </XStack>
-          <Text>{shortenAddress(data.receiver ?? "", 7, 7)}</Text>
+          <Text fontFamily="$mono">{shortenAddress(data.receiver ?? "", 7, 7)}</Text>
         </XStack>
       )}
       <XStack justifyContent="space-between" alignItems="center">
@@ -60,7 +60,7 @@ export default function Details({ hash }: { hash?: string }) {
                 Transaction hash
               </Text>
             </XStack>
-            <Text>{shortenAddress(hash, 7, 7)}</Text>
+            <Text fontFamily="$mono">{shortenAddress(hash, 7, 7)}</Text>
           </XStack>
 
           <Button

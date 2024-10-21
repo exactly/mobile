@@ -76,7 +76,7 @@ export default function ProfileHeader() {
               hitSlop={ms(15)}
             >
               <View display="flex" flexDirection="row" alignItems="flex-start">
-                <Text fontSize={ms(17)} lineHeight={ms(23)}>
+                <Text fontSize={ms(17)} lineHeight={ms(23)} fontFamily="$mono">
                   {shortenAddress(address, 6, 4).toLowerCase()}
                 </Text>
               </View>

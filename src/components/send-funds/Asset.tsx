@@ -90,7 +90,7 @@ export default function AssetSelection() {
                   <Text emphasized callout color="$uiNeutralSecondary">
                     To:
                   </Text>
-                  <Text emphasized callout color="$uiNeutralPrimary">
+                  <Text emphasized callout color="$uiNeutralPrimary" fontFamily="$mono">
                     {shortenAddress(withdraw.receiver, 7, 7)}
                   </Text>
                 </XStack>
