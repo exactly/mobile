@@ -101,17 +101,19 @@ export default function Card() {
         const { isSuccess, data } = await refetchCard();
         if (isSuccess && data.url) {
           setCardDetailsOpen(true);
-        } else {
-          await kycStatus();
-          await createCard();
-          await queryClient.refetchQueries({ queryKey: ["card, details"] });
+          return;
         }
+        await kycStatus();
+        await createCard();
+        const { data: card } = await refetchCard();
+        if (card?.url) setCardDetailsOpen(true);
       } catch (error) {
-        if (!(error instanceof APIError)) return handleError(error);
-        if (
-          (error.code === 403 && error.text === "kyc required") ||
-          (error.code === 404 && error.text === "kyc not found")
-        ) {
+        if (!(error instanceof APIError)) {
+          handleError(error);
+          return;
+        }
+        const { code, text } = error;
+        if ((code === 403 && text === "kyc required") || (code === 404 && text === "kyc not found")) {
           if (Platform.OS === "web") {
             const otl = await kyc();
             window.open(otl, "_self");
@@ -127,10 +129,12 @@ export default function Card() {
             .onError(handleError)
             .build()
             .start();
+          return;
         }
-        if (error.code === 404 && error.text === "card not found") {
+        if (code === 404 && text === "card not found") {
           await createCard();
-          await queryClient.refetchQueries({ queryKey: ["card, details"] });
+          const { data: card } = await refetchCard();
+          if (card?.url) setCardDetailsOpen(true);
         }
         handleError(error);
       }
