@@ -11,6 +11,7 @@
     "expo-dev-client",
     "expo-font",
     "expo-insights",
+    "expo-linear-gradient",
     "expo-linking",
     "expo-router",
     "expo-status-bar",
