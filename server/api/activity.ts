@@ -9,6 +9,7 @@ import {
   array,
   bigint,
   type InferInput,
+  type InferOutput,
   isoTimestamp,
   nullable,
   number,
@@ -22,7 +23,7 @@ import {
   transform,
   union,
 } from "valibot";
-import { zeroAddress, decodeEventLog, type GetLogsReturnType } from "viem";
+import { zeroAddress } from "viem";
 
 import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
@@ -68,50 +69,72 @@ export default app.get(
       abi: previewerAbi,
       args: [zeroAddress],
     });
-    const markets = new Map<Address, (typeof exactly)[number]>(exactly.map((m) => [parse(Address, m.market), m]));
-    const [deposits, repays, withdraws] = await Promise.all([
+    const markets = new Map<Hex, (typeof exactly)[number]>(exactly.map((m) => [m.market.toLowerCase() as Hex, m]));
+    const market = (address: Hex) => {
+      const found = markets.get(address.toLowerCase() as Hex);
+      if (!found) throw new Error("market not found");
+      return found;
+    };
+    const events = await Promise.all([
       ignore("received")
-        ? []
-        : await publicClient.getLogs({
-            event: marketAbi.find((item) => item.type === "event" && item.name === "Deposit"),
-            address: [...markets.keys()],
-            args: { caller: account, owner: account },
-            toBlock: "latest",
-            fromBlock: 0n,
-          }),
-      ignore("repay")
-        ? []
-        : await publicClient.getLogs({
-            event: marketAbi.find((item) => item.type === "event" && item.name === "RepayAtMaturity"),
-            address: [...markets.keys()],
-            args: { caller: exaPluginAddress, borrower: account },
-            toBlock: "latest",
-            fromBlock: 0n,
-          }),
-      ignore("sent")
         ? []
         : await publicClient
             .getLogs({
-              event: marketAbi.find((item) => item.type === "event" && item.name === "Withdraw"),
+              event: marketAbi[24],
               address: [...markets.keys()],
               args: { caller: account, owner: account },
               toBlock: "latest",
               fromBlock: 0n,
+              strict: true,
             })
             .then((logs) =>
-              logs.filter(
-                ({ topics, data }) =>
-                  decodeEventLog({
-                    abi: marketAbi,
-                    eventName: "Withdraw",
-                    topics,
-                    data,
-                  }).args.receiver.toLowerCase() !== collector,
+              logs.map((log) =>
+                parse(DepositActivity, { ...log, market: market(log.address) } satisfies InferInput<
+                  typeof DepositActivity
+                >),
               ),
             ),
-    ]);
+      ignore("repay")
+        ? []
+        : await publicClient
+            .getLogs({
+              event: marketAbi[38],
+              address: [...markets.keys()],
+              args: { caller: exaPluginAddress, borrower: account },
+              toBlock: "latest",
+              fromBlock: 0n,
+              strict: true,
+            })
+            .then((logs) =>
+              logs.map((log) =>
+                parse(RepayActivity, { ...log, market: market(log.address) } satisfies InferInput<
+                  typeof RepayActivity
+                >),
+              ),
+            ),
+      ignore("sent")
+        ? []
+        : await publicClient
+            .getLogs({
+              event: marketAbi[49],
+              address: [...markets.keys()],
+              args: { caller: account, owner: account },
+              toBlock: "latest",
+              fromBlock: 0n,
+              strict: true,
+            })
+            .then((logs) =>
+              logs
+                .filter(({ args }) => args.receiver.toLowerCase() !== collector)
+                .map((log) =>
+                  parse(WithdrawActivity, { ...log, market: market(log.address) } satisfies InferInput<
+                    typeof WithdrawActivity
+                  >),
+                ),
+            ),
+    ]).then((results) => results.flat());
     const blocks = await Promise.all(
-      [...new Set([...deposits, ...repays, ...withdraws].map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
+      [...new Set(events.map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
         publicClient.getBlock({ blockNumber }),
       ),
     );
@@ -119,54 +142,27 @@ export default app.get(
       blocks.map(({ number: block, timestamp }) => [block, new Date(Number(timestamp) * 1000).toISOString()]),
     );
 
-    function events(eventName: "Deposit" | "RepayAtMaturity" | "Withdraw", logs: GetLogsReturnType) {
-      return logs
-        .map(({ address, blockNumber, data, topics, transactionHash, logIndex }) => {
-          const event = decodeEventLog({
-            abi: marketAbi,
-            eventName,
-            data,
-            topics,
-          });
-          const result = safeParse(
-            { Deposit: DepositActivity, RepayAtMaturity: RepayActivity, Withdraw: WithdrawActivity }[eventName],
-            {
-              ...event,
-              transactionHash,
-              logIndex,
-              market: markets.get(parse(Address, address)),
-              timestamp: timestamps.get(blockNumber),
-            },
-          );
-          if (result.success) return result.output;
-          withScope((scope) => {
-            scope.setLevel("error");
-            scope.setContext("validation", result);
-            captureException(new Error(`bad ${eventName}`));
-          });
-        })
-        .filter(<T>(value: T | undefined): value is T => value !== undefined);
-    }
-
     return c.json(
       [
         ...credential.cards.flatMap(({ transactions }) =>
-          transactions
-            .map(({ payload }) => {
-              const result = safeParse(CardActivity, payload);
-              if (result.success) return result.output;
-              withScope((scope) => {
-                scope.setLevel("error");
-                scope.setContext("validation", result);
-                captureException(new Error("bad transaction"));
-              });
-            })
-            .filter(<T>(value: T | undefined): value is T => value !== undefined),
+          transactions.map(({ payload }) => {
+            const result = safeParse(CardActivity, payload);
+            if (result.success) return result.output;
+            withScope((scope) => {
+              scope.setLevel("error");
+              scope.setContext("validation", result);
+              captureException(new Error("bad transaction"));
+            });
+          }),
         ),
-        ...events("Deposit", deposits),
-        ...events("RepayAtMaturity", repays),
-        ...events("Withdraw", withdraws),
-      ].sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
+        ...events.map(({ blockNumber, ...event }) => {
+          const found = timestamps.get(blockNumber);
+          if (found) return { ...event, timestamp: found };
+          captureException(new Error("block not found"));
+        }),
+      ]
+        .filter(<T>(value: T | undefined): value is T => value !== undefined)
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
       200,
     );
   },
@@ -205,53 +201,45 @@ export const CardActivity = pipe(
 );
 
 const OnchainActivity = object({
+  args: object({ assets: bigint() }),
   market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
-  timestamp: pipe(string(), isoTimestamp()),
+  blockNumber: bigint(),
   transactionHash: Hex,
   logIndex: number(),
 });
 
-export const DepositActivity = pipe(
-  object({ args: object({ assets: bigint() }), ...OnchainActivity.entries }),
+const transformActivity = <T extends InferOutput<typeof ActivityTypes>>(type: T) =>
   transform(
-    ({ args: { assets: value }, market: { decimals, symbol, usdPrice }, timestamp, transactionHash, logIndex }) => {
+    ({
+      args: { assets: value },
+      market: { decimals, symbol, usdPrice },
+      blockNumber,
+      transactionHash,
+      logIndex,
+    }: InferOutput<typeof OnchainActivity>) => {
       const baseUnit = 10 ** decimals;
       return {
-        type: "received" as const,
+        type,
         id: `${transactionHash}:${logIndex}`,
         currency: symbol.slice(3),
         amount: Number(value) / baseUnit,
         usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-        timestamp,
+        blockNumber,
       };
     },
-  ),
-);
+  );
 
-export const RepayActivity = pipe(
-  object({ args: object({ assets: bigint() }), ...OnchainActivity.entries }),
-  transform(
-    ({ args: { assets: value }, market: { decimals, symbol, usdPrice }, timestamp, transactionHash, logIndex }) => {
-      const baseUnit = 10 ** decimals;
-      return {
-        type: "repay" as const,
-        id: `${transactionHash}:${logIndex}`,
-        currency: symbol.slice(3),
-        amount: Number(value) / baseUnit,
-        usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-        timestamp,
-      };
-    },
-  ),
-);
+export const DepositActivity = pipe(OnchainActivity, transformActivity("received" as const));
+
+export const RepayActivity = pipe(OnchainActivity, transformActivity("repay" as const));
 
 export const WithdrawActivity = pipe(
-  object({ args: object({ assets: bigint(), receiver: Address }), ...OnchainActivity.entries }),
+  object({ ...OnchainActivity.entries, args: object({ assets: bigint(), receiver: Address }) }),
   transform(
     ({
       args: { assets: value, receiver },
       market: { decimals, symbol, usdPrice },
-      timestamp,
+      blockNumber,
       transactionHash,
       logIndex,
     }) => {
@@ -262,7 +250,7 @@ export const WithdrawActivity = pipe(
         currency: symbol.slice(3),
         amount: Number(value) / baseUnit,
         usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
-        timestamp,
+        blockNumber,
         receiver,
       };
     },
