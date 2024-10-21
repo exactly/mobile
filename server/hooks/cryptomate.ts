@@ -42,7 +42,8 @@ import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi, previewerAbi } from "../generated/contracts";
 import COLLECTOR from "../utils/COLLECTOR";
 import keeper from "../utils/keeper";
-import publicClient, { type CallFrame } from "../utils/publicClient";
+import publicClient from "../utils/publicClient";
+import traceClient, { type CallFrame } from "../utils/traceClient";
 import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
@@ -174,7 +175,7 @@ export default new Hono().post(
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
         try {
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
-            publicClient.traceCall(transaction),
+            traceClient.traceCall(transaction),
           );
           if (trace.output) {
             let error: string = trace.output;
