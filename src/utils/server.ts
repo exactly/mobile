@@ -66,7 +66,7 @@ export async function setCardStatus(status: "ACTIVE" | "FROZEN") {
   return response.json();
 }
 
-export async function setCardMode(mode: 0 | 1) {
+export async function setCardMode(mode: number) {
   await auth();
   const response = await client.api.card.$patch({ json: { mode } });
   if (!response.ok) throw new APIError(response.status, await response.json());

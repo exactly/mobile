@@ -1,9 +1,10 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
-import { useSharedValue } from "react-native-reanimated";
+import React from "react";
+import Animated from "react-native-reanimated";
 import { YStack } from "tamagui";
 
 import CardContents from "./CardContents";
+import InstallmentsSelector from "./InstallmentsSelector";
 import ModeSelector from "./ModeSelector";
 import handleError from "../../../utils/handleError";
 import queryClient from "../../../utils/queryClient";
@@ -12,56 +13,45 @@ import View from "../../shared/View";
 
 export default function ExaCard({ disabled }: { disabled: boolean }) {
   const { data: card, isFetching: isFetchingCardMode } = useQuery({ queryKey: ["card", "mode"], queryFn: getCard });
-  const { mutateAsync: mutateCardMode, isPending: isMutatingCardMode } = useMutation({
+
+  const { mutateAsync: mutateMode, isPending: isTogglingMode } = useMutation({
     mutationKey: ["card", "mode"],
     mutationFn: setCardMode,
     onMutate: async (newMode) => {
       await queryClient.cancelQueries({ queryKey: ["card", "mode"] });
-      const previousIsCredit = isCredit;
-      const previousRIsCredit = rIsCredit.value;
-      const previousRIsExpanded = rIsExpanded.value;
-      setIsCredit(newMode === 1);
-      rIsCredit.value = newMode === 1;
-      if (!rIsCredit.value) {
-        rIsExpanded.value = false;
-      }
-      return {
-        previousIsCredit,
-        previousRIsCredit,
-        previousRIsExpanded,
-      };
+      const previous = queryClient.getQueryData(["card", "mode"]);
+      queryClient.setQueryData(["card", "mode"], (old: Awaited<ReturnType<typeof getCard>>) => ({
+        ...old,
+        mode: newMode,
+      }));
+      return { previous };
     },
-    onError: (_error, _variables, context) => {
-      if (!context) return;
-      setIsCredit(context.previousIsCredit);
-      rIsCredit.value = context.previousRIsCredit;
-      rIsExpanded.value = context.previousRIsExpanded;
+    onError: (error, _, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["card", "mode"], context.previous);
+      }
+      handleError(error);
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ["card", "mode"] });
     },
   });
 
-  const [isCredit, setIsCredit] = useState(true);
-  const rIsCredit = useSharedValue(true);
-  const rIsExpanded = useSharedValue(false);
-
-  function toggleMode() {
-    const newMode = rIsCredit.value ? 0 : 1;
-    mutateCardMode(newMode).catch(handleError);
+  function toggle() {
+    if (!card) return;
+    mutateMode(isCredit ? 0 : 1).catch(handleError);
   }
 
-  useEffect(() => {
-    if (card) {
-      setIsCredit(card.mode === 1);
-      rIsCredit.value = card.mode === 1;
-    }
-  }, [card, rIsCredit]);
+  function setInstallments(installments: number) {
+    if (!card) return;
+    mutateMode(installments).catch(handleError);
+  }
 
-  const isLoading = isMutatingCardMode || isFetchingCardMode;
+  const isLoading = isTogglingMode || isFetchingCardMode;
+  const isCredit = card ? card.mode > 0 : false;
 
   return (
-    <YStack width="100%" borderRadius="$r4" borderWidth={0} maxHeight={280}>
+    <AnimatedYStack width="100%" borderRadius="$r4" borderWidth={0} maxHeight={280}>
       <View zIndex={3} backgroundColor="black" borderColor="black" borderRadius="$r4" borderWidth={1} overflow="hidden">
         <CardContents isCredit={isCredit} isLoading={isLoading} disabled={disabled} />
       </View>
@@ -72,14 +62,17 @@ export default function ExaCard({ disabled }: { disabled: boolean }) {
         borderWidth={1}
         borderTopLeftRadius={0}
         borderTopRightRadius={0}
+        marginTop={-20}
         onPress={() => {
           if (disabled || isLoading) return;
-          toggleMode();
+          toggle();
         }}
-        marginTop={-20}
       >
         <ModeSelector isCredit={isCredit} disabled={disabled} />
       </View>
-    </YStack>
+      <InstallmentsSelector isCredit={isCredit} value={card?.mode ?? 0} onChange={setInstallments} />
+    </AnimatedYStack>
   );
 }
+
+const AnimatedYStack = Animated.createAnimatedComponent(YStack);

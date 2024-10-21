@@ -1,77 +1,95 @@
 import MAX_INSTALLMENTS from "@exactly/common/MAX_INSTALLMENTS";
 import { ChevronDown } from "@tamagui/lucide-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Animated, {
-  CurvedTransition,
   Extrapolation,
+  FadeIn,
+  FadeOut,
   interpolate,
   useAnimatedStyle,
-  useDerivedValue,
   withTiming,
 } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
-import { AnimatePresence, Square, XStack, YStack } from "tamagui";
+import { Square, XStack, YStack } from "tamagui";
 
 import AnimatedView from "../../shared/AnimatedView";
 import Text from "../../shared/Text";
 
-const AnimatedXStack = Animated.createAnimatedComponent(XStack);
-
 export default function InstallmentsSelector({
   value,
+  isCredit,
   onChange,
-  onExpand,
-  expanded,
 }: {
   value: number;
+  isCredit: boolean;
   onChange: (installments: number) => void;
-  onExpand: () => void;
-  expanded: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
+  function toggleExpanded() {
+    setExpanded((previous) => !previous);
+  }
+
   const rContainer = useAnimatedStyle(() => {
-    return { height: withTiming(expanded ? 140 : 79) };
-  });
+    return {
+      height: withTiming(isCredit && expanded ? 160 : isCredit && !expanded ? 99 : 0),
+      marginTop: withTiming(isCredit ? -20 : 0),
+    };
+  }, [expanded, isCredit]);
+
+  const rOther = useAnimatedStyle(() => {
+    return { height: withTiming(isCredit && expanded ? 140 : isCredit && !expanded ? 79 : 0) };
+  }, [expanded, isCredit]);
+
+  useEffect(() => {
+    if (!isCredit) {
+      setExpanded(false);
+    }
+  }, [expanded, isCredit]);
+
   return (
-    <YStack justifyContent="flex-end" height="100%">
-      <AnimatedXStack
-        style={rContainer}
-        overflow="hidden"
-        justifyContent="center"
-        paddingHorizontal="$s4_5"
-        gap="$s4"
-        layout={CurvedTransition.duration(250)}
-      >
-        <AnimatePresence>
+    <AnimatedYStack
+      zIndex={1}
+      backgroundColor="transparent"
+      borderColor="$borderNeutralSoft"
+      borderRadius="$r4"
+      borderWidth={isCredit ? 1 : 0}
+      borderTopLeftRadius={0}
+      borderTopRightRadius={0}
+      onPress={toggleExpanded}
+      style={rContainer}
+    >
+      <AnimatedYStack justifyContent="flex-end" height="100%">
+        <AnimatedXStack style={rOther} overflow="hidden" justifyContent="center" paddingHorizontal="$s4_5" gap="$s4">
           {!expanded && (
-            <AnimatedView alignItems="flex-start" justifyContent="center" flex={1}>
+            <AnimatedView alignItems="flex-start" justifyContent="center" flex={1} entering={FadeIn} exiting={FadeOut}>
               <Text subHeadline color="$uiNeutralSecondary">
                 Set installments
               </Text>
             </AnimatedView>
           )}
-        </AnimatePresence>
-
-        <AnimatedXStack gap="$s2" justifyContent="center" minHeight={39} flex={1}>
-          <XStack animation="moderate" justifyContent="flex-end" alignItems="center" gap="$s2">
-            {Array.from({ length: MAX_INSTALLMENTS }).map((_, index) => {
-              return (
-                <Installment
-                  key={index}
-                  index={index}
-                  value={value}
-                  onChange={onChange}
-                  onExpand={onExpand}
-                  expanded={expanded}
-                />
-              );
-            })}
-          </XStack>
-          <Square animation="moderate" rotate={expanded ? "180deg" : "0deg"}>
-            <ChevronDown size={ms(20)} color="$uiBrandSecondary" />
-          </Square>
+          <AnimatedXStack gap="$s2" justifyContent="center" minHeight={39} flex={1}>
+            <XStack animation="moderate" justifyContent="flex-end" alignItems="center" gap="$s2">
+              {Array.from({ length: MAX_INSTALLMENTS }).map((_, index) => {
+                return (
+                  <Installment
+                    key={index}
+                    index={index}
+                    value={value}
+                    onChange={onChange}
+                    expanded={expanded}
+                    onPress={toggleExpanded}
+                  />
+                );
+              })}
+            </XStack>
+            <Square animation="moderate" rotate={expanded ? "180deg" : "0deg"}>
+              <ChevronDown size={ms(20)} color="$uiBrandSecondary" />
+            </Square>
+          </AnimatedXStack>
         </AnimatedXStack>
-      </AnimatedXStack>
-    </YStack>
+      </AnimatedYStack>
+    </AnimatedYStack>
   );
 }
 
@@ -79,13 +97,13 @@ function Installment({
   index,
   value,
   onChange,
-  onExpand,
+  onPress,
   expanded,
 }: {
   index: number;
   value: number;
   onChange: (installments: number) => void;
-  onExpand: () => void;
+  onPress: () => void;
   expanded: boolean;
 }) {
   const rInstallment = useAnimatedStyle(() => {
@@ -96,10 +114,9 @@ function Installment({
     };
   });
 
-  const dExpanded = useDerivedValue(() => expanded);
   const translateFontAnim = useAnimatedStyle(
-    () => ({ fontSize: interpolate(dExpanded.value ? 1 : 0, [1, 0], [28, 20], Extrapolation.CLAMP) }),
-    [dExpanded],
+    () => ({ fontSize: withTiming(interpolate(expanded ? 1 : 0, [1, 0], [28, 20], Extrapolation.CLAMP)) }),
+    [expanded],
   );
   return (
     <AnimatedView
@@ -113,14 +130,13 @@ function Installment({
       alignItems="center"
       borderWidth={1}
       borderColor={index + 1 > value ? "$interactiveBaseBrandSoftDefault" : "transparent"}
+      style={rInstallment}
       onPress={() => {
-        if (expanded) {
+        if (!expanded) onPress();
+        if (expanded && index + 1 !== value) {
           onChange(index + 1);
-        } else {
-          onExpand();
         }
       }}
-      style={rInstallment}
     >
       <AnimatedView animation="moderate" opacity={index + 1 === value ? 1 : expanded ? 0.5 : 0}>
         <Animated.Text style={translateFontAnim}>
@@ -132,3 +148,6 @@ function Installment({
     </AnimatedView>
   );
 }
+
+const AnimatedXStack = Animated.createAnimatedComponent(XStack);
+const AnimatedYStack = Animated.createAnimatedComponent(YStack);
