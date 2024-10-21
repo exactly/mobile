@@ -55,10 +55,7 @@ export default function CardContents({
               transform={[{ translateX: 0 }]}
             >
               <Text sensitive color="white" title2>
-                {(markets
-                  ? Number(borrowLimit(markets, marketUSDCAddress, Math.floor(Date.now() / 1000))) / 1e6
-                  : 0
-                ).toLocaleString(undefined, {
+                {(markets ? Number(borrowLimit(markets, marketUSDCAddress)) / 1e6 : 0).toLocaleString(undefined, {
                   style: "currency",
                   currency: "USD",
                   currencyDisplay: "narrowSymbol",
@@ -84,10 +81,7 @@ export default function CardContents({
               transform={[{ translateX: 0 }]}
             >
               <Text sensitive color="white" title2>
-                {(markets
-                  ? Number(withdrawLimit(markets, marketUSDCAddress, Math.floor(Date.now() / 1000))) / 1e6
-                  : 0
-                ).toLocaleString(undefined, {
+                {(markets ? Number(withdrawLimit(markets, marketUSDCAddress)) / 1e6 : 0).toLocaleString(undefined, {
                   style: "currency",
                   currency: "USD",
                   currencyDisplay: "narrowSymbol",
