@@ -155,11 +155,12 @@ export default app.get(
               }, new Map<Hash, { blockNumber: bigint; events: (typeof logs)[number]["args"][] }>()),
             ),
     ]);
-    const events = [...deposits, ...repays, ...withdraws];
     const blocks = await Promise.all(
-      [...new Set(events.map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
-        publicClient.getBlock({ blockNumber }),
-      ),
+      [
+        ...new Set(
+          [...deposits, ...repays, ...withdraws, ...(borrows?.values() ?? [])].map(({ blockNumber }) => blockNumber),
+        ),
+      ].map((blockNumber) => publicClient.getBlock({ blockNumber })),
     );
     const timestamps = new Map(
       blocks.map(({ number: block, timestamp }) => [block, new Date(Number(timestamp) * 1000).toISOString()]),
@@ -182,7 +183,7 @@ export default app.get(
             captureException(new Error("bad transaction"), { level: "error", contexts: { validation } });
           }),
         ),
-        ...events.map(({ blockNumber, ...event }) => {
+        ...[...deposits, ...repays, ...withdraws].map(({ blockNumber, ...event }) => {
           const found = timestamps.get(blockNumber);
           if (found) return { ...event, timestamp: found };
           captureException(new Error("block not found"), {
