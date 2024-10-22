@@ -10,7 +10,7 @@ vi.mock("@sentry/node", async () => ({
     for (const [key, value] of contexts) {
       console.log(key, inspect(value, false, null, true)); // eslint-disable-line no-console
     }
-    console.log(...arguments_); // eslint-disable-line no-console
+    console.log(...arguments_.map((value) => inspect(value, false, null, true))); // eslint-disable-line no-console
   },
   setContext: (key: string, value: unknown) => contexts.set(key, value),
 }));
