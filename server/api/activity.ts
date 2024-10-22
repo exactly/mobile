@@ -162,9 +162,7 @@ export default app.get(
         ),
       ].map((blockNumber) => publicClient.getBlock({ blockNumber })),
     );
-    const timestamps = new Map(
-      blocks.map(({ number: block, timestamp }) => [block, new Date(Number(timestamp) * 1000).toISOString()]),
-    );
+    const timestamps = new Map(blocks.map(({ number: block, timestamp }) => [block, timestamp]));
 
     return c.json(
       [
@@ -184,11 +182,11 @@ export default app.get(
           }),
         ),
         ...[...deposits, ...repays, ...withdraws].map(({ blockNumber, ...event }) => {
-          const found = timestamps.get(blockNumber);
-          if (found) return { ...event, timestamp: found };
+          const timestamp = timestamps.get(blockNumber);
+          if (timestamp) return { ...event, timestamp: new Date(Number(timestamp) * 1000).toISOString() };
           captureException(new Error("block not found"), {
             level: "error",
-            contexts: { event: { ...event, timestamp: found } },
+            contexts: { event: { ...event, timestamp } },
           });
         }),
       ]
