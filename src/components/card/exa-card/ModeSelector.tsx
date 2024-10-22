@@ -77,7 +77,7 @@ export default function ModeSelector({ isCredit, disabled }: { isCredit: boolean
                   }
                   width="100%"
                   height="100%"
-                  borderRadius="$r2"
+                  borderRadius="$r3"
                 />
               </View>
             )}
