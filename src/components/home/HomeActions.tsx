@@ -1,11 +1,15 @@
 import { ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
+import { PixelRatio } from "react-native";
+import { ms } from "react-native-size-matters";
 
 import Button from "../shared/Button";
+import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function HomeActions() {
+  const fontScale = PixelRatio.getFontScale();
   return (
     <View flexDirection="row" display="flex" gap="$s4" justifyContent="center" alignItems="center">
       <Button
@@ -14,12 +18,20 @@ export default function HomeActions() {
         onPress={() => {
           router.push("/add-funds/add-crypto");
         }}
-        iconAfter={<ArrowDownToLine color="$interactiveOnBaseBrandDefault" />}
+        iconAfter={<ArrowDownToLine size={ms(18) * fontScale} color="$interactiveOnBaseBrandDefault" />}
         backgroundColor="$interactiveBaseBrandDefault"
         color="$interactiveOnBaseBrandDefault"
         {...contained}
       >
-        Add funds
+        <Text
+          fontSize={ms(15)}
+          emphasized
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          color="$interactiveOnBaseBrandDefault"
+        >
+          Add funds
+        </Text>
       </Button>
       <Button
         main
@@ -27,12 +39,14 @@ export default function HomeActions() {
         onPress={() => {
           router.push("/send-funds");
         }}
-        iconAfter={<ArrowUpRight color="$interactiveOnBaseBrandSoft" />}
+        iconAfter={<ArrowUpRight size={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />}
         backgroundColor="$interactiveBaseBrandSoftDefault"
         color="$interactiveOnBaseBrandSoft"
         {...outlined}
       >
-        Send
+        <Text fontSize={ms(15)} emphasized numberOfLines={1} adjustsFontSizeToFit color="$interactiveOnBaseBrandSoft">
+          Send
+        </Text>
       </Button>
     </View>
   );
