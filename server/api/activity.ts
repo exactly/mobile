@@ -252,7 +252,7 @@ export const CreditActivity = pipe(
     mode: 1 as const,
     borrow: transformBorrow(
       activity.events[0]!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      activity.blockTimestamp ?? BigInt(new Date(activity.data.created_at).getTime() / 1000),
+      activity.blockTimestamp ?? BigInt(Math.floor(new Date(activity.data.created_at).getTime() / 1000)),
     ),
   })),
 );
@@ -261,7 +261,7 @@ export const InstallmentsActivity = pipe(
   object({ ...CardActivity.entries, events: pipe(array(Borrow), minLength(2)), blockTimestamp: optional(bigint()) }),
   transform((activity) => {
     const { data, events, blockTimestamp } = activity;
-    const timestamp = blockTimestamp ?? BigInt(new Date(data.created_at).getTime() / 1000);
+    const timestamp = blockTimestamp ?? BigInt(Math.floor(new Date(data.created_at).getTime() / 1000));
     events.sort((a, b) => Number(a.maturity) - Number(b.maturity));
     return {
       ...transformCard(activity),
