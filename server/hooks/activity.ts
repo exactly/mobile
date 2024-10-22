@@ -52,7 +52,7 @@ export default app.post(
               }),
               v.object({
                 category: v.picklist(["token", "erc20", "erc721", "erc1155"]),
-                asset: v.string(),
+                asset: v.optional(v.string()),
                 rawContract: v.object({ address: Address }),
                 value: v.optional(v.number()),
               }),
