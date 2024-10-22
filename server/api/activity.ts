@@ -1,6 +1,6 @@
-import { previewerAddress, exaPluginAddress } from "@exactly/common/generated/chain";
+import { previewerAddress, exaPluginAddress, marketUSDCAddress } from "@exactly/common/generated/chain";
 import { Address, Hex } from "@exactly/common/validation";
-import { WAD } from "@exactly/lib";
+import { effectiveRate, ONE_YEAR, WAD } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser } from "@sentry/node";
 import { eq } from "drizzle-orm";
@@ -11,6 +11,8 @@ import {
   type InferInput,
   type InferOutput,
   isoTimestamp,
+  length,
+  minLength,
   nullable,
   number,
   object,
@@ -21,6 +23,7 @@ import {
   safeParse,
   string,
   transform,
+  undefined_,
   union,
 } from "valibot";
 import { zeroAddress, type Hash } from "viem";
@@ -137,19 +140,19 @@ export default app.get(
         : publicClient
             .getLogs({
               event: marketAbi[22],
-              address: [...markets.keys()],
+              address: marketUSDCAddress,
               args: { borrower: account },
               toBlock: "latest",
               fromBlock: 0n,
               strict: true,
             })
             .then((logs) =>
-              logs.reduce((map, { args, transactionHash }) => {
-                const events = map.get(transactionHash);
-                if (!events) return map.set(transactionHash, [args]);
-                events.push(args);
+              logs.reduce((map, { args, transactionHash, blockNumber }) => {
+                const data = map.get(transactionHash);
+                if (!data) return map.set(transactionHash, { blockNumber, events: [args] });
+                data.events.push(args);
                 return map;
-              }, new Map<Hash, (typeof logs)[number]["args"][]>()),
+              }, new Map<Hash, { blockNumber: bigint; events: (typeof logs)[number]["args"][] }>()),
             ),
     ]);
     const events = [...deposits, ...repays, ...withdraws];
@@ -166,7 +169,15 @@ export default app.get(
       [
         ...credential.cards.flatMap(({ transactions }) =>
           transactions.map(({ hash, payload }) => {
-            const validation = safeParse(CardActivity, { ...(payload as object), events: borrows?.get(hash as Hex) });
+            const borrow = borrows?.get(hash as Hex);
+            const validation = safeParse(
+              { 0: DebitActivity, 1: CreditActivity }[borrow?.events.length ?? 0] ?? InstallmentsActivity,
+              {
+                ...(payload as object),
+                events: borrow?.events,
+                blockTimestamp: borrow?.blockNumber && timestamps.get(borrow.blockNumber),
+              },
+            );
             if (validation.success) return validation.output;
             captureException(new Error("bad transaction"), { level: "error", contexts: { validation } });
           }),
@@ -187,38 +198,90 @@ export default app.get(
   },
 );
 
-export const CardActivity = pipe(
-  object({
-    operation_id: string(),
-    data: object({
-      created_at: pipe(string(), isoTimestamp()),
-      bill_amount: number(),
-      merchant_data: object({
-        name: string(),
-        country: nullable(string()),
-        state: nullable(string()),
-        city: nullable(string()),
-      }),
-      transaction_amount: number(),
-      transaction_currency_code: nullable(string()),
+const Borrow = object({ maturity: bigint(), assets: bigint(), fee: bigint() });
+const CardActivity = object({
+  operation_id: string(),
+  data: object({
+    created_at: pipe(string(), isoTimestamp()),
+    bill_amount: number(),
+    merchant_data: object({
+      name: string(),
+      country: nullable(string()),
+      state: nullable(string()),
+      city: nullable(string()),
     }),
-    events: optional(array(object({ assets: bigint() }))),
+    transaction_amount: number(),
+    transaction_currency_code: nullable(string()),
   }),
-  transform(({ operation_id, data, events }) => ({
+});
+
+function fixedRate({ maturity, assets, fee }: InferOutput<typeof Borrow>, timestamp: bigint) {
+  return ((((assets + fee) * WAD) / assets - WAD) * ONE_YEAR) / (maturity - timestamp);
+}
+
+function transformBorrow(borrow: InferOutput<typeof Borrow>, timestamp: bigint) {
+  return { fee: Number(borrow.fee) / 1e6, rate: Number(fixedRate(borrow, timestamp)) / 1e18 };
+}
+
+function transformCard({ operation_id, data }: InferOutput<typeof CardActivity>) {
+  return {
     type: "card" as const,
     id: operation_id,
     timestamp: data.created_at,
     currency: data.transaction_currency_code,
     amount: data.transaction_amount,
+    usdAmount: data.bill_amount,
     merchant: {
       name: data.merchant_data.name,
       city: data.merchant_data.city,
       country: data.merchant_data.country,
       state: data.merchant_data.state,
     },
-    usdAmount: data.bill_amount,
-    mode: events?.length ?? 0,
+  };
+}
+
+export const DebitActivity = pipe(
+  object({ ...CardActivity.entries, events: undefined_(), blockTimestamp: undefined_() }),
+  transform((activity) => ({ ...transformCard(activity), mode: 0 as const })),
+);
+
+export const CreditActivity = pipe(
+  object({ ...CardActivity.entries, events: pipe(array(Borrow), length(1)), blockTimestamp: optional(bigint()) }),
+  transform((activity) => ({
+    ...transformCard(activity),
+    mode: 1 as const,
+    borrow: transformBorrow(
+      activity.events[0]!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      activity.blockTimestamp ?? BigInt(new Date(activity.data.created_at).getTime() / 1000),
+    ),
   })),
+);
+
+export const InstallmentsActivity = pipe(
+  object({ ...CardActivity.entries, events: pipe(array(Borrow), minLength(2)), blockTimestamp: optional(bigint()) }),
+  transform((activity) => {
+    const { data, events, blockTimestamp } = activity;
+    const timestamp = blockTimestamp ?? BigInt(new Date(data.created_at).getTime() / 1000);
+    events.sort((a, b) => Number(a.maturity) - Number(b.maturity));
+    return {
+      ...transformCard(activity),
+      mode: events.length,
+      borrow: {
+        fee: Number(events.reduce((sum, { fee }) => sum + fee, 0n)) / 1e6,
+        rate:
+          Number(
+            effectiveRate(
+              events.reduce((sum, { assets }) => sum + assets, 0n),
+              Number(events[0]!.maturity), // eslint-disable-line @typescript-eslint/no-non-null-assertion
+              events.map(({ assets, fee }) => assets + fee),
+              events.map((borrow) => fixedRate(borrow, timestamp)),
+              Number(timestamp),
+            ),
+          ) / 1e18,
+        installments: events.map((borrow) => transformBorrow(borrow, timestamp)),
+      },
+    };
+  }),
 );
 
 const OnchainActivity = object({
@@ -229,13 +292,13 @@ const OnchainActivity = object({
   logIndex: number(),
 });
 
-const transformActivity = ({
+function transformActivity({
   args: { assets: value },
   market: { decimals, symbol, usdPrice },
   blockNumber,
   transactionHash,
   logIndex,
-}: InferOutput<typeof OnchainActivity>) => {
+}: InferOutput<typeof OnchainActivity>) {
   const baseUnit = 10 ** decimals;
   return {
     id: `${transactionHash}:${logIndex}`,
@@ -244,7 +307,7 @@ const transformActivity = ({
     usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
     blockNumber,
   };
-};
+}
 
 export const DepositActivity = pipe(
   OnchainActivity,

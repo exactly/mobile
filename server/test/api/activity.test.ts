@@ -10,7 +10,7 @@ import { zeroAddress, zeroHash, padHex, type Hash } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import app, { CardActivity } from "../../api/activity";
+import app, { CreditActivity, DebitActivity, InstallmentsActivity } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
 import { marketAbi } from "../../generated/contracts";
 import deriveAddress from "../../utils/deriveAddress";
@@ -63,7 +63,7 @@ describe("authenticated", () => {
   afterEach(() => captureException.mockClear());
 
   describe("card", () => {
-    let activity: InferOutput<typeof CardActivity>[];
+    let activity: InferOutput<typeof DebitActivity | typeof CreditActivity | typeof InstallmentsActivity>[];
 
     beforeAll(async () => {
       await database.insert(cards).values([{ id: "activity", credentialId: account, lastFour: "1234" }]);
@@ -79,10 +79,7 @@ describe("authenticated", () => {
         [...new Set(logs.map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
           anvilClient.getBlock({ blockNumber }),
         ),
-      ).then(
-        (blocks) =>
-          new Map(blocks.map(({ number, timestamp }) => [number, new Date(Number(timestamp) * 1000).toISOString()])),
-      );
+      ).then((blocks) => new Map(blocks.map(({ number, timestamp }) => [number, timestamp])));
       activity = await Promise.all(
         logs
           .reduce((map, { args, transactionHash, blockNumber }) => {
@@ -93,12 +90,13 @@ describe("authenticated", () => {
           }, new Map<Hash, { blockNumber: bigint; events: (typeof logs)[number]["args"][] }>())
           .entries()
           .map(async ([hash, { blockNumber, events }], index) => {
+            const blockTimestamp = timestamps.get(blockNumber)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
             const total = events.reduce((sum, { assets }) => sum + assets, 0n);
             const payload = {
               hash,
               operation_id: String(index),
               data: {
-                created_at: timestamps.get(blockNumber)!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+                created_at: new Date(Number(blockTimestamp) * 1000).toISOString(),
                 bill_amount: Number(total) / 1e6,
                 transaction_amount: (1200 * Number(total)) / 1e6,
                 transaction_currency_code: "ARS",
@@ -106,7 +104,11 @@ describe("authenticated", () => {
               },
             };
             await database.insert(transactions).values({ id: String(index), cardId: "activity", hash, payload });
-            return parse(CardActivity, { ...payload, events });
+            return parse({ 0: DebitActivity, 1: CreditActivity }[events.length] ?? InstallmentsActivity, {
+              ...payload,
+              events,
+              blockTimestamp,
+            });
           }),
       ).then((results) => results.sort((a, b) => b.timestamp.localeCompare(a.timestamp)));
     });
