@@ -3,17 +3,18 @@ import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/sentry";
 
-import { Address } from "@exactly/common/validation";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
-import { parse, type InferInput } from "valibot";
-import { zeroAddress, zeroHash, padHex } from "viem";
-import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
+import { parse, type InferOutput } from "valibot";
+import { zeroAddress, zeroHash, padHex, type Hash } from "viem";
+import { privateKeyToAddress } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import app, { CardActivity } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
+import { marketAbi } from "../../generated/contracts";
 import deriveAddress from "../../utils/deriveAddress";
+import anvilClient from "../anvilClient";
 
 const appClient = testClient(app);
 
@@ -49,7 +50,8 @@ describe("validation", () => {
 });
 
 describe("authenticated", () => {
-  const account = parse(Address, privateKeyToAddress(generatePrivateKey()));
+  const bob = privateKeyToAddress(padHex("0xb0b"));
+  const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
   const captureException = vi.spyOn(sentry, "captureException");
 
   beforeAll(async () => {
@@ -61,20 +63,52 @@ describe("authenticated", () => {
   afterEach(() => captureException.mockClear());
 
   describe("card", () => {
-    const payload: InferInput<typeof CardActivity> = {
-      operation_id: "0",
-      data: {
-        created_at: new Date().toISOString(),
-        bill_amount: 100 / 3,
-        transaction_amount: (1111.11 * 100) / 3,
-        transaction_currency_code: "ARS",
-        merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "CABA" },
-      },
-    };
+    let activity: InferOutput<typeof CardActivity>[];
 
     beforeAll(async () => {
-      await database.insert(cards).values([{ id: "card", credentialId: account, lastFour: "1234" }]);
-      await database.insert(transactions).values([{ id: "0", cardId: "card", hash: "0x0", payload }]);
+      await database.insert(cards).values([{ id: "activity", credentialId: account, lastFour: "1234" }]);
+      const logs = await anvilClient.getLogs({
+        event: marketAbi[22],
+        address: [inject("MarketEXA"), inject("MarketUSDC"), inject("MarketWETH")],
+        args: { borrower: account },
+        toBlock: "latest",
+        fromBlock: 0n,
+        strict: true,
+      });
+      const timestamps = await Promise.all(
+        [...new Set(logs.map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
+          anvilClient.getBlock({ blockNumber }),
+        ),
+      ).then(
+        (blocks) =>
+          new Map(blocks.map(({ number, timestamp }) => [number, new Date(Number(timestamp) * 1000).toISOString()])),
+      );
+      activity = await Promise.all(
+        logs
+          .reduce((map, { args, transactionHash, blockNumber }) => {
+            const data = map.get(transactionHash);
+            if (!data) return map.set(transactionHash, { blockNumber, events: [args] });
+            data.events.push(args);
+            return map;
+          }, new Map<Hash, { blockNumber: bigint; events: (typeof logs)[number]["args"][] }>())
+          .entries()
+          .map(async ([hash, { blockNumber, events }], index) => {
+            const total = events.reduce((sum, { assets }) => sum + assets, 0n);
+            const payload = {
+              hash,
+              operation_id: String(index),
+              data: {
+                created_at: timestamps.get(blockNumber)!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
+                bill_amount: Number(total) / 1e6,
+                transaction_amount: (1200 * Number(total)) / 1e6,
+                transaction_currency_code: "ARS",
+                merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "CABA" },
+              },
+            };
+            await database.insert(transactions).values({ id: String(index), cardId: "activity", hash, payload });
+            return parse(CardActivity, { ...payload, events });
+          }),
+      ).then((results) => results.sort((a, b) => b.timestamp.localeCompare(a.timestamp)));
     });
 
     it("returns the card transaction", async () => {
@@ -84,11 +118,11 @@ describe("authenticated", () => {
       );
 
       expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual([parse(CardActivity, payload)]);
+      await expect(response.json()).resolves.toStrictEqual(activity);
     });
 
     it("reports bad transaction", async () => {
-      await database.insert(transactions).values([{ id: "1", cardId: "card", hash: "0x1", payload: {} }]);
+      await database.insert(transactions).values([{ id: "69", cardId: "activity", hash: "0x1", payload: {} }]);
       captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "card" } },
@@ -103,24 +137,15 @@ describe("authenticated", () => {
         }),
       );
       expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual([parse(CardActivity, payload)]);
+      await expect(response.json()).resolves.toStrictEqual(activity);
     });
   });
 
   describe("onchain", () => {
-    const bob = privateKeyToAddress(padHex("0xb0b"));
-    const bobAccount = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
-
-    beforeAll(async () => {
-      await database
-        .insert(credentials)
-        .values([{ id: bobAccount, publicKey: new Uint8Array(), account: bobAccount, factory: zeroAddress }]);
-    });
-
     it("returns deposits", async () => {
       const response = await appClient.index.$get(
         { query: { include: "received" } },
-        { headers: { "test-credential-id": bobAccount } },
+        { headers: { "test-credential-id": account } },
       );
 
       expect(response.status).toBe(200);
@@ -134,7 +159,7 @@ describe("authenticated", () => {
     it("returns repays", async () => {
       const response = await appClient.index.$get(
         { query: { include: "repay" } },
-        { headers: { "test-credential-id": bobAccount } },
+        { headers: { "test-credential-id": account } },
       );
 
       expect(response.status).toBe(200);
@@ -147,7 +172,7 @@ describe("authenticated", () => {
     it("returns withdraws", async () => {
       const response = await appClient.index.$get(
         { query: { include: "sent" } },
-        { headers: { "test-credential-id": bobAccount } },
+        { headers: { "test-credential-id": account } },
       );
 
       expect(response.status).toBe(200);

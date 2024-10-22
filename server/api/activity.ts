@@ -23,7 +23,7 @@ import {
   transform,
   union,
 } from "valibot";
-import { zeroAddress } from "viem";
+import { zeroAddress, type Hash } from "viem";
 
 import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
@@ -54,7 +54,7 @@ export default app.get(
       with: {
         cards: {
           columns: {},
-          with: { transactions: { columns: { payload: true } } },
+          with: { transactions: { columns: { hash: true, payload: true } } },
           limit: ignore("card") ? 0 : undefined,
         },
       },
@@ -75,10 +75,10 @@ export default app.get(
       if (!found) throw new Error("market not found");
       return found;
     };
-    const events = await Promise.all([
+    const [deposits, repays, withdraws, borrows] = await Promise.all([
       ignore("received")
         ? []
-        : await publicClient
+        : publicClient
             .getLogs({
               event: marketAbi[24],
               address: [...markets.keys()],
@@ -96,7 +96,7 @@ export default app.get(
             ),
       ignore("repay")
         ? []
-        : await publicClient
+        : publicClient
             .getLogs({
               event: marketAbi[38],
               address: [...markets.keys()],
@@ -114,7 +114,7 @@ export default app.get(
             ),
       ignore("sent")
         ? []
-        : await publicClient
+        : publicClient
             .getLogs({
               event: marketAbi[49],
               address: [...markets.keys()],
@@ -132,7 +132,27 @@ export default app.get(
                   >),
                 ),
             ),
-    ]).then((results) => results.flat());
+      ignore("card")
+        ? undefined
+        : publicClient
+            .getLogs({
+              event: marketAbi[22],
+              address: [...markets.keys()],
+              args: { borrower: account },
+              toBlock: "latest",
+              fromBlock: 0n,
+              strict: true,
+            })
+            .then((logs) =>
+              logs.reduce((map, { args, transactionHash }) => {
+                const events = map.get(transactionHash);
+                if (!events) return map.set(transactionHash, [args]);
+                events.push(args);
+                return map;
+              }, new Map<Hash, (typeof logs)[number]["args"][]>()),
+            ),
+    ]);
+    const events = [...deposits, ...repays, ...withdraws];
     const blocks = await Promise.all(
       [...new Set(events.map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
         publicClient.getBlock({ blockNumber }),
@@ -145,8 +165,8 @@ export default app.get(
     return c.json(
       [
         ...credential.cards.flatMap(({ transactions }) =>
-          transactions.map(({ payload }) => {
-            const validation = safeParse(CardActivity, payload);
+          transactions.map(({ hash, payload }) => {
+            const validation = safeParse(CardActivity, { ...(payload as object), events: borrows?.get(hash as Hex) });
             if (validation.success) return validation.output;
             captureException(new Error("bad transaction"), { level: "error", contexts: { validation } });
           }),
@@ -182,8 +202,9 @@ export const CardActivity = pipe(
       transaction_amount: number(),
       transaction_currency_code: nullable(string()),
     }),
+    events: optional(array(object({ assets: bigint() }))),
   }),
-  transform(({ operation_id, data }) => ({
+  transform(({ operation_id, data, events }) => ({
     type: "card" as const,
     id: operation_id,
     timestamp: data.created_at,
@@ -196,6 +217,7 @@ export const CardActivity = pipe(
       state: data.merchant_data.state,
     },
     usdAmount: data.bill_amount,
+    mode: events?.length ?? 0,
   })),
 );
 
