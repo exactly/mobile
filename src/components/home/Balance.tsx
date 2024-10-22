@@ -60,6 +60,7 @@ export default function Balance() {
                     fontSize={ms(40)}
                     fontWeight="bold"
                     overflow="hidden"
+                    maxFontSizeMultiplier={1}
                   >
                     {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
                       style: "currency",
