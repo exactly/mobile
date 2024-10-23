@@ -42,23 +42,36 @@ export default async function createAccountClient({ credentialId, factory, x, y 
     getAccountInitCode: () => Promise.resolve(accountInitCode({ factory, x, y })),
     getDummySignature: () => "0x",
     async signUserOperationHash(uoHash) {
-      const credential = await get({
-        rpId: domain,
-        challenge: bufferToBase64URLString(hexToBytes(hashMessage({ raw: uoHash }), { size: 32 })),
-        allowCredentials: Platform.OS === "android" ? [] : [{ id: credentialId, type: "public-key" }], // HACK fix android credential filtering
-        userVerification: "preferred",
-      });
-      if (!credential) throw new Error("no credential");
-      const response = credential.response;
-      const clientDataJSON = new TextDecoder().decode(base64URLStringToBuffer(response.clientDataJSON));
-      const typeIndex = BigInt(clientDataJSON.indexOf('"type":"'));
-      const challengeIndex = BigInt(clientDataJSON.indexOf('"challenge":"'));
-      const authenticatorData = bytesToHex(new Uint8Array(base64URLStringToBuffer(response.authenticatorData)));
-      const signature = AsnParser.parse(base64URLStringToBuffer(response.signature), ECDSASigValue);
-      const r = bytesToBigInt(new Uint8Array(signature.r));
-      let s = bytesToBigInt(new Uint8Array(signature.s));
-      if (s > P256_N / 2n) s = P256_N - s; // pass malleability guard
-      return webauthn({ authenticatorData, clientDataJSON, challengeIndex, typeIndex, r, s });
+      try {
+        const credential = await get({
+          rpId: domain,
+          challenge: bufferToBase64URLString(hexToBytes(hashMessage({ raw: uoHash }), { size: 32 })),
+          allowCredentials: Platform.OS === "android" ? [] : [{ id: credentialId, type: "public-key" }], // HACK fix android credential filtering
+          userVerification: "preferred",
+        });
+        if (!credential) throw new Error("no credential");
+        const response = credential.response;
+        const clientDataJSON = new TextDecoder().decode(base64URLStringToBuffer(response.clientDataJSON));
+        const typeIndex = BigInt(clientDataJSON.indexOf('"type":"'));
+        const challengeIndex = BigInt(clientDataJSON.indexOf('"challenge":"'));
+        const authenticatorData = bytesToHex(new Uint8Array(base64URLStringToBuffer(response.authenticatorData)));
+        const signature = AsnParser.parse(base64URLStringToBuffer(response.signature), ECDSASigValue);
+        const r = bytesToBigInt(new Uint8Array(signature.r));
+        let s = bytesToBigInt(new Uint8Array(signature.s));
+        if (s > P256_N / 2n) s = P256_N - s; // pass malleability guard
+        return webauthn({ authenticatorData, clientDataJSON, challengeIndex, typeIndex, r, s });
+      } catch (error: unknown) {
+        if (
+          error instanceof Error &&
+          (error.message ===
+            "The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1001.)" ||
+            error.message === "The operation couldn’t be completed. Device must be unlocked to perform request." ||
+            error.message === "UserCancelled")
+        ) {
+          return "0x";
+        }
+        throw error;
+      }
     },
     signMessage: () => Promise.resolve("0x..."), // TODO implement
     signTypedData: () => Promise.resolve("0x..."), // TODO implement

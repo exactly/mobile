@@ -15,16 +15,32 @@ queryClient.setQueryDefaults(["auth"], {
   gcTime: 30 * 60_000,
   staleTime: AUTH_EXPIRY,
   queryFn: async () => {
-    const credentialId = queryClient.getQueryData<Passkey>(["passkey"])?.credentialId;
-    const get = await client.api.auth.authentication.$get({ query: { credentialId } });
-    const options = await get.json();
-    if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
-    const assertion = await assert(options);
-    if (!assertion) throw new Error("bad assertion");
-    const post = await client.api.auth.authentication.$post({ query: { credentialId: assertion.id }, json: assertion });
-    if (!post.ok) throw new APIError(post.status, await post.json());
-    const { expires } = await post.json();
-    return parse(Auth, expires);
+    try {
+      const credentialId = queryClient.getQueryData<Passkey>(["passkey"])?.credentialId;
+      const get = await client.api.auth.authentication.$get({ query: { credentialId } });
+      const options = await get.json();
+      if (Platform.OS === "android") delete options.allowCredentials; // HACK fix android credential filtering
+      const assertion = await assert(options);
+      if (!assertion) throw new Error("bad assertion");
+      const post = await client.api.auth.authentication.$post({
+        query: { credentialId: assertion.id },
+        json: assertion,
+      });
+      if (!post.ok) throw new APIError(post.status, await post.json());
+      const { expires } = await post.json();
+      return parse(Auth, expires);
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        (error.message ===
+          "The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1001.)" ||
+          error.message === "The operation couldn’t be completed. Device must be unlocked to perform request." ||
+          error.message === "UserCancelled")
+      ) {
+        return { success: false };
+      }
+      throw error;
+    }
   },
 });
 
@@ -105,7 +121,9 @@ export async function getActivity(parameters?: NonNullable<Parameters<typeof cli
 
 export async function auth() {
   const { success } = safeParse(Auth, await queryClient.ensureQueryData({ queryKey: ["auth"] }));
-  if (!success) await queryClient.refetchQueries({ queryKey: ["auth"] });
+  if (!success) {
+    await queryClient.refetchQueries({ queryKey: ["auth"] });
+  }
 }
 
 const Auth = pipe(

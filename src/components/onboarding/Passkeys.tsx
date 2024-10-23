@@ -34,7 +34,19 @@ export default function Passkeys() {
     isPending,
   } = useMutation<Passkey>({
     mutationFn: createPasskey,
-    onError: handleError,
+    onError(error: unknown) {
+      if (
+        error instanceof Error &&
+        (error.message ===
+          "The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1001.)" ||
+          error.message === "The operation couldn’t be completed. Device must be unlocked to perform request." ||
+          error.message === "UserCancelled" ||
+          error.message.startsWith("androidx.credentials.exceptions.domerrors.NotAllowedError"))
+      ) {
+        return;
+      }
+      handleError(error);
+    },
     onSuccess(passkey) {
       queryClient.setQueryData<Passkey>(["passkey"], passkey);
     },
