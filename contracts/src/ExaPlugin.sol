@@ -320,7 +320,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         return "";
       }
 
-      if (receiver == collector) return "";
+      if (receiver == address(this) || receiver == collector) return "";
 
       Proposal memory proposal = proposals[owner];
 
