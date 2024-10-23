@@ -470,6 +470,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function receiveFlashLoan(IERC20[] memory, uint256[] memory, uint256[] memory, bytes memory data) external {
+    // slither-disable-next-line incorrect-equality -- hash comparison
     assert(msg.sender == address(BALANCER_VAULT) && callHash == keccak256(data));
     delete callHash;
 
