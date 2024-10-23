@@ -200,6 +200,7 @@ export default new Hono().post(
             ) !== amount
           ) {
             debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "bad collection");
+            captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { trace } } });
             return c.json({ response_code: "51" });
           }
           return c.json({ response_code: "00" });
