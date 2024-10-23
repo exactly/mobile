@@ -70,7 +70,12 @@ export default function ExaCard({ disabled }: { disabled: boolean }) {
       >
         <ModeSelector isCredit={isCredit} disabled={disabled} />
       </View>
-      <InstallmentsSelector isCredit={isCredit} value={card?.mode ?? 0} onChange={setInstallments} />
+      <InstallmentsSelector
+        isCredit={isCredit}
+        disabled={disabled}
+        value={card?.mode ?? 0}
+        onChange={setInstallments}
+      />
     </AnimatedYStack>
   );
 }

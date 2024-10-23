@@ -19,10 +19,12 @@ export default function InstallmentsSelector({
   value,
   isCredit,
   onChange,
+  disabled,
 }: {
   value: number;
   isCredit: boolean;
   onChange: (installments: number) => void;
+  disabled: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -56,14 +58,17 @@ export default function InstallmentsSelector({
       borderWidth={isCredit ? 1 : 0}
       borderTopLeftRadius={0}
       borderTopRightRadius={0}
-      onPress={toggleExpanded}
+      onPress={() => {
+        if (disabled) return;
+        toggleExpanded();
+      }}
       style={rContainer}
     >
       <AnimatedYStack justifyContent="flex-end" height="100%">
         <AnimatedXStack style={rOther} overflow="hidden" justifyContent="center" paddingHorizontal="$s4_5" gap="$s4">
           {!expanded && (
             <AnimatedView alignItems="flex-start" justifyContent="center" flex={1} entering={FadeIn} exiting={FadeOut}>
-              <Text subHeadline color="$uiNeutralSecondary">
+              <Text subHeadline color={disabled ? "$interactiveDisabled" : "$uiNeutralSecondary"}>
                 Set installments
               </Text>
             </AnimatedView>
@@ -79,12 +84,13 @@ export default function InstallmentsSelector({
                     onChange={onChange}
                     expanded={expanded}
                     onPress={toggleExpanded}
+                    disabled={disabled}
                   />
                 );
               })}
             </XStack>
             <Square animation="moderate" rotate={expanded ? "180deg" : "0deg"}>
-              <ChevronDown size={ms(20)} color="$uiBrandSecondary" />
+              <ChevronDown size={ms(20)} color={disabled ? "$interactiveDisabled" : "$uiBrandSecondary"} />
             </Square>
           </AnimatedXStack>
         </AnimatedXStack>
@@ -99,12 +105,14 @@ function Installment({
   onChange,
   onPress,
   expanded,
+  disabled,
 }: {
   index: number;
   value: number;
   onChange: (installments: number) => void;
   onPress: () => void;
   expanded: boolean;
+  disabled: boolean;
 }) {
   const rInstallment = useAnimatedStyle(() => {
     const isSelected = index + 1 === value;
@@ -129,9 +137,12 @@ function Installment({
       justifyContent="center"
       alignItems="center"
       borderWidth={1}
-      borderColor={index + 1 > value ? "$interactiveBaseBrandSoftDefault" : "transparent"}
+      borderColor={
+        disabled ? "$interactiveDisabled" : index + 1 > value ? "$interactiveBaseBrandSoftDefault" : "transparent"
+      }
       style={rInstallment}
       onPress={() => {
+        if (disabled) return;
         if (!expanded) onPress();
         if (expanded && index + 1 !== value) {
           onChange(index + 1);
