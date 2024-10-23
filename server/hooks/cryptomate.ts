@@ -189,7 +189,7 @@ export default new Hono().post(
                 ],
               }).errorName;
             } catch {} // eslint-disable-line no-empty
-            captureException(new Error(error), { contexts: { tx: { trace } } });
+            captureException(new Error(error), { contexts: { tx: { call, trace } } });
             return c.json({ response_code: "69" });
           }
           if (
@@ -200,12 +200,12 @@ export default new Hono().post(
             ) !== amount
           ) {
             debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "bad collection");
-            captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { trace } } });
+            captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { call, trace } } });
             return c.json({ response_code: "51" });
           }
           return c.json({ response_code: "00" });
         } catch (error: unknown) {
-          captureException(error);
+          captureException(error, { contexts: { tx: { call } } });
           return c.json({ response_code: "05" });
         }
       case "CLEARING":
