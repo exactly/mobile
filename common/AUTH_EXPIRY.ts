@@ -1,1 +1,1 @@
-export default 24 * 60 * 60_000;
+export default 3 * 60_000;
