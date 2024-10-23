@@ -4,10 +4,11 @@ import "../mocks/redis";
 import "../mocks/sentry";
 
 import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
+import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { beforeAll, describe, expect, inject, it } from "vitest";
+import { beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import database, { cards, credentials } from "../../database";
 import app from "../../hooks/cryptomate";
@@ -53,6 +54,7 @@ describe("validation", () => {
   });
 
   it("accepts valid request", async () => {
+    vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
     const response = await appClient.index.$post(authorization);
 
     expect(response.status).toBe(200);
