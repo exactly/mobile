@@ -78,6 +78,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   KeeperFeeModel public keeperFeeModel;
   mapping(address account => Proposal lastProposal) public proposals;
 
+  bytes32 private callHash;
+
   constructor(
     IAuditor auditor,
     IMarket exaUSDC,
@@ -129,13 +131,15 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       address(this),
       tokens,
       amounts,
-      abi.encode(
-        BalancerCallbackData({
-          maturity: maturity,
-          borrower: msg.sender,
-          positionAssets: positionAssets,
-          maxRepay: amounts[0]
-        })
+      _hash(
+        abi.encode(
+          BalancerCallbackData({
+            maturity: maturity,
+            borrower: msg.sender,
+            positionAssets: positionAssets,
+            maxRepay: amounts[0]
+          })
+        )
       )
     );
   }
@@ -471,7 +475,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function receiveFlashLoan(IERC20[] memory, uint256[] memory, uint256[] memory, bytes memory data) external {
-    assert(msg.sender == address(BALANCER_VAULT)); // TODO check call hash
+    assert(msg.sender == address(BALANCER_VAULT) && callHash == keccak256(data));
+    delete callHash;
 
     BalancerCallbackData memory b = abi.decode(data, (BalancerCallbackData));
 
@@ -520,6 +525,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     }
 
     if (sumCollateral < sumDebtPlusEffects) revert InsufficientLiquidity();
+  }
+
+  function _hash(bytes memory data) internal returns (bytes memory) {
+    callHash = keccak256(data);
+    return data;
   }
 
   function _getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
