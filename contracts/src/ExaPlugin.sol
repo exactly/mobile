@@ -122,26 +122,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     amounts[0] = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender));
     positionAssets = positionAssets.min(EXA_USDC.maxWithdraw(msg.sender));
+    bytes memory data = abi.encode(
+      BalancerCallbackData({
+        maturity: maturity,
+        borrower: msg.sender,
+        positionAssets: positionAssets,
+        maxRepay: amounts[0]
+      })
+    );
+    callHash = keccak256(data);
 
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amounts[0])))
     );
 
-    BALANCER_VAULT.flashLoan(
-      address(this),
-      tokens,
-      amounts,
-      _hash(
-        abi.encode(
-          BalancerCallbackData({
-            maturity: maturity,
-            borrower: msg.sender,
-            positionAssets: positionAssets,
-            maxRepay: amounts[0]
-          })
-        )
-      )
-    );
+    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, data);
   }
 
   function crossRepay(uint256 maturity, IMarket collateral) external {
@@ -525,11 +520,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     }
 
     if (sumCollateral < sumDebtPlusEffects) revert InsufficientLiquidity();
-  }
-
-  function _hash(bytes memory data) internal returns (bytes memory) {
-    callHash = keccak256(data);
-    return data;
   }
 
   function _getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
