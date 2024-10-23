@@ -9,7 +9,7 @@ init({
   profilesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
   attachStacktrace: true,
   autoSessionTracking: true,
-  normalizeDepth: 10,
-  integrations: [nodeProfilingIntegration(), extraErrorDataIntegration({ depth: 10 }), sessionTimingIntegration()],
+  normalizeDepth: 69,
+  integrations: [nodeProfilingIntegration(), extraErrorDataIntegration({ depth: 69 }), sessionTimingIntegration()],
   spotlight: !process.env.APP_DOMAIN || process.env.APP_DOMAIN === "localhost",
 });
