@@ -2,11 +2,13 @@ import { Address } from "@exactly/common/validation";
 import removeAccents from "remove-accents";
 import * as v from "valibot";
 
+import { track } from "./segment";
+
 if (!process.env.CRYPTOMATE_URL || !process.env.CRYPTOMATE_API_KEY) throw new Error("missing cryptomate vars");
 const baseURL = process.env.CRYPTOMATE_URL;
 const apiKey = process.env.CRYPTOMATE_API_KEY;
 
-export function createCard({
+export async function createCard({
   account,
   email,
   name,
@@ -21,7 +23,7 @@ export function createCard({
 }) {
   let cardholder = [name.first, name.middle, name.last].filter(Boolean).join(" ");
   if (cardholder.length > 26 && name.middle) cardholder = `${name.first} ${name.last}`;
-  return request(
+  const card = await request(
     CreateCardResponse,
     "/cards/virtual-cards/create",
     v.parse(CreateCardRequest, {
@@ -36,6 +38,8 @@ export function createCard({
       metadata: { account },
     }),
   );
+  track({ event: "CardIssued", userId: account });
+  return card;
 }
 
 export async function getPAN(cardId: string) {

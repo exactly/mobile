@@ -18,6 +18,7 @@ import block from "./hooks/block";
 import cryptomate from "./hooks/cryptomate";
 import androidFingerprint from "./utils/android/fingerprint";
 import appOrigin from "./utils/appOrigin";
+import { closeAndFlush } from "./utils/segment";
 
 const app = new Hono();
 app.use(sentry());
@@ -57,6 +58,12 @@ app.onError((error, c) => {
 });
 
 serve(app);
+
+["SIGINT", "SIGTERM"].map((code) =>
+  process.on(code, () => {
+    closeAndFlush().catch(() => undefined);
+  }),
+);
 
 declare module "hono" {
   interface ContextVariableMap {

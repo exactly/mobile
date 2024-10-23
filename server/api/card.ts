@@ -12,6 +12,7 @@ import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
 import { createCard, getPAN } from "../utils/cryptomate";
 import { getInquiry } from "../utils/persona";
+import { track } from "../utils/segment";
 
 const mutexes = new Map<string, Mutex>();
 function createMutex(credentialId: string) {
@@ -118,7 +119,8 @@ export default app
             },
           });
           if (!credential) return c.json("credential not found", 401);
-          setUser({ id: parse(Address, credential.account) });
+          const account = parse(Address, credential.account);
+          setUser({ id: account });
           if (credential.cards.length === 0 || !credential.cards[0]) return c.json("no card found", 404);
           const card = credential.cards[0];
           switch (patch.type) {
@@ -132,6 +134,7 @@ export default app
               const { status } = patch;
               if (card.status === status) return c.json(`card is already ${status.toLowerCase()}`, 400);
               await database.update(cards).set({ status }).where(eq(cards.id, card.id));
+              track({ userId: account, event: status === "FROZEN" ? "CardFrozen" : "CardUnfrozen" });
               return c.json({ status }, 200);
             }
           }

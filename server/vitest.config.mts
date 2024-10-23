@@ -17,6 +17,7 @@ export default defineConfig({
       KEEPER_PRIVATE_KEY: padHex("0x69"),
       POSTGRES_URL: "postgres",
       REDIS_URL: "redis",
+      SEGMENT_WRITE_KEY: "segment",
     },
     coverage: { enabled: true, reporter: ["lcov"] },
   },

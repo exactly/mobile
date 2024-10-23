@@ -20,6 +20,7 @@ import authSecret from "../../utils/authSecret";
 import decodePublicKey from "../../utils/decodePublicKey";
 import deriveAddress from "../../utils/deriveAddress";
 import redis from "../../utils/redis";
+import { identify } from "../../utils/segment";
 
 if (!process.env.ALCHEMY_ACTIVITY_ID) throw new Error("missing alchemy activity id");
 const webhookId = process.env.ALCHEMY_ACTIVITY_ID;
@@ -143,6 +144,7 @@ export default app
           })
           .catch((error: unknown) => captureException(error)),
       ]);
+      identify({ userId: account });
 
       return c.json(
         { credentialId: credential.id, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() },

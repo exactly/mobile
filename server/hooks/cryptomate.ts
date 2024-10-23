@@ -42,6 +42,7 @@ import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from ".
 import COLLECTOR from "../utils/COLLECTOR";
 import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
+import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
 import transactionOptions from "../utils/transactionOptions";
 
@@ -202,6 +203,11 @@ export default new Hono().post(
             captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { call, trace } } });
             return c.json({ response_code: "51" });
           }
+          track({
+            userId: account,
+            event: "TransactionAuthorized",
+            properties: { usdAmount: payload.data.bill_amount },
+          });
           return c.json({ response_code: "00" });
         } catch (error: unknown) {
           captureException(error, { contexts: { tx: { call } } });
