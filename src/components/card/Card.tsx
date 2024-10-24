@@ -257,7 +257,7 @@ export default function Card() {
                     setBorrowAssets(assets);
                   }}
                 />
-                {purchases && purchases.length > 0 && <LatestActivity activity={purchases} title="Latest purchases" />}
+                <LatestActivity activity={purchases} title="Latest purchases" />
                 <View>
                   <Accordion
                     overflow="hidden"
