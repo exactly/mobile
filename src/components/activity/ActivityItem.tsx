@@ -13,11 +13,9 @@ registerLocale(require("i18n-iso-countries/langs/en.json") as LocaleData); // es
 
 export default function ActivityItem({
   item,
-  isFirst,
   isLast,
 }: {
   item: Awaited<ReturnType<typeof getActivity>>[number];
-  isFirst: boolean;
   isLast: boolean;
 }) {
   const { amount, id, usdAmount, currency, type, timestamp } = item;
@@ -28,7 +26,7 @@ export default function ActivityItem({
       gap="$s4"
       alignItems="center"
       paddingHorizontal="$s5"
-      paddingTop={isFirst ? "$s4" : "$s3"}
+      paddingTop="$s3"
       paddingBottom={isLast ? "$s4" : "$s3"}
     >
       <View
