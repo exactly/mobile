@@ -3,8 +3,7 @@ import type { Passkey } from "@exactly/common/validation";
 import { ChevronDown, Eye, EyeOff, Info, Snowflake, CreditCard } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
-import { Platform, Pressable } from "react-native";
-import { Inquiry } from "react-native-persona";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, styled, Spinner, XStack, Accordion, Square } from "tamagui";
 import { zeroAddress } from "viem";
@@ -16,9 +15,9 @@ import SpendingLimitButton from "./SpendingLimitButton";
 import ExaCard from "./exa-card/ExaCard";
 import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
-import { environment, templateId } from "../../utils/persona";
+import { verifyIdentity } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
-import { APIError, getActivity, getCard, createCard, kyc, kycStatus, setCardStatus } from "../../utils/server";
+import { APIError, getActivity, getCard, createCard, kycStatus, setCardStatus } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
 import LatestActivity from "../shared/LatestActivity";
@@ -98,26 +97,7 @@ export default function Card() {
         }
         const { code, text } = error;
         if ((code === 403 && text === "kyc required") || (code === 404 && text === "kyc not found")) {
-          if (Platform.OS === "web") {
-            const otl = await kyc();
-            window.open(otl, "_self");
-            return;
-          }
-          Inquiry.fromTemplate(templateId)
-            .environment(environment)
-            .referenceId(passkey.credentialId)
-            .onCanceled((inquiryId) => {
-              if (!inquiryId) throw new Error("no inquiry id");
-              kyc(inquiryId).catch(handleError);
-            })
-            .onComplete((inquiryId) => {
-              if (!inquiryId) throw new Error("no inquiry id");
-              kyc(inquiryId).catch(handleError);
-            })
-            .onError(handleError)
-            .build()
-            .start();
-          return;
+          await verifyIdentity(passkey);
         }
         if (code === 404 && text === "card not found") {
           await createCard();

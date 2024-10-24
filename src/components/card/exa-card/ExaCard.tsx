@@ -12,15 +12,15 @@ import { getCard, setCardMode } from "../../../utils/server";
 import View from "../../shared/View";
 
 export default function ExaCard({ disabled }: { disabled: boolean }) {
-  const { data: card, isFetching: isFetchingCardMode } = useQuery({ queryKey: ["card", "mode"], queryFn: getCard });
+  const { data: card, isFetching: isFetchingCardMode } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
 
   const { mutateAsync: mutateMode, isPending: isTogglingMode } = useMutation({
     mutationKey: ["card", "mode"],
     mutationFn: setCardMode,
     onMutate: async (newMode) => {
-      await queryClient.cancelQueries({ queryKey: ["card", "mode"] });
-      const previous = queryClient.getQueryData(["card", "mode"]);
-      queryClient.setQueryData(["card", "mode"], (old: Awaited<ReturnType<typeof getCard>>) => ({
+      await queryClient.cancelQueries({ queryKey: ["card", "details"] });
+      const previous = queryClient.getQueryData(["card", "details"]);
+      queryClient.setQueryData(["card", "details"], (old: Awaited<ReturnType<typeof getCard>>) => ({
         ...old,
         mode: newMode,
       }));
@@ -28,12 +28,12 @@ export default function ExaCard({ disabled }: { disabled: boolean }) {
     },
     onError: (error, _, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(["card", "mode"], context.previous);
+        queryClient.setQueryData(["card", "details"], context.previous);
       }
       handleError(error);
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["card", "mode"] });
+      await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
     },
   });
 

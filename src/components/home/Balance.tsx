@@ -1,30 +1,12 @@
-import { previewerAddress } from "@exactly/common/generated/chain";
 import { ChevronDown } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { Accordion, Square, View } from "tamagui";
-import { zeroAddress } from "viem";
-import { useAccount } from "wagmi";
 
 import AssetList from "./AssetList";
-import { useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 
-export default function Balance() {
-  const { address } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
-  let usdBalance = 0n;
-  if (markets) {
-    for (const market of markets) {
-      if (market.floatingDepositAssets > 0n) {
-        usdBalance += (market.floatingDepositAssets * market.usdPrice) / 10n ** BigInt(market.decimals);
-      }
-    }
-  }
+export default function Balance({ usdBalance }: { usdBalance: bigint }) {
   return (
     <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s4">
       <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center">

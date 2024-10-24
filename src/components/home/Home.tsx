@@ -8,10 +8,11 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import Balance from "./Balance";
+import GettingStarted from "./GettingStarted";
 import HomeActions from "./HomeActions";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
-import { getActivity } from "../../utils/server";
+import { getActivity, kycStatus } from "../../utils/server";
 import AlertBadge from "../shared/AlertBadge";
 import LatestActivity from "../shared/LatestActivity";
 import ProfileHeader from "../shared/ProfileHeader";
@@ -37,6 +38,22 @@ export default function Home() {
     account: address,
     args: [address ?? zeroAddress],
   });
+
+  const {
+    data: KYCStatus,
+    error: KYCStatusError,
+    refetch: refetchKYCStatus,
+  } = useQuery({ queryKey: ["kyc", "status"], queryFn: kycStatus });
+
+  let usdBalance = 0n;
+  if (markets) {
+    for (const market of markets) {
+      if (market.floatingDepositAssets > 0n) {
+        usdBalance += (market.floatingDepositAssets * market.usdPrice) / 10n ** BigInt(market.decimals);
+      }
+    }
+  }
+
   const isPending = isPendingActivity || isPendingPreviewer;
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
@@ -52,6 +69,7 @@ export default function Home() {
               onRefresh={() => {
                 refetchActivity().catch(handleError);
                 refetchMarkets().catch(handleError);
+                refetchKYCStatus().catch(handleError);
               }}
             />
           }
@@ -60,10 +78,11 @@ export default function Home() {
           <View gap="$s4_5" flex={1}>
             <View backgroundColor="$backgroundSoft" padded gap="$s4">
               {markets && healthFactor(markets) < HEALTH_FACTOR_THRESHOLD && <AlertBadge />}
-              <Balance />
+              <Balance usdBalance={usdBalance} />
               <HomeActions />
             </View>
-            <View padded>
+            <View padded gap="$s5">
+              {(!KYCStatus || KYCStatusError) && <GettingStarted hasFunds={usdBalance > 0n} />}
               <LatestActivity activity={activity} />
             </View>
           </View>
