@@ -1,6 +1,5 @@
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import React from "react";
-import { RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 import { zeroAddress } from "viem";
@@ -11,6 +10,7 @@ import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
+import RefreshControl from "../shared/RefreshControl";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -28,56 +28,61 @@ export default function Payments() {
     }
   }
   return (
-    <SafeView fullScreen tab>
-      <ScrollView
-        flex={1}
-        refreshControl={
-          <RefreshControl
-            refreshing={isPending}
-            onRefresh={() => {
-              refetch().catch(handleError);
-              queryClient.refetchQueries({ queryKey: ["activity"] }).catch(handleError);
-            }}
-          />
-        }
-      >
-        <View padded gap="$s5" backgroundColor="$backgroundSoft">
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-            <Text fontSize={ms(20)} fontWeight="bold">
-              Payments
-            </Text>
-          </View>
-          <View gap="$s8">
-            <View gap="$s6">
-              <View flexDirection="column" justifyContent="center" alignItems="center">
-                <Text
-                  sensitive
-                  textAlign="center"
-                  fontFamily="$mono"
-                  fontSize={ms(40)}
-                  fontWeight="bold"
-                  overflow="hidden"
-                >
-                  {(Number(usdDue) / 1e18).toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "USD",
-                    currencyDisplay: "narrowSymbol",
-                  })}
-                </Text>
-              </View>
-              <View gap="$s3" alignItems="center">
-                <Text emphasized title3 color="$uiNeutralSecondary">
-                  Total debt
-                </Text>
+    <SafeView fullScreen tab backgroundColor="$backgroundSoft">
+      <View fullScreen backgroundColor="$backgroundMild">
+        <ScrollView
+          flex={1}
+          backgroundColor="$backgroundMild"
+          refreshControl={
+            <RefreshControl
+              backgroundColor="$backgroundSoft"
+              margin={-5}
+              refreshing={isPending}
+              onRefresh={() => {
+                refetch().catch(handleError);
+                queryClient.refetchQueries({ queryKey: ["activity"] }).catch(handleError);
+              }}
+            />
+          }
+        >
+          <View padded gap="$s5" backgroundColor="$backgroundSoft">
+            <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+              <Text fontSize={ms(20)} fontWeight="bold">
+                Payments
+              </Text>
+            </View>
+            <View gap="$s8">
+              <View gap="$s6">
+                <View flexDirection="column" justifyContent="center" alignItems="center">
+                  <Text
+                    sensitive
+                    textAlign="center"
+                    fontFamily="$mono"
+                    fontSize={ms(40)}
+                    fontWeight="bold"
+                    overflow="hidden"
+                  >
+                    {(Number(usdDue) / 1e18).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      currencyDisplay: "narrowSymbol",
+                    })}
+                  </Text>
+                </View>
+                <View gap="$s3" alignItems="center">
+                  <Text emphasized title3 color="$uiNeutralSecondary">
+                    Total debt
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-        <View padded gap="$s6">
-          <NextPayment />
-          <UpcomingPayments />
-        </View>
-      </ScrollView>
+          <View padded gap="$s6">
+            <NextPayment />
+            <UpcomingPayments />
+          </View>
+        </ScrollView>
+      </View>
     </SafeView>
   );
 }
