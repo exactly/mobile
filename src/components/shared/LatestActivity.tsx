@@ -14,29 +14,36 @@ export default function LatestActivity({
   activity,
   title = "Latest activity",
 }: {
-  activity: Awaited<ReturnType<typeof getActivity>>;
+  activity?: Awaited<ReturnType<typeof getActivity>>;
   title?: string;
 }) {
   return (
     <InfoCard
       title={title}
       renderAction={
-        <Pressable
-          hitSlop={ms(15)}
-          onPress={() => {
-            router.push("/activity");
-          }}
-        >
-          <View flexDirection="row" gap="$s1" alignItems="center">
-            <Text color="$interactiveTextBrandDefault" emphasized footnote fontWeight="bold">
-              View all
-            </Text>
-            <ChevronRight size={ms(14)} color="$interactiveTextBrandDefault" fontWeight="bold" />
-          </View>
-        </Pressable>
+        activity?.length ? (
+          <Pressable
+            hitSlop={ms(15)}
+            onPress={() => {
+              router.push("/activity");
+            }}
+          >
+            <View flexDirection="row" gap="$s1" alignItems="center">
+              <Text color="$interactiveTextBrandDefault" emphasized footnote fontWeight="bold">
+                View all
+              </Text>
+              <ChevronRight size={ms(14)} color="$interactiveTextBrandDefault" fontWeight="bold" />
+            </View>
+          </Pressable>
+        ) : null
       }
     >
-      {activity.slice(0, 4).map((item) => {
+      {!activity?.length && (
+        <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
+          There is no activity yet.
+        </Text>
+      )}
+      {activity?.slice(0, 4).map((item) => {
         const { amount, id, usdAmount, currency, type, timestamp } = item;
         return (
           <View key={id} flexDirection="row" gap="$s4" alignItems="center">

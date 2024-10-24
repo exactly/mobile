@@ -63,7 +63,9 @@ export default function Home() {
               <Balance />
               <HomeActions />
             </View>
-            <View padded>{activity && activity.length > 0 && <LatestActivity activity={activity} />}</View>
+            <View padded>
+              <LatestActivity activity={activity} />
+            </View>
           </View>
         </ScrollView>
         <TimeToFullDisplay record={!!markets && !!activity} />
