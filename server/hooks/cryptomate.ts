@@ -162,6 +162,7 @@ export default new Hono().post(
         args: [BigInt(firstMaturity), amounts, maxUint256, BigInt(timestamp), signature],
       } as const;
     })();
+    setContext("tx", { call });
     const transaction = {
       from: keeper.account.address,
       to: account,
@@ -224,11 +225,11 @@ export default new Hono().post(
               if (call.functionName === "collectCredit") return publicClient.simulateContract({ ...collect, ...call });
               return publicClient.simulateContract({ ...collect, ...call });
             });
-            setContext("tx", request);
+            setContext("tx", { call, ...request });
             const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
               keeper.writeContract(request as Parameters<typeof keeper.writeContract>[0]),
             );
-            setContext("tx", { ...request, transactionHash: hash });
+            setContext("tx", { call, ...request, transactionHash: hash });
             await database
               .insert(transactions)
               .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]);
@@ -237,7 +238,7 @@ export default new Hono().post(
                 if (receipt.status === "success") return;
                 captureException(new Error("tx reverted"), {
                   level: "fatal",
-                  contexts: { tx: { ...request, ...receipt } },
+                  contexts: { tx: { call, ...request, ...receipt } },
                 });
               })
               .catch((error: unknown) => captureException(error));
@@ -258,7 +259,7 @@ export default new Hono().post(
                 if (receipt?.status === "success") return c.json({});
               }
             }
-            captureException(error, { level: "fatal" });
+            captureException(error, { level: "fatal", contexts: { tx: { call } } });
             return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
           }
         });
