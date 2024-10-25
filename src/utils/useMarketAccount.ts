@@ -7,7 +7,12 @@ import { useReadPreviewerExactly } from "../generated/contracts";
 
 export default function useMarketAccount(address?: Address) {
   const { address: account } = useAccount();
-  const { data: markets, queryKey } = useReadPreviewerExactly({
+  const {
+    data: markets,
+    queryKey,
+    isFetching,
+    isRefetching,
+  } = useReadPreviewerExactly({
     address: previewerAddress,
     args: [account ?? zeroAddress],
   });
@@ -16,5 +21,6 @@ export default function useMarketAccount(address?: Address) {
     market: useMemo(() => markets?.find(({ market }) => market === address), [address, markets]),
     markets,
     queryKey,
+    isLoading: isFetching || isRefetching,
   };
 }

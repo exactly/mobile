@@ -1,33 +1,55 @@
+import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import { WAD } from "@exactly/lib";
 import { Calculator } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
 import React, { useEffect, useState } from "react";
 import { ms } from "react-native-size-matters";
 import { Spinner, XStack, YStack } from "tamagui";
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits, parseUnits, zeroAddress } from "viem";
 
+import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
+import handleError from "../../utils/handleError";
+import useInstallments from "../../utils/useInstallments";
+import useMarketAccount from "../../utils/useMarketAccount";
 import InfoCard from "../home/InfoCard";
 import TamaguiInput from "../shared/TamaguiInput";
 import Text from "../shared/Text";
 
-export default function SimulatePurchase({
-  borrowPreview,
-  timestamp,
-  onAssetsChange,
-  isLoading,
-}: {
-  borrowPreview?: { maturity: bigint; assets: bigint; utilization: bigint };
-  timestamp: number;
-  onAssetsChange: (assets: bigint) => void;
-  isLoading: boolean;
-}) {
+export default function SimulatePurchase({ installments }: { installments: number }) {
   const [input, setInput] = useState("100");
   const [assets, setAssets] = useState(100n);
+
+  const {
+    data: installmentsResult,
+    nextMaturity,
+    timestamp,
+    isLoading: isInstallmentsLoading,
+  } = useInstallments({ totalAmount: assets, installments });
+
+  const { market, account } = useMarketAccount(marketUSDCAddress);
+  const {
+    data: borrowPreview,
+    isFetching: isFetchingBorrowPreview,
+    isRefetching: isRefetchingBorrowPreview,
+    refetch: refetchBorrowPreview,
+  } = useReadPreviewerPreviewBorrowAtMaturity({
+    address: previewerAddress,
+    account,
+    args: [market?.market ?? zeroAddress, BigInt(nextMaturity), assets],
+    query: { enabled: !!market && !!account && !!nextMaturity && assets > 0n },
+  });
+
+  const isLoading = isInstallmentsLoading || isFetchingBorrowPreview || isRefetchingBorrowPreview;
+
   useEffect(() => {
     const value = parseUnits(input.replaceAll(/\D/g, ".").replaceAll(/\.(?=.*\.)/g, ""), 6);
     setAssets(value);
-    onAssetsChange(value);
-  }, [input, onAssetsChange]);
+  }, [input]);
+
+  useEffect(() => {
+    if (!isInstallmentsLoading) return;
+    refetchBorrowPreview().catch(handleError);
+  }, [isInstallmentsLoading, refetchBorrowPreview]);
   return (
     <InfoCard
       title="Simulate purchase"
@@ -42,7 +64,14 @@ export default function SimulatePurchase({
             <TamaguiInput borderRadius="$r3" backgroundColor="$backgroundMild">
               <TamaguiInput.Icon>
                 <Text primary title3>
-                  $
+                  {(0)
+                    .toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      maximumFractionDigits: 0,
+                    })
+                    .replaceAll(/\d/g, "")
+                    .trim()}
                 </Text>
               </TamaguiInput.Icon>
               <TamaguiInput.Input
@@ -66,18 +95,26 @@ export default function SimulatePurchase({
             Fixed APR
           </Text>
           <Text primary headline maxWidth="50%" flexShrink={1}>
-            {borrowPreview
-              ? (
-                  Number(
-                    ((borrowPreview.assets - assets) * WAD * 31_536_000n) /
-                      (assets * (borrowPreview.maturity - BigInt(timestamp))),
-                  ) / 1e18
-                ).toLocaleString(undefined, {
-                  style: "percent",
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })
-              : "N/A"}
+            {installments > 1
+              ? installmentsResult
+                ? (Number(installmentsResult.effectiveRate) / 1e18).toLocaleString(undefined, {
+                    style: "percent",
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : "N/A"
+              : borrowPreview
+                ? (
+                    Number(
+                      ((borrowPreview.assets - assets) * WAD * 31_536_000n) /
+                        (assets * (borrowPreview.maturity - BigInt(timestamp))),
+                    ) / 1e18
+                  ).toLocaleString(undefined, {
+                    style: "percent",
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                : "N/A"}
           </Text>
         </XStack>
         <XStack alignItems="center" justifyContent="space-between" width="100%">
@@ -86,15 +123,22 @@ export default function SimulatePurchase({
           </Text>
           <XStack alignItems="center" gap="$s2">
             <Text headline color="$backgroundBrand" textAlign="right">
-              1x
+              {installments > 0 ? `${installments}x` : "N/A"}
             </Text>
             <Text headline primary textAlign="right">
-              {borrowPreview
-                ? Number(formatUnits(borrowPreview.assets, 6)).toLocaleString(undefined, {
-                    style: "currency",
-                    currency: "USD",
-                  })
-                : "N/A"}
+              {installments > 1
+                ? installmentsResult
+                  ? Number(formatUnits(installmentsResult.installments[0] ?? 0n, 6)).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                    })
+                  : "N/A"
+                : borrowPreview
+                  ? Number(formatUnits(borrowPreview.assets, 6)).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                    })
+                  : "N/A"}
             </Text>
           </XStack>
         </XStack>
@@ -102,9 +146,7 @@ export default function SimulatePurchase({
           <Text primary subHeadline>
             First due date
           </Text>
-          <Text headline>
-            {borrowPreview ? format(new Date(Number(borrowPreview.maturity) * 1000), "yyyy-MM-dd") : "N/A"}
-          </Text>
+          <Text headline>{format(new Date(Number(nextMaturity) * 1000), "yyyy-MM-dd")}</Text>
         </XStack>
       </YStack>
     </InfoCard>
