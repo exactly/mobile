@@ -28,7 +28,7 @@
     "@openzeppelin/contracts-upgradeable": "^5.1.0",
     "@openzeppelin/contracts-v4": "npm:@openzeppelin/contracts@^4.9.6",
     "account-abstraction": "eth-infinitism/account-abstraction#v0.6.0",
-    "forge-std": "foundry-rs/forge-std#v1.9.3",
+    "forge-std": "foundry-rs/forge-std#v1.9.4",
     "fresh-crypto-lib": "rdubois-crypto/FreshCryptoLib#fd2a0e6",
     "solhint": "^5.0.3",
     "solmate": "transmissions11/solmate#v7"

@@ -85,8 +85,8 @@
     "tamagui": "~1.115.5",
     "title-case": "^4.3.2",
     "valibot": "^0.42.1",
-    "viem": "^2.21.33",
-    "wagmi": "^2.12.24",
+    "viem": "^2.21.35",
+    "wagmi": "^2.12.25",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
@@ -186,6 +186,10 @@
         "@openzeppelin/contracts-v4",
         "@openzeppelin/contracts-upgradeable-v4",
         "@react-native-async-storage/async-storage",
+        "@tamagui/animations-moti",
+        "@tamagui/babel-plugin",
+        "@tamagui/config",
+        "@tamagui/lucide-icons",
         "@types/react",
         "account-abstraction",
         "eslint",
@@ -208,7 +212,8 @@
         "react-native-reanimated",
         "react-native-safe-area-context",
         "react-native-screens",
-        "sharp-cli"
+        "sharp-cli",
+        "tamagui"
       ]
     },
     "auditConfig": {

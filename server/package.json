@@ -40,10 +40,10 @@
     "hono": "^4.6.6",
     "ioredis": "^5.4.1",
     "libphonenumber-js": "^1.11.12",
-    "pg": "^8.13.0",
+    "pg": "^8.13.1",
     "redis-semaphore": "^5.6.1",
     "valibot": "^0.42.1",
-    "viem": "^2.21.33"
+    "viem": "^2.21.35"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.12",
