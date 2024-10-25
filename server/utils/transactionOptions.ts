@@ -5,5 +5,5 @@ export default {
   type: "eip1559",
   maxFeePerGas: 1_000_000_000n,
   maxPriorityFeePerGas: 1_000_000n,
-  gas: 2_000_000n,
+  gas: 5_000_000n,
 } as const;
