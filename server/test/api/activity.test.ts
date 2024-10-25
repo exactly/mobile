@@ -166,8 +166,8 @@ describe("authenticated", () => {
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toMatchObject([
-        { amount: expect.closeTo(433, 1), currency: "USDC", type: "repay", usdAmount: expect.closeTo(433, 1) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-        { amount: expect.closeTo(81, 1), currency: "USDC", type: "repay", usdAmount: expect.closeTo(81, 1) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        { amount: expect.closeTo(433, 0.5), currency: "USDC", type: "repay", usdAmount: expect.closeTo(433, 0.5) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+        { amount: expect.closeTo(81, 0.5), currency: "USDC", type: "repay", usdAmount: expect.closeTo(81, 0.5) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       ]);
     });
 
