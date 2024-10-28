@@ -65,7 +65,7 @@
     "expo-updates": "~0.25.27",
     "expo-web-browser": "~13.0.3",
     "fast-text-encoding": "^1.0.6",
-    "hono": "^4.6.6",
+    "hono": "^4.6.7",
     "i18n-iso-countries": "^7.12.0",
     "moti": "^0.29.0",
     "react": "18.2.0",
@@ -90,11 +90,11 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.9",
-    "@babel/preset-env": "^7.25.9",
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
     "@changesets/cli": "^2.27.9",
     "@changesets/types": "^6.0.0",
-    "@eslint-community/eslint-plugin-eslint-comments": "^4.4.0",
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.4.1",
     "@exactly/protocol": "exactly/protocol#16a172a",
     "@expo/image-utils": "^0.5.1",
     "@react-navigation/bottom-tabs": "^6.6.1",
@@ -106,10 +106,10 @@
     "@types/eslint": "^9.6.1",
     "@types/eslint-plugin-jsx-a11y": "^6.9.0",
     "@types/fast-text-encoding": "^1.0.3",
-    "@types/node": "^22.7.9",
+    "@types/node": "^22.8.1",
     "@types/react": "~18.2.79",
-    "@typescript-eslint/eslint-plugin": "^8.11.0",
-    "@typescript-eslint/parser": "^8.11.0",
+    "@typescript-eslint/eslint-plugin": "^8.12.0",
+    "@typescript-eslint/parser": "^8.12.0",
     "@vitest/eslint-plugin": "^1.1.7",
     "@wagmi/cli": "^2.1.16",
     "babel-plugin-module-resolver": "^5.0.2",
@@ -121,7 +121,7 @@
     "eslint-import-resolver-typescript": "^3.6.3",
     "eslint-plugin-drizzle": "^0.2.3",
     "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-jsx-a11y": "^6.10.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-n": "^17.11.1",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.2",
@@ -214,11 +214,6 @@
         "react-native-screens",
         "sharp-cli",
         "tamagui"
-      ]
-    },
-    "auditConfig": {
-      "ignoreCves": [
-        "CVE-2024-48948"
       ]
     },
     "peerDependencyRules": {
