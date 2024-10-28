@@ -88,7 +88,7 @@ export default function ProfileHeader() {
 
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
           <Pressable onPress={toggle} hitSlop={ms(15)}>
-            {hidden ? <Eye color="$uiNeutralPrimary" /> : <EyeOff color="$uiNeutralPrimary" />}
+            {hidden ? <EyeOff color="$uiNeutralPrimary" /> : <Eye color="$uiNeutralPrimary" />}
           </Pressable>
           <Pressable onPress={settings} hitSlop={ms(15)}>
             <Settings color="$uiNeutralPrimary" />
