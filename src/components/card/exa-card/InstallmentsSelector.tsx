@@ -132,7 +132,9 @@ function Installment({
       hitSlop={ms(10)}
       minHeight={39}
       minWidth={13.6}
-      backgroundColor={index + 1 > value ? "$backgroundSoft" : "$interactiveBaseBrandSoftDefault"}
+      backgroundColor={
+        disabled ? "$interactiveDisabled" : index + 1 > value ? "$backgroundSoft" : "$interactiveBaseBrandSoftDefault"
+      }
       borderRadius={expanded ? "$r3" : "$r2"}
       justifyContent="center"
       alignItems="center"
@@ -151,7 +153,16 @@ function Installment({
     >
       <AnimatedView animation="moderate" opacity={index + 1 === value ? 1 : expanded ? 0.5 : 0}>
         <Animated.Text style={translateFontAnim}>
-          <Text emphasized color={index + 1 > value ? "$uiBrandTertiary" : "$interactiveOnBaseBrandSoft"}>
+          <Text
+            emphasized
+            color={
+              disabled
+                ? "$interactiveOnDisabled"
+                : index + 1 > value
+                  ? "$uiBrandTertiary"
+                  : "$interactiveOnBaseBrandSoft"
+            }
+          >
             {index + 1}
           </Text>
         </Animated.Text>
