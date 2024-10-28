@@ -21,6 +21,7 @@ import { APIError, getActivity, getCard, createCard, kycStatus, setCardStatus } 
 import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
 import LatestActivity from "../shared/LatestActivity";
+import PluginUpgrade from "../shared/PluginUpgrade";
 import RefreshControl from "../shared/RefreshControl";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -149,6 +150,7 @@ export default function Card() {
                     </Pressable>
                   </View>
                 </XStack>
+                <PluginUpgrade />
                 <ExaCard disabled={!cardDetails || cardDetails.status === "FROZEN"} />
                 {revealError && (
                   <Text color="$uiErrorPrimary" fontWeight="bold">
