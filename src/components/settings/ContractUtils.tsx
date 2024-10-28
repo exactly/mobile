@@ -42,11 +42,9 @@ export default function ContractUtils() {
     account: address,
     args: [address ?? zeroAddress],
   });
+  const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
-  });
-  const { data: pluginManifest } = useReadExaPluginPluginManifest({
-    address: exaPluginAddress,
   });
 
   const marketUSDC = markets?.find((market) => market.asset === usdcAddress);
