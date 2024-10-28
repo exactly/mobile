@@ -1,4 +1,4 @@
-import { exaPluginAddress, marketUSDCAddress } from "@exactly/common/generated/chain";
+import { marketUSDCAddress } from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/validation";
 import { ChevronDown, Eye, EyeOff, Info, Snowflake, CreditCard } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -43,10 +43,9 @@ export default function Card() {
     queryFn: () => getActivity({ include: "card" }),
   });
 
-  const { address } = useAccount();
   const { queryKey } = useMarketAccount(marketUSDCAddress);
-
-  const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
+  const { address } = useAccount();
+  const { refetch: refetchInstalledPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
   });
 
@@ -121,7 +120,9 @@ export default function Card() {
               margin={-5}
               refreshing={isPending}
               onRefresh={() => {
+                refetchCard().catch(handleError);
                 refetchPurchases().catch(handleError);
+                refetchInstalledPlugins().catch(handleError);
                 queryClient.refetchQueries({ queryKey }).catch(handleError);
               }}
             />
@@ -148,11 +149,7 @@ export default function Card() {
                     </Pressable>
                   </View>
                 </XStack>
-                <ExaCard
-                  disabled={
-                    !cardDetails || cardDetails.status === "FROZEN" || exaPluginAddress !== installedPlugins?.[0]
-                  }
-                />
+                <ExaCard disabled={!cardDetails || cardDetails.status === "FROZEN"} />
                 {revealError && (
                   <Text color="$uiErrorPrimary" fontWeight="bold">
                     {revealError.message}

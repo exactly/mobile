@@ -1,19 +1,26 @@
+import { exaPluginAddress } from "@exactly/common/generated/chain";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import Animated from "react-native-reanimated";
 import { YStack } from "tamagui";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
 import CardContents from "./CardContents";
 import InstallmentsSelector from "./InstallmentsSelector";
 import ModeSelector from "./ModeSelector";
+import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../../generated/contracts";
 import handleError from "../../../utils/handleError";
 import queryClient from "../../../utils/queryClient";
 import { getCard, setCardMode } from "../../../utils/server";
 import View from "../../shared/View";
 
 export default function ExaCard({ disabled }: { disabled: boolean }) {
+  const { address } = useAccount();
   const { data: card, isFetching: isFetchingCardMode } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
-
+  const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
+    address: address ?? zeroAddress,
+  });
   const { mutateAsync: mutateMode, isPending: isTogglingMode } = useMutation({
     mutationKey: ["card", "mode"],
     mutationFn: setCardMode,
@@ -70,12 +77,14 @@ export default function ExaCard({ disabled }: { disabled: boolean }) {
       >
         <ModeSelector isCredit={isCredit} disabled={disabled} />
       </View>
-      <InstallmentsSelector
-        isCredit={isCredit}
-        disabled={disabled}
-        value={card?.mode ?? 0}
-        onChange={setInstallments}
-      />
+      {exaPluginAddress === installedPlugins?.[0] && (
+        <InstallmentsSelector
+          isCredit={isCredit}
+          disabled={disabled}
+          value={card?.mode ?? 0}
+          onChange={setInstallments}
+        />
+      )}
     </AnimatedYStack>
   );
 }
