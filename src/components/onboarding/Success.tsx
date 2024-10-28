@@ -35,12 +35,11 @@ export default function Success() {
               marginTop="$s4"
               marginBottom="$s5"
               onPress={() => {
-                // TODO Implement account setup
                 router.replace("/(app)");
               }}
               iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" />}
             >
-              Start account setup
+              Get started
             </ActionButton>
           </View>
         </View>
