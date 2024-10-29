@@ -80,6 +80,8 @@ export default async function setup({ provide }: GlobalSetupContext) {
     shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter.contractAddress;
     shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
     shell.env.PROTOCOL_VELODROMEPOOLFACTORY_ADDRESS = velodromeFactory.contractAddress;
+    await $(shell)`forge script script/InstallmentsPreviewer.s.sol
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/IssuerChecker.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
@@ -97,6 +99,12 @@ export default async function setup({ provide }: GlobalSetupContext) {
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
+  const [installmentsPreviewer] = parse(
+    object({
+      transactions: tuple([object({ contractName: literal("InstallmentsPreviewer"), contractAddress: Address })]),
+    }),
+    await import(`@exactly/plugin/broadcast/InstallmentsPreviewer.s.sol/${foundry.id}/run-latest.json`),
+  ).transactions;
   const [refunder] = parse(
     object({
       transactions: tuple([object({ contractName: literal("Refunder"), contractAddress: Address })]),
@@ -152,6 +160,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   }
 
   provide("Auditor", auditor.contractAddress);
+  provide("InstallmentsPreviewer", installmentsPreviewer.contractAddress);
   provide("EXA", exa.contractAddress);
   provide("ExaAccountFactory", exaAccountFactory.contractAddress);
   provide("ExaPlugin", exaPlugin.contractAddress);
@@ -224,6 +233,7 @@ const Protocol = object({
 declare module "vitest" {
   export interface ProvidedContext {
     Auditor: Address;
+    InstallmentsPreviewer: Address;
     EXA: Address;
     ExaAccountFactory: Address;
     ExaPlugin: Address;

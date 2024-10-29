@@ -1,12 +1,13 @@
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import chain, {
   exaPluginAbi,
-  previewerAddress,
+  installmentsPreviewerAbi,
+  installmentsPreviewerAddress,
   upgradeableModularAccountAbi,
   usdcAddress,
 } from "@exactly/common/generated/chain";
 import { Address, Hash, type Hex } from "@exactly/common/validation";
-import { fixedUtilization, globalUtilization, MATURITY_INTERVAL, splitInstallments } from "@exactly/lib";
+import { MATURITY_INTERVAL, splitInstallments } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import {
   captureException,
@@ -33,12 +34,11 @@ import {
   isHash,
   maxUint256,
   padHex,
-  zeroAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, transactions } from "../database/index";
-import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi, previewerAbi } from "../generated/contracts";
+import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
 import COLLECTOR from "../utils/COLLECTOR";
 import keeper from "../utils/keeper";
 import publicClient from "../utils/publicClient";
@@ -132,34 +132,27 @@ export default new Hono().post(
           args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
         } as const;
       }
-      const exactly = await startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
+      const preview = await startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
         publicClient.readContract({
-          address: previewerAddress,
-          functionName: "exactly",
-          args: [zeroAddress],
-          abi: previewerAbi,
+          abi: installmentsPreviewerAbi,
+          address: installmentsPreviewerAddress,
+          functionName: "preview",
         }),
       );
-      const market = exactly.find(({ asset }) => asset === usdcAddress);
-      if (!market) throw new Error("usdc market not found");
       const { amounts } = startSpan({ name: "split installments", op: "exa.split" }, () =>
         splitInstallments(
           amount,
-          market.totalFloatingDepositAssets,
+          preview.floatingAssets,
           firstMaturity,
-          market.fixedPools.length,
-          market.fixedPools
+          preview.fixedUtilizations.length,
+          preview.fixedUtilizations
             .filter(
               ({ maturity }) => maturity >= firstMaturity && maturity < firstMaturity + card.mode * MATURITY_INTERVAL,
             )
-            .map(({ supplied, borrowed }) => fixedUtilization(supplied, borrowed, market.totalFloatingDepositAssets)),
-          market.floatingUtilization,
-          globalUtilization(
-            market.totalFloatingDepositAssets,
-            market.totalFloatingBorrowAssets,
-            market.floatingBackupBorrowed,
-          ),
-          market.interestRateModel.parameters,
+            .map(({ utilization }) => utilization),
+          preview.floatingUtilization,
+          preview.globalUtilization,
+          preview.interestRateModel,
         ),
       );
       return {
