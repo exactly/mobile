@@ -16,7 +16,6 @@ import { BaseScript } from "../../script/Base.s.sol";
 import { ExaAccountFactory } from "../../src/ExaAccountFactory.sol";
 import { IExaAccount, IMarket } from "../../src/IExaAccount.sol";
 import { IssuerChecker } from "../../src/IssuerChecker.sol";
-import { MockVelodromeFactory } from "./MockVelodromeFactory.sol";
 
 contract BobScript is BaseScript {
   using OwnersLib for address[];
@@ -51,9 +50,6 @@ contract BobScript is BaseScript {
     vm.label(address(factory.ENTRYPOINT()), "EntryPoint");
     vm.label(factory.WEBAUTHN_OWNER_PLUGIN(), "WebauthnOwnerPlugin");
     vm.label(factory.IMPL(), "ModularAccount");
-    MockVelodromeFactory velodromeFactory = MockVelodromeFactory(protocol("VelodromePoolFactory"));
-    vm.label(address(velodromeFactory), "VelodromeFactory");
-    vm.label(velodromeFactory.getPool(address(exa), address(usdc), false), "EXA/USDC");
 
     keeper = acct("keeper");
     bob = vm.addr(bobKey);
@@ -93,8 +89,8 @@ contract BobScript is BaseScript {
     vm.stopBroadcast();
     Call[] memory calls = new Call[](3);
     calls[0] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.repay, (maturity)));
-    calls[1] =
-      Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.crossRepay, (maturity + FixedLib.INTERVAL, exaEXA)));
+    // calls[1] =
+    //   Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.crossRepay, (maturity + FixedLib.INTERVAL, exaEXA)));
     calls[2] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, 69e6, address(0x69))));
     vm.broadcast(bob);
     IStandardExecutor(address(bobAccount)).executeBatch(calls);
