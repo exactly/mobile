@@ -25,7 +25,8 @@ const usdc = loadDeployment("USDC");
 const weth = loadDeployment("WETH");
 const [exaPlugin, factory] = loadBroadcast("Deploy").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
-if (!exaPlugin || !factory || !issuerChecker) throw new Error("missing contracts");
+const [installmentsPreviewer] = loadBroadcast("InstallmentsPreviewer").transactions;
+if (!exaPlugin || !factory || !issuerChecker || !installmentsPreviewer) throw new Error("missing contracts");
 
 export default defineConfig([
   {
@@ -51,6 +52,7 @@ export default defineConfig([
         auditor: auditor.address,
         exaAccountFactory: factory.contractAddress,
         exaPlugin: exaPlugin.contractAddress,
+        installmentsPreviewer: installmentsPreviewer.contractAddress,
         marketUSDC: marketUSDC.address,
         marketWETH: marketWETH.address,
         previewer: previewer.address,
@@ -63,6 +65,7 @@ export default defineConfig([
         include: [
           "ExaAccountFactory.sol/ExaAccountFactory.json",
           "ExaPlugin.sol/ExaPlugin.json",
+          "InstallmentsPreviewer.sol/InstallmentsPreviewer.json",
           "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
         ],
       }),
