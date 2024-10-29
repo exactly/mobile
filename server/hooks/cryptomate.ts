@@ -115,6 +115,7 @@ export default new Hono().post(
     if (!card) return c.json("card not found", 404);
     const account = v.parse(Address, card.credential.account);
     setUser({ id: account });
+    setTag("exa.mode", card.mode);
     const amount = BigInt(Math.round(payload.data.bill_amount * 1e6));
     const call = await (async () => {
       const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
@@ -131,31 +132,35 @@ export default new Hono().post(
           args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
         } as const;
       }
-      const exactly = await publicClient.readContract({
-        address: previewerAddress,
-        functionName: "exactly",
-        args: [zeroAddress],
-        abi: previewerAbi,
-      });
+      const exactly = await startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
+        publicClient.readContract({
+          address: previewerAddress,
+          functionName: "exactly",
+          args: [zeroAddress],
+          abi: previewerAbi,
+        }),
+      );
       const market = exactly.find(({ asset }) => asset === usdcAddress);
       if (!market) throw new Error("usdc market not found");
-      const { amounts } = splitInstallments(
-        amount,
-        market.totalFloatingDepositAssets,
-        firstMaturity,
-        market.fixedPools.length,
-        market.fixedPools
-          .filter(
-            ({ maturity }) => maturity >= firstMaturity && maturity < firstMaturity + card.mode * MATURITY_INTERVAL,
-          )
-          .map(({ supplied, borrowed }) => fixedUtilization(supplied, borrowed, market.totalFloatingDepositAssets)),
-        market.floatingUtilization,
-        globalUtilization(
+      const { amounts } = startSpan({ name: "split installments", op: "exa.split" }, () =>
+        splitInstallments(
+          amount,
           market.totalFloatingDepositAssets,
-          market.totalFloatingBorrowAssets,
-          market.floatingBackupBorrowed,
+          firstMaturity,
+          market.fixedPools.length,
+          market.fixedPools
+            .filter(
+              ({ maturity }) => maturity >= firstMaturity && maturity < firstMaturity + card.mode * MATURITY_INTERVAL,
+            )
+            .map(({ supplied, borrowed }) => fixedUtilization(supplied, borrowed, market.totalFloatingDepositAssets)),
+          market.floatingUtilization,
+          globalUtilization(
+            market.totalFloatingDepositAssets,
+            market.totalFloatingBorrowAssets,
+            market.floatingBackupBorrowed,
+          ),
+          market.interestRateModel.parameters,
         ),
-        market.interestRateModel.parameters,
       );
       return {
         functionName: "collectInstallments",
