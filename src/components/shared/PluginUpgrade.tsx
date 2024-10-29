@@ -17,16 +17,13 @@ import handleError from "../../utils/handleError";
 export default function PluginUpgrade() {
   const { address } = useAccount();
   const { data: installedPlugins, refetch: refetchInstalledPlugins } =
-    useReadUpgradeableModularAccountGetInstalledPlugins({
-      address: address ?? zeroAddress,
-    });
+    useReadUpgradeableModularAccountGetInstalledPlugins({ address, query: { refetchOnMount: true } });
   const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
   const { data: uninstallPluginSimulation } = useSimulateUpgradeableModularAccountUninstallPlugin({
     address,
     args: [installedPlugins?.[0] ?? zeroAddress, "0x", "0x"],
     query: { enabled: !!address && !!installedPlugins },
   });
-
   const { mutateAsync: updatePlugin, isPending: isUpdating } = useMutation({
     mutationFn: async () => {
       if (!accountClient) throw new Error("no account client");
@@ -63,9 +60,7 @@ export default function PluginUpgrade() {
       await refetchInstalledPlugins();
     },
   });
-
-  if (installedPlugins?.[0] === exaPluginAddress) return null;
-
+  if (!installedPlugins || installedPlugins[0] === exaPluginAddress) return null;
   return (
     <InfoBadge
       title="An account upgrade is required to access the latest features."
