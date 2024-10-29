@@ -16,6 +16,7 @@ import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
 import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
+import { OnboardingProvider } from "../components/context/OnboardingProvider";
 import ThemeProvider from "../components/context/ThemeProvider";
 import handleError from "../utils/handleError";
 import queryClient, { persister } from "../utils/queryClient";
@@ -63,10 +64,12 @@ export default wrap(function RootLayout() {
       <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
         <SafeAreaProvider>
           <ThemeProvider>
-            <Stack initialRouteName="(app)" screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(app)" />
-              <Stack.Screen name="onboarding" />
-            </Stack>
+            <OnboardingProvider>
+              <Stack initialRouteName="(app)" screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(app)" />
+                <Stack.Screen name="onboarding" />
+              </Stack>
+            </OnboardingProvider>
           </ThemeProvider>
         </SafeAreaProvider>
         {devtools && <ReactQueryDevtools initialIsOpen={false} client={queryClient} />}

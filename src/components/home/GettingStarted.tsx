@@ -2,7 +2,7 @@ import type { Passkey } from "@exactly/common/validation";
 import { ArrowRight, ChevronRight, IdCard } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import { PixelRatio, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
@@ -10,11 +10,12 @@ import { XStack, YStack } from "tamagui";
 import handleError from "../../utils/handleError";
 import { verifyIdentity } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
+import { OnboardingContext } from "../context/OnboardingProvider";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-export default function GettingStarted({ hasFunds }: { hasFunds: boolean }) {
-  const completedSteps = hasFunds ? 2 : 1;
+export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean; hasKYC: boolean }) {
+  const { steps, currentStep, completedSteps, setSteps } = useContext(OnboardingContext);
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
   const { mutateAsync: startKYC } = useMutation({
     mutationKey: ["kyc"],
@@ -26,21 +27,27 @@ export default function GettingStarted({ hasFunds }: { hasFunds: boolean }) {
       await queryClient.invalidateQueries({ queryKey: ["kyc", "status"] });
     },
   });
-
-  function handleViewAll() {
-    router.push({
-      pathname: "/getting-started",
-      params: { step: hasFunds ? "verify-identity" : "add-funds" },
-    });
-  }
-
-  function handleStep() {
-    if (hasFunds) {
-      startKYC().catch(handleError);
-    } else {
-      router.push({ pathname: "/add-funds/add-crypto" });
+  function handleStepPress() {
+    switch (currentStep?.id) {
+      case "add-funds":
+        router.push("/add-funds/add-crypto");
+        break;
+      case "verify-identity":
+        startKYC().catch(handleError);
+        break;
     }
   }
+  useEffect(() => {
+    setSteps((previous) => {
+      return previous.map((step) => {
+        if (step.id === "add-funds" && hasFunds) return { ...step, completed: true };
+        if (step.id === "verify-identity" && hasKYC) return { ...step, completed: true };
+        return step;
+      });
+    });
+  }, [hasFunds, hasKYC, setSteps]);
+
+  if (hasFunds && hasKYC) return null;
 
   return (
     <YStack backgroundColor="$backgroundBrandSoft" borderWidth={1} borderColor="$borderBrandSoft" borderRadius="$r3">
@@ -50,7 +57,13 @@ export default function GettingStarted({ hasFunds }: { hasFunds: boolean }) {
         </Text>
         <Pressable hitSlop={ms(15)}>
           <XStack gap={2} alignItems="center">
-            <Pressable hitSlop={ms(15)} onPress={handleViewAll}>
+            <Pressable
+              hitSlop={ms(15)}
+              onPress={() => {
+                if (!currentStep) return;
+                router.push("/getting-started");
+              }}
+            >
               <Text emphasized footnote color="$interactiveBaseBrandDefault">
                 View all steps
               </Text>
@@ -64,7 +77,7 @@ export default function GettingStarted({ hasFunds }: { hasFunds: boolean }) {
           <XStack gap="$s3" alignItems="center">
             <IdCard size={ms(24) * PixelRatio.getFontScale()} color="$uiBrandSecondary" />
             <Text emphasized headline color="$uiBrandSecondary" maxFontSizeMultiplier={1.3}>
-              {hasFunds ? "Verify your identity" : "Add funds to account"}
+              {steps.find(({ completed }) => !completed)?.title}
             </Text>
           </XStack>
           <XStack gap="$s3_5" alignItems="center">
@@ -84,7 +97,7 @@ export default function GettingStarted({ hasFunds }: { hasFunds: boolean }) {
             </Text>
           </XStack>
         </YStack>
-        <Pressable hitSlop={ms(15)} onPress={handleStep}>
+        <Pressable hitSlop={ms(15)} onPress={handleStepPress}>
           <View
             width={ms(44)}
             height={ms(44)}

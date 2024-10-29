@@ -38,13 +38,7 @@ export default function Home() {
     account: address,
     args: [address ?? zeroAddress],
   });
-
-  const {
-    data: KYCStatus,
-    error: KYCStatusError,
-    refetch: refetchKYCStatus,
-  } = useQuery({ queryKey: ["kyc", "status"], queryFn: kycStatus });
-
+  const { data: KYCStatus, refetch: refetchKYCStatus } = useQuery({ queryKey: ["kyc", "status"], queryFn: kycStatus });
   let usdBalance = 0n;
   if (markets) {
     for (const market of markets) {
@@ -53,7 +47,6 @@ export default function Home() {
       }
     }
   }
-
   const isPending = isPendingActivity || isPendingPreviewer;
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
@@ -82,7 +75,7 @@ export default function Home() {
               <HomeActions />
             </View>
             <View padded gap="$s5">
-              {(!KYCStatus || KYCStatusError) && <GettingStarted hasFunds={usdBalance > 0n} />}
+              <GettingStarted hasFunds={usdBalance > 0n} hasKYC={KYCStatus === "ok"} />
               <LatestActivity activity={activity} />
             </View>
           </View>
