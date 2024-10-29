@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.20;
 
-import { FixedLib } from "@exactly/protocol/utils/FixedLib.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 
@@ -44,7 +43,7 @@ contract KeeperFeeModel {
     uint256 amountsByTime = 0;
     uint256 totalAmount = 0;
     for (uint256 i = 0; i < amounts.length; ++i) {
-      amountsByTime += amounts[i] * (firstMaturity + FixedLib.INTERVAL * i - block.timestamp);
+      amountsByTime += amounts[i] * (firstMaturity + 4 weeks * i - block.timestamp);
       totalAmount += amounts[i];
     }
     uint256 avgDuration = amountsByTime.divWad(totalAmount);
