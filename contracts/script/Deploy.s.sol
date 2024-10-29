@@ -5,9 +5,7 @@ import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factor
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
-import {
-  ExaPlugin, IAuditor, IBalancerVault, IInstallmentsRouter, IMarket, IVelodromeFactory
-} from "../src/ExaPlugin.sol";
+import { ExaPlugin, IAuditor, IBalancerVault, IInstallmentsRouter, IMarket } from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
 import { Refunder } from "../src/Refunder.sol";
@@ -26,7 +24,6 @@ contract DeployScript is BaseScript {
   IInstallmentsRouter public installmentsRouter;
   Refunder public refunder;
   IBalancerVault public balancerVault;
-  IVelodromeFactory public velodromeFactory;
 
   address public keeper;
   address public deployer;
@@ -43,7 +40,6 @@ contract DeployScript is BaseScript {
     keeperFeeModel = KeeperFeeModel(broadcast("KeeperFeeModel"));
 
     balancerVault = IBalancerVault(protocol("BalancerVault"));
-    velodromeFactory = IVelodromeFactory(protocol("VelodromePoolFactory"));
 
     keeper = acct("keeper");
     deployer = acct("deployer");
@@ -54,15 +50,7 @@ contract DeployScript is BaseScript {
     vm.startBroadcast(deployer);
 
     exaPlugin = new ExaPlugin(
-      auditor,
-      exaUSDC,
-      exaWETH,
-      balancerVault,
-      installmentsRouter,
-      velodromeFactory,
-      issuerChecker,
-      collector,
-      keeperFeeModel
+      auditor, exaUSDC, exaWETH, balancerVault, installmentsRouter, issuerChecker, collector, keeperFeeModel
     );
     factory = new ExaAccountFactory(deployer, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 
