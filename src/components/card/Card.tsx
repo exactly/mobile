@@ -1,17 +1,17 @@
 import { marketUSDCAddress } from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/validation";
-import { ChevronDown, Eye, EyeOff, Info, Snowflake, CreditCard } from "@tamagui/lucide-icons";
+import { Eye, EyeOff, Info, Snowflake, CreditCard } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, styled, Spinner, XStack, Accordion, Square } from "tamagui";
+import { ScrollView, styled, Spinner, XStack, Square } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import CardDetails from "./CardDetails";
 import SimulatePurchase from "./SimulatePurchase";
-import SpendingLimitButton from "./SpendingLimitButton";
+import SpendingLimits from "./SpendingLimits";
 import ExaCard from "./exa-card/ExaCard";
 import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
@@ -205,45 +205,8 @@ export default function Card() {
               </View>
               <View padded gap="$s5">
                 {cardDetails && cardDetails.mode > 0 && <SimulatePurchase installments={cardDetails.mode} />}
+                <SpendingLimits />
                 <LatestActivity activity={purchases} title="Latest purchases" />
-                <View>
-                  <Accordion
-                    overflow="hidden"
-                    type="multiple"
-                    backgroundColor="$backgroundSoft"
-                    borderRadius="$r3"
-                    padding="$s4"
-                  >
-                    <Accordion.Item value="a1" flex={1}>
-                      <Accordion.Trigger
-                        unstyled
-                        flexDirection="row"
-                        justifyContent="space-between"
-                        backgroundColor="transparent"
-                        borderWidth={0}
-                        alignItems="center"
-                      >
-                        {({ open }: { open: boolean }) => (
-                          <>
-                            <Text emphasized headline>
-                              Spending Limits
-                            </Text>
-                            <Square animation="quick" rotate={open ? "180deg" : "0deg"}>
-                              <ChevronDown size={ms(24)} color="$interactiveTextBrandDefault" />
-                            </Square>
-                          </>
-                        )}
-                      </Accordion.Trigger>
-                      <Accordion.HeightAnimator animation="quick">
-                        <Accordion.Content exitStyle={exitStyle} gap="$s4" paddingTop="$s4">
-                          <SpendingLimitButton title="Daily" limit={1000} />
-                          <SpendingLimitButton title="Weekly" limit={3000} />
-                          <SpendingLimitButton title="Monthly" limit={5000} />
-                        </Accordion.Content>
-                      </Accordion.HeightAnimator>
-                    </Accordion.Item>
-                  </Accordion>
-                </View>
               </View>
             </View>
           </View>
@@ -259,8 +222,6 @@ export default function Card() {
     </SafeView>
   );
 }
-
-const exitStyle = { opacity: 0 };
 
 const StyledAction = styled(View, {
   height: ms(64),
