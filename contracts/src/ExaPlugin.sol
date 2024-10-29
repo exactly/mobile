@@ -62,12 +62,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
+  address public constant LIFI = 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE;
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
   IMarket public immutable EXA_WETH;
   IBalancerVault public immutable BALANCER_VAULT;
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
-  IVelodromeFactory public immutable VELODROME_FACTORY;
   IssuerChecker public immutable ISSUER_CHECKER;
 
   uint256 public immutable INTERVAL = 30 days;
@@ -86,7 +86,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IMarket exaWETH,
     IBalancerVault balancerVault,
     IInstallmentsRouter installmentsRouter,
-    IVelodromeFactory velodromeFactory,
     IssuerChecker issuerChecker,
     address collector_,
     KeeperFeeModel keeperFeeModel_
@@ -96,7 +95,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     EXA_WETH = exaWETH;
     BALANCER_VAULT = balancerVault;
     INSTALLMENTS_ROUTER = installmentsRouter;
-    VELODROME_FACTORY = velodromeFactory;
     ISSUER_CHECKER = issuerChecker;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -112,54 +110,53 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function repay(uint256 maturity) external {
-    IERC20[] memory tokens = new IERC20[](1);
-    tokens[0] = IERC20(EXA_USDC.asset());
-
     uint256 positionAssets;
     uint256 maxRepay;
-    uint256[] memory amounts = new uint256[](1);
     (positionAssets, maxRepay) = _previewRepay(maturity);
 
-    amounts[0] = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender));
+    uint256 amount = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender));
     positionAssets = positionAssets.min(EXA_USDC.maxWithdraw(msg.sender));
-    bytes memory data = abi.encode(
+
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amount)))
+    );
+    _flashLoan(
+      amount,
+      BalancerCallbackData({
+        maturity: maturity,
+        borrower: msg.sender,
+        positionAssets: positionAssets.min(EXA_USDC.maxWithdraw(msg.sender)),
+        maxRepay: amount,
+        marketIn: IMarket(address(0)),
+        amountIn: 0,
+        route: ""
+      })
+    );
+  }
+
+  function crossRepay(
+    uint256 maturity,
+    uint256 positionAssets,
+    uint256 maxRepay,
+    IMarket collateral,
+    uint256 amountIn,
+    bytes calldata route
+  ) external onlyMarket(collateral) {
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn))
+    );
+    _flashLoan(
+      maxRepay,
       BalancerCallbackData({
         maturity: maturity,
         borrower: msg.sender,
         positionAssets: positionAssets,
-        maxRepay: amounts[0]
+        maxRepay: maxRepay,
+        marketIn: collateral,
+        amountIn: amountIn,
+        route: route
       })
     );
-    callHash = keccak256(data);
-
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amounts[0])))
-    );
-
-    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, data);
-  }
-
-  function crossRepay(uint256 maturity, IMarket collateral) external {
-    address asset = collateral.asset();
-    address usdc = EXA_USDC.asset();
-    address pool = VELODROME_FACTORY.getPool(asset, usdc, false);
-    (uint256 positionAssets, uint256 maxRepay) = _previewRepay(maturity);
-    uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
-    uint256 collateralAssets = _getAmountIn(pool, maxRepay, usdc > asset, swapFee);
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), collateralAssets))
-    );
-    bytes memory data = abi.encode(
-      VelodromeCallbackData({
-        maturity: maturity,
-        borrower: msg.sender,
-        positionAssets: positionAssets,
-        collateralMarket: collateral,
-        collateralAssets: collateralAssets,
-        fee: swapFee
-      })
-    );
-    IVelodromePool(pool).swap(usdc < asset ? maxRepay : 0, usdc > asset ? maxRepay : 0, address(this), data);
   }
 
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature)
@@ -288,10 +285,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if (msg.sender != address(BALANCER_VAULT)) revert Unauthorized();
       return;
     }
-    if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_VELODROME)) {
-      if (!VELODROME_FACTORY.isPool(msg.sender)) revert Unauthorized();
-      return;
-    }
     revert NotImplemented(msg.sig, functionId);
   }
 
@@ -320,7 +313,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         return "";
       }
 
-      if (receiver == collector) return "";
+      if (receiver == address(this) || receiver == collector) return "";
 
       Proposal memory proposal = proposals[owner];
 
@@ -355,7 +348,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](11);
+    manifest.executionFunctions = new bytes4[](10);
     manifest.executionFunctions[0] = this.propose.selector;
     manifest.executionFunctions[1] = this.repay.selector;
     manifest.executionFunctions[2] = this.crossRepay.selector;
@@ -366,7 +359,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.executionFunctions[7] = this.pokeETH.selector;
     manifest.executionFunctions[8] = this.withdraw.selector;
     manifest.executionFunctions[9] = this.receiveFlashLoan.selector;
-    manifest.executionFunctions[10] = this.hook.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -383,12 +375,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_BALANCER),
       dependencyIndex: 0
     });
-    ManifestFunction memory velodromeRuntimeValidationFunction = ManifestFunction({
-      functionType: ManifestAssociatedFunctionType.SELF,
-      functionId: uint8(FunctionId.RUNTIME_VALIDATION_VELODROME),
-      dependencyIndex: 0
-    });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](11);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](10);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
@@ -428,10 +415,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
       executionSelector: this.receiveFlashLoan.selector,
       associatedFunction: balancerRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
-      executionSelector: this.hook.selector,
-      associatedFunction: velodromeRuntimeValidationFunction
     });
 
     ManifestFunction memory proposedValidationFunction = ManifestFunction({
@@ -476,23 +459,29 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     BalancerCallbackData memory b = abi.decode(data, (BalancerCallbackData));
 
-    uint256 actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower).min(
-      EXA_USDC.maxWithdraw(b.borrower)
-    );
-    assert(actualRepay <= b.maxRepay);
-    if (actualRepay < b.maxRepay) EXA_USDC.deposit(b.maxRepay - actualRepay, b.borrower);
+    uint256 actualRepay;
+    if (b.amountIn == 0) {
+      actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower).min(
+        EXA_USDC.maxWithdraw(b.borrower)
+      );
 
-    EXA_USDC.withdraw(b.maxRepay, address(BALANCER_VAULT), b.borrower);
-  }
+      assert(actualRepay <= b.maxRepay);
+      if (actualRepay < b.maxRepay) EXA_USDC.deposit(b.maxRepay - actualRepay, b.borrower);
 
-  function hook(address sender, uint256 amount0Out, uint256 amount1Out, bytes calldata data) external {
-    if (sender != address(this)) revert Unauthorized();
+      EXA_USDC.withdraw(b.maxRepay, address(BALANCER_VAULT), b.borrower);
+    } else {
+      actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower);
 
-    VelodromeCallbackData memory v = abi.decode(data, (VelodromeCallbackData));
-    uint256 maxRepay = amount0Out == 0 ? amount1Out : amount0Out;
-    uint256 actualRepay = EXA_USDC.repayAtMaturity(v.maturity, v.positionAssets, maxRepay, v.borrower);
-    assert(actualRepay == maxRepay);
-    v.collateralMarket.withdraw(v.collateralAssets, msg.sender, v.borrower);
+      b.marketIn.withdraw(b.amountIn, address(this), b.borrower);
+
+      uint256 balance = IERC20(EXA_USDC.asset()).balanceOf(address(this));
+      IERC20(b.marketIn.asset()).approve(LIFI, b.amountIn);
+      LIFI.functionCall(b.route);
+      uint256 received = IERC20(EXA_USDC.asset()).balanceOf(address(this)) - balance;
+
+      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), b.maxRepay);
+      EXA_USDC.deposit(received - actualRepay, b.borrower);
+    }
   }
 
   receive() external payable { } // solhint-disable-line no-empty-blocks
@@ -523,21 +512,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (sumCollateral < sumDebtPlusEffects) revert InsufficientLiquidity();
   }
 
-  function _getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
-    (uint256 reserve0, uint256 reserve1,) = IVelodromePool(pool).getReserves();
-    return (
-      isToken0
-        ? (reserve0 * amountOut * 10_000) / ((reserve1 - amountOut) * (10_000 - fee))
-        : (reserve1 * amountOut * 10_000) / ((reserve0 - amountOut) * (10_000 - fee))
-    ) + 1;
+  function _checkMarket(IMarket market) internal view {
+    if (!_isMarket(market)) revert NotMarket();
   }
 
-  function _previewRepay(uint256 maturity) internal view returns (uint256 positionAssets, uint256 maxRepay) {
-    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, msg.sender);
-    positionAssets = position.principal + position.fee;
-    maxRepay = block.timestamp < maturity
-      ? positionAssets - _fixedDepositYield(EXA_USDC, maturity, position.principal)
-      : positionAssets + positionAssets.mulWad((block.timestamp - maturity) * EXA_USDC.penaltyRate());
+  function _flashLoan(uint256 amount, BalancerCallbackData memory b) internal {
+    IERC20[] memory tokens = new IERC20[](1);
+    tokens[0] = IERC20(EXA_USDC.asset());
+    uint256[] memory amounts = new uint256[](1);
+    amounts[0] = amount;
+
+    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, _hash(abi.encode(b)));
   }
 
   function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256 yield) {
@@ -555,12 +540,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     }
   }
 
-  function _checkMarket(IMarket market) internal view {
-    if (!_isMarket(market)) revert NotMarket();
+  function _hash(bytes memory data) internal returns (bytes memory) {
+    callHash = keccak256(data);
+    return data;
   }
 
   function _isMarket(IMarket market) internal view returns (bool) {
     return AUDITOR.markets(market).isListed;
+  }
+
+  function _previewRepay(uint256 maturity) internal view returns (uint256 positionAssets, uint256 maxRepay) {
+    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, msg.sender);
+    positionAssets = position.principal + position.fee;
+    maxRepay = block.timestamp < maturity
+      ? positionAssets - _fixedDepositYield(EXA_USDC, maturity, position.principal)
+      : positionAssets + positionAssets.mulWad((block.timestamp - maturity) * EXA_USDC.penaltyRate());
   }
 
   modifier onlyMarket(IMarket market) {
@@ -582,7 +576,6 @@ enum FunctionId {
   RUNTIME_VALIDATION_SELF,
   RUNTIME_VALIDATION_KEEPER,
   RUNTIME_VALIDATION_BALANCER,
-  RUNTIME_VALIDATION_VELODROME,
   PRE_EXEC_VALIDATION_PROPOSED
 }
 
@@ -614,13 +607,7 @@ struct BalancerCallbackData {
   address borrower;
   uint256 positionAssets;
   uint256 maxRepay;
-}
-
-struct VelodromeCallbackData {
-  uint256 maturity;
-  address borrower;
-  uint256 positionAssets;
-  IMarket collateralMarket;
-  uint256 collateralAssets;
-  uint24 fee;
+  IMarket marketIn;
+  uint256 amountIn;
+  bytes route;
 }

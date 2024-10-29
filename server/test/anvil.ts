@@ -66,7 +66,6 @@ export default async function setup({ provide }: GlobalSetupContext) {
   const previewer = protocol[27];
   const installmentsRouter = protocol[28];
   const balancer = protocol[29];
-  const velodromeFactory = protocol[32];
 
   if (initialize) {
     shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor.contractAddress;
@@ -79,7 +78,6 @@ export default async function setup({ provide }: GlobalSetupContext) {
     shell.env.PROTOCOL_PREVIEWER_ADDRESS = previewer.contractAddress;
     shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter.contractAddress;
     shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
-    shell.env.PROTOCOL_VELODROMEPOOLFACTORY_ADDRESS = velodromeFactory.contractAddress;
     await $(shell)`forge script script/InstallmentsPreviewer.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/IssuerChecker.s.sol
@@ -222,11 +220,6 @@ const Protocol = object({
     }),
     object({ transactionType: literal("CALL") }),
     object({ transactionType: literal("CALL") }),
-    object({
-      transactionType: literal("CREATE"),
-      contractName: literal("MockVelodromeFactory"),
-      contractAddress: Address,
-    }),
   ]),
 });
 

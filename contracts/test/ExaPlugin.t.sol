@@ -8,10 +8,12 @@ import { FixedLib, Market } from "@exactly/protocol/Market.sol";
 
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
 
+import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
 
 import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
+import { Address } from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
@@ -24,7 +26,7 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
-import { ExaPlugin, FunctionId, IInstallmentsRouter, ZeroAddress } from "../src/ExaPlugin.sol";
+import { ExaPlugin, FunctionId, IBalancerVault, IInstallmentsRouter, ZeroAddress } from "../src/ExaPlugin.sol";
 import {
   CollectorSet,
   Expired,
@@ -57,6 +59,7 @@ contract ExaPluginTest is ForkTest {
   using FixedPointMathLib for uint256;
   using OwnersLib for address[];
   using LibString for address;
+  using Address for address;
   using ECDSA for bytes32;
 
   address internal owner;
@@ -130,7 +133,6 @@ contract ExaPluginTest is ForkTest {
       exaWETH,
       p.balancer(),
       IInstallmentsRouter(address(p.installmentsRouter())),
-      p.velodromeFactory(),
       issuerChecker,
       collector,
       keeperFeeModel
@@ -447,9 +449,7 @@ contract ExaPluginTest is ForkTest {
         abi.encodePacked(NoProposal.selector)
       )
     );
-    account.execute(
-      address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(exaPlugin), address(account)))
-    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), address(account))));
   }
 
   function test_withdraw_reverts_whenNoProposal() external {
@@ -615,21 +615,61 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
 
-  function test_crossRepay_repays() external {
-    uint256 maturity = block.timestamp + FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
+  function test_crossRepay_lifi() external {
+    vm.createSelectFork("optimism", 127_050_624);
+    account = ExaAccount(payable(0x6120Fb2A9d47f7955298b80363F00C620dB9f6E6));
+    uint256 amount = 0.0004e8;
 
-    vm.startPrank(keeper);
-    account.poke(exaEXA);
-    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+    vm.setEnv("DEPLOYER_ADDRESS", "");
+    vm.setEnv("KEEPER_ADDRESS", "");
+    vm.setEnv("ISSUER_ADDRESS", "");
+    vm.setEnv("PROTOCOL_MARKETUSDC_ADDRESS", "");
+    vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", "");
+    vm.setEnv("BROADCAST_REFUNDER_ADDRESS", "");
 
-    uint256 prevCollateral = exaEXA.balanceOf(address(account));
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0);
+    exaPlugin = new ExaPlugin(
+      IAuditor(protocol("Auditor")),
+      IMarket(protocol("MarketUSDC")),
+      IMarket(protocol("MarketWETH")),
+      IBalancerVault(protocol("BalancerVault")),
+      IInstallmentsRouter(protocol("InstallmentsRouter")),
+      IssuerChecker(broadcast("IssuerChecker")),
+      acct("collector"),
+      KeeperFeeModel(broadcast("KeeperFeeModel"))
+    );
+
+    IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
+    deal(address(exaWBTC), address(account), amount);
+    usdc = MockERC20(protocol("USDC"));
 
     vm.startPrank(address(account));
-    account.crossRepay(maturity, exaEXA);
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (0x9aac010e4EE770168182A4a65E07aab36b1cA526, "", ""))
+    );
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.installPlugin,
+        (address(exaPlugin), keccak256(abi.encode(exaPlugin.pluginManifest())), "", new FunctionReference[](0))
+      )
+    );
 
+    uint256 maturity = block.timestamp + 2 * FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
+
+    bytes memory route = bytes.concat(
+      hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",
+      abi.encodePacked(address(exaPlugin)),
+      hex"00000000000000000000000000000000000000000000000000000000018f7705000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000034578610000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a30783030303030303030303030303030303030303030303030303030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000111111125421ca6dc452d289314280a0f8842a65000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000004e807ed2379000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff85000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba0000000000000000000000001231deb6f5749ef6ce6943a275a1d3e7486f4eae0000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000018f770400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000039600000000000000000000000000000000000000000000000000000000037800a007e5c0d20000000000000000000000000000000000000000000000000003540000f051204c4af8dbc524681930a27b2f1af5bcc8062e6fb768f180fcce6836688e9084f035309e29bf0a209500447dc2038200000000000000000000000068f180fcce6836688e9084f035309e29bf0a209500000000000000000000000042000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000002495763e3d93b6000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000042f527f50f16a103b6ccab48bccca214500c102100a0c9e75c480000000000000013130c0000000000000000000000000000000000000000000002360001d300006302a000000000000000000000000000000000000000000000000000000000005f6305ee63c1e580c1738d90e2e26c35784a0d3e3d8a9f795074bca44200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a655106a062ae8a9c5e11aaa026fc2670b0d65ccc8b285842000000000000000000000000000000000000060004cac88ea9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009708bd00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000000000000000000000000000000000000671fb839000000000000000000000000000000000000000000000000000000000000000100000000000000000000000042000000000000000000000000000000000000060000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f1046053aa5682b4f9a81b5481394da16be5ff5a02a0000000000000000000000000000000000000000000000000000000000097095eee63c1e580d4cb5566b5c16ef2f4a08b1438052013171212a24200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a65000000000000000000002a94d114000000000000000000000000000000000000000000000000"
+    );
+    uint256 prevCollateral = exaWBTC.balanceOf(address(account));
+
+    account.crossRepay(maturity, 21e6, 25e6, exaWBTC, amount, route);
+    vm.stopPrank();
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
+    assertGt(prevCollateral, exaWBTC.balanceOf(address(account)), "collateral didn't decrease");
   }
 
   function test_collectDebit_collects_whenProposalLeavesEnoughLiquidity() external {
@@ -650,7 +690,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), debit);
   }
 
-  function test_collectDebit_reverts_whenPrposalCausesInsufficientLiquidity() external {
+  function test_collectDebit_reverts_whenProposalCausesInsufficientLiquidity() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
