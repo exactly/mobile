@@ -3,17 +3,28 @@ import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/sentry";
 
-import { exaAccountFactoryAbi, previewerAddress, wethAddress } from "@exactly/common/generated/chain";
+import { previewerAddress, wethAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
+import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { parse } from "valibot";
-import { hexToBigInt, padHex, parseEther, zeroHash, parseEventLogs } from "viem";
+import {
+  hexToBigInt,
+  padHex,
+  parseEther,
+  zeroHash,
+  parseEventLogs,
+  bytesToHex,
+  numberToBytes,
+  type PrivateKeyAccount,
+} from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { beforeEach, describe, expect, inject, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, inject, it, vi } from "vitest";
 
 import database, { credentials } from "../../database";
 import { previewerAbi, marketAbi } from "../../generated/contracts";
 import app from "../../hooks/activity";
+import * as decodePublicKey from "../../utils/decodePublicKey";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
 import publicClient from "../../utils/publicClient";
@@ -55,7 +66,7 @@ const activityPayload = {
   },
 } as const;
 
-const waitForDeposit = async (caller: Address, quantity: number) => {
+const waitForDeposit = async (caller: Address, quantity: number, timeout = 1000) => {
   let counter = quantity;
   return new Promise((resolve) => {
     const unwatch = publicClient.watchEvent({
@@ -71,25 +82,85 @@ const waitForDeposit = async (caller: Address, quantity: number) => {
         }
       },
     });
+
+    setTimeout(() => {
+      unwatch();
+      resolve([]);
+    }, timeout);
   });
 };
 
-describe.todo("address activity", () => {
-  let owner;
+describe("address activity", () => {
+  let owner: PrivateKeyAccount;
   let account: Address;
 
   beforeEach(async () => {
     owner = privateKeyToAccount(generatePrivateKey());
     account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
-    await keeper.writeContract({
-      address: inject("ExaAccountFactory"),
-      abi: exaAccountFactoryAbi,
-      functionName: "createAccount",
-      args: [0n, [{ x: hexToBigInt(owner.address), y: 0n }]],
-    });
+
+    const x = numberToBytes(hexToBigInt(owner.address));
+    const y = numberToBytes(0n);
+    vi.spyOn(decodePublicKey, "default").mockReturnValue({ x: bytesToHex(x), y: bytesToHex(y) });
+
     await database
       .insert(credentials)
       .values([{ id: account, publicKey: new Uint8Array(), account, factory: inject("ExaAccountFactory") }]);
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("fails with unexpected error", async () => {
+    const captureException = vi.spyOn(sentry, "captureException");
+
+    vi.spyOn(publicClient, "getCode").mockRejectedValue(new Error("Unexpected"));
+
+    const deposit = parseEther("5");
+    await anvilClient.setBalance({ address: account, value: deposit });
+
+    const response = await appClient.index.$post({
+      ...activityPayload,
+      json: {
+        ...activityPayload.json,
+        event: {
+          ...activityPayload.json.event,
+          activity: [{ ...activityPayload.json.event.activity[0], toAddress: account }],
+        },
+      },
+    });
+
+    const deposits = await waitForDeposit(account, 1);
+
+    expect(captureException).toHaveBeenCalledWith(new Error("Unexpected"));
+
+    expect(deposits).toHaveLength(0);
+    expect(response.status).toBe(200);
+  });
+
+  it("fails with transaction timeout", async () => {
+    const captureException = vi.spyOn(sentry, "captureException");
+
+    vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
+
+    const deposit = parseEther("5");
+    await anvilClient.setBalance({ address: account, value: deposit });
+
+    const response = await appClient.index.$post({
+      ...activityPayload,
+      json: {
+        ...activityPayload.json,
+        event: {
+          ...activityPayload.json.event,
+          activity: [{ ...activityPayload.json.event.activity[0], toAddress: account }],
+        },
+      },
+    });
+
+    const deposits = await waitForDeposit(account, 1);
+
+    expect(captureException).toHaveBeenCalledWith(new Error("account deployment reverted"));
+
+    expect(deposits).toHaveLength(0);
+    expect(response.status).toBe(200);
   });
 
   it("pokes eth", async () => {

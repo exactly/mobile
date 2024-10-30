@@ -6,7 +6,15 @@ import chain, {
   wethAddress,
 } from "@exactly/common/generated/chain";
 import { Address, Hash } from "@exactly/common/validation";
-import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, startSpan } from "@sentry/node";
+import {
+  captureException,
+  continueTrace,
+  getActiveSpan,
+  getTraceData,
+  SEMANTIC_ATTRIBUTE_SENTRY_OP,
+  setContext,
+  startSpan,
+} from "@sentry/node";
 import createDebug from "debug";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
@@ -105,82 +113,101 @@ export default app.post(
         pokes.set(account, { publicKey, factory, assets: new Set([asset]) });
       }
     }
-
+    const { "sentry-trace": sentryTrace, baggage } = getTraceData();
     Promise.allSettled(
       [...pokes.entries()].map(([account, { publicKey, factory, assets }]) =>
-        startSpan({ name: "account activity", op: "exa.activity", attributes: { account } }, async () => {
-          if (
-            !(await publicClient.getCode({ address: account })) &&
-            !(await startSpan({ name: "create account", op: "exa.account", attributes: { account } }, async () => {
-              const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-                publicClient.simulateContract({
-                  account: keeper.account,
-                  address: factory,
-                  functionName: "createAccount",
-                  args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
-                  abi: exaAccountFactoryAbi,
-                  ...transactionOptions,
+        continueTrace({ sentryTrace, baggage }, () =>
+          startSpan(
+            { name: "account activity", op: "exa.activity", attributes: { account }, parentSpan: null },
+            async () => {
+              if (
+                !(await publicClient.getCode({ address: account })) &&
+                !(await startSpan({ name: "create account", op: "exa.account", attributes: { account } }, async () => {
+                  try {
+                    const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                      publicClient.simulateContract({
+                        account: keeper.account,
+                        address: factory,
+                        functionName: "createAccount",
+                        args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
+                        abi: exaAccountFactoryAbi,
+                        ...transactionOptions,
+                      }),
+                    );
+                    setContext("tx", request);
+                    const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
+                      keeper.writeContract(request),
+                    );
+                    setContext("tx", { transactionHash: hash });
+                    setContext("tx", { ...request, transactionHash: hash });
+                    const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+                      publicClient.waitForTransactionReceipt({ hash }),
+                    );
+                    setContext("tx", { ...request, ...receipt });
+                    return receipt.status === "success";
+                  } catch (error: unknown) {
+                    captureException(error);
+                    return false;
+                  }
+                }))
+              ) {
+                captureException(new Error("account deployment reverted"));
+                return;
+              }
+              await Promise.allSettled(
+                [...assets].map(async (asset) => {
+                  await startSpan(
+                    { name: "poke account", op: "exa.poke", attributes: { account, asset } },
+                    async () => {
+                      try {
+                        const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                          publicClient.simulateContract({
+                            abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
+                            account: keeper.account,
+                            address: account,
+                            ...(asset === ETH
+                              ? { functionName: "pokeETH" }
+                              : {
+                                  functionName: "poke",
+                                  args: [marketsByAsset.get(asset)!], // eslint-disable-line @typescript-eslint/no-non-null-assertion
+                                }),
+                          }),
+                        );
+                        setContext("tx", request);
+                        const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+                          keeper.writeContract(request),
+                        );
+                        setContext("tx", { ...request, transactionHash: hash });
+                        const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+                          publicClient.waitForTransactionReceipt({ hash }),
+                        );
+                        setContext("tx", { ...request, ...receipt });
+                        if (receipt.status !== "success") captureException(new Error("tx reverted"));
+                      } catch (error: unknown) {
+                        if (
+                          error instanceof BaseError &&
+                          error.cause instanceof ContractFunctionRevertedError &&
+                          error.cause.data?.errorName === "NoBalance"
+                        ) {
+                          return;
+                        }
+                        captureException(error);
+                      }
+                    },
+                  );
                 }),
               );
-              setContext("tx", request);
-              const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
-                keeper.writeContract(request),
-              );
-              setContext("tx", { transactionHash: hash });
-              setContext("tx", { ...request, transactionHash: hash });
-              const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-                publicClient.waitForTransactionReceipt({ hash }),
-              );
-              setContext("tx", { ...request, ...receipt });
-              return receipt.status === "success";
-            }))
-          ) {
-            captureException(new Error("account deployment reverted"));
-            return;
-          }
-          await Promise.allSettled(
-            [...assets].map(async (asset) => {
-              await startSpan({ name: "poke account", op: "exa.poke", attributes: { account, asset } }, async () => {
-                try {
-                  const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-                    publicClient.simulateContract({
-                      abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
-                      account: keeper.account,
-                      address: account,
-                      ...(asset === ETH
-                        ? { functionName: "pokeETH" }
-                        : {
-                            functionName: "poke",
-                            args: [marketsByAsset.get(asset)!], // eslint-disable-line @typescript-eslint/no-non-null-assertion
-                          }),
-                    }),
-                  );
-                  setContext("tx", request);
-                  const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-                    keeper.writeContract(request),
-                  );
-                  setContext("tx", { ...request, transactionHash: hash });
-                  const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-                    publicClient.waitForTransactionReceipt({ hash }),
-                  );
-                  setContext("tx", { ...request, ...receipt });
-                  if (receipt.status !== "success") captureException(new Error("tx reverted"));
-                } catch (error: unknown) {
-                  if (
-                    error instanceof BaseError &&
-                    error.cause instanceof ContractFunctionRevertedError &&
-                    error.cause.data?.errorName === "NoBalance"
-                  ) {
-                    return;
-                  }
-                  captureException(error);
-                }
-              });
-            }),
-          );
-        }),
+            },
+          ),
+        ),
       ),
-    ).catch((error: unknown) => captureException(error));
+    )
+      .then((results) => {
+        for (const result of results) {
+          if (result.status === "rejected") captureException(result.reason);
+        }
+      })
+      .catch((error: unknown) => captureException(error));
     return c.json({});
   },
 );
