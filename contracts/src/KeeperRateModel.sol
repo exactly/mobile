@@ -50,7 +50,7 @@ contract KeeperRateModel {
     uint256 avgDuration = amountsByTime.divWad(totalAmount);
 
     uint256 linearRate =
-      MIN_RATE + (RATE_END - RATE_START).mulDiv(avgDuration - DURATION_START, DURATION_END - DURATION_START);
+      RATE_START + (RATE_END - RATE_START).mulDiv(avgDuration - DURATION_START, DURATION_END - DURATION_START);
     uint256 nonLinearRate = RATE_START
       + (RATE_END - RATE_START).mulWad(
         (

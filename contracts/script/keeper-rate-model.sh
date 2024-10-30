@@ -17,7 +17,7 @@ rate=$(BC_LINE_LENGTH=666 bc -l <<< "
   total       = ${input[8]} / wad
 
   avgduration = amountstime / total
-  linearrate = minrate + (rateend - ratestart) * (avgduration - dstart) / (dend - dstart)
+  linearrate = ratestart + (rateend - ratestart) * (avgduration - dstart) / (dend - dstart)
 
   nonlinearrate = ratestart + (rateend - ratestart) * e(dgrowth * l((avgduration - dstart) / (dend - dstart)))
   rate = minrate + linearrate * linearr + nonlinearrate * (1 - linearr)
