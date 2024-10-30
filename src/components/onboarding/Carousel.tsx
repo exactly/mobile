@@ -193,23 +193,26 @@ export default function Carousel() {
                 isLoading={isPending || isConnecting}
                 loadingContent="Logging in..."
                 onPress={() => {
-                  router.push("../onboarding/(passkeys)/passkeys");
+                  recoverAccount();
                 }}
                 iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
               >
-                Get started
+                Log in
               </ActionButton>
             </View>
 
             <View flexDirection="row" justifyContent="center">
               <Pressable
-                hitSlop={ms(10)}
+                hitSlop={ms(15)}
                 onPress={() => {
-                  recoverAccount();
+                  router.push("../onboarding/(passkeys)/passkeys");
                 }}
               >
-                <Text fontSize={ms(13)} textAlign="center" fontWeight="bold" color="$interactiveBaseBrandDefault">
-                  Recover an existing account
+                <Text fontSize={ms(13)} textAlign="center" color="$uiNeutralSecondary">
+                  New here?&nbsp;
+                  <Text emphasized color="$interactiveBaseBrandDefault">
+                    Create an account
+                  </Text>
                 </Text>
               </Pressable>
             </View>

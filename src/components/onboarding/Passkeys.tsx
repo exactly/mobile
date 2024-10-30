@@ -115,7 +115,7 @@ export default function Passkeys() {
                   createAccount();
                 }}
               >
-                Create account
+                Set passkey and create account
               </ActionButton>
             </View>
 
