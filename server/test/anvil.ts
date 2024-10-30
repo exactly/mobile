@@ -112,19 +112,19 @@ export default async function setup({ provide }: GlobalSetupContext) {
 
   if (initialize) {
     shell.env.BROADCAST_REFUNDER_ADDRESS = refunder.contractAddress;
-    await $(shell)`forge script script/KeeperFeeModel.s.sol
+    await $(shell)`forge script script/KeeperRateModel.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
-  const [keeperFeeModel] = parse(
+  const [keeperRateModel] = parse(
     object({
-      transactions: tuple([object({ contractName: literal("KeeperFeeModel"), contractAddress: Address })]),
+      transactions: tuple([object({ contractName: literal("KeeperRateModel"), contractAddress: Address })]),
     }),
-    await import(`@exactly/plugin/broadcast/KeeperFeeModel.s.sol/${foundry.id}/run-latest.json`),
+    await import(`@exactly/plugin/broadcast/KeeperRateModel.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
 
   if (initialize) {
-    shell.env.BROADCAST_KEEPERFEEMODEL_ADDRESS = keeperFeeModel.contractAddress;
+    shell.env.BROADCAST_KEEPERRATEMODEL_ADDRESS = keeperRateModel.contractAddress;
     await $(shell)`forge script script/Deploy.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
@@ -164,7 +164,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   provide("ExaPlugin", exaPlugin.contractAddress);
   provide("InstallmentsRouter", installmentsRouter.contractAddress);
   provide("IssuerChecker", issuerChecker.contractAddress);
-  provide("KeeperFeeModel", keeperFeeModel.contractAddress);
+  provide("KeeperRateModel", keeperRateModel.contractAddress);
   provide("MarketEXA", marketEXA.contractAddress);
   provide("MarketUSDC", marketUSDC.contractAddress);
   provide("MarketWETH", marketWETH.contractAddress);
@@ -232,7 +232,7 @@ declare module "vitest" {
     ExaPlugin: Address;
     InstallmentsRouter: Address;
     IssuerChecker: Address;
-    KeeperFeeModel: Address;
+    KeeperRateModel: Address;
     MarketEXA: Address;
     MarketUSDC: Address;
     MarketWETH: Address;

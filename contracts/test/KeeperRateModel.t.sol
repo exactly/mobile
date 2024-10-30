@@ -4,15 +4,15 @@ pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
 import { ForkTest } from "./Fork.t.sol";
 import { FixedLib } from "@exactly/protocol/Market.sol";
 
-import { DeployKeeperFeeModel } from "../script/KeeperFeeModel.s.sol";
-import { InvalidRange, KeeperFeeModel } from "../src/KeeperFeeModel.sol";
+import { DeployKeeperRateModel } from "../script/KeeperRateModel.s.sol";
+import { InvalidRange, KeeperRateModel } from "../src/KeeperRateModel.sol";
 
-contract KeeperFeeModelTest is ForkTest {
-  KeeperFeeModel internal model;
+contract KeeperRateModelTest is ForkTest {
+  KeeperRateModel internal model;
 
   // solhint-disable func-name-mixedcase
 
-  function test_fuzz_refFee(uint256 nMaturities, uint256[] memory amounts, uint256 firstMaturity) external {
+  function test_fuzz_refRate(uint256 nMaturities, uint256[] memory amounts, uint256 firstMaturity) external {
     nMaturities = _bound(nMaturities, 1, 24);
     uint256 nextMaturity = block.timestamp + FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
     amounts = new uint256[](nMaturities);
@@ -29,25 +29,25 @@ contract KeeperFeeModelTest is ForkTest {
       total += amounts[i];
     }
     string[] memory ffi = new string[](2);
-    ffi[0] = "script/keeper-fee-model.sh";
+    ffi[0] = "script/keeper-rate-model.sh";
     ffi[1] = encodeHex(
       abi.encode(
         model.DURATION_START(),
         model.DURATION_END(),
         model.DURATION_GROWTH(),
-        model.FEE_START(),
-        model.FEE_END(),
-        model.MIN_FEE(),
+        model.RATE_START(),
+        model.RATE_END(),
+        model.MIN_RATE(),
         model.LINEAR_RATIO(),
         amountsByTime,
         total
       )
     );
 
-    uint256 refFee = abi.decode(vm.ffi(ffi), (uint256));
-    uint256 fee = model.calculateFee(amounts, firstMaturity);
+    uint256 refRate = abi.decode(vm.ffi(ffi), (uint256));
+    uint256 rate = model.rate(amounts, firstMaturity);
 
-    assertApproxEqRel(fee, refFee, 1e2, "fee != refFee");
+    assertApproxEqRel(rate, refRate, 1e2, "rate != refRate");
   }
 
   function test_invalidRangeDeploy_reverts() external {
@@ -55,22 +55,22 @@ contract KeeperFeeModelTest is ForkTest {
     uint256 durationStart = model.DURATION_START();
     uint256 durationEnd = model.DURATION_END();
     uint256 durationGrowth = model.DURATION_GROWTH();
-    uint256 feeStart = model.FEE_START();
-    uint256 feeEnd = model.FEE_END();
-    uint256 minFee = model.MIN_FEE();
+    uint256 rateStart = model.RATE_START();
+    uint256 rateEnd = model.RATE_END();
+    uint256 minRate = model.MIN_RATE();
     uint256 linearRatio = model.LINEAR_RATIO();
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperFeeModel(durationStart, durationStart, durationGrowth, feeStart, feeEnd, minFee, linearRatio);
+    model = new KeeperRateModel(durationStart, durationStart, durationGrowth, rateStart, rateEnd, minRate, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperFeeModel(durationStart, durationEnd, 10e18 + 1, feeStart, feeEnd, minFee, linearRatio);
+    model = new KeeperRateModel(durationStart, durationEnd, 10e18 + 1, rateStart, rateEnd, minRate, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperFeeModel(durationStart, durationEnd, durationGrowth, feeStart, feeStart, minFee, linearRatio);
+    model = new KeeperRateModel(durationStart, durationEnd, durationGrowth, rateStart, rateStart, minRate, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperFeeModel(durationStart, durationEnd, durationGrowth, feeStart, feeStart, minFee, 1e18 + 1);
+    model = new KeeperRateModel(durationStart, durationEnd, durationGrowth, rateStart, rateStart, minRate, 1e18 + 1);
 
     // solhint-enable func-name-mixedcase
   }
@@ -87,9 +87,9 @@ contract KeeperFeeModelTest is ForkTest {
     return string(buffer);
   }
 
-  function deployDefault() internal returns (KeeperFeeModel) {
-    DeployKeeperFeeModel kfm = new DeployKeeperFeeModel();
-    kfm.run();
-    return kfm.keeperFeeModel();
+  function deployDefault() internal returns (KeeperRateModel) {
+    DeployKeeperRateModel krm = new DeployKeeperRateModel();
+    krm.run();
+    return krm.keeperRateModel();
   }
 }

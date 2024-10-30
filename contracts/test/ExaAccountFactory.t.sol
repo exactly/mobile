@@ -21,7 +21,7 @@ import { ExaAccountFactory, ExaAccountInitialized } from "../src/ExaAccountFacto
 import { ExaPlugin, IBalancerVault, IInstallmentsRouter } from "../src/ExaPlugin.sol";
 import { IAuditor, IMarket } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
-import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
+import { KeeperRateModel } from "../src/KeeperRateModel.sol";
 
 contract ExaAccountFactoryTest is Test {
   using FixedPointMathLib for uint256;
@@ -41,7 +41,7 @@ contract ExaAccountFactoryTest is Test {
       IInstallmentsRouter(address(this)),
       IssuerChecker(address(this)),
       address(this),
-      KeeperFeeModel(address(this))
+      KeeperRateModel(address(this))
     );
 
     IEntryPoint entryPoint = IEntryPoint(address(new EntryPoint()));

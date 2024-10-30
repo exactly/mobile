@@ -34,18 +34,18 @@ import {
   IExaAccount,
   IMarket,
   InsufficientLiquidity,
-  KeeperFeeModelSet,
+  KeeperRateModelSet,
   NoProposal,
   Proposed,
   Timelocked,
   Unauthorized
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
-import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
+import { KeeperRateModel } from "../src/KeeperRateModel.sol";
 import { Refunder } from "../src/Refunder.sol";
 
 import { DeployIssuerChecker } from "../script/IssuerChecker.s.sol";
-import { DeployKeeperFeeModel } from "../script/KeeperFeeModel.s.sol";
+import { DeployKeeperRateModel } from "../script/KeeperRateModel.s.sol";
 import { DeployRefunder } from "../script/Refunder.s.sol";
 
 import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
@@ -74,7 +74,7 @@ contract ExaPluginTest is ForkTest {
   ExaPlugin internal exaPlugin;
   WebauthnOwnerPlugin internal ownerPlugin;
   IssuerChecker internal issuerChecker;
-  KeeperFeeModel internal keeperFeeModel;
+  KeeperRateModel internal keeperRateModel;
   bytes32 internal domainSeparator;
   Refunder internal refunder;
 
@@ -114,10 +114,10 @@ contract ExaPluginTest is ForkTest {
     issuerChecker = ic.issuerChecker();
     vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", address(issuerChecker).toHexString());
 
-    DeployKeeperFeeModel kfm = new DeployKeeperFeeModel();
-    kfm.run();
-    keeperFeeModel = kfm.keeperFeeModel();
-    vm.setEnv("BROADCAST_KEEPERFEEMODEL_ADDRESS", address(keeperFeeModel).toHexString());
+    DeployKeeperRateModel krm = new DeployKeeperRateModel();
+    krm.run();
+    keeperRateModel = krm.keeperRateModel();
+    vm.setEnv("BROADCAST_KEEPERRATEMODEL_ADDRESS", address(keeperRateModel).toHexString());
 
     DeployRefunder r = new DeployRefunder();
     r.setUp();
@@ -135,7 +135,7 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(address(p.installmentsRouter())),
       issuerChecker,
       collector,
-      keeperFeeModel
+      keeperRateModel
     );
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
@@ -635,7 +635,7 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
       acct("collector"),
-      KeeperFeeModel(broadcast("KeeperFeeModel"))
+      KeeperRateModel(broadcast("KeeperRateModel"))
     );
 
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
@@ -792,12 +792,12 @@ contract ExaPluginTest is ForkTest {
     exaPlugin.setCollector(newCollector);
   }
 
-  function test_setKeeperFeeModel_sets_whenAdmin() external {
-    exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0xb0b)));
-    assertEq(address(exaPlugin.keeperFeeModel()), address(0xb0b));
+  function test_setKeeperRateModel_sets_whenAdmin() external {
+    exaPlugin.setKeeperRateModel(KeeperRateModel(address(0xb0b)));
+    assertEq(address(exaPlugin.keeperRateModel()), address(0xb0b));
   }
 
-  function test_setKeeperFeeModel_reverts_whenNotAdmin() external {
+  function test_setKeeperRateModel_reverts_whenNotAdmin() external {
     address nonAdmin = address(0x1);
     vm.startPrank(nonAdmin);
     vm.expectRevert(
@@ -806,19 +806,19 @@ contract ExaPluginTest is ForkTest {
       )
     );
 
-    exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0xb0b)));
+    exaPlugin.setKeeperRateModel(KeeperRateModel(address(0xb0b)));
   }
 
-  function test_setKeeperFeeModel_emitsKeeperFeeModelSet() external {
-    KeeperFeeModel newKeeperFeeModel = KeeperFeeModel(address(0x1));
+  function test_setKeeperRateModel_emitsKeeperRateModelSet() external {
+    KeeperRateModel newKeeperRateModel = KeeperRateModel(address(0x1));
     vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit KeeperFeeModelSet(address(newKeeperFeeModel), address(this));
-    exaPlugin.setKeeperFeeModel(newKeeperFeeModel);
+    emit KeeperRateModelSet(address(newKeeperRateModel), address(this));
+    exaPlugin.setKeeperRateModel(newKeeperRateModel);
   }
 
-  function test_setKeeperFeeModel_reverts_whenAddressZero() external {
+  function test_setKeeperRateModel_reverts_whenAddressZero() external {
     vm.expectRevert(ZeroAddress.selector);
-    exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0)));
+    exaPlugin.setKeeperRateModel(KeeperRateModel(address(0)));
   }
 
   function test_repay_partiallyRepays() external {
