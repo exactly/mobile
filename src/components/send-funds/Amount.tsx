@@ -104,7 +104,7 @@ export default function Amount() {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: market.decimals,
                           useGrouping: false,
-                        })} ${market.assetName}`}
+                        })} ${market.symbol.slice(3)}`}
                       </Text>
                     </XStack>
                   </XStack>
