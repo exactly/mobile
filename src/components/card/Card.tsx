@@ -1,11 +1,11 @@
 import { marketUSDCAddress } from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/validation";
-import { Eye, EyeOff, Info, Snowflake, CreditCard } from "@tamagui/lucide-icons";
+import { Eye, EyeOff, Info } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, styled, Spinner, XStack, Square } from "tamagui";
+import { ScrollView, XStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -17,7 +17,7 @@ import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../gener
 import handleError from "../../utils/handleError";
 import { verifyIdentity } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
-import { APIError, getActivity, getCard, createCard, kycStatus, setCardStatus } from "../../utils/server";
+import { APIError, getActivity, getCard, createCard, kycStatus } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
 import LatestActivity from "../shared/LatestActivity";
@@ -57,20 +57,6 @@ export default function Card() {
     gcTime: 0,
     staleTime: 0,
   });
-
-  const {
-    mutateAsync: changeCardStatus,
-    isPending: isSettingCardStatus,
-    variables: optimisticCardStatus,
-  } = useMutation({
-    mutationKey: ["card", "status"],
-    mutationFn: setCardStatus,
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
-    },
-  });
-
-  const displayStatus = isSettingCardStatus ? optimisticCardStatus : cardDetails?.status;
 
   const {
     mutateAsync: revealCard,
@@ -151,57 +137,22 @@ export default function Card() {
                   </View>
                 </XStack>
                 <PluginUpgrade />
-                <ExaCard disabled={!cardDetails || cardDetails.status === "FROZEN"} />
+
+                <ExaCard
+                  revealing={isRevealing}
+                  disabled={!cardDetails}
+                  frozen={cardDetails?.status === "FROZEN"}
+                  onPress={() => {
+                    if (isRevealing) return;
+                    revealCard().catch(handleError);
+                  }}
+                />
+
                 {revealError && (
                   <Text color="$uiErrorPrimary" fontWeight="bold">
                     {revealError.message}
                   </Text>
                 )}
-                <View flexDirection="row" justifyContent="space-between" width="100%" gap="$s4">
-                  <StyledAction>
-                    <Pressable
-                      onPress={() => {
-                        if (isRevealing) return;
-                        revealCard().catch(handleError);
-                      }}
-                      disabled={isRevealing}
-                      style={{ padding: ms(16) }}
-                    >
-                      <XStack gap="$s3_5" alignItems="center">
-                        <Text emphasized fontSize={ms(15)} color="$interactiveOnBaseBrandSoft">
-                          Card Details
-                        </Text>
-                        {isRevealing ? (
-                          <Spinner color="$interactiveOnBaseBrandSoft" alignSelf="flex-start" />
-                        ) : (
-                          <CreditCard size={ms(24)} color="$backgroundBrand" fontWeight="bold" />
-                        )}
-                      </XStack>
-                    </Pressable>
-                  </StyledAction>
-                  <StyledAction>
-                    <Pressable
-                      onPress={() => {
-                        if (isSettingCardStatus) return;
-                        changeCardStatus(cardDetails?.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
-                      }}
-                      style={{ padding: ms(16) }}
-                    >
-                      <XStack gap="$s3_5" alignItems="center">
-                        <Text emphasized fontSize={ms(15)} color="$interactiveOnBaseBrandSoft">
-                          {displayStatus === "FROZEN" ? "Unfreeze Card" : "Freeze Card"}
-                        </Text>
-                        <Square size={ms(24)}>
-                          {isSettingCardStatus ? (
-                            <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
-                          ) : (
-                            <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
-                          )}
-                        </Square>
-                      </XStack>
-                    </Pressable>
-                  </StyledAction>
-                </View>
               </View>
               <View padded gap="$s5">
                 {cardDetails && cardDetails.mode > 0 && <SimulatePurchase installments={cardDetails.mode} />}
@@ -222,14 +173,3 @@ export default function Card() {
     </SafeView>
   );
 }
-
-const StyledAction = styled(View, {
-  height: ms(64),
-  borderWidth: 1,
-  borderRadius: 8,
-  backgroundColor: "transparent",
-  borderColor: "$interactiveOnBaseBrandSoft",
-  justifyContent: "center",
-  alignItems: "center",
-  flex: 1,
-});

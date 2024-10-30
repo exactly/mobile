@@ -68,7 +68,11 @@ export default function InstallmentsSelector({
         <AnimatedXStack style={rOther} overflow="hidden" justifyContent="center" paddingHorizontal="$s4_5" gap="$s4">
           {!expanded && (
             <AnimatedView alignItems="flex-start" justifyContent="center" flex={1} entering={FadeIn} exiting={FadeOut}>
-              <Text subHeadline color={disabled ? "$interactiveDisabled" : "$uiNeutralSecondary"}>
+              <Text
+                subHeadline
+                color={disabled ? "$interactiveDisabled" : "$uiNeutralSecondary"}
+                maxFontSizeMultiplier={1}
+              >
                 Set installments
               </Text>
             </AnimatedView>
@@ -152,8 +156,9 @@ function Installment({
       }}
     >
       <AnimatedView animation="moderate" opacity={index + 1 === value ? 1 : expanded ? 0.5 : 0}>
-        <Animated.Text style={translateFontAnim}>
+        <Animated.Text style={translateFontAnim} maxFontSizeMultiplier={1}>
           <Text
+            maxFontSizeMultiplier={1}
             emphasized
             color={
               disabled

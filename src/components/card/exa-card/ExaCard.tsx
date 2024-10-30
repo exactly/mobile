@@ -15,7 +15,14 @@ import queryClient from "../../../utils/queryClient";
 import { getCard, setCardMode } from "../../../utils/server";
 import View from "../../shared/View";
 
-export default function ExaCard({ disabled }: { disabled: boolean }) {
+interface ExaCardProperties {
+  disabled: boolean;
+  revealing: boolean;
+  frozen: boolean;
+  onPress?: () => void;
+}
+
+export default function ExaCard({ disabled, revealing, frozen, onPress }: ExaCardProperties) {
   const { address } = useAccount();
   const { data: card, isFetching: isFetchingCardMode } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
@@ -58,9 +65,23 @@ export default function ExaCard({ disabled }: { disabled: boolean }) {
   const isCredit = card ? card.mode > 0 : false;
 
   return (
-    <AnimatedYStack width="100%" borderRadius="$r4" borderWidth={0} maxHeight={280}>
+    <AnimatedYStack
+      width="100%"
+      borderRadius="$r4"
+      borderWidth={0}
+      onPress={() => {
+        if (disabled || isLoading) return;
+        onPress?.();
+      }}
+    >
       <View zIndex={3} backgroundColor="black" borderColor="black" borderRadius="$r4" borderWidth={1} overflow="hidden">
-        <CardContents isCredit={isCredit} isLoading={isLoading} disabled={disabled} />
+        <CardContents
+          isCredit={isCredit}
+          disabled={disabled}
+          lastFour={card?.lastFour}
+          frozen={frozen}
+          revealing={revealing}
+        />
       </View>
       <View
         zIndex={2}

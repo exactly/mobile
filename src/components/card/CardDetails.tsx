@@ -1,20 +1,36 @@
-import { X } from "@tamagui/lucide-icons";
-import { useQuery } from "@tanstack/react-query";
+import { Snowflake, X } from "@tamagui/lucide-icons";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Sheet } from "tamagui";
+import { ScrollView, Sheet, Spinner, Square, Switch, XStack } from "tamagui";
 import { nonEmpty, pipe, safeParse, string, url } from "valibot";
 
 import CardBack from "./CardBack";
 import DismissableAlert from "./DismissableAlert";
+import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import { getCard, setCardStatus } from "../../utils/server";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
+import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function CardDetails({ open, onClose, uri }: { open: boolean; onClose: () => void; uri?: string }) {
   const { data: alertShown } = useQuery({ queryKey: ["settings", "alertShown"] });
   const { success, output } = safeParse(pipe(string(), nonEmpty("empty url"), url("bad url")), uri);
+  const { data: card, isFetching: isFetchingCard } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
+  const {
+    mutateAsync: changeCardStatus,
+    isPending: isSettingCardStatus,
+    variables: optimisticCardStatus,
+  } = useMutation({
+    mutationKey: ["card", "status"],
+    mutationFn: setCardStatus,
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
+    },
+  });
+  const displayStatus = isSettingCardStatus ? optimisticCardStatus : card?.status;
   return (
     <Sheet
       open={open}
@@ -39,8 +55,45 @@ export default function CardDetails({ open, onClose, uri }: { open: boolean; onC
         <SafeView paddingTop={0} fullScreen borderTopLeftRadius="$r4" borderTopRightRadius="$r4">
           <ScrollView>
             <View fullScreen flex={1}>
-              <View gap="$s5" flex={1} padded alignContent="space-between">
+              <View gap="$s5" flex={1} padded>
                 {success && <CardBack uri={output} />}
+
+                <XStack
+                  gap="$s3_5"
+                  alignItems="center"
+                  alignSelf="center"
+                  onPress={() => {
+                    if (isFetchingCard || isSettingCardStatus) return;
+                    changeCardStatus(card?.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
+                  }}
+                >
+                  <Square size={ms(24)}>
+                    {isSettingCardStatus ? (
+                      <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
+                    ) : (
+                      <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                    )}
+                  </Square>
+                  <Text subHeadline color="$uiNeutralPrimary">
+                    {displayStatus === "FROZEN" ? "Unfreeze card" : "Freeze card"}
+                  </Text>
+                  <Switch
+                    pointerEvents="none"
+                    checked={displayStatus === "FROZEN"}
+                    backgroundColor="$backgroundMild"
+                    borderColor="$borderNeutralSoft"
+                  >
+                    <Switch.Thumb
+                      checked={displayStatus === "FROZEN"}
+                      shadowColor="$uiNeutralSecondary"
+                      animation="moderate"
+                      backgroundColor={
+                        displayStatus === "ACTIVE" ? "$interactiveDisabled" : "$interactiveBaseBrandDefault"
+                      }
+                    />
+                  </Switch>
+                </XStack>
+
                 {success && alertShown && (
                   <DismissableAlert
                     text="Manually add your card to Apple Pay & Google Pay to make contactless payments."
@@ -49,6 +102,7 @@ export default function CardDetails({ open, onClose, uri }: { open: boolean; onC
                     }}
                   />
                 )}
+
                 <Button
                   main
                   noFlex

@@ -24,6 +24,7 @@ export default function ModeSelector({ isCredit, disabled }: { isCredit: boolean
             emphasized
             subHeadline
             color={disabled ? "$interactiveOnDisabled" : isCredit ? "$cardCreditText" : "$cardDebitInteractive"}
+            maxFontSizeMultiplier={1}
           >
             CREDIT MODE
           </Text>
@@ -43,6 +44,7 @@ export default function ModeSelector({ isCredit, disabled }: { isCredit: boolean
             emphasized
             subHeadline
             color={disabled ? "$interactiveOnDisabled" : isCredit ? "$cardCreditInteractive" : "$cardDebitText"}
+            maxFontSizeMultiplier={1}
           >
             DEBIT MODE
           </Text>
