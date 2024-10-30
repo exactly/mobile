@@ -43,7 +43,7 @@ export default function Review({
             </Text>
             <XStack alignItems="center" gap="$s3">
               <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
-              <YStack>
+              <YStack flex={1}>
                 <Text title color="$uiNeutralPrimary">
                   {amount} {assetName}
                 </Text>

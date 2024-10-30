@@ -84,7 +84,7 @@ export default function AssetSelector({
                       {symbol}
                     </Text>
                     <Text fontSize={ms(12)} color="$uiNeutralSecondary" numberOfLines={1}>
-                      {assetName}
+                      {assetName === "Wrapped Ether" ? "Ether" : assetName}
                     </Text>
                   </View>
                 </View>

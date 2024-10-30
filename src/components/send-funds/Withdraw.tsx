@@ -40,7 +40,7 @@ export default function Withdraw() {
   }, [propose, proposeSimulation]);
 
   const details: WithdrawDetails = {
-    assetName: market?.assetName,
+    assetName: market?.symbol.slice(3) === "WETH" ? "ETH" : market?.symbol.slice(3),
     amount: formatUnits(withdraw?.amount ?? 0n, market?.decimals ?? 0),
     usdValue: formatUnits(((withdraw?.amount ?? 0n) * (market?.usdPrice ?? 0n)) / WAD, market?.decimals ?? 0),
   };
