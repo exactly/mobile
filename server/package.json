@@ -28,6 +28,7 @@
     "@hono/sentry": "^1.2.0",
     "@hono/valibot-validator": "^0.4.1",
     "@onesignal/node-onesignal": "^5.0.0-alpha-01",
+    "@segment/analytics-node": "^2.2.0",
     "@sentry/node": "^8.35.0",
     "@sentry/profiling-node": "^8.35.0",
     "@simplewebauthn/server": "^11.0.0",
