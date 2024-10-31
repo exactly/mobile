@@ -2,7 +2,7 @@ import type { Base64URL } from "@exactly/common/validation";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { sentry } from "@hono/sentry";
-import { captureException } from "@sentry/node";
+import { captureException, close } from "@sentry/node";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { trimTrailingSlash } from "hono/trailing-slash";
@@ -61,7 +61,7 @@ serve(app);
 
 ["SIGINT", "SIGTERM"].map((code) =>
   process.on(code, () => {
-    closeAndFlush().catch(() => undefined);
+    Promise.allSettled([close(), closeAndFlush()]).catch(() => undefined);
   }),
 );
 
