@@ -19,11 +19,11 @@
   "keeperRateModel": {
     "durationStart": 0.083333333333333333e18,
     "durationEnd": 1e18,
-    "durationGrowth": 1.5e18,
+    "durationGrowth": 0.75e18,
     "rateStart": 0,
-    "rateEnd": 5e16,
-    "minRate": 0.25e16,
-    "maxRate": 1e18,
-    "linearRatio": 0.5e18
+    "rateEnd": 3e16,
+    "minRate": 2.5e16,
+    "maxRate": 5.5e16,
+    "linearRatio": 0.25e18
   }
 }
