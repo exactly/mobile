@@ -111,6 +111,7 @@ describe("address activity", () => {
 
   it("fails with unexpected error", async () => {
     const captureException = vi.spyOn(sentry, "captureException");
+    captureException.mockImplementationOnce(() => "");
 
     vi.spyOn(publicClient, "getCode").mockRejectedValue(new Error("Unexpected"));
 
@@ -138,6 +139,7 @@ describe("address activity", () => {
 
   it("fails with transaction timeout", async () => {
     const captureException = vi.spyOn(sentry, "captureException");
+    captureException.mockImplementation(() => "");
 
     vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
 
