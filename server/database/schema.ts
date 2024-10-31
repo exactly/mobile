@@ -16,7 +16,7 @@ export const credentials = pgTable(
     counter: integer("counter").notNull().default(0),
     kycId: text("kyc_id"),
   },
-  (table) => ({ accountIndex: uniqueIndex("account_index").on(table.account) }),
+  (table) => [{ build: () => uniqueIndex("account_index").on(table.account) }],
 );
 
 export const cards = pgTable("cards", {
