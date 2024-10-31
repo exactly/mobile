@@ -111,6 +111,7 @@ export default function Passkeys() {
                 isLoading={isPending || isConnecting}
                 loadingContent="Creating account..."
                 iconAfter={<Key size={ms(20)} color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
+                disabled={isPending}
                 onPress={() => {
                   createAccount();
                 }}
