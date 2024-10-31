@@ -35,6 +35,7 @@ import {
   IMarket,
   InsufficientLiquidity,
   KeeperRateModelSet,
+  KeeperSet,
   NoProposal,
   Proposed,
   Timelocked,
@@ -135,6 +136,7 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(address(p.installmentsRouter())),
       issuerChecker,
       collector,
+      keeper,
       keeperRateModel
     );
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
@@ -635,6 +637,7 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
       acct("collector"),
+      acct("keeper"),
       KeeperRateModel(broadcast("KeeperRateModel"))
     );
 
@@ -790,6 +793,34 @@ contract ExaPluginTest is ForkTest {
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit CollectorSet(newCollector, address(this));
     exaPlugin.setCollector(newCollector);
+  }
+
+  function test_setKeeper_sets_whenAdmin() external {
+    exaPlugin.setKeeper(address(0x1));
+    assertEq(exaPlugin.keeper(), address(0x1));
+  }
+
+  function test_setKeeper_reverts_whenNotAdmin() external {
+    address nonAdmin = address(0x1);
+    vm.startPrank(nonAdmin);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    exaPlugin.setKeeper(address(0x2));
+  }
+
+  function test_setKeeper_reverts_whenAddressZero() external {
+    vm.expectRevert(ZeroAddress.selector);
+    exaPlugin.setKeeper(address(0));
+  }
+
+  function test_setKeeper_emitsKeeperSet() external {
+    address newKeeper = address(0x1);
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit KeeperSet(newKeeper, address(this));
+    exaPlugin.setKeeper(newKeeper);
   }
 
   function test_setKeeperRateModel_sets_whenAdmin() external {

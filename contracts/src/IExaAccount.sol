@@ -30,6 +30,8 @@ interface IExaAccount {
 
 event CollectorSet(address indexed collector, address indexed account);
 
+event KeeperSet(address indexed keeper, address indexed account);
+
 event KeeperRateModelSet(address indexed keeperRateModel, address indexed account);
 
 event Proposed(

@@ -55,7 +55,7 @@ contract DeployScript is BaseScript {
     vm.startBroadcast(deployer);
 
     exaPlugin = new ExaPlugin(
-      auditor, exaUSDC, exaWETH, balancerVault, installmentsRouter, issuerChecker, collector, keeperRateModel
+      auditor, exaUSDC, exaWETH, balancerVault, installmentsRouter, issuerChecker, collector, keeper, keeperRateModel
     );
     factory = new ExaAccountFactory(deployer, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 

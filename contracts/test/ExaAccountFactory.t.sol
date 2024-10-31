@@ -30,9 +30,11 @@ contract ExaAccountFactoryTest is Test {
   ExaAccountFactory internal factory;
   WebauthnOwnerPlugin internal ownerPlugin;
   ExaPlugin internal exaPlugin;
+  address internal keeper;
 
   function setUp() external {
     ownerPlugin = new WebauthnOwnerPlugin();
+    keeper = address(0x1);
     exaPlugin = new ExaPlugin(
       IAuditor(address(0)),
       IMarket(address(new MockERC4626(new MockERC20()))),
@@ -41,6 +43,7 @@ contract ExaAccountFactoryTest is Test {
       IInstallmentsRouter(address(this)),
       IssuerChecker(address(this)),
       address(this),
+      keeper,
       KeeperRateModel(address(this))
     );
 

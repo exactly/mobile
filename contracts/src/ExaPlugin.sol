@@ -34,6 +34,7 @@ import {
   IMarket,
   InsufficientLiquidity,
   KeeperRateModelSet,
+  KeeperSet,
   MarketData,
   NoBalance,
   NoProposal,
@@ -75,6 +76,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
   address public collector;
+  address public keeper;
   KeeperRateModel public keeperRateModel;
   mapping(address account => Proposal lastProposal) public proposals;
 
@@ -88,6 +90,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IInstallmentsRouter installmentsRouter,
     IssuerChecker issuerChecker,
     address collector_,
+    address keeper_,
     KeeperRateModel keeperRateModel_
   ) {
     AUDITOR = auditor;
@@ -99,6 +102,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setCollector(collector_);
+    setKeeper(keeper_);
     setKeeperRateModel(keeperRateModel_);
 
     IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
@@ -263,6 +267,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (collector_ == address(0)) revert ZeroAddress();
     collector = collector_;
     emit CollectorSet(collector_, msg.sender);
+  }
+
+  function setKeeper(address keeper_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    if (keeper_ == address(0)) revert ZeroAddress();
+    keeper = keeper_;
+    emit KeeperSet(keeper_, msg.sender);
   }
 
   function setKeeperRateModel(KeeperRateModel keeperRateModel_) public onlyRole(DEFAULT_ADMIN_ROLE) {
