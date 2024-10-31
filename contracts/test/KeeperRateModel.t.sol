@@ -46,7 +46,7 @@ contract KeeperRateModelTest is ForkTest {
     );
 
     uint256 refRate = abi.decode(vm.ffi(ffi), (uint256));
-    uint256 rate = model.rate(amounts, firstMaturity);
+    uint256 rate = model.rate(amountsByTime * 1e18 / total);
 
     assertApproxEqRel(rate, refRate, 1e2, "rate != refRate");
   }

@@ -43,15 +43,7 @@ contract KeeperRateModel {
     LINEAR_RATIO = _linearRatio;
   }
 
-  function rate(uint256[] memory amounts, uint256 firstMaturity) external view returns (uint256) {
-    uint256 amountsByTime = 0;
-    uint256 totalAmount = 0;
-    for (uint256 i = 0; i < amounts.length; ++i) {
-      // TODO use FixedLib.INTERVAL
-      amountsByTime += amounts[i] * (firstMaturity + 4 weeks * i - block.timestamp);
-      totalAmount += amounts[i];
-    }
-    uint256 avgDuration = amountsByTime.divWad(totalAmount);
+  function rate(uint256 avgDuration) external view returns (uint256) {
     if (avgDuration <= DURATION_START) return MIN_RATE;
     if (avgDuration >= DURATION_END) return MAX_RATE;
 
