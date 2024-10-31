@@ -81,6 +81,8 @@ services:
         scope: RUN_TIME
       - key: PERSONA_URL
         scope: RUN_TIME
+      - key: SEGMENT_WRITE_KEY
+        scope: RUN_TIME
 databases:
   - name: postgres
     cluster_name: exactly-postgres
