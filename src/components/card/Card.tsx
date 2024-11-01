@@ -1,7 +1,8 @@
-import { marketUSDCAddress } from "@exactly/common/generated/chain";
+import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/validation";
 import { Eye, EyeOff, Info } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -13,13 +14,17 @@ import CardDetails from "./CardDetails";
 import SimulatePurchase from "./SimulatePurchase";
 import SpendingLimits from "./SpendingLimits";
 import ExaCard from "./exa-card/ExaCard";
-import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
+import {
+  useReadPreviewerExactly,
+  useReadUpgradeableModularAccountGetInstalledPlugins,
+} from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import { verifyIdentity } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
 import { APIError, getActivity, getCard, createCard, kycStatus } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
+import InfoBadge from "../shared/InfoBadge";
 import LatestActivity from "../shared/LatestActivity";
 import PluginUpgrade from "../shared/PluginUpgrade";
 import RefreshControl from "../shared/RefreshControl";
@@ -46,9 +51,25 @@ export default function Card() {
 
   const { queryKey } = useMarketAccount(marketUSDCAddress);
   const { address } = useAccount();
+  const { data: KYCStatus, refetch: refetchKYCStatus } = useQuery({ queryKey: ["kyc", "status"], queryFn: kycStatus });
   const { refetch: refetchInstalledPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
   });
+
+  const { data: markets, refetch: refetchMarkets } = useReadPreviewerExactly({
+    address: previewerAddress,
+    account: address,
+    args: [address ?? zeroAddress],
+  });
+
+  let usdBalance = 0n;
+  if (markets) {
+    for (const market of markets) {
+      if (market.floatingDepositAssets > 0n) {
+        usdBalance += (market.floatingDepositAssets * market.usdPrice) / 10n ** BigInt(market.decimals);
+      }
+    }
+  }
 
   const { data: cardDetails, refetch: refetchCard } = useQuery({
     queryKey: ["card", "details"],
@@ -94,7 +115,6 @@ export default function Card() {
       }
     },
   });
-
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View fullScreen backgroundColor="$backgroundMild">
@@ -109,6 +129,8 @@ export default function Card() {
               onRefresh={() => {
                 refetchCard().catch(handleError);
                 refetchPurchases().catch(handleError);
+                refetchMarkets().catch(handleError);
+                refetchKYCStatus().catch(handleError);
                 refetchInstalledPlugins().catch(handleError);
                 queryClient.refetchQueries({ queryKey }).catch(handleError);
               }}
@@ -136,8 +158,16 @@ export default function Card() {
                     </Pressable>
                   </View>
                 </XStack>
+                {(usdBalance === 0n || KYCStatus !== "ok") && (
+                  <InfoBadge
+                    title="Your card is awaiting activation. Follow the steps to enable it."
+                    actionText="Get started"
+                    onPress={() => {
+                      router.push("/getting-started");
+                    }}
+                  />
+                )}
                 <PluginUpgrade />
-
                 <ExaCard
                   revealing={isRevealing}
                   disabled={!cardDetails}
@@ -147,7 +177,6 @@ export default function Card() {
                     revealCard().catch(handleError);
                   }}
                 />
-
                 {revealError && (
                   <Text color="$uiErrorPrimary" fontWeight="bold">
                     {revealError.message}

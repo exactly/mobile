@@ -2,7 +2,7 @@ import { ChevronRight, AlertTriangle } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { View, Text, Spinner } from "tamagui";
+import { View, Text, Spinner, XStack } from "tamagui";
 
 export default function InfoBadge({
   title,
@@ -37,7 +37,6 @@ export default function InfoBadge({
       >
         <AlertTriangle size={ms(32)} color="$interactiveOnBaseInformationDefault" />
       </View>
-
       <View gap={ms(10)} padding={ms(25)} flex={1}>
         <Text fontSize={ms(15)} color="$interactiveOnBaseInformationSoft">
           {title}
@@ -47,16 +46,22 @@ export default function InfoBadge({
             onPress?.();
           }}
         >
-          <View flexDirection="row" gap={ms(2)} alignItems="center">
-            <Text color="$interactiveOnBaseInformationSoft" fontSize={ms(15)} lineHeight={18} fontWeight="bold">
+          <XStack flexDirection="row" gap={ms(2)} alignItems="center">
+            <Text color="$interactiveOnBaseInformationSoft" fontSize={ms(15)} fontWeight="bold">
               {actionText}
             </Text>
             {loading ? (
               <Spinner color="$interactiveOnBaseInformationSoft" />
             ) : (
-              <ChevronRight size={ms(14)} color="$interactiveOnBaseInformationSoft" fontWeight="bold" />
+              <ChevronRight
+                size={ms(16)}
+                color="$interactiveOnBaseInformationSoft"
+                fontWeight="bold"
+                strokeWidth={3}
+                transform={[{ translateY: 1.2 }]}
+              />
             )}
-          </View>
+          </XStack>
         </Pressable>
       </View>
     </View>
