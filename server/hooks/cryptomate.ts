@@ -141,7 +141,8 @@ export default new Hono().post(
         } as const;
       }
       const preview = await previewPromise;
-      const { amounts } = startSpan({ name: "split installments", op: "exa.split" }, () =>
+      setContext("preview", preview);
+      const installments = startSpan({ name: "split installments", op: "exa.split" }, () =>
         splitInstallments(
           amount,
           preview.floatingAssets,
@@ -157,9 +158,10 @@ export default new Hono().post(
           preview.interestRateModel,
         ),
       );
+      setContext("installments", installments);
       return {
         functionName: "collectInstallments",
-        args: [BigInt(firstMaturity), amounts, maxUint256, BigInt(timestamp), signature],
+        args: [BigInt(firstMaturity), installments.amounts, maxUint256, BigInt(timestamp), signature],
       } as const;
     })();
     setContext("tx", { call });
