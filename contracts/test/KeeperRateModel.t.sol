@@ -38,7 +38,6 @@ contract KeeperRateModelTest is ForkTest {
         model.RATE_START(),
         model.RATE_END(),
         model.MIN_RATE(),
-        model.MAX_RATE(),
         model.LINEAR_RATIO(),
         amountsByTime,
         total
@@ -59,26 +58,19 @@ contract KeeperRateModelTest is ForkTest {
     uint256 rateStart = model.RATE_START();
     uint256 rateEnd = model.RATE_END();
     uint256 minRate = model.MIN_RATE();
-    uint256 maxRate = model.MAX_RATE();
     uint256 linearRatio = model.LINEAR_RATIO();
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperRateModel(
-      durationStart, durationStart, durationGrowth, rateStart, rateEnd, minRate, maxRate, linearRatio
-    );
+    model = new KeeperRateModel(durationStart, durationStart, durationGrowth, rateStart, rateEnd, minRate, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
-    model =
-      new KeeperRateModel(durationStart, durationEnd, 10e18 + 1, rateStart, rateEnd, minRate, maxRate, linearRatio);
+    model = new KeeperRateModel(durationStart, durationEnd, 10e18 + 1, rateStart, rateEnd, minRate, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
-    model = new KeeperRateModel(
-      durationStart, durationEnd, durationGrowth, rateStart, rateStart, minRate, maxRate, linearRatio
-    );
+    model = new KeeperRateModel(durationStart, durationEnd, durationGrowth, rateStart, rateStart, minRate, linearRatio);
 
     vm.expectRevert(InvalidRange.selector);
-    model =
-      new KeeperRateModel(durationStart, durationEnd, durationGrowth, rateStart, rateStart, minRate, maxRate, 1e18 + 1);
+    model = new KeeperRateModel(durationStart, durationEnd, durationGrowth, rateStart, rateStart, minRate, 1e18 + 1);
   }
 
   // solhint-enable func-name-mixedcase

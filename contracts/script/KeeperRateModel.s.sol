@@ -21,7 +21,6 @@ contract DeployKeeperRateModel is BaseScript {
       abi.decode(deploy.parseRaw(".keeperRateModel.rateStart"), (uint256)),
       abi.decode(deploy.parseRaw(".keeperRateModel.rateEnd"), (uint256)),
       abi.decode(deploy.parseRaw(".keeperRateModel.minRate"), (uint256)),
-      abi.decode(deploy.parseRaw(".keeperRateModel.maxRate"), (uint256)),
       abi.decode(deploy.parseRaw(".keeperRateModel.linearRatio"), (uint256))
     );
   }

@@ -23,7 +23,6 @@
     "rateStart": 0,
     "rateEnd": 3e16,
     "minRate": 2.5e16,
-    "maxRate": 5.5e16,
     "linearRatio": 0.25e18
   }
 }

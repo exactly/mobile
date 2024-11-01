@@ -14,7 +14,6 @@ contract KeeperRateModel {
   uint256 public immutable DURATION_END;
   uint256 public immutable DURATION_GROWTH;
   uint256 public immutable MIN_RATE;
-  uint256 public immutable MAX_RATE;
   uint256 public immutable RATE_START;
   uint256 public immutable RATE_END;
   uint256 public immutable LINEAR_RATIO;
@@ -26,10 +25,8 @@ contract KeeperRateModel {
     uint256 _rateStart,
     uint256 _rateEnd,
     uint256 _minRate,
-    uint256 _maxRate,
     uint256 _linearRatio
   ) {
-    // TODO add min/max ranges
     if (_durationStart >= _durationEnd || _durationGrowth > 10e18 || _rateStart >= _rateEnd || _linearRatio > 1e18) {
       revert InvalidRange();
     }
@@ -39,13 +36,12 @@ contract KeeperRateModel {
     RATE_START = _rateStart;
     RATE_END = _rateEnd;
     MIN_RATE = _minRate;
-    MAX_RATE = _maxRate;
     LINEAR_RATIO = _linearRatio;
   }
 
   function rate(uint256 avgDuration) external view returns (uint256) {
     if (avgDuration <= DURATION_START) return MIN_RATE;
-    if (avgDuration >= DURATION_END) return MAX_RATE;
+    if (avgDuration >= DURATION_END) return MIN_RATE + RATE_END;
 
     uint256 linearRate =
       RATE_START + (RATE_END - RATE_START).mulDiv(avgDuration - DURATION_START, DURATION_END - DURATION_START);
