@@ -103,6 +103,13 @@ export default new Hono().post(
     },
   ),
   async (c) => {
+    const previewPromise = startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
+      publicClient.readContract({
+        abi: installmentsPreviewerAbi,
+        address: installmentsPreviewerAddress,
+        functionName: "preview",
+      }),
+    );
     const payload = c.req.valid("json");
     setTag("cryptomate.event", payload.event_type);
     setTag("cryptomate.status", payload.status);
@@ -133,13 +140,7 @@ export default new Hono().post(
           args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
         } as const;
       }
-      const preview = await startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
-        publicClient.readContract({
-          abi: installmentsPreviewerAbi,
-          address: installmentsPreviewerAddress,
-          functionName: "preview",
-        }),
-      );
+      const preview = await previewPromise;
       const { amounts } = startSpan({ name: "split installments", op: "exa.split" }, () =>
         splitInstallments(
           amount,
