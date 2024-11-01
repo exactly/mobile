@@ -140,7 +140,7 @@ export default new Hono().post(
           args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
         } as const;
       }
-      const preview = await previewPromise;
+      const preview = await startSpan({ name: "await preview", op: "exa.wait" }, () => previewPromise);
       setContext("preview", preview);
       const installments = startSpan({ name: "split installments", op: "exa.split" }, () =>
         splitInstallments(
