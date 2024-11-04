@@ -5,15 +5,28 @@ import "../mocks/sentry";
 
 import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
 import * as sentry from "@sentry/node";
+import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
-import { hexToBigInt, padHex, zeroAddress, zeroHash } from "viem";
+import {
+  BaseError,
+  ContractFunctionRevertedError,
+  encodeErrorResult,
+  encodeFunctionData,
+  hexToBigInt,
+  padHex,
+  zeroAddress,
+  zeroHash,
+  type Hex,
+} from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { beforeAll, describe, expect, inject, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import database, { cards, credentials } from "../../database";
+import database, { cards, credentials, transactions } from "../../database";
+import { issuerCheckerAbi } from "../../generated/contracts";
 import app from "../../hooks/cryptomate";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
+import publicClient from "../../utils/publicClient";
 
 const appClient = testClient(app);
 
@@ -35,6 +48,82 @@ const authorization = {
     },
   },
 } as const;
+
+const clearing = {
+  header: { "x-webhook-key": "cryptomate" },
+  json: {
+    product: "CARDS",
+    event_type: "CLEARING",
+    operation_id: "op",
+    status: "PENDING",
+    data: {
+      card_id: "id",
+      bill_amount: 45.23,
+      bill_currency_number: "840",
+      bill_currency_code: "USD",
+      exchange_rate: 1,
+      transaction_amount: 45.23,
+      transaction_currency_number: "840",
+      transaction_currency_code: "USD",
+      channel: "ECOMMERCE",
+      created_at: new Date().toISOString(),
+      fees: { atm_fees: 0, fx_fees: 0 },
+      merchant_data: {
+        id: "420429000207212",
+        name: "GetYourGuideOperations",
+        city: "185-5648235",
+        post_code: "1990",
+        state: "DE",
+        country: "USA",
+        mcc_category: "Tourist Attractions and Exhibits",
+        mcc_code: "7991",
+      },
+      metadata: { account: zeroAddress },
+      signature: "0x",
+    },
+  },
+} as const;
+
+const receipt = {
+  status: "success",
+  blockHash: zeroHash,
+  blockNumber: 0n,
+  contractAddress: undefined,
+  cumulativeGasUsed: 0n,
+  effectiveGasPrice: 0n,
+  from: zeroAddress,
+  gasUsed: 0n,
+  logs: [],
+  logsBloom: "0x",
+  to: null,
+  transactionHash: "0x",
+  transactionIndex: 0,
+  type: "0x0",
+} as const;
+
+async function collectorBalance() {
+  return await publicClient
+    .call({
+      to: inject("USDC"),
+      data: encodeFunctionData({
+        abi: [
+          {
+            constant: true,
+            inputs: [{ name: "_owner", type: "address" }],
+            name: "balanceOf",
+            outputs: [{ name: "balance", type: "uint256" }],
+            type: "function",
+          },
+        ],
+        functionName: "balanceOf",
+        args: [process.env.COLLECTOR_ADDRESS],
+      }),
+    })
+    .then(({ data }) => {
+      if (!data) throw new Error("No data");
+      return hexToBigInt(data);
+    });
+}
 
 const owner = privateKeyToAccount(generatePrivateKey());
 const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
@@ -62,14 +151,8 @@ describe("validation", () => {
   });
 });
 
-describe("authorization", () => {
+describe("card operations", () => {
   beforeAll(async () => {
-    await keeper.writeContract({
-      address: inject("USDC"),
-      abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
-      functionName: "mint",
-      args: [account, 420e6],
-    });
     await keeper.writeContract({
       address: inject("ExaAccountFactory"),
       abi: exaAccountFactoryAbi,
@@ -78,46 +161,278 @@ describe("authorization", () => {
     });
   });
 
-  describe("with collateral", () => {
-    beforeAll(async () => {
-      await keeper.writeContract({
-        address: account,
-        abi: exaPluginAbi,
-        functionName: "poke",
-        args: [inject("MarketUSDC")],
+  describe("authorization", () => {
+    describe("with collateral", () => {
+      beforeAll(async () => {
+        await keeper.writeContract({
+          address: inject("USDC"),
+          abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
+          functionName: "mint",
+          args: [account, 420e6],
+        });
+        await keeper.writeContract({
+          address: account,
+          abi: exaPluginAbi,
+          functionName: "poke",
+          args: [inject("MarketUSDC")],
+        });
+      });
+
+      it("authorizes credit", async () => {
+        const response = await appClient.index.$post({
+          ...authorization,
+          json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
+        });
+
+        expect(response.status).toBe(200);
+        await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+      });
+
+      it("authorizes debit", async () => {
+        await database.insert(cards).values([{ id: "debit", credentialId: "cred", lastFour: "5678", mode: 0 }]);
+        const response = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            data: { ...authorization.json.data, card_id: "debit", metadata: { account } },
+          },
+        });
+
+        expect(response.status).toBe(200);
+        await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+      });
+
+      it("authorizes installments", async () => {
+        await database.insert(cards).values([{ id: "inst", credentialId: "cred", lastFour: "5678", mode: 6 }]);
+        const response = await appClient.index.$post({
+          ...authorization,
+          json: { ...authorization.json, data: { ...authorization.json.data, card_id: "inst", metadata: { account } } },
+        });
+
+        expect(response.status).toBe(200);
+        await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
       });
     });
+  });
 
-    it("authorizes credit", async () => {
-      const response = await appClient.index.$post({
-        ...authorization,
-        json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
+  describe("clearing", () => {
+    describe("with collateral", () => {
+      beforeAll(async () => {
+        await keeper.writeContract({
+          address: inject("USDC"),
+          abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
+          functionName: "mint",
+          args: [account, 420e6],
+        });
+        await keeper.writeContract({
+          address: account,
+          abi: exaPluginAbi,
+          functionName: "poke",
+          args: [inject("MarketUSDC")],
+        });
       });
 
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
-    });
+      afterEach(() => vi.restoreAllMocks());
 
-    it("authorizes debit", async () => {
-      await database.insert(cards).values([{ id: "debit", credentialId: "cred", lastFour: "5678", mode: 0 }]);
-      const response = await appClient.index.$post({
-        ...authorization,
-        json: { ...authorization.json, data: { ...authorization.json.data, card_id: "debit", metadata: { account } } },
+      it("clears debit", async () => {
+        const balance = await collectorBalance();
+
+        const operation = "clears_debit_operation";
+        await database.insert(cards).values([{ id: "clears", credentialId: "cred", lastFour: "3456", mode: 0 }]);
+        const response = await appClient.index.$post({
+          ...clearing,
+          json: {
+            ...clearing.json,
+            operation_id: operation,
+            data: { ...clearing.json.data, card_id: "clears", metadata: { account } },
+          },
+        });
+
+        const card = await database.query.transactions.findFirst({
+          where: eq(transactions.id, operation),
+        });
+
+        await publicClient.waitForTransactionReceipt({ hash: card?.hash as Hex });
+
+        await expect(collectorBalance()).resolves.toBe(
+          balance + BigInt(Math.round(clearing.json.data.bill_amount * 1e6)),
+        );
+
+        expect(response.status).toBe(200);
       });
 
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
-    });
+      it("clears credit", async () => {
+        const balance = await collectorBalance();
+        const amount = 10;
 
-    it("authorizes installments", async () => {
-      await database.insert(cards).values([{ id: "inst", credentialId: "cred", lastFour: "5678", mode: 6 }]);
-      const response = await appClient.index.$post({
-        ...authorization,
-        json: { ...authorization.json, data: { ...authorization.json.data, card_id: "inst", metadata: { account } } },
+        const operation = "clears_credit_operation";
+        await database.insert(cards).values([{ id: "clears_credit", credentialId: "cred", lastFour: "7890", mode: 1 }]);
+        const response = await appClient.index.$post({
+          ...clearing,
+          json: {
+            ...clearing.json,
+            operation_id: operation,
+            data: { ...clearing.json.data, card_id: "clears_credit", bill_amount: amount, metadata: { account } },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({
+          where: eq(transactions.id, operation),
+        });
+
+        await publicClient.waitForTransactionReceipt({ hash: transaction?.hash as Hex });
+
+        await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
+
+        expect(response.status).toBe(200);
       });
 
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+      it("clears installments", async () => {
+        const balance = await collectorBalance();
+        const amount = 100;
+
+        const operation = "clears_installments_operation";
+        await database
+          .insert(cards)
+          .values([{ id: "clears_installments", credentialId: "cred", lastFour: "6754", mode: 6 }]);
+        const response = await appClient.index.$post({
+          ...clearing,
+          json: {
+            ...clearing.json,
+            operation_id: operation,
+            data: { ...clearing.json.data, card_id: "clears_installments", bill_amount: amount, metadata: { account } },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({
+          where: eq(transactions.id, operation),
+        });
+
+        await publicClient.waitForTransactionReceipt({ hash: transaction?.hash as Hex });
+
+        await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
+
+        expect(response.status).toBe(200);
+      });
+
+      it("handles duplicated clearing", async () => {
+        const captureException = vi.spyOn(sentry, "captureException");
+        captureException.mockImplementation(() => "");
+
+        vi.spyOn(publicClient, "simulateContract").mockRejectedValue(
+          new BaseError("Error", {
+            cause: new ContractFunctionRevertedError({
+              abi: issuerCheckerAbi,
+              functionName: "collectInstallments",
+              data: encodeErrorResult({ errorName: "Expired", abi: issuerCheckerAbi }),
+            }),
+          }),
+        );
+
+        const getTransactionReceipt = vi
+          .spyOn(publicClient, "getTransactionReceipt")
+          .mockResolvedValue({ ...receipt, logs: [] });
+
+        const amount = 50;
+
+        const operation = "duplicate_clearing_operation";
+        const cardId = "handle_duplicated_clearing";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "777", mode: 6 }]);
+        await database.insert(transactions).values([{ id: operation, cardId, hash: zeroHash, payload: {} }]);
+        const response = await appClient.index.$post({
+          ...clearing,
+          json: {
+            ...clearing.json,
+            operation_id: operation,
+            data: { ...clearing.json.data, card_id: cardId, bill_amount: amount, metadata: { account } },
+          },
+        });
+
+        expect(captureException).not.toHaveBeenCalled();
+        expect(getTransactionReceipt).toHaveBeenCalledOnce();
+        expect(response.status).toBe(200);
+      });
+
+      it("fails with transaction timeout", async () => {
+        const captureException = vi.spyOn(sentry, "captureException");
+        captureException.mockImplementation(() => "");
+
+        vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
+
+        const operation = "timeout_clearing_operation";
+        await database
+          .insert(cards)
+          .values([{ id: "failed_installments", credentialId: "cred", lastFour: "777", mode: 6 }]);
+        const response = await appClient.index.$post({
+          ...clearing,
+          json: {
+            ...clearing.json,
+            operation_id: operation,
+            data: { ...clearing.json.data, card_id: "failed_installments", bill_amount: 60, metadata: { account } },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({
+          where: eq(transactions.id, operation),
+        });
+
+        expect(captureException).toHaveBeenCalledWith(new Error("Transaction Timeout"));
+        expect(transaction).toBeTruthy();
+        expect(response.status).toBe(200);
+      });
+
+      it("fails with transaction revert", async () => {
+        const captureException = vi.spyOn(sentry, "captureException");
+        captureException.mockImplementation(() => "");
+
+        vi.spyOn(publicClient, "waitForTransactionReceipt").mockResolvedValue({
+          ...receipt,
+          status: "reverted",
+          logs: [],
+        });
+
+        const operation = "revert_clearing_operation";
+        await database
+          .insert(cards)
+          .values([{ id: "revert_installments", credentialId: "cred", lastFour: "888", mode: 5 }]);
+        const response = await appClient.index.$post({
+          ...clearing,
+          json: {
+            ...clearing.json,
+            operation_id: operation,
+            data: { ...clearing.json.data, card_id: "revert_installments", bill_amount: 70, metadata: { account } },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({
+          where: eq(transactions.id, operation),
+        });
+
+        expect(captureException).toHaveBeenCalledWith(new Error("tx reverted"), expect.anything());
+        expect(transaction).toBeTruthy();
+        expect(response.status).toBe(200);
+      });
+
+      it("fails with unexpected error", async () => {
+        const captureException = vi.spyOn(sentry, "captureException");
+        captureException.mockImplementation(() => "");
+
+        vi.spyOn(publicClient, "simulateContract").mockRejectedValue(new Error("Unexpected Error"));
+
+        const cardId = "unexpected_error_card";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "888", mode: 4 }]);
+        const response = await appClient.index.$post({
+          ...clearing,
+          json: {
+            ...clearing.json,
+            operation_id: "unexpected_error_clearing_operation",
+            data: { ...clearing.json.data, card_id: cardId, bill_amount: 90, metadata: { account } },
+          },
+        });
+
+        expect(captureException).toHaveBeenCalledWith(new Error("Unexpected Error"), expect.anything());
+        expect(response.status).toBe(569);
+      });
     });
   });
 });
