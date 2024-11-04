@@ -12,7 +12,7 @@ export const persister = createAsyncStoragePersister({ serialize, deserialize, s
 const queryClient = new QueryClient({ defaultOptions: { queries: { structuralSharing } } });
 
 if (typeof window !== "undefined") {
-  persistQueryClientRestore({ queryClient, persister }).catch(handleError);
+  persistQueryClientRestore({ queryClient, persister, maxAge: Infinity }).catch(handleError);
   persistQueryClientSubscribe({ queryClient, persister });
 }
 
