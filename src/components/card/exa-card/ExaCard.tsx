@@ -16,13 +16,13 @@ import { getCard, setCardMode } from "../../../utils/server";
 import View from "../../shared/View";
 
 interface ExaCardProperties {
-  disabled: boolean;
+  disabled?: boolean;
   revealing: boolean;
   frozen: boolean;
   onPress?: () => void;
 }
 
-export default function ExaCard({ disabled, revealing, frozen, onPress }: ExaCardProperties) {
+export default function ExaCard({ disabled = false, revealing, frozen, onPress }: ExaCardProperties) {
   const { address } = useAccount();
   const { data: card, isFetching: isFetchingCardMode } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({

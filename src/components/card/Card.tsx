@@ -170,7 +170,6 @@ export default function Card() {
                 <PluginUpgrade />
                 <ExaCard
                   revealing={isRevealing}
-                  disabled={!cardDetails}
                   frozen={cardDetails?.status === "FROZEN"}
                   onPress={() => {
                     if (isRevealing) return;
