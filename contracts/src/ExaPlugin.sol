@@ -79,6 +79,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   address public keeper;
   KeeperRateModel public keeperRateModel;
   mapping(address account => Proposal lastProposal) public proposals;
+  mapping(address account => mapping(uint256 maturity => uint256 fee)) public keeperFees;
 
   bytes32 private callHash;
 
@@ -118,11 +119,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 maxRepay;
     (positionAssets, maxRepay) = _previewRepay(maturity);
 
-    uint256 amount = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender));
+    uint256 keeperFee = keeperFees[msg.sender][maturity];
+    uint256 amount = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender) - keeperFee);
     positionAssets = positionAssets.min(EXA_USDC.maxWithdraw(msg.sender));
 
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amount)))
+      address(EXA_USDC),
+      0,
+      abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amount) + keeperFee))
     );
     _flashLoan(
       amount,
@@ -131,6 +135,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         borrower: msg.sender,
         positionAssets: positionAssets.min(EXA_USDC.maxWithdraw(msg.sender)),
         maxRepay: amount,
+        keeperFee: keeperFee,
         marketIn: IMarket(address(0)),
         amountIn: 0,
         route: ""
@@ -157,6 +162,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         positionAssets: positionAssets,
         maxRepay: maxRepay,
         marketIn: collateral,
+        keeperFee: 0,
         amountIn: amountIn,
         route: route
       })
@@ -167,11 +173,16 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     external
     onlyIssuer(amount, timestamp, signature)
   {
+    uint256 duration = maturity - block.timestamp;
+    keeperFees[msg.sender][maturity] +=
+      amount.mulWad(keeperRateModel.rate(duration.divWad(365 days)).mulDiv(duration, 365 days));
+
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC),
       0,
       abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, type(uint256).max, collector, msg.sender)) // TODO slippage control
     );
+
     _checkLiquidity(msg.sender);
   }
 
@@ -471,6 +482,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     uint256 actualRepay;
     if (b.amountIn == 0) {
+      keeperFees[b.borrower][b.maturity] -= b.keeperFee;
       actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower).min(
         EXA_USDC.maxWithdraw(b.borrower)
       );
@@ -478,6 +490,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if (actualRepay < b.maxRepay) EXA_USDC.deposit(b.maxRepay - actualRepay, b.borrower);
 
       EXA_USDC.withdraw(b.maxRepay, address(BALANCER_VAULT), b.borrower);
+      // slither-disable-next-line arbitrary-send-erc20
+      IERC20(EXA_USDC).safeTransferFrom(b.borrower, keeper, b.keeperFee);
     } else {
       actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower);
 
@@ -605,6 +619,7 @@ struct BalancerCallbackData {
   address borrower;
   uint256 positionAssets;
   uint256 maxRepay;
+  uint256 keeperFee;
   IMarket marketIn;
   uint256 amountIn;
   bytes route;

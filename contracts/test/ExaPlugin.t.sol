@@ -865,6 +865,26 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
 
+  function test_fuzz_repayCredit_paysKeeperFee(uint256 maturity, uint256 amount) external {
+    maturity = _bound(maturity, FixedLib.INTERVAL, FixedLib.INTERVAL * 7);
+    maturity = maturity - maturity % FixedLib.INTERVAL;
+    amount = _bound(amount, 1, type(uint32).max);
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    account.collectCredit(maturity, amount, block.timestamp, _issuerOp(amount, block.timestamp));
+    vm.stopPrank();
+
+    uint256 duration = maturity - block.timestamp;
+    uint256 keeperFee =
+      amount.mulWad(exaPlugin.keeperRateModel().rate(duration.divWad(365 days)).mulDiv(duration, 365 days));
+
+    assertEq(usdc.balanceOf(keeper), 0);
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity)));
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    assertEq(exaUSDC.balanceOf(keeper), keeperFee, "keeper fee not paid");
+  }
+
   // solhint-enable func-name-mixedcase
 
   function _op(bytes memory callData, uint256 privateKey) internal view returns (UserOperation memory op) {
