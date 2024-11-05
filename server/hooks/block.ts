@@ -85,7 +85,7 @@ export default app.post(
   async (c) => {
     const { timestamp, logs } = c.req.valid("json").event.data.block;
     if (logs.length === 0) {
-      getActiveSpan()?.setAttribute("exa.ignore", false);
+      getActiveSpan()?.setAttribute("exa.ignore", true);
       return c.json({}, 200);
     }
     setContext("alchemy", await c.req.json());
