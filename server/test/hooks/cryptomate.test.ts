@@ -27,6 +27,7 @@ import app from "../../hooks/cryptomate";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
 import publicClient from "../../utils/publicClient";
+import traceClient from "../../utils/traceClient";
 
 const appClient = testClient(app);
 
@@ -99,6 +100,15 @@ const receipt = {
   transactionHash: "0x",
   transactionIndex: 0,
   type: "0x0",
+} as const;
+
+const callFrame = {
+  type: "CALL",
+  from: "",
+  to: "",
+  gas: "0x",
+  gasUsed: "0x",
+  input: "0x",
 } as const;
 
 async function collectorBalance() {
@@ -178,6 +188,8 @@ describe("card operations", () => {
         });
       });
 
+      afterEach(() => vi.restoreAllMocks());
+
       it("authorizes credit", async () => {
         const response = await appClient.index.$post({
           ...authorization,
@@ -211,6 +223,27 @@ describe("card operations", () => {
 
         expect(response.status).toBe(200);
         await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+      });
+
+      it("fails when tracing", async () => {
+        const captureException = vi.spyOn(sentry, "captureException");
+        captureException.mockImplementation(() => "");
+
+        const trace = vi.spyOn(traceClient, "traceCall").mockResolvedValue({ ...callFrame, output: "0x" });
+
+        await database.insert(cards).values([{ id: "failed_trace", credentialId: "cred", lastFour: "2222", mode: 4 }]);
+        const response = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            data: { ...authorization.json.data, card_id: "failed_trace", metadata: { account } },
+          },
+        });
+
+        expect(trace).toHaveBeenCalledOnce();
+        expect(captureException).toHaveBeenCalledWith(new Error("0x"), expect.anything());
+        expect(response.status).toBe(200);
+        await expect(response.json()).resolves.toStrictEqual({ response_code: "69" });
       });
     });
   });
