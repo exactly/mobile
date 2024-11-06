@@ -221,12 +221,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function poke(IMarket market) external onlyMarket(market) {
-    uint256 balance = IERC20(market.asset()).balanceOf(msg.sender);
+    address asset = market.asset();
+    uint256 balance = IERC20(asset).balanceOf(msg.sender);
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (balance == 0) revert NoBalance();
 
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market.asset()), 0, abi.encodeCall(IERC20.approve, (address(market), balance))
+      asset, 0, abi.encodeCall(IERC20.approve, (address(market), balance))
     );
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(market), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender))
@@ -497,12 +498,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
       b.marketIn.withdraw(b.amountIn, address(this), b.borrower);
 
-      uint256 balance = IERC20(EXA_USDC.asset()).balanceOf(address(this));
+      IERC20 usdc = IERC20(EXA_USDC.asset());
+      uint256 balance = usdc.balanceOf(address(this));
       IERC20(b.marketIn.asset()).approve(LIFI, b.amountIn);
       LIFI.functionCall(b.route);
-      uint256 received = IERC20(EXA_USDC.asset()).balanceOf(address(this)) - balance;
+      uint256 received = usdc.balanceOf(address(this)) - balance;
 
-      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), b.maxRepay);
+      usdc.safeTransfer(address(BALANCER_VAULT), b.maxRepay);
       EXA_USDC.deposit(received - actualRepay, b.borrower);
     }
   }
