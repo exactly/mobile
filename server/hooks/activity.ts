@@ -138,7 +138,6 @@ export default app.post(
                     const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
                       keeper.writeContract(request),
                     );
-                    setContext("tx", { transactionHash: hash });
                     setContext("tx", { ...request, transactionHash: hash });
                     const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
                       publicClient.waitForTransactionReceipt({ hash }),
@@ -146,12 +145,11 @@ export default app.post(
                     setContext("tx", { ...request, ...receipt });
                     return receipt.status === "success";
                   } catch (error: unknown) {
-                    captureException(error);
+                    captureException(error, { level: "error" });
                     return false;
                   }
                 }))
               ) {
-                captureException(new Error("account deployment reverted"));
                 return;
               }
               await Promise.allSettled(
@@ -182,7 +180,9 @@ export default app.post(
                           publicClient.waitForTransactionReceipt({ hash }),
                         );
                         setContext("tx", { ...request, ...receipt });
-                        if (receipt.status !== "success") captureException(new Error("tx reverted"));
+                        if (receipt.status !== "success") {
+                          captureException(new Error("tx reverted"), { level: "error" });
+                        }
                       } catch (error: unknown) {
                         if (
                           error instanceof BaseError &&
@@ -191,7 +191,7 @@ export default app.post(
                         ) {
                           return;
                         }
-                        captureException(error);
+                        captureException(error, { level: "error" });
                       }
                     },
                   );

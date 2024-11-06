@@ -159,7 +159,7 @@ describe("address activity", () => {
 
     const deposits = await waitForDeposit(account, 1);
 
-    expect(captureException).toHaveBeenCalledWith(new Error("account deployment reverted"));
+    expect(captureException).toHaveBeenCalledWith(new Error("Transaction Timeout"), expect.anything());
 
     expect(deposits).toHaveLength(0);
     expect(response.status).toBe(200);
