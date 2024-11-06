@@ -637,8 +637,8 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
       acct("collector"),
-      acct("keeper"),
-      KeeperRateModel(broadcast("KeeperRateModel"))
+      keeper,
+      keeperRateModel
     );
 
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
@@ -661,6 +661,18 @@ contract ExaPluginTest is ForkTest {
     );
 
     uint256 maturity = block.timestamp + 2 * FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
+
+    // fixme - assert keeper fee is paid
+    // uint256 duration = maturity - block.timestamp;
+    // emit log_named_uint("duration", duration);
+    // emit log_named_address("exaPlugin.keeperRateModel()", address(exaPlugin.keeperRateModel()));
+    // emit log_named_address("keeperRateModel", address(keeperRateModel));
+    // // emit log_named_uint("rate", exaPlugin.keeperRateModel().rate(duration.divWad(365 days)));
+
+    // emit log_named_uint("durEnd", KeeperRateModel(keeperRateModel).DURATION_END());
+    // uint256 keeperFee = amount.mulWad(keeperRateModel.rate(duration.divWad(365 days)).mulDiv(duration, 365 days));
+
+    // emit log_named_decimal_uint("keeperFee", keeperFee, 6);
 
     bytes memory route = bytes.concat(
       hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",

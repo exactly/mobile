@@ -115,9 +115,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function repay(uint256 maturity) external {
-    uint256 positionAssets;
-    uint256 maxRepay;
-    (positionAssets, maxRepay) = _previewRepay(maturity);
+    (uint256 positionAssets, uint256 maxRepay) = _previewRepay(maturity);
 
     uint256 keeperFee = keeperFees[msg.sender][maturity];
     uint256 amount = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender) - keeperFee);
@@ -162,7 +160,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         positionAssets: positionAssets,
         maxRepay: maxRepay,
         marketIn: collateral,
-        keeperFee: 0,
+        keeperFee: keeperFees[msg.sender][maturity],
         amountIn: amountIn,
         route: route
       })
@@ -481,9 +479,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     BalancerCallbackData memory b = abi.decode(data, (BalancerCallbackData));
 
+    if (b.keeperFee != 0) {
+      keeperFees[b.borrower][b.maturity] -= b.keeperFee;
+      // slither-disable-next-line arbitrary-send-erc20
+      IERC20(EXA_USDC).safeTransferFrom(b.borrower, keeper, b.keeperFee);
+    }
     uint256 actualRepay;
     if (b.amountIn == 0) {
-      keeperFees[b.borrower][b.maturity] -= b.keeperFee;
       actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower).min(
         EXA_USDC.maxWithdraw(b.borrower)
       );
@@ -491,8 +493,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if (actualRepay < b.maxRepay) EXA_USDC.deposit(b.maxRepay - actualRepay, b.borrower);
 
       EXA_USDC.withdraw(b.maxRepay, address(BALANCER_VAULT), b.borrower);
-      // slither-disable-next-line arbitrary-send-erc20
-      IERC20(EXA_USDC).safeTransferFrom(b.borrower, keeper, b.keeperFee);
     } else {
       actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower);
 
