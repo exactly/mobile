@@ -86,14 +86,14 @@ export async function setCardMode(mode: number) {
   return response.json();
 }
 
-export async function kyc(inquiryId?: string) {
+export async function getKYCLink() {
   await auth();
-  const response = await client.api.kyc.$post({ json: { inquiryId } });
+  const response = await client.api.kyc.$post();
   if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
-export async function kycStatus() {
+export async function getKYCStatus() {
   await auth();
   const response = await client.api.kyc.$get();
   if (!response.ok) throw new APIError(response.status, await response.json());

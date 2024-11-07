@@ -19,9 +19,9 @@ import {
   useReadUpgradeableModularAccountGetInstalledPlugins,
 } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
-import { verifyIdentity } from "../../utils/persona";
+import { createInquiry, resumeInquiry } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
-import { APIError, getActivity, getCard, createCard, kycStatus } from "../../utils/server";
+import { APIError, getActivity, getCard, createCard, getKYCStatus } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
 import InfoBadge from "../shared/InfoBadge";
@@ -51,7 +51,10 @@ export default function Card() {
 
   const { queryKey } = useMarketAccount(marketUSDCAddress);
   const { address } = useAccount();
-  const { data: KYCStatus, refetch: refetchKYCStatus } = useQuery({ queryKey: ["kyc", "status"], queryFn: kycStatus });
+  const { data: KYCStatus, refetch: refetchKYCStatus } = useQuery({
+    queryKey: ["kyc", "status"],
+    queryFn: getKYCStatus,
+  });
   const { refetch: refetchInstalledPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
   });
@@ -86,30 +89,34 @@ export default function Card() {
   } = useMutation({
     mutationKey: ["card", "reveal"],
     mutationFn: async function handleReveal() {
-      if (!passkey || isRevealing) return;
+      if (isRevealing) return;
+      if (!passkey) return;
       try {
         const { isSuccess, data } = await refetchCard();
         if (isSuccess && data.url) {
           setCardDetailsOpen(true);
           return;
         }
-        await kycStatus();
-        await createCard();
-        const { data: card } = await refetchCard();
-        if (card?.url) setCardDetailsOpen(true);
+        const result = await getKYCStatus();
+        if (result === "ok") {
+          await createCard();
+          const { data: card } = await refetchCard();
+          if (card?.url) setCardDetailsOpen(true);
+        } else {
+          resumeInquiry(result.inquiryId, result.sessionToken);
+        }
       } catch (error) {
         if (!(error instanceof APIError)) {
           handleError(error);
           return;
         }
         const { code, text } = error;
-        if ((code === 403 && text === "kyc required") || (code === 404 && text === "kyc not found")) {
-          await verifyIdentity(passkey);
-        }
-        if (code === 404 && text === "card not found") {
-          await createCard();
-          const { data: card } = await refetchCard();
-          if (card?.url) setCardDetailsOpen(true);
+        if (
+          (code === 403 && text === "kyc required") ||
+          (code === 404 && text === "kyc not found") ||
+          (code === 400 && text === "kyc not started")
+        ) {
+          createInquiry(passkey);
         }
         handleError(error);
       }

@@ -12,7 +12,7 @@ import GettingStarted from "./GettingStarted";
 import HomeActions from "./HomeActions";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
-import { getActivity, kycStatus } from "../../utils/server";
+import { getActivity, getKYCStatus } from "../../utils/server";
 import AlertBadge from "../shared/AlertBadge";
 import LatestActivity from "../shared/LatestActivity";
 import ProfileHeader from "../shared/ProfileHeader";
@@ -38,7 +38,10 @@ export default function Home() {
     account: address,
     args: [address ?? zeroAddress],
   });
-  const { data: KYCStatus, refetch: refetchKYCStatus } = useQuery({ queryKey: ["kyc", "status"], queryFn: kycStatus });
+  const { data: KYCStatus, refetch: refetchKYCStatus } = useQuery({
+    queryKey: ["kyc", "status"],
+    queryFn: getKYCStatus,
+  });
   let usdBalance = 0n;
   if (markets) {
     for (const market of markets) {

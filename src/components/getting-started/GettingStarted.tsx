@@ -9,8 +9,9 @@ import { ScrollView, XStack, YStack } from "tamagui";
 
 import Step from "./Step";
 import handleError from "../../utils/handleError";
-import { verifyIdentity } from "../../utils/persona";
+import { createInquiry, resumeInquiry } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
+import { APIError, getKYCStatus } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
 import { OnboardingContext } from "../context/OnboardingProvider";
 import ActionButton from "../shared/ActionButton";
@@ -124,7 +125,25 @@ function CurrentStep() {
     mutationKey: ["kyc"],
     mutationFn: async () => {
       if (!passkey) throw new Error("missing passkey");
-      await verifyIdentity(passkey);
+      try {
+        const result = await getKYCStatus();
+        if (result === "ok") return;
+        resumeInquiry(result.inquiryId, result.sessionToken);
+      } catch (error) {
+        if (!(error instanceof APIError)) {
+          handleError(error);
+          return;
+        }
+        const { code, text } = error;
+        if (
+          (code === 403 && text === "kyc required") ||
+          (code === 404 && text === "kyc not found") ||
+          (code === 400 && text === "kyc not started")
+        ) {
+          createInquiry(passkey);
+        }
+        handleError(error);
+      }
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ["kyc", "status"] });
