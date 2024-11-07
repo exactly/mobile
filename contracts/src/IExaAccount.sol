@@ -32,6 +32,8 @@ event CollectorSet(address indexed collector, address indexed account);
 
 event KeeperFeeModelSet(address indexed keeperFeeModel, address indexed account);
 
+event MinCreditFactorSet(uint256 minCreditFactor, address indexed account);
+
 event Proposed(
   address indexed account, IMarket indexed market, address indexed receiver, uint256 amount, uint256 unlock
 );
@@ -71,6 +73,7 @@ error NoProposal();
 error NotMarket();
 error Timelocked();
 error Unauthorized();
+error WrongValue();
 
 interface IAuditor {
   function accountMarkets(address account) external view returns (uint256);

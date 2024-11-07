@@ -35,13 +35,15 @@ import {
   InsufficientLiquidity,
   KeeperFeeModelSet,
   MarketData,
+  MinCreditFactorSet,
   NoBalance,
   NoProposal,
   NotMarket,
   Proposal,
   Proposed,
   Timelocked,
-  Unauthorized
+  Unauthorized,
+  WrongValue
 } from "./IExaAccount.sol";
 import { IssuerChecker } from "./IssuerChecker.sol";
 import { KeeperFeeModel } from "./KeeperFeeModel.sol";
@@ -76,6 +78,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   address public collector;
   KeeperFeeModel public keeperFeeModel;
+  uint256 public minCreditFactor;
   mapping(address account => Proposal lastProposal) public proposals;
 
   bytes32 private callHash;
@@ -100,6 +103,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setCollector(collector_);
     setKeeperFeeModel(keeperFeeModel_);
+    setMinCreditFactor(1e18);
 
     IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
   }
@@ -168,7 +172,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       0,
       abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, type(uint256).max, collector, msg.sender)) // TODO slippage control
     );
-    _checkLiquidity(msg.sender);
+    _checkLiquidity(msg.sender, minCreditFactor);
   }
 
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature)
@@ -178,7 +182,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender))
     );
-    _checkLiquidity(msg.sender);
+    _checkLiquidity(msg.sender, 1e18);
   }
 
   function collectInstallments(
@@ -202,7 +206,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       0,
       abi.encodeCall(IInstallmentsRouter.borrow, (EXA_USDC, firstMaturity, amounts, maxRepay, collector))
     );
-    _checkLiquidity(msg.sender);
+    _checkLiquidity(msg.sender, 1e18);
   }
 
   function poke(IMarket market) external onlyMarket(market) {
@@ -269,6 +273,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (address(keeperFeeModel_) == address(0)) revert ZeroAddress();
     keeperFeeModel = keeperFeeModel_;
     emit KeeperFeeModelSet(address(keeperFeeModel_), msg.sender);
+  }
+
+  function setMinCreditFactor(uint256 minCreditFactor_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    if (minCreditFactor_ < 1e18) revert WrongValue();
+    minCreditFactor = minCreditFactor_;
+    emit MinCreditFactorSet(minCreditFactor_, msg.sender);
   }
 
   /// @inheritdoc BasePlugin
@@ -486,7 +496,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   receive() external payable { } // solhint-disable-line no-empty-blocks
 
-  function _checkLiquidity(address account) internal view {
+  function _checkLiquidity(address account, uint256 minHealthFactor) internal view {
     IMarket withdrawMarket = proposals[account].market;
     uint256 marketMap = AUDITOR.accountMarkets(account);
     uint256 sumCollateral = 0;
@@ -509,7 +519,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if ((1 << i) > marketMap) break;
     }
 
-    if (sumCollateral < sumDebtPlusEffects) revert InsufficientLiquidity();
+    if (sumDebtPlusEffects != 0 && sumCollateral.divWad(sumDebtPlusEffects) < minHealthFactor) {
+      revert InsufficientLiquidity();
+    }
   }
 
   function _checkMarket(IMarket market) internal view {

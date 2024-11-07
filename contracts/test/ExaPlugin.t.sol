@@ -38,7 +38,8 @@ import {
   NoProposal,
   Proposed,
   Timelocked,
-  Unauthorized
+  Unauthorized,
+  WrongValue
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
@@ -747,6 +748,31 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), 0);
   }
 
+  function test_collectCredit_collects_whenHealthFactorHigherThanMinCreditFactor() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
+    uint256 credit = exaUSDCBalance / 2;
+
+    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
+
+    assertEq(usdc.balanceOf(collector), credit);
+  }
+
+  function test_collectCredit_reverts_whenHealthFactorLowerThanMinCreditFactor() external {
+    exaPlugin.setMinCreditFactor(2e18);
+
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
+    uint256 credit = exaUSDCBalance / 2;
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
+  }
+
   function test_onUninstall_uninstalls() external {
     vm.startPrank(owner);
     account.uninstallPlugin(address(exaPlugin), "", "");
@@ -819,6 +845,27 @@ contract ExaPluginTest is ForkTest {
   function test_setKeeperFeeModel_reverts_whenAddressZero() external {
     vm.expectRevert(ZeroAddress.selector);
     exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0)));
+  }
+
+  function test_setMinCreditFactor_sets_whenAdmin() external {
+    exaPlugin.setMinCreditFactor(2e18);
+    assertEq(exaPlugin.minCreditFactor(), 2e18);
+  }
+
+  function test_setMinCreditFactor_reverts_whenNotAdmin() external {
+    address nonAdmin = address(0x1);
+    vm.startPrank(nonAdmin);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    exaPlugin.setMinCreditFactor(2e18);
+  }
+
+  function test_setMinCreditFactor_reverts_whenLowerThanWad() external {
+    vm.expectRevert(WrongValue.selector);
+    exaPlugin.setMinCreditFactor(1e18 - 1);
   }
 
   function test_repay_partiallyRepays() external {
