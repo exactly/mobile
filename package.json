@@ -229,7 +229,8 @@
       "reactNativeDirectoryCheck": {
         "enabled": true,
         "exclude": [
-          "@intercom/intercom-react-native"
+          "@intercom/intercom-react-native",
+          "tamagui"
         ],
         "listUnknownPackages": false
       }
