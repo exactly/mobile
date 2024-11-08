@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
 
-import { ForkTest } from "./Fork.t.sol";
+import { ForkTest, stdError } from "./Fork.t.sol";
 
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { FixedLib, Market } from "@exactly/protocol/Market.sol";
@@ -473,6 +473,22 @@ contract ExaPluginTest is ForkTest {
     account.collectInstallments(
       FixedLib.INTERVAL, new uint256[](0), type(uint256).max, block.timestamp, _issuerOp(0, block.timestamp)
     );
+  }
+
+  function test_collectInstallments_revertsWhenNoSlippage() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    assertEq(usdc.balanceOf(collector), 0);
+
+    uint256[] memory amounts = new uint256[](3);
+    amounts[0] = 10e6;
+    amounts[1] = 10e6;
+    amounts[2] = 10e6;
+
+    vm.expectRevert(stdError.arithmeticError);
+    account.collectInstallments(FixedLib.INTERVAL, amounts, 30e6, block.timestamp, _issuerOp(30e6, block.timestamp));
+
+    assertEq(usdc.balanceOf(collector), 0);
   }
 
   function test_withdraw_transfersAsset_asOwner() external {
