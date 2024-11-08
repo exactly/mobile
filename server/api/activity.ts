@@ -13,7 +13,7 @@ import {
   isoTimestamp,
   length,
   minLength,
-  nullable,
+  nullish,
   number,
   object,
   optional,
@@ -205,12 +205,12 @@ const CardActivity = object({
     bill_amount: number(),
     merchant_data: object({
       name: string(),
-      country: nullable(string()),
-      state: nullable(string()),
-      city: nullable(string()),
+      country: nullish(string()),
+      state: nullish(string()),
+      city: nullish(string()),
     }),
     transaction_amount: number(),
-    transaction_currency_code: nullable(string()),
+    transaction_currency_code: nullish(string()),
   }),
 });
 
