@@ -22,6 +22,11 @@ const templateId = process.env.PERSONA_TEMPLATE_ID;
 const baseURL = process.env.PERSONA_URL;
 
 export async function getInquiry(referenceId: string) {
+  const { data: approvedInquiries } = await request(
+    GetInquiriesResponse,
+    `/inquiries?page[size]=1filter[reference-id]=${referenceId}&filter[status]=approved`,
+  );
+  if (approvedInquiries[0]) return approvedInquiries[0];
   const { data: inquiries } = await request(
     GetInquiriesResponse,
     `/inquiries?page[size]=1&filter[reference-id]=${referenceId}`,
