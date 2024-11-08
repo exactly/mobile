@@ -209,6 +209,8 @@ export default new Hono().post(
           }
         });
       }
+      default:
+        return c.json({});
     }
   },
 );
