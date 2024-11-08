@@ -3,7 +3,7 @@
   "build": {
     "base": {
       "resourceClass": "large",
-      "node": "22.10.0",
+      "node": "22.11.0",
       "pnpm": "9.12.3",
       "prebuildCommand": "prebuild --clean --template https://github.com/expo/expo/tree/5532a07/templates/expo-template-bare-minimum",
       "android": { "image": "latest" },

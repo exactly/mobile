@@ -3,12 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "engines": {
-    "node": ">=22.10.0"
+    "node": ">=22.11.0"
   },
   "dependencies": {
     "@alchemy/aa-core": "^3.19.0",
     "@exactly/plugin": "workspace:*",
     "valibot": "^0.42.1",
-    "viem": "^2.21.40"
+    "viem": "^2.21.43"
   }
 }
