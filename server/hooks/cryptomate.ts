@@ -134,7 +134,7 @@ export default new Hono().post(
       const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
       const firstMaturity =
         nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
-      if (card.mode === 1) {
+      if (card.mode === 1 || payload.data.bill_amount * 100 < card.mode) {
         return {
           functionName: "collectCredit",
           args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
