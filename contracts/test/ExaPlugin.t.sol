@@ -52,9 +52,6 @@ import { DeployRefunder } from "../script/Refunder.s.sol";
 import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
-// TODO use mock asset with price != 1
-// TODO use price feed for that asset with 8 decimals
-// TODO add the debt manager to the plugin so we can roll fixed to floating
 // solhint-disable-next-line max-states-count
 contract ExaPluginTest is ForkTest {
   using FixedPointMathLib for uint256;
@@ -227,6 +224,70 @@ contract ExaPluginTest is ForkTest {
     account.collectCredit(FixedLib.INTERVAL, 1, block.timestamp, _issuerOp(1, block.timestamp));
   }
 
+  function test_collectCredit_passes_whenProposalLeavesEnoughLiquidity() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
+    uint256 propose = exaUSDCBalance.mulWad(0.8e18);
+    (uint256 adjustFactor,,,,) = auditor.markets(Market(address(exaUSDC)));
+
+    uint256 credit = (exaUSDCBalance - propose).mulWad(adjustFactor) / 2;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, propose, receiver)));
+
+    vm.startPrank(keeper);
+    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
+
+    assertEq(usdc.balanceOf(collector), credit);
+  }
+
+  function test_collectCredit_reverts_whenPrposalCausesInsufficientLiquidity() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
+    uint256 propose = exaUSDCBalance.mulWad(0.8e18);
+    uint256 credit = exaUSDCBalance - propose;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, propose, receiver)));
+
+    vm.startPrank(keeper);
+    vm.expectRevert(InsufficientLiquidity.selector);
+    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
+
+    assertEq(usdc.balanceOf(collector), 0);
+  }
+
+  function test_collectCredit_collects_whenHealthFactorHigherThanMinCreditFactor() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
+    uint256 credit = exaUSDCBalance / 2;
+
+    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
+
+    assertEq(usdc.balanceOf(collector), credit);
+  }
+
+  function test_collectCredit_reverts_whenHealthFactorLowerThanMinCreditFactor() external {
+    exaPlugin.setMinCreditFactor(2e18);
+
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
+    uint256 credit = exaUSDCBalance / 2;
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
+  }
+
   function test_collectDebit_collects() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
@@ -288,6 +349,42 @@ contract ExaPluginTest is ForkTest {
       )
     );
     account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
+  }
+
+  function test_collectDebit_collects_whenProposalLeavesEnoughLiquidity() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
+    uint256 propose = exaUSDCBalance.mulWad(0.8e18);
+    uint256 debit = exaUSDCBalance - propose;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, propose, receiver)));
+
+    vm.startPrank(keeper);
+    account.collectDebit(debit, block.timestamp, _issuerOp(debit, block.timestamp));
+    assertEq(usdc.balanceOf(collector), debit);
+    assertEq(usdc.balanceOf(collector), debit);
+  }
+
+  function test_collectDebit_reverts_whenProposalCausesInsufficientLiquidity() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
+    uint256 propose = exaUSDCBalance.mulWad(0.8e18);
+    uint256 debit = exaUSDCBalance - propose + 1;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, propose, receiver)));
+
+    vm.startPrank(keeper);
+    vm.expectRevert(InsufficientLiquidity.selector);
+    account.collectDebit(debit, block.timestamp, _issuerOp(debit, block.timestamp));
+    assertEq(usdc.balanceOf(collector), 0);
   }
 
   function test_collectInstallments_collects() external {
@@ -581,7 +678,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_poke() external {
     vm.startPrank(keeper);
-    account.poke(exaEXA); // TODO test all cases
+    account.poke(exaEXA);
   }
 
   function test_pokeETH_deposits() external {
@@ -611,6 +708,19 @@ contract ExaPluginTest is ForkTest {
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
     vm.stopPrank();
 
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+  }
+
+  function test_repay_partiallyRepays() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    account.poke(exaEXA);
+    account.collectCredit(FixedLib.INTERVAL, 100_000e6 + 1, block.timestamp, _issuerOp(100_000e6 + 1, block.timestamp));
+    vm.stopPrank();
+
+    assertEq(exaUSDC.maxWithdraw(address(account)), 100_000e6);
     vm.prank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -671,106 +781,6 @@ contract ExaPluginTest is ForkTest {
     vm.stopPrank();
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(prevCollateral, exaWBTC.balanceOf(address(account)), "collateral didn't decrease");
-  }
-
-  function test_collectDebit_collects_whenProposalLeavesEnoughLiquidity() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-
-    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
-    uint256 propose = exaUSDCBalance.mulWad(0.8e18);
-    uint256 debit = exaUSDCBalance - propose;
-    address receiver = address(0x420);
-
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, propose, receiver)));
-
-    vm.startPrank(keeper);
-    account.collectDebit(debit, block.timestamp, _issuerOp(debit, block.timestamp));
-    assertEq(usdc.balanceOf(collector), debit);
-    assertEq(usdc.balanceOf(collector), debit);
-  }
-
-  function test_collectDebit_reverts_whenProposalCausesInsufficientLiquidity() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-
-    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
-    uint256 propose = exaUSDCBalance.mulWad(0.8e18);
-    uint256 debit = exaUSDCBalance - propose + 1;
-    address receiver = address(0x420);
-
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, propose, receiver)));
-
-    vm.startPrank(keeper);
-    vm.expectRevert(InsufficientLiquidity.selector);
-    account.collectDebit(debit, block.timestamp, _issuerOp(debit, block.timestamp));
-    assertEq(usdc.balanceOf(collector), 0);
-  }
-
-  function test_collectCredit_passes_whenProposalLeavesEnoughLiquidity() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-
-    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
-    uint256 propose = exaUSDCBalance.mulWad(0.8e18);
-    (uint256 adjustFactor,,,,) = auditor.markets(Market(address(exaUSDC)));
-
-    uint256 credit = (exaUSDCBalance - propose).mulWad(adjustFactor) / 2;
-    address receiver = address(0x420);
-
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, propose, receiver)));
-
-    vm.startPrank(keeper);
-    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
-
-    assertEq(usdc.balanceOf(collector), credit);
-  }
-
-  function test_collectCredit_reverts_whenPrposalCausesInsufficientLiquidity() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-
-    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
-    uint256 propose = exaUSDCBalance.mulWad(0.8e18);
-    uint256 credit = exaUSDCBalance - propose;
-    address receiver = address(0x420);
-
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, propose, receiver)));
-
-    vm.startPrank(keeper);
-    vm.expectRevert(InsufficientLiquidity.selector);
-    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
-
-    assertEq(usdc.balanceOf(collector), 0);
-  }
-
-  function test_collectCredit_collects_whenHealthFactorHigherThanMinCreditFactor() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-
-    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
-    uint256 credit = exaUSDCBalance / 2;
-
-    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
-
-    assertEq(usdc.balanceOf(collector), credit);
-  }
-
-  function test_collectCredit_reverts_whenHealthFactorLowerThanMinCreditFactor() external {
-    exaPlugin.setMinCreditFactor(2e18);
-
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-
-    uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
-    uint256 credit = exaUSDCBalance / 2;
-
-    vm.expectRevert(InsufficientLiquidity.selector);
-    account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
   }
 
   function test_onUninstall_uninstalls() external {
@@ -866,19 +876,6 @@ contract ExaPluginTest is ForkTest {
   function test_setMinCreditFactor_reverts_whenLowerThanWad() external {
     vm.expectRevert(WrongValue.selector);
     exaPlugin.setMinCreditFactor(1e18 - 1);
-  }
-
-  function test_repay_partiallyRepays() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-    account.poke(exaEXA);
-    account.collectCredit(FixedLib.INTERVAL, 100_000e6 + 1, block.timestamp, _issuerOp(100_000e6 + 1, block.timestamp));
-    vm.stopPrank();
-
-    assertEq(exaUSDC.maxWithdraw(address(account)), 100_000e6);
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
 
   // solhint-enable func-name-mixedcase
