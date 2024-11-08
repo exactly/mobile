@@ -12,7 +12,7 @@ import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 
-import { BaseScript, stdJson } from "../../script/Base.s.sol";
+import { BaseScript } from "../../script/Base.s.sol";
 import { ExaAccountFactory } from "../../src/ExaAccountFactory.sol";
 import { IExaAccount, IMarket } from "../../src/IExaAccount.sol";
 import { IssuerChecker } from "../../src/IssuerChecker.sol";
@@ -22,7 +22,6 @@ contract BobScript is BaseScript {
   using OwnersLib for address[];
   using LibString for address;
   using LibString for uint256;
-  using stdJson for string;
 
   MockERC20 public exa;
   MockERC20 public usdc;

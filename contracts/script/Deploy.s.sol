@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0;
 
-import { LibString } from "solady/utils/LibString.sol";
-
 import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factory.s.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
@@ -14,12 +12,9 @@ import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
 import { Refunder } from "../src/Refunder.sol";
 
-import { BaseScript, stdJson } from "./Base.s.sol";
+import { BaseScript } from "./Base.s.sol";
 
 contract DeployScript is BaseScript {
-  using LibString for uint256;
-  using stdJson for string;
-
   ExaAccountFactory public factory;
   ExaPlugin public exaPlugin;
   IssuerChecker public issuerChecker;
