@@ -66,6 +66,21 @@ const CollectData = v.object({
   signature: v.string(),
 });
 
+const Payload = v.intersect([
+  v.variant("event_type", [
+    v.object({ event_type: v.literal("AUTHORIZATION"), status: v.literal("PENDING"), data: CollectData }),
+    v.variant("status", [
+      v.object({ event_type: v.literal("CLEARING"), status: v.literal("PENDING"), data: CollectData }),
+      v.object({ event_type: v.literal("CLEARING"), status: v.literal("SUCCESS") }),
+      v.object({ event_type: v.literal("CLEARING"), status: v.literal("FAILED") }),
+    ]),
+    v.object({ event_type: v.literal("DECLINED"), status: v.literal("FAILED") }),
+    v.object({ event_type: v.literal("REFUND"), status: v.literal("SUCCESS") }),
+    v.object({ event_type: v.literal("REVERSAL"), status: v.literal("SUCCESS") }),
+  ]),
+  v.object({ product: v.literal("CARDS"), operation_id: v.string(), data: OperationData }),
+]);
+
 export default new Hono().post(
   "/",
   vValidator(
@@ -73,106 +88,28 @@ export default new Hono().post(
     v.object({ "x-webhook-key": v.literal(process.env.CRYPTOMATE_WEBHOOK_KEY) }),
     ({ success }, c) => (success ? undefined : c.text("unauthorized", 401)),
   ),
-  vValidator(
-    "json",
-    v.intersect([
-      v.variant("event_type", [
-        v.object({ event_type: v.literal("AUTHORIZATION"), status: v.literal("PENDING"), data: CollectData }),
-        v.variant("status", [
-          v.object({ event_type: v.literal("CLEARING"), status: v.literal("PENDING"), data: CollectData }),
-          v.object({ event_type: v.literal("CLEARING"), status: v.literal("SUCCESS") }),
-          v.object({ event_type: v.literal("CLEARING"), status: v.literal("FAILED") }),
-        ]),
-        v.object({ event_type: v.literal("DECLINED"), status: v.literal("FAILED") }),
-        v.object({ event_type: v.literal("REFUND"), status: v.literal("SUCCESS") }),
-        v.object({ event_type: v.literal("REVERSAL"), status: v.literal("SUCCESS") }),
-      ]),
-      v.object({ product: v.literal("CARDS"), operation_id: v.string(), data: OperationData }),
-    ]),
-    (validation, c) => {
-      if (debug.enabled) {
-        c.req
-          .text()
-          .then(debug)
-          .catch((error: unknown) => captureException(error));
-      }
-      if (!validation.success) {
-        captureException(new Error("bad cryptomate"), { contexts: { validation } });
-        return c.text("bad request", 400);
-      }
-    },
-  ),
+  vValidator("json", Payload, (validation, c) => {
+    if (debug.enabled) {
+      c.req
+        .text()
+        .then(debug)
+        .catch((error: unknown) => captureException(error));
+    }
+    if (!validation.success) {
+      captureException(new Error("bad cryptomate"), { contexts: { validation } });
+      return c.text("bad request", 400);
+    }
+  }),
   async (c) => {
-    const previewPromise = startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
-      publicClient.readContract({
-        abi: installmentsPreviewerAbi,
-        address: installmentsPreviewerAddress,
-        functionName: "preview",
-      }),
-    );
     const payload = c.req.valid("json");
     setTag("cryptomate.event", payload.event_type);
     setTag("cryptomate.status", payload.status);
     const jsonBody = await c.req.json(); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
     setContext("cryptomate", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
-    const card = await database.query.cards.findFirst({
-      columns: { mode: true },
-      where: and(eq(cards.id, payload.data.card_id), eq(cards.status, "ACTIVE")),
-      with: { credential: { columns: { account: true } } },
-    });
-    if (!card) return c.json("card not found", 404);
-    const account = v.parse(Address, card.credential.account);
-    setUser({ id: account });
-    setTag("exa.mode", card.mode);
-    const amount = BigInt(Math.round(payload.data.bill_amount * 1e6));
-    const call = await (async () => {
-      const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
-      const signature = await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }); // TODO replace with payload signature
-      if (card.mode === 0) {
-        return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
-      }
-      const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
-      const firstMaturity =
-        nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
-      if (card.mode === 1 || payload.data.bill_amount * 100 < card.mode) {
-        return {
-          functionName: "collectCredit",
-          args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
-        } as const;
-      }
-      const preview = await startSpan({ name: "await preview", op: "exa.wait" }, () => previewPromise);
-      setContext("preview", preview);
-      const installments = startSpan({ name: "split installments", op: "exa.split" }, () =>
-        splitInstallments(
-          amount,
-          preview.floatingAssets,
-          firstMaturity,
-          preview.fixedUtilizations.length,
-          preview.fixedUtilizations
-            .filter(
-              ({ maturity }) => maturity >= firstMaturity && maturity < firstMaturity + card.mode * MATURITY_INTERVAL,
-            )
-            .map(({ utilization }) => utilization),
-          preview.floatingUtilization,
-          preview.globalUtilization,
-          preview.interestRateModel,
-        ),
-      );
-      setContext("installments", installments);
-      return {
-        functionName: "collectInstallments",
-        args: [BigInt(firstMaturity), installments.amounts, maxUint256, BigInt(timestamp), signature],
-      } as const;
-    })();
-    setContext("tx", { call });
-    const transaction = {
-      from: keeper.account.address,
-      to: account,
-      data: encodeFunctionData({ abi: exaPluginAbi, ...call }),
-    } as const;
 
     switch (payload.event_type) {
-      case "AUTHORIZATION":
+      case "AUTHORIZATION": {
+        const { account, amount, call, transaction } = await prepareCollection(payload);
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
         try {
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
@@ -216,9 +153,10 @@ export default new Hono().post(
           captureException(error, { contexts: { tx: { call } } });
           return c.json({ response_code: "05" });
         }
-      case "CLEARING":
-        if (payload.status !== "PENDING") return c.json({});
+      }
+      case "CLEARING": {
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
+        const { account, call } = await prepareCollection(payload);
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
           try {
             const collect = {
@@ -270,11 +208,80 @@ export default new Hono().post(
             return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
           }
         });
-      default:
-        return c.json({});
+      }
     }
   },
 );
+
+async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
+  const previewPromise = startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
+    publicClient.readContract({
+      abi: installmentsPreviewerAbi,
+      address: installmentsPreviewerAddress,
+      functionName: "preview",
+    }),
+  );
+  const card = await database.query.cards.findFirst({
+    columns: { mode: true },
+    where: and(eq(cards.id, payload.data.card_id), eq(cards.status, "ACTIVE")),
+    with: { credential: { columns: { account: true } } },
+  });
+  if (!card) throw new Error("card not found");
+  const account = v.parse(Address, card.credential.account);
+  setUser({ id: account });
+  setTag("exa.mode", card.mode);
+  const amount = BigInt(Math.round(payload.data.bill_amount * 1e6));
+  const call = await (async () => {
+    const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
+    const signature = await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }); // TODO replace with payload signature
+    if (card.mode === 0) {
+      return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
+    }
+    const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
+    const firstMaturity =
+      nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
+    if (card.mode === 1 || payload.data.bill_amount * 100 < card.mode) {
+      return {
+        functionName: "collectCredit",
+        args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
+      } as const;
+    }
+    const preview = await startSpan({ name: "await preview", op: "exa.wait" }, () => previewPromise);
+    setContext("preview", preview);
+    const installments = startSpan({ name: "split installments", op: "exa.split" }, () =>
+      splitInstallments(
+        amount,
+        preview.floatingAssets,
+        firstMaturity,
+        preview.fixedUtilizations.length,
+        preview.fixedUtilizations
+          .filter(
+            ({ maturity }) => maturity >= firstMaturity && maturity < firstMaturity + card.mode * MATURITY_INTERVAL,
+          )
+          .map(({ utilization }) => utilization),
+        preview.floatingUtilization,
+        preview.globalUtilization,
+        preview.interestRateModel,
+      ),
+    );
+    setContext("installments", installments);
+    return {
+      functionName: "collectInstallments",
+      args: [BigInt(firstMaturity), installments.amounts, maxUint256, BigInt(timestamp), signature],
+    } as const;
+  })();
+  setContext("tx", { call });
+  return {
+    account,
+    amount,
+    call,
+    transaction: {
+      from: keeper.account.address,
+      to: account,
+      data: encodeFunctionData({ abi: exaPluginAbi, ...call }),
+    } as const,
+  };
+}
 
 const collectorTopic = padHex(COLLECTOR);
 const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
