@@ -163,14 +163,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     );
   }
 
-  function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature)
-    external
-    onlyIssuer(amount, timestamp, signature)
-  {
+  function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature) external {
+    collectCredit(maturity, amount, type(uint256).max, timestamp, signature);
+  }
+
+  function collectCredit(
+    uint256 maturity,
+    uint256 amount,
+    uint256 maxRepay,
+    uint256 timestamp,
+    bytes calldata signature
+  ) public onlyIssuer(amount, timestamp, signature) {
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC),
       0,
-      abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, type(uint256).max, collector, msg.sender)) // TODO slippage control
+      abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, maxRepay, collector, msg.sender))
     );
     _checkLiquidity(msg.sender, minCreditFactor);
   }
@@ -358,17 +365,18 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](10);
+    manifest.executionFunctions = new bytes4[](11);
     manifest.executionFunctions[0] = this.propose.selector;
     manifest.executionFunctions[1] = this.repay.selector;
     manifest.executionFunctions[2] = this.crossRepay.selector;
-    manifest.executionFunctions[3] = this.collectCredit.selector;
-    manifest.executionFunctions[4] = this.collectDebit.selector;
-    manifest.executionFunctions[5] = this.collectInstallments.selector;
-    manifest.executionFunctions[6] = this.poke.selector;
-    manifest.executionFunctions[7] = this.pokeETH.selector;
-    manifest.executionFunctions[8] = this.withdraw.selector;
-    manifest.executionFunctions[9] = this.receiveFlashLoan.selector;
+    manifest.executionFunctions[3] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[4] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[5] = this.collectDebit.selector;
+    manifest.executionFunctions[6] = this.collectInstallments.selector;
+    manifest.executionFunctions[7] = this.poke.selector;
+    manifest.executionFunctions[8] = this.pokeETH.selector;
+    manifest.executionFunctions[9] = this.withdraw.selector;
+    manifest.executionFunctions[10] = this.receiveFlashLoan.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -385,7 +393,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_BALANCER),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](10);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](11);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
@@ -399,30 +407,34 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectCredit.selector,
+      executionSelector: bytes4(bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"))),
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectDebit.selector,
+      executionSelector: bytes4(bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"))),
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectInstallments.selector,
+      executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.poke.selector,
+      executionSelector: IExaAccount.collectInstallments.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.pokeETH.selector,
+      executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.withdraw.selector,
+      executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.withdraw.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
       executionSelector: this.receiveFlashLoan.selector,
       associatedFunction: balancerRuntimeValidationFunction
     });
