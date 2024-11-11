@@ -59,25 +59,34 @@ export default function CardDetails({ open, onClose, uri }: { open: boolean; onC
                 {success && <CardBack uri={output} />}
 
                 <XStack
-                  gap="$s3_5"
+                  width="100%"
+                  paddingHorizontal="$s4"
+                  paddingVertical="$s3_5"
+                  borderRadius="$r3"
+                  borderWidth={1}
+                  borderColor="$borderNeutralSoft"
+                  justifyContent="space-between"
                   alignItems="center"
-                  alignSelf="center"
                   onPress={() => {
                     if (isFetchingCard || isSettingCardStatus) return;
                     changeCardStatus(card?.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
                   }}
                 >
-                  <Square size={ms(24)}>
-                    {isSettingCardStatus ? (
-                      <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
-                    ) : (
-                      <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
-                    )}
-                  </Square>
-                  <Text subHeadline color="$uiNeutralPrimary">
-                    {displayStatus === "FROZEN" ? "Unfreeze card" : "Freeze card"}
-                  </Text>
+                  <XStack alignItems="center" gap="$s3">
+                    <Square size={ms(24)}>
+                      {isSettingCardStatus ? (
+                        <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
+                      ) : (
+                        <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                      )}
+                    </Square>
+                    <Text subHeadline color="$uiNeutralPrimary">
+                      {displayStatus === "FROZEN" ? "Unfreeze card" : "Freeze card"}
+                    </Text>
+                  </XStack>
+
                   <Switch
+                    height={24}
                     pointerEvents="none"
                     checked={displayStatus === "FROZEN"}
                     backgroundColor="$backgroundMild"
