@@ -21,9 +21,16 @@ export default function Balance({ usdBalance }: { usdBalance: bigint }) {
           Assets
         </Text>
       </View>
-      <Accordion overflow="hidden" type="multiple" borderRadius="$r3" padding="$s4" defaultValue={["balance"]}>
+      <Accordion
+        overflow="hidden"
+        type="multiple"
+        borderRadius="$r3"
+        padding="$s4"
+        defaultValue={usdBalance === 0n ? undefined : ["balance"]}
+      >
         <Accordion.Item value="balance" flex={1}>
           <Accordion.Trigger
+            disabled={usdBalance === 0n}
             unstyled
             flexDirection="row"
             justifyContent="center"
@@ -50,9 +57,11 @@ export default function Balance({ usdBalance }: { usdBalance: bigint }) {
                       currencyDisplay: "narrowSymbol",
                     })}
                   </Text>
-                  <Square animation="quick" rotate={open ? "180deg" : "0deg"}>
-                    <ChevronDown size={ms(24)} color="$interactiveTextBrandDefault" />
-                  </Square>
+                  {usdBalance !== 0n && (
+                    <Square animation="quick" rotate={open ? "180deg" : "0deg"}>
+                      <ChevronDown size={ms(24)} color="$interactiveTextBrandDefault" />
+                    </Square>
+                  )}
                 </>
               );
             }}
