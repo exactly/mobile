@@ -54,11 +54,13 @@ async function request<TInput, TOutput, TIssue extends BaseIssue<unknown>>(
   url: `/${string}`,
   body?: unknown,
   method: "GET" | "POST" = body === undefined ? "GET" : "POST",
+  timeout = 10_000,
 ) {
   const response = await fetch(`${baseURL}${url}`, {
     method,
     headers: { authorization, accept: "application/json", "content-type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(timeout),
   });
   if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
   return parse(schema, await response.json());
