@@ -191,8 +191,8 @@ export default function Card() {
               </View>
               <View padded gap="$s5">
                 {cardDetails && cardDetails.mode > 0 && <SimulatePurchase installments={cardDetails.mode} />}
-                <SpendingLimits />
                 <LatestActivity activity={purchases} title="Latest purchases" />
+                <SpendingLimits />
               </View>
             </View>
           </View>

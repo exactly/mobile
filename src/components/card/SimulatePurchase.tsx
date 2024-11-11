@@ -58,7 +58,7 @@ export default function SimulatePurchase({ installments }: { installments: numbe
           {({ open }: { open: boolean }) => (
             <>
               <Text emphasized headline>
-                Simulate purchase
+                Purchase simulator
               </Text>
               {isLoading ? (
                 <Spinner color="$interactiveTextBrandDefault" />
