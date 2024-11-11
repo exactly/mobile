@@ -1,4 +1,5 @@
 import type { Passkey } from "@exactly/common/validation";
+import { router } from "expo-router";
 import { Environment, Inquiry } from "react-native-persona";
 
 import handleError from "./handleError";
@@ -13,9 +14,11 @@ export function createInquiry(passkey: Passkey) {
     .referenceId(passkey.credentialId)
     .onCanceled(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
+      router.replace("/(home)");
     })
     .onComplete(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
+      router.replace("/(home)");
     })
     .onError(handleError)
     .build()
@@ -27,9 +30,11 @@ export function resumeInquiry(inquiryId: string, sessionToken: string) {
     .sessionToken(sessionToken)
     .onCanceled(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
+      router.replace("/(home)");
     })
     .onComplete(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
+      router.replace("/(home)");
     })
     .build()
     .start();
