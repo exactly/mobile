@@ -288,6 +288,23 @@ contract ExaPluginTest is ForkTest {
     account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
   }
 
+  function test_collectCredit_reverts_whenDisagreement() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    vm.expectRevert(Disagreement.selector);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+    assertEq(usdc.balanceOf(collector), 0);
+  }
+
+  function test_collectCredit_collects_withEnoughSlippage() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    account.collectCredit(FixedLib.INTERVAL, 100e6, 110e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+    assertEq(usdc.balanceOf(collector), 100e6);
+  }
+
   function test_collectDebit_collects() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
@@ -951,3 +968,5 @@ contract ExaPluginTest is ForkTest {
 }
 
 abstract contract ExaAccount is UpgradeableModularAccount, IExaAccount { } // solhint-disable-line no-empty-blocks
+
+error Disagreement();
