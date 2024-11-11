@@ -44,10 +44,10 @@ export default function InstallmentsSelector({
   }, [expanded, isCredit]);
 
   useEffect(() => {
-    if (!isCredit) {
+    if (!isCredit || disabled) {
       setExpanded(false);
     }
-  }, [expanded, isCredit]);
+  }, [disabled, expanded, isCredit]);
 
   return (
     <AnimatedYStack

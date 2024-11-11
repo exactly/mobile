@@ -8,11 +8,21 @@ import View from "../../shared/View";
 
 const sharedHeight = 51;
 
-export default function ModeSelector({ isCredit, disabled }: { isCredit: boolean; disabled: boolean }) {
+export default function ModeSelector({
+  isCredit,
+  disabled,
+  frozen,
+}: {
+  isCredit: boolean;
+  disabled: boolean;
+  frozen: boolean;
+}) {
   const [switcherWidth, setSwitcherWidth] = useState(0);
   return (
     <YStack
-      backgroundColor={disabled ? "$uiNeutralTertiary" : isCredit ? "$cardCreditBackground" : "$cardDebitBackground"}
+      backgroundColor={
+        disabled || frozen ? "$uiNeutralTertiary" : isCredit ? "$cardCreditBackground" : "$cardDebitBackground"
+      }
       height={71}
       width="100%"
       justifyContent="flex-end"
@@ -23,7 +33,9 @@ export default function ModeSelector({ isCredit, disabled }: { isCredit: boolean
           <Text
             emphasized
             subHeadline
-            color={disabled ? "$interactiveOnDisabled" : isCredit ? "$cardCreditText" : "$cardDebitInteractive"}
+            color={
+              disabled || frozen ? "$interactiveOnDisabled" : isCredit ? "$cardCreditText" : "$cardDebitInteractive"
+            }
             maxFontSizeMultiplier={1}
           >
             CREDIT MODE
@@ -33,7 +45,11 @@ export default function ModeSelector({ isCredit, disabled }: { isCredit: boolean
           <Square animation="moderate" rotate={isCredit ? "360deg" : "0deg"}>
             <ArrowRightLeft
               color={
-                disabled ? "$interactiveOnDisabled" : isCredit ? "$cardCreditInteractive" : "$cardDebitInteractive"
+                disabled || frozen
+                  ? "$interactiveOnDisabled"
+                  : isCredit
+                    ? "$cardCreditInteractive"
+                    : "$cardDebitInteractive"
               }
               size={ms(20)}
             />
@@ -43,7 +59,9 @@ export default function ModeSelector({ isCredit, disabled }: { isCredit: boolean
           <Text
             emphasized
             subHeadline
-            color={disabled ? "$interactiveOnDisabled" : isCredit ? "$cardCreditInteractive" : "$cardDebitText"}
+            color={
+              disabled || frozen ? "$interactiveOnDisabled" : isCredit ? "$cardCreditInteractive" : "$cardDebitText"
+            }
             maxFontSizeMultiplier={1}
           >
             DEBIT MODE
@@ -75,7 +93,11 @@ export default function ModeSelector({ isCredit, disabled }: { isCredit: boolean
               >
                 <View
                   backgroundColor={
-                    disabled ? "$interactiveDisabled" : isCredit ? "$cardCreditInteractive" : "$cardDebitInteractive"
+                    disabled || frozen
+                      ? "$interactiveDisabled"
+                      : isCredit
+                        ? "$cardCreditInteractive"
+                        : "$cardDebitInteractive"
                   }
                   width="100%"
                   height="100%"

@@ -85,23 +85,25 @@ export default function ExaCard({ disabled = false, revealing, frozen, onPress }
       </View>
       <View
         zIndex={2}
-        borderColor={disabled ? "$borderNeutralDisabled" : isCredit ? "$cardCreditBorder" : "$cardDebitBorder"}
+        borderColor={
+          disabled || frozen ? "$borderNeutralDisabled" : isCredit ? "$cardCreditBorder" : "$cardDebitBorder"
+        }
         borderRadius="$r4"
         borderWidth={1}
         borderTopLeftRadius={0}
         borderTopRightRadius={0}
         marginTop={-20}
         onPress={() => {
-          if (disabled || isLoading) return;
+          if (disabled || frozen || isLoading) return;
           toggle();
         }}
       >
-        <ModeSelector isCredit={isCredit} disabled={disabled} />
+        <ModeSelector isCredit={isCredit} disabled={disabled} frozen={frozen} />
       </View>
       {exaPluginAddress === installedPlugins?.[0] && (
         <InstallmentsSelector
           isCredit={isCredit}
-          disabled={disabled}
+          disabled={disabled || frozen}
           value={card?.mode ?? 0}
           onChange={setInstallments}
         />
