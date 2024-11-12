@@ -216,13 +216,6 @@ export default new Hono().post(
 );
 
 async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
-  const previewPromise = startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
-    publicClient.readContract({
-      abi: installmentsPreviewerAbi,
-      address: installmentsPreviewerAddress,
-      functionName: "preview",
-    }),
-  );
   const card = await database.query.cards.findFirst({
     columns: { mode: true },
     where: and(eq(cards.id, payload.data.card_id), eq(cards.status, "ACTIVE")),
@@ -242,13 +235,19 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
     const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
     const firstMaturity =
       nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
-    if (card.mode === 1 || payload.data.bill_amount * 100 < card.mode) {
+    if (card.mode === 1 || payload.data.bill_amount * 100 < card.mode || payload.event_type === "AUTHORIZATION") {
       return {
         functionName: "collectCredit",
-        args: [BigInt(firstMaturity), amount, BigInt(timestamp), signature],
+        args: [BigInt(firstMaturity + (card.mode - 1) * MATURITY_INTERVAL), amount, BigInt(timestamp), signature],
       } as const;
     }
-    const preview = await startSpan({ name: "await preview", op: "exa.wait" }, () => previewPromise);
+    const preview = await startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
+      publicClient.readContract({
+        abi: installmentsPreviewerAbi,
+        address: installmentsPreviewerAddress,
+        functionName: "preview",
+      }),
+    );
     setContext("preview", preview);
     const installments = startSpan({ name: "split installments", op: "exa.split" }, () =>
       splitInstallments(
