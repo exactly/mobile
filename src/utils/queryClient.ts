@@ -7,6 +7,7 @@ import { deserialize, serialize } from "wagmi";
 import { structuralSharing } from "wagmi/query";
 
 import handleError from "./handleError";
+import type { getActivity } from "./server";
 
 export const persister = createAsyncStoragePersister({ serialize, deserialize, storage: AsyncStorage });
 const queryClient = new QueryClient({ defaultOptions: { queries: { structuralSharing } } });
@@ -61,10 +62,11 @@ queryClient.setQueryDefaults(["contacts", "recent"], {
   },
 });
 
-export default queryClient;
-
+export type ActivityItem = Awaited<ReturnType<typeof getActivity>>[number];
 export interface Withdraw {
   receiver?: Address;
   market?: Address;
   amount: bigint;
 }
+
+export default queryClient;

@@ -32,10 +32,10 @@ export default styled(Button, {
     },
     danger: {
       true: {
-        backgroundColor: "$interactiveBaseErrorDefault",
-        color: "$interactiveOnBaseErrorDefault",
-        hoverStyle: { backgroundColor: "$interactiveBaseErrorHover" },
-        pressStyle: { backgroundColor: "$interactiveBaseErrorPressed" },
+        backgroundColor: "$interactiveBaseErrorSoftDefault",
+        color: "$interactiveOnBaseErrorSoft",
+        hoverStyle: { backgroundColor: "$interactiveBaseErrorSoftHover" },
+        pressStyle: { backgroundColor: "$interactiveBaseErrorSoftPressed" },
       },
     },
     dangerSecondary: {

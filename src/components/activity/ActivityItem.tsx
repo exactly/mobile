@@ -1,24 +1,24 @@
 import { ArrowDownToLine, ArrowUpFromLine, CircleDollarSign } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
+import { router } from "expo-router";
 import { getName, registerLocale, type LocaleData } from "i18n-iso-countries/index";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { titleCase } from "title-case";
 
-import type { getActivity } from "../../utils/server";
+import type { ActivityItem as Item } from "../../utils/queryClient";
+import queryClient from "../../utils/queryClient";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 registerLocale(require("i18n-iso-countries/langs/en.json") as LocaleData); // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
 
-export default function ActivityItem({
-  item,
-  isLast,
-}: {
-  item: Awaited<ReturnType<typeof getActivity>>[number];
-  isLast: boolean;
-}) {
+export default function ActivityItem({ item, isLast }: { item: Item; isLast: boolean }) {
   const { amount, id, usdAmount, currency, type, timestamp } = item;
+  function handlePress() {
+    queryClient.setQueryData(["activity", "details"], item);
+    router.push({ pathname: "/activity-details" });
+  }
   return (
     <View
       key={id}
@@ -28,6 +28,7 @@ export default function ActivityItem({
       paddingHorizontal="$s5"
       paddingTop="$s3"
       paddingBottom={isLast ? "$s4" : "$s3"}
+      onPress={handlePress}
     >
       <View
         width={ms(40)}
