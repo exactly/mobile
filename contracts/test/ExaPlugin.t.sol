@@ -26,10 +26,13 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
-import { ExaPlugin, FunctionId, IBalancerVault, IInstallmentsRouter, ZeroAddress } from "../src/ExaPlugin.sol";
+import {
+  ExaPlugin, FunctionId, IBalancerVault, IDebtManager, IInstallmentsRouter, ZeroAddress
+} from "../src/ExaPlugin.sol";
 import {
   CollectorSet,
   Expired,
+  FixedPosition,
   IAuditor,
   IExaAccount,
   IMarket,
@@ -124,12 +127,12 @@ contract ExaPluginTest is ForkTest {
     vm.setEnv("BROADCAST_REFUNDER_ADDRESS", address(refunder).toHexString());
 
     refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
-
     exaPlugin = new ExaPlugin(
       IAuditor(address(auditor)),
       exaUSDC,
       exaWETH,
       p.balancer(),
+      IDebtManager(address(p.debtManager())),
       IInstallmentsRouter(address(p.installmentsRouter())),
       issuerChecker,
       collector,
@@ -776,6 +779,7 @@ contract ExaPluginTest is ForkTest {
       IMarket(protocol("MarketUSDC")),
       IMarket(protocol("MarketWETH")),
       IBalancerVault(protocol("BalancerVault")),
+      IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
       acct("collector"),
@@ -814,6 +818,25 @@ contract ExaPluginTest is ForkTest {
     vm.stopPrank();
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(prevCollateral, exaWBTC.balanceOf(address(account)), "collateral didn't decrease");
+  }
+
+  function test_rollDebt_rolls() external {
+    vm.startPrank(keeper);
+
+    account.poke(exaUSDC);
+    uint256 assets = 100e6;
+    uint256 maxAssets = 110e6;
+    account.collectCredit(FixedLib.INTERVAL, assets, maxAssets, block.timestamp, _issuerOp(assets, block.timestamp));
+
+    account.rollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 100e18);
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
+    assertEq(position.principal, 0);
+    assertEq(position.fee, 0);
+    position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL * 2, address(account));
+    assertGt(position.principal, assets);
+    assertGt(position.fee, 0);
+    assertLe(position.principal, maxAssets);
   }
 
   function test_onUninstall_uninstalls() external {
