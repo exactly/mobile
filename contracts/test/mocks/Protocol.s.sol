@@ -7,6 +7,7 @@ import { InterestRateModel, Parameters } from "@exactly/protocol/InterestRateMod
 import { Market } from "@exactly/protocol/Market.sol";
 import { MockBalancerVault } from "@exactly/protocol/mocks/MockBalancerVault.sol";
 import { MockPriceFeed } from "@exactly/protocol/mocks/MockPriceFeed.sol";
+import { DebtManager, IBalancerVault as BalancerVault, IPermit2 } from "@exactly/protocol/periphery/DebtManager.sol";
 import { InstallmentsRouter } from "@exactly/protocol/periphery/InstallmentsRouter.sol";
 import { Previewer } from "@exactly/protocol/periphery/Previewer.sol";
 
@@ -27,6 +28,7 @@ contract DeployProtocol is BaseScript {
   MockERC20 public exa;
   MockERC20 public usdc;
   MockWETH public weth;
+  DebtManager public debtManager;
   Previewer public previewer;
   InstallmentsRouter public installmentsRouter;
 
@@ -78,11 +80,13 @@ contract DeployProtocol is BaseScript {
     vm.label(address(exaWETH), "exaWETH");
     auditor.enableMarket(exaWETH, new MockPriceFeed(18, 2500e18), 0.86e18);
 
+    balancer = IBalancerVault(address(new MockBalancerVault()));
+    debtManager = new DebtManager(auditor, IPermit2(address(0)), BalancerVault(address(balancer)));
+    debtManager.approve(exaUSDC);
     previewer = new Previewer(auditor, IPriceFeed(address(0)));
 
     installmentsRouter = new InstallmentsRouter(auditor, exaWETH);
 
-    balancer = IBalancerVault(address(new MockBalancerVault()));
     exa.mint(address(balancer), 1_000_000e18);
     usdc.mint(address(balancer), 1_000_000e6);
     vm.label(address(balancer), "BalancerVault");

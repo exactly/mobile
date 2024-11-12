@@ -14,6 +14,13 @@ interface IExaAccount {
     uint256 amountIn,
     bytes calldata route
   ) external;
+  function rollDebt(
+    uint256 repayMaturity,
+    uint256 borrowMaturity,
+    uint256 maxRepayAssets,
+    uint256 maxBorrowAssets,
+    uint256 percentage
+  ) external;
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature) external;
   function collectCredit(
     uint256 maturity,
