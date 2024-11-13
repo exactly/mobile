@@ -155,6 +155,7 @@ export default new Hono().post(
         }
       }
       case "CLEARING": {
+        if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
         const { account, call } = await prepareCollection(payload);
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
