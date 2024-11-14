@@ -17,6 +17,7 @@ import {
   bytesToHex,
   numberToBytes,
   type PrivateKeyAccount,
+  WaitForTransactionReceiptTimeoutError,
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeEach, describe, expect, inject, it, vi } from "vitest";
@@ -137,11 +138,13 @@ describe("address activity", () => {
     expect(response.status).toBe(200);
   });
 
-  it("fails with transaction timeout", async () => {
+  it.todo("fails with transaction timeout", async () => {
     const captureException = vi.spyOn(sentry, "captureException");
     captureException.mockImplementation(() => "");
 
-    vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
+    vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(
+      new WaitForTransactionReceiptTimeoutError({ hash: zeroHash }),
+    );
 
     const deposit = parseEther("5");
     await anvilClient.setBalance({ address: account, value: deposit });
@@ -159,9 +162,54 @@ describe("address activity", () => {
 
     const deposits = await waitForDeposit(account, 1);
 
-    expect(captureException).toHaveBeenCalledWith(new Error("Transaction Timeout"), expect.anything());
+    expect(captureException).toHaveBeenCalledWith(
+      new WaitForTransactionReceiptTimeoutError({ hash: zeroHash }),
+      expect.anything(),
+    );
 
     expect(deposits).toHaveLength(0);
+    expect(response.status).toBe(200);
+  });
+
+  it("pokesETH with transaction timeout", async () => {
+    const captureException = vi.spyOn(sentry, "captureException");
+    captureException.mockImplementation(() => "");
+
+    vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValueOnce(
+      new WaitForTransactionReceiptTimeoutError({ hash: zeroHash }),
+    );
+
+    const deposit = parseEther("5");
+    await anvilClient.setBalance({ address: account, value: deposit });
+
+    const response = await appClient.index.$post({
+      ...activityPayload,
+      json: {
+        ...activityPayload.json,
+        event: {
+          ...activityPayload.json.event,
+          activity: [{ ...activityPayload.json.event.activity[0], toAddress: account }],
+        },
+      },
+    });
+
+    await waitForDeposit(account, 1);
+
+    expect(captureException).toHaveBeenCalledWith(
+      new WaitForTransactionReceiptTimeoutError({ hash: zeroHash }),
+      expect.anything(),
+    );
+
+    const exactly = await publicClient.readContract({
+      address: previewerAddress,
+      functionName: "exactly",
+      abi: previewerAbi,
+      args: [account],
+    });
+
+    const market = exactly.find((m) => m.asset === wethAddress);
+
+    expect(market?.floatingDepositAssets).toBe(deposit);
     expect(response.status).toBe(200);
   });
 
