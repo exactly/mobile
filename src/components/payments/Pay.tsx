@@ -19,7 +19,7 @@ import { auditorAbi, marketAbi } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
-import Details from "../send-funds/Details";
+import Details from "../shared/Details";
 import ExaSpinner from "../shared/Spinner";
 
 export default function PaymentModal() {
@@ -143,7 +143,12 @@ export default function PaymentModal() {
                   </View>
                 </View>
               </View>
-              <Details hash={hash} />
+              <Details
+                hash={hash}
+                onClose={() => {
+                  router.back();
+                }}
+              />
             </View>
           ) : isSuccess ? (
             <View>
@@ -167,7 +172,12 @@ export default function PaymentModal() {
                   </View>
                 </View>
               </View>
-              <Details hash={hash} />
+              <Details
+                hash={hash}
+                onClose={() => {
+                  router.replace("/(app)/(home)/payments");
+                }}
+              />
             </View>
           ) : isError ? (
             <>
@@ -192,7 +202,12 @@ export default function PaymentModal() {
                   </View>
                 </View>
               </View>
-              <Details hash={hash} />
+              <Details
+                hash={hash}
+                onClose={() => {
+                  router.back();
+                }}
+              />
               <Button
                 alignSelf="flex-end"
                 onPress={() => {

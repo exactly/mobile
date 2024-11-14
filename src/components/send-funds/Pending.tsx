@@ -1,9 +1,10 @@
+import { router } from "expo-router";
 import React from "react";
 import { ScrollView } from "tamagui";
 
-import Details from "./Details";
 import Values from "./Values";
 import type { WithdrawDetails } from "./Withdraw";
+import Details from "../shared/Details";
 import Spinner from "../shared/Spinner";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -29,7 +30,12 @@ export default function Pending({
             <Values amount={amount} assetName={assetName} usdValue={usdValue} />
           </View>
         </View>
-        <Details hash={hash} />
+        <Details
+          hash={hash}
+          onClose={() => {
+            router.back();
+          }}
+        />
       </ScrollView>
     </View>
   );

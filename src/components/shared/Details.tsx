@@ -3,21 +3,20 @@ import { User, Calendar, Hash, ExternalLink } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { setStringAsync } from "expo-clipboard";
-import { router } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
 import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack, Avatar } from "tamagui";
 
+import Button from "./Button";
+import Text from "./Text";
+import View from "./View";
 import handleError from "../../utils/handleError";
-import queryClient, { type Withdraw } from "../../utils/queryClient";
+import type { Withdraw } from "../../utils/queryClient";
 import shortenAddress from "../../utils/shortenAddress";
-import Button from "../shared/Button";
-import Text from "../shared/Text";
-import View from "../shared/View";
 
-export default function Details({ hash }: { hash?: string }) {
+export default function Details({ hash, onClose }: { hash?: string; onClose: () => void }) {
   const { data } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   return (
     <View padded gap="$s4">
@@ -77,12 +76,7 @@ export default function Details({ hash }: { hash?: string }) {
           </Button>
 
           <View padded alignItems="center">
-            <Pressable
-              onPress={() => {
-                queryClient.setQueryData(["withdrawal"], { receiver: undefined, market: undefined, amount: 0n });
-                router.replace("/");
-              }}
-            >
+            <Pressable onPress={onClose}>
               <Text emphasized footnote color="$interactiveBaseBrandDefault">
                 Close
               </Text>
