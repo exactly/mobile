@@ -46,7 +46,7 @@ event CollectorSet(address indexed collector, address indexed account);
 
 event KeeperFeeModelSet(address indexed keeperFeeModel, address indexed account);
 
-event MinCreditFactorSet(uint256 minCreditFactor, address indexed account);
+event MinHealthFactorSet(uint256 minHealthFactor, address indexed account);
 
 event Proposed(
   address indexed account, IMarket indexed market, address indexed receiver, uint256 amount, uint256 unlock

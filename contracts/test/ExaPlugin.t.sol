@@ -266,7 +266,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), 0);
   }
 
-  function test_collectCredit_collects_whenHealthFactorHigherThanMinCreditFactor() external {
+  function test_collectCredit_collects_whenHealthFactorHigherThanMinHealthFactor() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
@@ -278,8 +278,8 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), credit);
   }
 
-  function test_collectCredit_reverts_whenHealthFactorLowerThanMinCreditFactor() external {
-    exaPlugin.setMinCreditFactor(2e18);
+  function test_collectCredit_reverts_whenHealthFactorLowerThanMinHealthFactor() external {
+    exaPlugin.setMinHealthFactor(2e18);
 
     vm.startPrank(keeper);
     account.poke(exaUSDC);
@@ -913,12 +913,12 @@ contract ExaPluginTest is ForkTest {
     exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0)));
   }
 
-  function test_setMinCreditFactor_sets_whenAdmin() external {
-    exaPlugin.setMinCreditFactor(2e18);
-    assertEq(exaPlugin.minCreditFactor(), 2e18);
+  function test_setMinHealthFactor_sets_whenAdmin() external {
+    exaPlugin.setMinHealthFactor(2e18);
+    assertEq(exaPlugin.minHealthFactor(), 2e18);
   }
 
-  function test_setMinCreditFactor_reverts_whenNotAdmin() external {
+  function test_setMinHealthFactor_reverts_whenNotAdmin() external {
     address nonAdmin = address(0x1);
     vm.startPrank(nonAdmin);
     vm.expectRevert(
@@ -926,12 +926,12 @@ contract ExaPluginTest is ForkTest {
         IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
       )
     );
-    exaPlugin.setMinCreditFactor(2e18);
+    exaPlugin.setMinHealthFactor(2e18);
   }
 
-  function test_setMinCreditFactor_reverts_whenLowerThanWad() external {
+  function test_setMinHealthFactor_reverts_whenLowerThanWad() external {
     vm.expectRevert(WrongValue.selector);
-    exaPlugin.setMinCreditFactor(1e18 - 1);
+    exaPlugin.setMinHealthFactor(1e18 - 1);
   }
 
   // solhint-enable func-name-mixedcase

@@ -35,7 +35,7 @@ import {
   InsufficientLiquidity,
   KeeperFeeModelSet,
   MarketData,
-  MinCreditFactorSet,
+  MinHealthFactorSet,
   NoBalance,
   NoProposal,
   NotMarket,
@@ -79,7 +79,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   address public collector;
   KeeperFeeModel public keeperFeeModel;
-  uint256 public minCreditFactor;
+  uint256 public minHealthFactor;
   mapping(address account => Proposal lastProposal) public proposals;
 
   bytes32 private callHash;
@@ -106,7 +106,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setCollector(collector_);
     setKeeperFeeModel(keeperFeeModel_);
-    setMinCreditFactor(1e18);
+    setMinHealthFactor(1e18);
 
     IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
   }
@@ -201,7 +201,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       0,
       abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, maxRepay, collector, msg.sender))
     );
-    _checkLiquidity(msg.sender, minCreditFactor);
+    _checkLiquidity(msg.sender);
   }
 
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature)
@@ -211,7 +211,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender))
     );
-    _checkLiquidity(msg.sender, 1e18);
+    _checkLiquidity(msg.sender);
   }
 
   function collectInstallments(
@@ -235,7 +235,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       0,
       abi.encodeCall(IInstallmentsRouter.borrow, (EXA_USDC, firstMaturity, amounts, maxRepay, collector))
     );
-    _checkLiquidity(msg.sender, 1e18);
+    _checkLiquidity(msg.sender);
   }
 
   function poke(IMarket market) external onlyMarket(market) {
@@ -304,10 +304,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     emit KeeperFeeModelSet(address(keeperFeeModel_), msg.sender);
   }
 
-  function setMinCreditFactor(uint256 minCreditFactor_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    if (minCreditFactor_ < 1e18) revert WrongValue();
-    minCreditFactor = minCreditFactor_;
-    emit MinCreditFactorSet(minCreditFactor_, msg.sender);
+  function setMinHealthFactor(uint256 minHealthFactor_) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    if (minHealthFactor_ < 1e18) revert WrongValue();
+    minHealthFactor = minHealthFactor_;
+    emit MinHealthFactorSet(minHealthFactor_, msg.sender);
   }
 
   /// @inheritdoc BasePlugin
@@ -535,7 +535,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   receive() external payable { } // solhint-disable-line no-empty-blocks
 
-  function _checkLiquidity(address account, uint256 minHealthFactor) internal view {
+  function _checkLiquidity(address account) internal view {
     IMarket withdrawMarket = proposals[account].market;
     uint256 marketMap = AUDITOR.accountMarkets(account);
     uint256 sumCollateral = 0;
