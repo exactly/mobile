@@ -7,7 +7,6 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin, IAuditor, IBalancerVault, IDebtManager, IInstallmentsRouter, IMarket } from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
-import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
 import { Refunder } from "../src/Refunder.sol";
 
 import { BaseScript } from "./Base.s.sol";
@@ -16,7 +15,6 @@ contract DeployScript is BaseScript {
   ExaAccountFactory public factory;
   ExaPlugin public exaPlugin;
   IssuerChecker public issuerChecker;
-  KeeperFeeModel public keeperFeeModel;
   WebauthnOwnerPlugin public ownerPlugin;
   IAuditor public auditor;
   IMarket public exaUSDC;
@@ -39,7 +37,6 @@ contract DeployScript is BaseScript {
     debtManager = IDebtManager(protocol("DebtManager"));
     installmentsRouter = IInstallmentsRouter(protocol("InstallmentsRouter"));
     refunder = Refunder(broadcast("Refunder"));
-    keeperFeeModel = KeeperFeeModel(broadcast("KeeperFeeModel"));
 
     balancerVault = IBalancerVault(protocol("BalancerVault"));
 
@@ -51,17 +48,8 @@ contract DeployScript is BaseScript {
   function run() external {
     vm.startBroadcast(deployer);
 
-    exaPlugin = new ExaPlugin(
-      auditor,
-      exaUSDC,
-      exaWETH,
-      balancerVault,
-      debtManager,
-      installmentsRouter,
-      issuerChecker,
-      collector,
-      keeperFeeModel
-    );
+    exaPlugin =
+      new ExaPlugin(auditor, exaUSDC, exaWETH, balancerVault, debtManager, installmentsRouter, issuerChecker, collector);
     factory = new ExaAccountFactory(deployer, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 
     factory.addStake{ value: 0.1 ether }(1 days, 0.1 ether);

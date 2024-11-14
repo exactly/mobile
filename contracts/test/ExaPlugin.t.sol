@@ -37,7 +37,6 @@ import {
   IExaAccount,
   IMarket,
   InsufficientLiquidity,
-  KeeperFeeModelSet,
   NoProposal,
   Proposed,
   Timelocked,
@@ -45,11 +44,9 @@ import {
   WrongValue
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
-import { KeeperFeeModel } from "../src/KeeperFeeModel.sol";
 import { Refunder } from "../src/Refunder.sol";
 
 import { DeployIssuerChecker } from "../script/IssuerChecker.s.sol";
-import { DeployKeeperFeeModel } from "../script/KeeperFeeModel.s.sol";
 import { DeployRefunder } from "../script/Refunder.s.sol";
 
 import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
@@ -75,7 +72,6 @@ contract ExaPluginTest is ForkTest {
   ExaPlugin internal exaPlugin;
   WebauthnOwnerPlugin internal ownerPlugin;
   IssuerChecker internal issuerChecker;
-  KeeperFeeModel internal keeperFeeModel;
   bytes32 internal domainSeparator;
   Refunder internal refunder;
 
@@ -115,11 +111,6 @@ contract ExaPluginTest is ForkTest {
     issuerChecker = ic.issuerChecker();
     vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", address(issuerChecker).toHexString());
 
-    DeployKeeperFeeModel kfm = new DeployKeeperFeeModel();
-    kfm.run();
-    keeperFeeModel = kfm.keeperFeeModel();
-    vm.setEnv("BROADCAST_KEEPERFEEMODEL_ADDRESS", address(keeperFeeModel).toHexString());
-
     DeployRefunder r = new DeployRefunder();
     r.setUp();
     r.run();
@@ -135,8 +126,7 @@ contract ExaPluginTest is ForkTest {
       IDebtManager(address(p.debtManager())),
       IInstallmentsRouter(address(p.installmentsRouter())),
       issuerChecker,
-      collector,
-      keeperFeeModel
+      collector
     );
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
@@ -782,8 +772,7 @@ contract ExaPluginTest is ForkTest {
       IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
-      acct("collector"),
-      KeeperFeeModel(broadcast("KeeperFeeModel"))
+      acct("collector")
     );
 
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
@@ -882,35 +871,6 @@ contract ExaPluginTest is ForkTest {
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit CollectorSet(newCollector, address(this));
     exaPlugin.setCollector(newCollector);
-  }
-
-  function test_setKeeperFeeModel_sets_whenAdmin() external {
-    exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0xb0b)));
-    assertEq(address(exaPlugin.keeperFeeModel()), address(0xb0b));
-  }
-
-  function test_setKeeperFeeModel_reverts_whenNotAdmin() external {
-    address nonAdmin = address(0x1);
-    vm.startPrank(nonAdmin);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
-      )
-    );
-
-    exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0xb0b)));
-  }
-
-  function test_setKeeperFeeModel_emitsKeeperFeeModelSet() external {
-    KeeperFeeModel newKeeperFeeModel = KeeperFeeModel(address(0x1));
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit KeeperFeeModelSet(address(newKeeperFeeModel), address(this));
-    exaPlugin.setKeeperFeeModel(newKeeperFeeModel);
-  }
-
-  function test_setKeeperFeeModel_reverts_whenAddressZero() external {
-    vm.expectRevert(ZeroAddress.selector);
-    exaPlugin.setKeeperFeeModel(KeeperFeeModel(address(0)));
   }
 
   function test_setMinHealthFactor_sets_whenAdmin() external {

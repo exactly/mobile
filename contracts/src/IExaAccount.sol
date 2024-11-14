@@ -44,8 +44,6 @@ interface IExaAccount {
 
 event CollectorSet(address indexed collector, address indexed account);
 
-event KeeperFeeModelSet(address indexed keeperFeeModel, address indexed account);
-
 event MinHealthFactorSet(uint256 minHealthFactor, address indexed account);
 
 event Proposed(
