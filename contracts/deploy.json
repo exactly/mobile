@@ -15,14 +15,5 @@
     "issuer": {
       "default": "0xe2D63e18Fb136ef84557f79052BFE8EFa90F69Bd"
     }
-  },
-  "keeperFeeModel": {
-    "durationStart": 0.083333333333333333e18,
-    "durationEnd": 1e18,
-    "durationGrowth": 1.5e18,
-    "feeStart": 0,
-    "feeEnd": 5e16,
-    "minFee": 0.25e16,
-    "linearRatio": 0.5e18
   }
 }
