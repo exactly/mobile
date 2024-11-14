@@ -33,7 +33,6 @@ import {
   IExaAccount,
   IMarket,
   InsufficientLiquidity,
-  KeeperFeeModelSet,
   MarketData,
   MinHealthFactorSet,
   NoBalance,
@@ -46,7 +45,6 @@ import {
   WrongValue
 } from "./IExaAccount.sol";
 import { IssuerChecker } from "./IssuerChecker.sol";
-import { KeeperFeeModel } from "./KeeperFeeModel.sol";
 
 /// @title Exa Plugin
 /// @author Exactly
@@ -78,7 +76,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
   address public collector;
-  KeeperFeeModel public keeperFeeModel;
   uint256 public minHealthFactor;
   mapping(address account => Proposal lastProposal) public proposals;
 
@@ -92,8 +89,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IDebtManager debtManager,
     IInstallmentsRouter installmentsRouter,
     IssuerChecker issuerChecker,
-    address collector_,
-    KeeperFeeModel keeperFeeModel_
+    address collector_
   ) {
     AUDITOR = auditor;
     EXA_USDC = exaUSDC;
@@ -105,7 +101,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setCollector(collector_);
-    setKeeperFeeModel(keeperFeeModel_);
     setMinHealthFactor(1e18);
 
     IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
@@ -296,12 +291,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (collector_ == address(0)) revert ZeroAddress();
     collector = collector_;
     emit CollectorSet(collector_, msg.sender);
-  }
-
-  function setKeeperFeeModel(KeeperFeeModel keeperFeeModel_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    if (address(keeperFeeModel_) == address(0)) revert ZeroAddress();
-    keeperFeeModel = keeperFeeModel_;
-    emit KeeperFeeModelSet(address(keeperFeeModel_), msg.sender);
   }
 
   function setMinHealthFactor(uint256 minHealthFactor_) public onlyRole(DEFAULT_ADMIN_ROLE) {
