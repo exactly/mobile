@@ -81,7 +81,7 @@ export default {
           packagingOptions: { pickFirst: ["**/libcrypto.so"] },
           extraMavenRepos: ["https://sdk.withpersona.com/android/releases"],
         },
-        ios: { deploymentTarget: "15.0" },
+        ios: { deploymentTarget: "15.1" },
       } satisfies BuildPropertiesConfig,
     ],
     [

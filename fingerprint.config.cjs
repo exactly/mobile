@@ -1,4 +1,4 @@
-/** @type {import('expo-updates/fingerprint').Config} */
+/** @type {import('@expo/fingerprint').Config} */
 module.exports = {
   sourceSkips: [
     "ExpoConfigAndroidPackage",

@@ -96,6 +96,7 @@
     "@changesets/types": "^6.0.0",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.4.1",
     "@exactly/protocol": "exactly/protocol#16a172a",
+    "@expo/fingerprint": "^0.11.2",
     "@react-navigation/bottom-tabs": "^6.6.1",
     "@simplewebauthn/types": "^11.0.0",
     "@spotlightjs/spotlight": "^2.5.0",
