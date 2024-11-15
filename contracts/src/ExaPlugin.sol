@@ -503,7 +503,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         EXA_USDC.maxWithdraw(b.borrower)
       );
 
-      assert(actualRepay <= b.maxRepay);
       if (actualRepay < b.maxRepay) EXA_USDC.deposit(b.maxRepay - actualRepay, b.borrower);
 
       EXA_USDC.withdraw(b.maxRepay, address(BALANCER_VAULT), b.borrower);
