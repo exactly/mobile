@@ -124,15 +124,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     );
     _flashLoan(
       amount,
-      BalancerCallbackData({
-        maturity: maturity,
-        borrower: msg.sender,
-        positionAssets: positionAssets.min(EXA_USDC.maxWithdraw(msg.sender)),
-        maxRepay: amount,
-        marketIn: IMarket(address(0)),
-        amountIn: 0,
-        route: ""
-      })
+      abi.encodePacked(
+        bytes1(0x01),
+        abi.encode(
+          RepayCallbackData({
+            maturity: maturity,
+            borrower: msg.sender,
+            positionAssets: positionAssets.min(EXA_USDC.maxWithdraw(msg.sender)),
+            maxRepay: amount
+          })
+        )
+      )
     );
   }
 
@@ -149,15 +151,20 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     );
     _flashLoan(
       maxRepay,
-      BalancerCallbackData({
-        maturity: maturity,
-        borrower: msg.sender,
-        positionAssets: positionAssets,
-        maxRepay: maxRepay,
-        marketIn: collateral,
-        amountIn: amountIn,
-        route: route
-      })
+      abi.encodePacked(
+        bytes1(0x02),
+        abi.encode(
+          CrossRepayCallbackData({
+            maturity: maturity,
+            borrower: msg.sender,
+            positionAssets: positionAssets,
+            maxRepay: maxRepay,
+            marketIn: collateral,
+            amountIn: amountIn,
+            route: route
+          })
+        )
+      )
     );
   }
 
@@ -490,34 +497,35 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     metadata.author = AUTHOR;
   }
 
-  function receiveFlashLoan(IERC20[] memory, uint256[] memory, uint256[] memory, bytes memory data) external {
+  function receiveFlashLoan(IERC20[] memory, uint256[] memory, uint256[] memory, bytes calldata data) external {
     // slither-disable-next-line incorrect-equality -- hash comparison
     assert(msg.sender == address(BALANCER_VAULT) && callHash == keccak256(data));
     delete callHash;
 
-    BalancerCallbackData memory b = abi.decode(data, (BalancerCallbackData));
-
     uint256 actualRepay;
-    if (b.amountIn == 0) {
-      actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower).min(
-        EXA_USDC.maxWithdraw(b.borrower)
+    bool isSingleRepay = data[0] == 0x01;
+    if (isSingleRepay) {
+      RepayCallbackData memory r = abi.decode(data[1:], (RepayCallbackData));
+      actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower).min(
+        EXA_USDC.maxWithdraw(r.borrower)
       );
 
-      if (actualRepay < b.maxRepay) EXA_USDC.deposit(b.maxRepay - actualRepay, b.borrower);
+      if (actualRepay < r.maxRepay) EXA_USDC.deposit(r.maxRepay - actualRepay, r.borrower);
 
-      EXA_USDC.withdraw(b.maxRepay, address(BALANCER_VAULT), b.borrower);
+      EXA_USDC.withdraw(r.maxRepay, address(BALANCER_VAULT), r.borrower);
     } else {
-      actualRepay = EXA_USDC.repayAtMaturity(b.maturity, b.positionAssets, b.maxRepay, b.borrower);
+      CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
+      actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
 
-      b.marketIn.withdraw(b.amountIn, address(this), b.borrower);
+      c.marketIn.withdraw(c.amountIn, address(this), c.borrower);
 
       uint256 balance = IERC20(EXA_USDC.asset()).balanceOf(address(this));
-      IERC20(b.marketIn.asset()).approve(LIFI, b.amountIn);
-      LIFI.functionCall(b.route);
+      IERC20(c.marketIn.asset()).approve(LIFI, c.amountIn);
+      LIFI.functionCall(c.route);
       uint256 received = IERC20(EXA_USDC.asset()).balanceOf(address(this)) - balance;
 
-      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), b.maxRepay);
-      EXA_USDC.deposit(received - actualRepay, b.borrower);
+      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
+      EXA_USDC.deposit(received - actualRepay, c.borrower);
     }
   }
 
@@ -555,13 +563,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (!_isMarket(market)) revert NotMarket();
   }
 
-  function _flashLoan(uint256 amount, BalancerCallbackData memory b) internal {
+  function _flashLoan(uint256 amount, bytes memory data) internal {
     IERC20[] memory tokens = new IERC20[](1);
     tokens[0] = IERC20(EXA_USDC.asset());
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
 
-    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, _hash(abi.encode(b)));
+    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, _hash(data));
   }
 
   function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256 yield) {
@@ -652,7 +660,14 @@ interface IVelodromePool {
   function getReserves() external view returns (uint256 reserve0, uint256 reserve1, uint256 blockTimestampLast);
 }
 
-struct BalancerCallbackData {
+struct RepayCallbackData {
+  uint256 maturity;
+  address borrower;
+  uint256 positionAssets;
+  uint256 maxRepay;
+}
+
+struct CrossRepayCallbackData {
   uint256 maturity;
   address borrower;
   uint256 positionAssets;
