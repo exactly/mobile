@@ -118,12 +118,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     uint256 amount = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender));
     positionAssets = positionAssets.min(EXA_USDC.maxWithdraw(msg.sender));
-
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amount)))
-    );
-    _flashLoan(
-      amount,
+    bytes memory data = _hash(
       abi.encodePacked(
         bytes1(0x01),
         abi.encode(
@@ -136,6 +131,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         )
       )
     );
+
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amount)))
+    );
+    _flashLoan(amount, data);
   }
 
   function crossRepay(
@@ -146,11 +146,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 amountIn,
     bytes calldata route
   ) external onlyMarket(collateral) {
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn))
-    );
-    _flashLoan(
-      maxRepay,
+    bytes memory data = _hash(
       abi.encodePacked(
         bytes1(0x02),
         abi.encode(
@@ -166,6 +162,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         )
       )
     );
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn))
+    );
+    _flashLoan(maxRepay, data);
   }
 
   function rollDebt(
@@ -569,7 +569,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
 
-    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, _hash(data));
+    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, data);
   }
 
   function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256 yield) {
