@@ -78,6 +78,7 @@ struct Proposal {
 }
 
 error BorrowLimitExceeded();
+error Disagreement();
 error Expired();
 error InsufficientLiquidity();
 error NoBalance();

@@ -27,6 +27,7 @@ import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 
 import {
   CollectorSet,
+  Disagreement,
   FixedPool,
   FixedPosition,
   IAuditor,
@@ -518,14 +519,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
 
       c.marketIn.withdraw(c.amountIn, address(this), c.borrower);
-
-      uint256 balance = IERC20(EXA_USDC.asset()).balanceOf(address(this));
-      IERC20(c.marketIn.asset()).approve(LIFI, c.amountIn);
-      LIFI.functionCall(c.route);
-      uint256 received = IERC20(EXA_USDC.asset()).balanceOf(address(this)) - balance;
-
+      uint256 out = _lifiSwap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.amountIn, actualRepay, c.route);
       IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
-      EXA_USDC.deposit(received - actualRepay, c.borrower);
+      EXA_USDC.deposit(out - actualRepay, c.borrower);
     }
   }
 
@@ -594,6 +590,19 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function _isMarket(IMarket market) internal view returns (bool) {
     return AUDITOR.markets(market).isListed;
+  }
+
+  function _lifiSwap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
+    internal
+    returns (uint256 amountOut)
+  {
+    uint256 balance = assetOut.balanceOf(address(this));
+    assetIn.approve(LIFI, amountIn);
+
+    LIFI.functionCall(route);
+
+    amountOut = assetOut.balanceOf(address(this)) - balance;
+    if (amountOut < minOut) revert Disagreement();
   }
 
   function _previewRepay(uint256 maturity) internal view returns (uint256 positionAssets, uint256 maxRepay) {
