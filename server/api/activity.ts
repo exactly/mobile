@@ -333,3 +333,13 @@ export const WithdrawActivity = pipe(
     type: "sent" as const,
   })),
 );
+
+/* eslint-disable @typescript-eslint/no-redeclare */
+export type DebitActivity = InferOutput<typeof DebitActivity>;
+export type CreditActivity = InferOutput<typeof CreditActivity>;
+export type InstallmentsActivity = InferOutput<typeof InstallmentsActivity>;
+export type DepositActivity = InferOutput<typeof DepositActivity>;
+export type RepayActivity = InferOutput<typeof RepayActivity>;
+export type WithdrawActivity = InferOutput<typeof WithdrawActivity>;
+export type OnchainActivity = InferOutput<typeof OnchainActivity>;
+/* eslint-enable @typescript-eslint/no-redeclare */
