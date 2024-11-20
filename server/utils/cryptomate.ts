@@ -24,7 +24,7 @@ export async function createCard({
   let cardholder = [name.first, name.middle, name.last].filter(Boolean).join(" ");
   if (cardholder.length > 26 && name.middle) cardholder = `${name.first} ${name.last}`;
   const card = await request(
-    CreateCardResponse,
+    CardResponse,
     "/cards/virtual-cards/create",
     v.parse(CreateCardRequest, {
       email,
@@ -42,6 +42,18 @@ export async function createCard({
   return card;
 }
 
+export async function setLimits(
+  cardId: string,
+  { daily, weekly, monthly }: { daily: number; weekly: number; monthly: number },
+) {
+  return request(
+    CardResponse,
+    `/cards/virtual-cards/${cardId}/limits`,
+    v.parse(SetLimitsRequest, { daily_limit: daily, weekly_limit: weekly, monthly_limit: monthly }),
+    "PATCH",
+  );
+}
+
 export async function getPAN(cardId: string) {
   const { url } = await request(PANResponse, `/cards/virtual-cards/${cardId}/pan-html`);
   return url;
@@ -51,7 +63,7 @@ async function request<TInput, TOutput, TIssue extends v.BaseIssue<unknown>>(
   schema: v.BaseSchema<TInput, TOutput, TIssue>,
   url: `/${string}`,
   body?: unknown,
-  method: "GET" | "POST" = body === undefined ? "GET" : "POST",
+  method: "GET" | "POST" | "PATCH" = body === undefined ? "GET" : "POST",
 ) {
   const response = await fetch(`${baseURL}${url}`, {
     method,
@@ -74,7 +86,13 @@ const CreateCardRequest = v.object({
   metadata: v.object({ account: Address }),
 });
 
-const CreateCardResponse = v.object({
+const SetLimitsRequest = v.object({
+  daily_limit: v.number(),
+  weekly_limit: v.number(),
+  monthly_limit: v.number(),
+});
+
+const CardResponse = v.object({
   id: v.string(),
   card_holder_name: v.string(),
   type: v.literal("Virtual"),
