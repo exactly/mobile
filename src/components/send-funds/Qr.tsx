@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import { Linking, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
-import { useWindowDimensions, XStack } from "tamagui";
+import { useWindowDimensions, XStack, YStack } from "tamagui";
 import { safeParse } from "valibot";
 
 import handleError from "../../utils/handleError";
@@ -43,13 +43,22 @@ export default function Qr() {
             <ArrowLeft size={ms(24)} color="white" />
             <Text headline>Back</Text>
           </XStack>
-          <Button
-            onPress={() => {
-              Linking.openSettings().catch(handleError);
-            }}
-          >
-            Go to Settings
-          </Button>
+          <View padded>
+            <YStack gap="$s4">
+              <Text secondary subHeadline textAlign="center">
+                Camera access is currently disabled for Exa App. In order to continue, enable camera access for Exa App
+                from your device settings.
+              </Text>
+              <Button
+                alignSelf="center"
+                onPress={() => {
+                  Linking.openSettings().catch(handleError);
+                }}
+              >
+                Go to Settings
+              </Button>
+            </YStack>
+          </View>
         </View>
       );
     }
@@ -71,17 +80,29 @@ export default function Qr() {
           <ArrowLeft size={ms(24)} color="white" />
           <Text headline>Back</Text>
         </XStack>
-        <Button
-          onPress={() => {
-            requestPermission().catch((error: unknown) => {
-              handleError(error);
-              router.back();
-            });
-          }}
-          outlined
-        >
-          Allow camera usage
-        </Button>
+        <View padded>
+          <YStack gap="$s4">
+            <Text secondary subHeadline textAlign="center">
+              Before we continue, we need your permission to access the camera. The camera will only be used for
+              scanning valid addresses.
+            </Text>
+            <Text secondary footnote textAlign="center">
+              Press &apos;Continue&apos; to proceed or &apos;Back&apos; to cancel.
+            </Text>
+            <Button
+              alignSelf="center"
+              onPress={() => {
+                requestPermission().catch((error: unknown) => {
+                  handleError(error);
+                  router.back();
+                });
+              }}
+              outlined
+            >
+              Continue
+            </Button>
+          </YStack>
+        </View>
       </View>
     );
   }
