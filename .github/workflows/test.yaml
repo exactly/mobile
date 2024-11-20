@@ -38,6 +38,6 @@ jobs:
       - run: pnpm test --recursive --aggregate-output --no-bail
 
       - uses: codecov/codecov-action@v4
-        if: always()
+        if: ${{ !cancelled() }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
