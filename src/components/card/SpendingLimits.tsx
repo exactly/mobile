@@ -31,9 +31,9 @@ export default function SpendingLimits() {
         </Accordion.Trigger>
         <Accordion.HeightAnimator animation="quick">
           <Accordion.Content exitStyle={exitStyle} gap="$s4" paddingTop="$s4">
-            <SpendingLimitButton title="Daily" limit={1000} />
-            <SpendingLimitButton title="Weekly" limit={3000} />
-            <SpendingLimitButton title="Monthly" limit={5000} />
+            <SpendingLimitButton title="Daily" limit={5000} />
+            <SpendingLimitButton title="Weekly" limit={10_000} />
+            <SpendingLimitButton title="Monthly" limit={30_000} />
           </Accordion.Content>
         </Accordion.HeightAnimator>
       </Accordion.Item>
