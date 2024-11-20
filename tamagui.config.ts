@@ -526,6 +526,6 @@ const tamagui = createTamagui({
 
 export type Config = typeof tamagui;
 declare module "tamagui" {
-  interface TamaguiCustomConfig extends Config {} // eslint-disable-line @typescript-eslint/no-empty-object-type -- module augmentation
+  interface TamaguiCustomConfig extends Config {}
 }
 export default tamagui;
