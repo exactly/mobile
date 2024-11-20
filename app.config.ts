@@ -59,7 +59,7 @@ export default {
     icon: "src/assets/icon-ios.png",
     bundleIdentifier: "app.exactly",
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
-    supportsTablet: true,
+    supportsTablet: false,
     buildNumber: String(versionCode),
     infoPlist: {
       NSCameraUsageDescription: "This app uses the camera to verify your identity.",
