@@ -1,5 +1,5 @@
 import { previewerAddress, exaPluginAddress, marketUSDCAddress } from "@exactly/common/generated/chain";
-import { Address, Hex } from "@exactly/common/validation";
+import { Address, Hash, type Hex } from "@exactly/common/validation";
 import { effectiveRate, ONE_YEAR, WAD } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser } from "@sentry/node";
@@ -26,7 +26,7 @@ import {
   undefined_,
   union,
 } from "valibot";
-import { zeroAddress, type Hash } from "viem";
+import { zeroAddress } from "viem";
 
 import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
@@ -168,12 +168,13 @@ export default app.get(
       [
         ...credential.cards.flatMap(({ transactions }) =>
           transactions.map(({ hash, payload }) => {
-            const borrow = borrows?.get(hash as Hex);
+            const borrow = borrows?.get(hash as Hash);
             const validation = safeParse(
               { 0: DebitActivity, 1: CreditActivity }[borrow?.events.length ?? 0] ?? InstallmentsActivity,
               {
                 ...(payload as object),
                 events: borrow?.events,
+                transactionHash: hash,
                 blockTimestamp: borrow?.blockNumber && timestamps.get(borrow.blockNumber),
               },
             );
@@ -212,6 +213,7 @@ const CardActivity = object({
     transaction_amount: number(),
     transaction_currency_code: nullish(string()),
   }),
+  hash: Hash,
 });
 
 function fixedRate({ maturity, assets, fee }: InferOutput<typeof Borrow>, timestamp: bigint) {
@@ -222,10 +224,11 @@ function transformBorrow(borrow: InferOutput<typeof Borrow>, timestamp: bigint) 
   return { fee: Number(borrow.fee) / 1e6, rate: Number(fixedRate(borrow, timestamp)) / 1e18 };
 }
 
-function transformCard({ operation_id, data }: InferOutput<typeof CardActivity>) {
+function transformCard({ operation_id, data, hash }: InferOutput<typeof CardActivity>) {
   return {
     type: "card" as const,
     id: operation_id,
+    transactionHash: hash,
     timestamp: data.created_at,
     currency: data.transaction_currency_code,
     amount: data.transaction_amount,
@@ -287,7 +290,7 @@ const OnchainActivity = object({
   args: object({ assets: bigint() }),
   market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
   blockNumber: bigint(),
-  transactionHash: Hex,
+  transactionHash: Hash,
   logIndex: number(),
 });
 
@@ -305,6 +308,7 @@ function transformActivity({
     amount: Number(value) / baseUnit,
     usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
     blockNumber,
+    transactionHash,
   };
 }
 
