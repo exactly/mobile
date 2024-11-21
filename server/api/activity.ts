@@ -318,8 +318,12 @@ export const DepositActivity = pipe(
 );
 
 export const RepayActivity = pipe(
-  OnchainActivity,
-  transform((activity) => ({ ...transformActivity(activity), type: "repay" as const })),
+  object({ ...OnchainActivity.entries, args: object({ assets: bigint(), positionAssets: bigint() }) }),
+  transform((activity) => ({
+    ...transformActivity(activity),
+    positionAmount: Number(activity.args.positionAssets) / 10 ** activity.market.decimals,
+    type: "repay" as const,
+  })),
 );
 
 export const WithdrawActivity = pipe(
