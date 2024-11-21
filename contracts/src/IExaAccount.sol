@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
+import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 
 interface IExaAccount {
@@ -14,6 +15,9 @@ interface IExaAccount {
     uint256 amountIn,
     bytes calldata route
   ) external;
+  function lifiSwap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
+    external
+    returns (uint256 received);
   function rollDebt(
     uint256 repayMaturity,
     uint256 borrowMaturity,
