@@ -66,7 +66,7 @@ export default function AddressDialog({ open, onActionPress }: { open: boolean; 
               </AlertDialog.Description>
               <XStack gap="$3" justifyContent="flex-end">
                 <AlertDialog.Action asChild flex={1}>
-                  <Button danger size={ms(50)} onPress={onActionPress}>
+                  <Button dangerSecondary size={ms(50)} onPress={onActionPress}>
                     I understand
                   </Button>
                 </AlertDialog.Action>

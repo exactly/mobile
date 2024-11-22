@@ -38,6 +38,14 @@ export default styled(Button, {
         pressStyle: { backgroundColor: "$interactiveBaseErrorPressed" },
       },
     },
+    dangerSecondary: {
+      true: {
+        backgroundColor: "$interactiveBaseErrorDefault",
+        color: "$interactiveOnBaseErrorDefault",
+        hoverStyle: { backgroundColor: "$interactiveBaseErrorHover" },
+        pressStyle: { backgroundColor: "$interactiveBaseErrorPressed" },
+      },
+    },
     main: {
       true: {
         flex: 1,
