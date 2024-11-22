@@ -524,8 +524,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     delete callHash;
 
     uint256 actualRepay;
-    bool isSingleRepay = data[0] == 0x01;
-    if (isSingleRepay) {
+    if (data[0] == 0x01) {
       RepayCallbackData memory r = abi.decode(data[1:], (RepayCallbackData));
       actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower).min(
         EXA_USDC.maxWithdraw(r.borrower)
@@ -534,7 +533,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if (actualRepay < r.maxRepay) EXA_USDC.deposit(r.maxRepay - actualRepay, r.borrower);
 
       EXA_USDC.withdraw(r.maxRepay, address(BALANCER_VAULT), r.borrower);
-    } else {
+      
+      _checkLiquidity(r.borrower);
+    } else if (data[0] == 0x02) {
       CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
       actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
 
@@ -542,6 +543,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       uint256 out = _lifiSwap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.amountIn, actualRepay, c.route);
       IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
       EXA_USDC.deposit(out - actualRepay, c.borrower);
+      
+      _checkLiquidity(c.borrower);
     }
   }
 
