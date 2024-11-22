@@ -174,7 +174,6 @@ export default app.get(
               {
                 ...(payload as object),
                 events: borrow?.events,
-                transactionHash: hash,
                 blockTimestamp: borrow?.blockNumber && timestamps.get(borrow.blockNumber),
               },
             );
