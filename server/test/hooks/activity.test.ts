@@ -18,6 +18,9 @@ import {
   numberToBytes,
   type PrivateKeyAccount,
   WaitForTransactionReceiptTimeoutError,
+  ContractFunctionExecutionError,
+  BaseError,
+  zeroAddress,
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeEach, describe, expect, inject, it, vi } from "vitest";
@@ -210,6 +213,45 @@ describe("address activity", () => {
     const market = exactly.find((m) => m.asset === wethAddress);
 
     expect(market?.floatingDepositAssets).toBe(deposit);
+    expect(response.status).toBe(200);
+  });
+
+  it("retries exactly when error and pokes eth", async () => {
+    const deposit = parseEther("5");
+    await anvilClient.setBalance({ address: account, value: deposit });
+
+    vi.spyOn(publicClient, "readContract").mockRejectedValueOnce(
+      new ContractFunctionExecutionError(new BaseError("Error"), {
+        abi: previewerAbi,
+        functionName: "exactly",
+        args: [zeroAddress],
+      }),
+    );
+
+    const response = await appClient.index.$post({
+      ...activityPayload,
+      json: {
+        ...activityPayload.json,
+        event: {
+          ...activityPayload.json.event,
+          activity: [{ ...activityPayload.json.event.activity[0], toAddress: account }],
+        },
+      },
+    });
+
+    await waitForDeposit(account, 1);
+
+    const exactly = await publicClient.readContract({
+      address: previewerAddress,
+      functionName: "exactly",
+      abi: previewerAbi,
+      args: [account],
+    });
+
+    const market = exactly.find((m) => m.asset === wethAddress);
+
+    expect(market?.floatingDepositAssets).toBe(deposit);
+    expect(market?.isCollateral).toBeTruthy();
     expect(response.status).toBe(200);
   });
 

@@ -6,14 +6,15 @@ import "../mocks/sentry";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { parse, type InferOutput } from "valibot";
-import { zeroAddress, zeroHash, padHex, type Hash } from "viem";
+import { zeroHash, padHex, type Hash, ContractFunctionExecutionError, BaseError, zeroAddress } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import app, { CreditActivity, DebitActivity, InstallmentsActivity } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
-import { marketAbi } from "../../generated/contracts";
+import { marketAbi, previewerAbi } from "../../generated/contracts";
 import deriveAddress from "../../utils/deriveAddress";
+import publicClient from "../../utils/publicClient";
 import anvilClient from "../anvilClient";
 
 const appClient = testClient(app);
@@ -53,6 +54,7 @@ describe("authenticated", () => {
   const bob = privateKeyToAddress(padHex("0xb0b"));
   const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
   const captureException = vi.spyOn(sentry, "captureException");
+  const readContract = vi.spyOn(publicClient, "readContract");
 
   beforeAll(async () => {
     await database
@@ -60,7 +62,10 @@ describe("authenticated", () => {
       .values([{ id: account, publicKey: new Uint8Array(), account, factory: zeroAddress }]);
   });
 
-  afterEach(() => captureException.mockClear());
+  afterEach(() => {
+    captureException.mockClear();
+    readContract.mockClear();
+  });
 
   describe("card", () => {
     let activity: InferOutput<typeof DebitActivity | typeof CreditActivity | typeof InstallmentsActivity>[];
@@ -111,6 +116,24 @@ describe("authenticated", () => {
             });
           }),
       ).then((results) => results.sort((a, b) => b.timestamp.localeCompare(a.timestamp)));
+    });
+
+    it("retries exactly when error and returns the card transaction", async () => {
+      readContract.mockRejectedValueOnce(
+        new ContractFunctionExecutionError(new BaseError("Error"), {
+          abi: previewerAbi,
+          functionName: "exactly",
+          args: [zeroAddress],
+        }),
+      );
+
+      const response = await appClient.index.$get(
+        { query: { include: "card" } },
+        { headers: { "test-credential-id": account } },
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toStrictEqual(activity);
     });
 
     it("returns the card transaction", async () => {

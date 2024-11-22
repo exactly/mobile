@@ -26,7 +26,7 @@ import {
   undefined_,
   union,
 } from "valibot";
-import { zeroAddress } from "viem";
+import { withRetry, zeroAddress } from "viem";
 
 import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
@@ -66,12 +66,17 @@ export default app.get(
     const account = parse(Address, credential.account);
     setUser({ id: account });
 
-    const exactly = await publicClient.readContract({
-      address: previewerAddress,
-      functionName: "exactly", // TODO cache
-      abi: previewerAbi,
-      args: [zeroAddress],
-    });
+    const exactly = await withRetry(
+      () =>
+        publicClient.readContract({
+          address: previewerAddress,
+          functionName: "exactly",
+          abi: previewerAbi,
+          args: [zeroAddress],
+        }),
+      { delay: 100, retryCount: 5 },
+    );
+
     const markets = new Map<Hex, (typeof exactly)[number]>(exactly.map((m) => [m.market.toLowerCase() as Hex, m]));
     const market = (address: Hex) => {
       const found = markets.get(address.toLowerCase() as Hex);

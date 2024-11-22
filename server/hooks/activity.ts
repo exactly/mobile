@@ -25,6 +25,7 @@ import {
   ContractFunctionRevertedError,
   WaitForTransactionReceiptTimeoutError,
   zeroAddress,
+  withRetry,
 } from "viem";
 import { optimism } from "viem/chains";
 
@@ -96,12 +97,17 @@ export default app.post(
           ),
         ),
       );
-    const exactly = await publicClient.readContract({
-      address: previewerAddress,
-      functionName: "exactly",
-      abi: previewerAbi,
-      args: [zeroAddress],
-    });
+
+    const exactly = await withRetry(
+      () =>
+        publicClient.readContract({
+          address: previewerAddress,
+          functionName: "exactly",
+          abi: previewerAbi,
+          args: [zeroAddress],
+        }),
+      { delay: 100, retryCount: 5 },
+    );
     const marketsByAsset = new Map<Address, Address>(
       exactly.map((market) => [v.parse(Address, market.asset), v.parse(Address, market.market)]),
     );
