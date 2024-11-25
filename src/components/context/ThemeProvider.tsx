@@ -1,3 +1,4 @@
+import { StatusBar } from "expo-status-bar";
 import React, { type ReactNode } from "react";
 import { Appearance } from "react-native";
 import { TamaguiProvider } from "tamagui";
@@ -12,6 +13,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
       {children}
       <NotificationToast />
       <SafeToastViewport />
+      <StatusBar style="auto" />
     </TamaguiProvider>
   );
 }
