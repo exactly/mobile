@@ -1,4 +1,4 @@
-const { extraErrorDataIntegration, init, sessionTimingIntegration } = require("@sentry/node");
+const { extraErrorDataIntegration, init } = require("@sentry/node");
 const { nodeProfilingIntegration } = require("@sentry/profiling-node");
 
 init({
@@ -11,7 +11,7 @@ init({
   autoSessionTracking: true,
   maxValueLength: 8192,
   normalizeDepth: 69,
-  integrations: [nodeProfilingIntegration(), extraErrorDataIntegration({ depth: 69 }), sessionTimingIntegration()],
+  integrations: [nodeProfilingIntegration(), extraErrorDataIntegration({ depth: 69 })],
   spotlight: !process.env.APP_DOMAIN || process.env.APP_DOMAIN === "localhost",
   beforeSendTransaction: (transaction) => (transaction.extra?.["exa.ignore"] ? null : transaction),
 });
