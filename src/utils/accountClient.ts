@@ -45,7 +45,9 @@ export default async function createAccountClient({ credentialId, factory, x, y 
       try {
         const credential = await get({
           rpId: domain,
-          challenge: bufferToBase64URLString(hexToBytes(hashMessage({ raw: uoHash }), { size: 32 })),
+          challenge: bufferToBase64URLString(
+            hexToBytes(hashMessage({ raw: uoHash }), { size: 32 }).buffer as ArrayBuffer,
+          ),
           allowCredentials: Platform.OS === "android" ? [] : [{ id: credentialId, type: "public-key" }], // HACK fix android credential filtering
           userVerification: "preferred",
         });
@@ -89,7 +91,8 @@ export default async function createAccountClient({ credentialId, factory, x, y 
         userOp.signature = webauthn({
           authenticatorData: "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000",
           clientDataJSON: `{"type":"webauthn.get","challenge":"${bufferToBase64URLString(
-            hexToBytes(hashMessage({ raw: deepHexlify(await resolveProperties(userOp)) as Hex }), { size: 32 }),
+            hexToBytes(hashMessage({ raw: deepHexlify(await resolveProperties(userOp)) as Hex }), { size: 32 })
+              .buffer as ArrayBuffer,
           )}","origin":"https://web.exactly.app","crossOrigin":false}`,
           typeIndex: 1n,
           challengeIndex: 23n,
