@@ -30,6 +30,7 @@ export default {
   scheme: "exactly",
   version: metadata.version,
   orientation: "portrait",
+  newArchEnabled: false,
   android: {
     package: "app.exactly",
     adaptiveIcon: { foregroundImage: "src/assets/icon.png", backgroundColor: "#1D1D1D" },
@@ -80,9 +81,8 @@ export default {
         android: {
           packagingOptions: { pickFirst: ["**/libcrypto.so"] },
           extraMavenRepos: ["https://sdk.withpersona.com/android/releases"],
-          newArchEnabled: false,
         },
-        ios: { deploymentTarget: "15.1", newArchEnabled: false },
+        ios: { deploymentTarget: "15.1" },
       } satisfies BuildPropertiesConfig,
     ],
     [
