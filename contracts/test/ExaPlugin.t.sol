@@ -148,9 +148,10 @@ contract ExaPluginTest is ForkTest {
     usdc.mint(bob, 10_000e6);
     usdc.approve(address(exaUSDC), 10_000e6);
     exaUSDC.deposit(10_000e6, bob);
-    vm.stopPrank();
 
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
+
+    vm.stopPrank();
   }
 
   // solhint-disable func-name-mixedcase
@@ -733,9 +734,8 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-    vm.stopPrank();
 
-    vm.prank(owner);
+    vm.startPrank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
@@ -745,16 +745,15 @@ contract ExaPluginTest is ForkTest {
     account.poke(exaUSDC);
     account.poke(exaEXA);
     account.collectCredit(FixedLib.INTERVAL, 100_000e6 + 1, block.timestamp, _issuerOp(100_000e6 + 1, block.timestamp));
-    vm.stopPrank();
 
     assertEq(exaUSDC.maxWithdraw(address(account)), 100_000e6);
-    vm.prank(owner);
+    vm.startPrank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (FixedLib.INTERVAL)));
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
 
-  function test_crossRepay_lifi() external {
-    lifiFork();
+  function test_crossRepay_repays() external {
+    _setUpLifiFork();
     uint256 amount = 0.0004e8;
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
     deal(address(exaWBTC), address(account), amount);
@@ -768,53 +767,14 @@ contract ExaPluginTest is ForkTest {
     );
     uint256 prevCollateral = exaWBTC.balanceOf(address(account));
 
+    vm.startPrank(address(account));
     account.crossRepay(maturity, 21e6, 25e6, exaWBTC, amount, route);
-    vm.stopPrank();
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(prevCollateral, exaWBTC.balanceOf(address(account)), "collateral didn't decrease");
   }
 
-  function lifiFork() internal {
-    vm.createSelectFork("optimism", 127_050_624);
-    account = ExaAccount(payable(0x6120Fb2A9d47f7955298b80363F00C620dB9f6E6));
-
-    vm.setEnv("DEPLOYER_ADDRESS", "");
-    vm.setEnv("KEEPER_ADDRESS", "");
-    vm.setEnv("ISSUER_ADDRESS", "");
-    vm.setEnv("PROTOCOL_MARKETUSDC_ADDRESS", "");
-    vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", "");
-    vm.setEnv("BROADCAST_REFUNDER_ADDRESS", "");
-
-    exaPlugin = new ExaPlugin(
-      IAuditor(protocol("Auditor")),
-      IMarket(protocol("MarketUSDC")),
-      IMarket(protocol("MarketWETH")),
-      IBalancerVault(protocol("BalancerVault")),
-      IDebtManager(protocol("DebtManager")),
-      IInstallmentsRouter(protocol("InstallmentsRouter")),
-      IssuerChecker(broadcast("IssuerChecker")),
-      acct("collector")
-    );
-    usdc = MockERC20(protocol("USDC"));
-
-    vm.startPrank(address(account));
-    account.execute(
-      address(account),
-      0,
-      abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (0x9aac010e4EE770168182A4a65E07aab36b1cA526, "", ""))
-    );
-    account.execute(
-      address(account),
-      0,
-      abi.encodeCall(
-        UpgradeableModularAccount.installPlugin,
-        (address(exaPlugin), keccak256(abi.encode(exaPlugin.pluginManifest())), "", new FunctionReference[](0))
-      )
-    );
-  }
-
   function test_lifiSwap_swaps() external {
-    lifiFork();
+    _setUpLifiFork();
     uint256 amount = 0.0004e8;
     IERC20 wbtc = IERC20(protocol("WBTC"));
     deal(address(wbtc), address(account), amount);
@@ -826,12 +786,13 @@ contract ExaPluginTest is ForkTest {
     );
 
     uint256 minAmount = 26_310_887;
+    vm.startPrank(address(account));
     account.lifiSwap(wbtc, IERC20(address(usdc)), amount, minAmount, route);
     assertGe(usdc.balanceOf(address(account)), minAmount, "usdc dust");
   }
 
   function test_lifiSwap_reverts_withDisagreement() external {
-    lifiFork();
+    _setUpLifiFork();
     uint256 amount = 0.0004e8;
     IERC20 wbtc = IERC20(protocol("WBTC"));
     deal(address(wbtc), address(account), amount);
@@ -843,6 +804,7 @@ contract ExaPluginTest is ForkTest {
     );
 
     uint256 received = 26_310_887;
+    vm.startPrank(address(account));
     vm.expectRevert(Disagreement.selector);
     account.lifiSwap(wbtc, IERC20(address(usdc)), amount, received + 1, route);
     assertEq(usdc.balanceOf(address(account)), 0);
@@ -946,6 +908,47 @@ contract ExaPluginTest is ForkTest {
   {
     op = _unsignedOp(callData, index);
     op.signature = _sign(privateKey, ENTRYPOINT.getUserOpHash(op).toEthSignedMessageHash());
+  }
+
+  function _setUpLifiFork() internal {
+    vm.createSelectFork("optimism", 127_050_624);
+    account = ExaAccount(payable(0x6120Fb2A9d47f7955298b80363F00C620dB9f6E6));
+
+    vm.setEnv("DEPLOYER_ADDRESS", "");
+    vm.setEnv("KEEPER_ADDRESS", "");
+    vm.setEnv("ISSUER_ADDRESS", "");
+    vm.setEnv("PROTOCOL_MARKETUSDC_ADDRESS", "");
+    vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", "");
+    vm.setEnv("BROADCAST_REFUNDER_ADDRESS", "");
+
+    exaPlugin = new ExaPlugin(
+      IAuditor(protocol("Auditor")),
+      IMarket(protocol("MarketUSDC")),
+      IMarket(protocol("MarketWETH")),
+      IBalancerVault(protocol("BalancerVault")),
+      IDebtManager(protocol("DebtManager")),
+      IInstallmentsRouter(protocol("InstallmentsRouter")),
+      IssuerChecker(broadcast("IssuerChecker")),
+      acct("collector")
+    );
+    exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
+    usdc = MockERC20(protocol("USDC"));
+
+    vm.startPrank(address(account));
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (0x9aac010e4EE770168182A4a65E07aab36b1cA526, "", ""))
+    );
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.installPlugin,
+        (address(exaPlugin), keccak256(abi.encode(exaPlugin.pluginManifest())), "", new FunctionReference[](0))
+      )
+    );
+    vm.stopPrank();
   }
 
   function _unsignedOp(bytes memory callData, uint256 index) internal view returns (UserOperation memory op) {
