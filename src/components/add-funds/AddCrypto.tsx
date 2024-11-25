@@ -1,9 +1,10 @@
 import chain from "@exactly/common/generated/chain";
 import { ArrowLeft, Files, Info, Share as ShareIcon } from "@tamagui/lucide-icons";
+import { useToastController } from "@tamagui/toast";
 import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { Alert, Pressable, Share } from "react-native";
+import { Pressable, Share } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 import { useAccount } from "wagmi";
@@ -25,15 +26,16 @@ const supportedAssets = Object.entries(assetLogos)
 
 export default function AddCrypto() {
   const [alertShown, setAlertShown] = useState(false);
+  const toast = useToastController();
   const { address } = useAccount();
   const { canGoBack } = router;
 
-  function copy() {
+  const copy = useCallback(() => {
     if (!address) return;
     setStringAsync(address).catch(handleError);
-    Alert.alert("Copied", "Your address has been copied to the clipboard.");
+    toast.show("Account address copied!");
     setAlertShown(false);
-  }
+  }, [address, toast]);
 
   const share = useCallback(async () => {
     if (!address) return;

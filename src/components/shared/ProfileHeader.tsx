@@ -1,9 +1,10 @@
 import { Eye, EyeOff, Settings } from "@tamagui/lucide-icons";
+import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Pressable } from "react-native";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Image, styled } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
@@ -38,6 +39,7 @@ export default function ProfileHeader() {
   const { connect } = useConnect();
   const { isConnected } = useAccount();
   const [alertShown, setAlertShown] = useState(false);
+  const toast = useToastController();
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   function toggle() {
     queryClient.setQueryData(["settings", "sensitive"], !hidden);
@@ -45,7 +47,7 @@ export default function ProfileHeader() {
   function copy() {
     if (!address) return;
     setStringAsync(address).catch(handleError);
-    Alert.alert("Copied", "Your address has been copied to the clipboard.");
+    toast.show("Account address copied!");
     setAlertShown(false);
   }
   return (
@@ -67,7 +69,6 @@ export default function ProfileHeader() {
               borderRadius="$r_0"
             />
           </View>
-
           {address && (
             <Pressable
               onPress={() => {
@@ -85,7 +86,6 @@ export default function ProfileHeader() {
 
           <AddressDialog open={alertShown} onActionPress={copy} />
         </View>
-
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
           <Pressable onPress={toggle} hitSlop={ms(15)}>
             {hidden ? <EyeOff color="$uiNeutralPrimary" /> : <Eye color="$uiNeutralPrimary" />}

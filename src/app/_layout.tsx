@@ -2,6 +2,7 @@ import "../utils/polyfill";
 
 import release from "@exactly/common/generated/release";
 import { init, mobileReplayIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
+import { ToastProvider } from "@tamagui/toast";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { isRunningInExpoGo } from "expo";
@@ -62,17 +63,19 @@ export default wrap(function RootLayout() {
   return (
     <WagmiProvider config={wagmiConfig}>
       <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
-        <SafeAreaProvider>
-          <ThemeProvider>
-            <OnboardingProvider>
-              <Stack initialRouteName="(app)" screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(app)" />
-                <Stack.Screen name="onboarding" />
-              </Stack>
-            </OnboardingProvider>
-          </ThemeProvider>
-        </SafeAreaProvider>
-        {devtools && <ReactQueryDevtools initialIsOpen={false} client={queryClient} />}
+        <ToastProvider>
+          <SafeAreaProvider>
+            <ThemeProvider>
+              <OnboardingProvider>
+                <Stack initialRouteName="(app)" screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(app)" />
+                  <Stack.Screen name="onboarding" />
+                </Stack>
+              </OnboardingProvider>
+            </ThemeProvider>
+          </SafeAreaProvider>
+          {devtools && <ReactQueryDevtools initialIsOpen={false} client={queryClient} />}
+        </ToastProvider>
       </PersistQueryClientProvider>
     </WagmiProvider>
   );
