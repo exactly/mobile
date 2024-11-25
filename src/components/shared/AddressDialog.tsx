@@ -1,4 +1,5 @@
 import chain from "@exactly/common/generated/chain";
+import { Copy } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
 import { AlertDialog, XStack, YStack } from "tamagui";
@@ -31,43 +32,47 @@ export default function AddressDialog({ open, onActionPress }: { open: boolean; 
           opacity={1}
           borderWidth={0}
           margin="$s5"
-          backgroundColor="transparent"
         >
-          <YStack
-            backgroundColor="$interactiveBaseErrorSoftDefault"
-            borderRadius="$r6"
-            padding="$s5"
-            paddingTop="$s5"
-            gap="$s3"
-          >
+          <YStack backgroundColor="$backgroundSoft" borderRadius="$r6" padding="$s5" paddingTop="$s5" gap="$s5">
             <XStack alignItems="center" gap="$s3" justifyContent="flex-start">
-              <View alignItems="center" justifyContent="center">
-                <OptimismImage height={ms(24)} width={ms(24)} />
-              </View>
-              <AlertDialog.Title fontWeight="bold" fontSize={ms(24)} color="$interactiveOnBaseErrorSoft">
-                Warning
+              <AlertDialog.Title>
+                <Text emphasized headline>
+                  Network reminder
+                </Text>
               </AlertDialog.Title>
             </XStack>
-            <YStack gap="$s4">
-              <AlertDialog.Description
-                fontSize={ms(15)}
-                fontWeight="regular"
-                textAlign="justify"
-                color="$interactiveOnBaseErrorSoft"
-              >
-                Funds sent to a network different from&nbsp;
-                <Text fontWeight="bold" color="$interactiveOnBaseErrorSoft">
-                  {chain.name}
+
+            <YStack gap="$s6">
+              <YStack gap="$s5">
+                <XStack gap="$s3" alignItems="center">
+                  <View alignItems="center" justifyContent="center">
+                    <OptimismImage height={ms(32)} width={ms(32)} />
+                  </View>
+                  <Text>
+                    <Text emphasized title3>
+                      {chain.name}
+                    </Text>
+                  </Text>
+                </XStack>
+                <Text secondary subHeadline>
+                  Add funds using
+                  <Text emphasized secondary>
+                    &nbsp;{chain.name}&nbsp;
+                  </Text>
+                  only. Sending assets on any other network will cause irreversible loss of funds.
                 </Text>
-                &nbsp;will be lost&nbsp;
-                <Text fontWeight="bold" color="$interactiveOnBaseErrorSoft">
-                  forever.
-                </Text>
-              </AlertDialog.Description>
-              <XStack gap="$3" justifyContent="flex-end">
+              </YStack>
+              <XStack>
                 <AlertDialog.Action asChild flex={1}>
-                  <Button dangerSecondary size={ms(50)} onPress={onActionPress}>
-                    I understand
+                  <Button
+                    onPress={onActionPress}
+                    contained
+                    main
+                    spaced
+                    fullwidth
+                    iconAfter={<Copy strokeWidth={3} color="$interactiveOnBaseBrandDefault" />}
+                  >
+                    Copy account address
                   </Button>
                 </AlertDialog.Action>
               </XStack>
