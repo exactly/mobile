@@ -98,7 +98,6 @@ describe("authenticated", () => {
             const blockTimestamp = timestamps.get(blockNumber)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
             const total = events.reduce((sum, { assets }) => sum + assets, 0n);
             const payload = {
-              hash,
               operation_id: String(index),
               data: {
                 created_at: new Date(Number(blockTimestamp) * 1000).toISOString(),
@@ -111,6 +110,7 @@ describe("authenticated", () => {
             await database.insert(transactions).values({ id: String(index), cardId: "activity", hash, payload });
             return parse({ 0: DebitActivity, 1: CreditActivity }[events.length] ?? InstallmentsActivity, {
               ...payload,
+              hash,
               events,
               blockTimestamp,
             });
