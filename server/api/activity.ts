@@ -178,6 +178,7 @@ export default app.get(
               { 0: DebitActivity, 1: CreditActivity }[borrow?.events.length ?? 0] ?? InstallmentsActivity,
               {
                 ...(payload as object),
+                hash,
                 events: borrow?.events,
                 blockTimestamp: borrow?.blockNumber && timestamps.get(borrow.blockNumber),
               },
