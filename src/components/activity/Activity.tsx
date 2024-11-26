@@ -38,6 +38,7 @@ export default function Activity() {
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View gap="$s5" flex={1} backgroundColor="$backgroundMild">
         <StyledFlatList
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               backgroundColor="$backgroundSoft"
