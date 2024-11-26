@@ -57,12 +57,18 @@ app.onError((error, c) => {
   return c.text(error instanceof Error ? error.message : String(error), 500);
 });
 
-serve(app);
+const server = serve(app);
 
 ["SIGINT", "SIGTERM"].map((code) =>
-  process.on(code, () => {
-    Promise.allSettled([close(), closeAndFlush()]).catch(() => undefined);
-  }),
+  process.on(code, () =>
+    server.close((error) => {
+      Promise.allSettled([close(), closeAndFlush()])
+        .then((results) => {
+          process.exit(error || results.some((result) => result.status === "rejected") ? 1 : 0); // eslint-disable-line n/no-process-exit
+        })
+        .catch(() => undefined);
+    }),
+  ),
 );
 
 declare module "hono" {
