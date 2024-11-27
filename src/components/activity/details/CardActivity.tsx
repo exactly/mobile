@@ -35,8 +35,7 @@ export default function CardActivity({ item }: { item: CreditActivity | DebitAct
           <XStack gap="$s3" alignItems="center">
             <Text emphasized subHeadline color="$uiNeutralSecondary">
               {Number(amount).toLocaleString(undefined, { maximumFractionDigits: 8, minimumFractionDigits: 0 })}
-              &nbsp;
-              {currency}
+              &nbsp;{currency}
             </Text>
           </XStack>
         </YStack>

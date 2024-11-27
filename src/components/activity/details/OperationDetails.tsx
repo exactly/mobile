@@ -1,5 +1,9 @@
+import chain from "@exactly/common/generated/chain";
 import type { CreditActivity, DebitActivity, InstallmentsActivity } from "@exactly/server/api/activity";
+import { SquareArrowOutUpRight } from "@tamagui/lucide-icons";
+import { format } from "date-fns";
 import { setStringAsync } from "expo-clipboard";
+import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
 import { Alert } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -19,6 +23,23 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
         <Separator height={1} borderColor="$borderNeutralSoft" />
       </YStack>
       <YStack gap="$s3_5">
+        <XStack justifyContent="space-between">
+          <Text emphasized footnote color="$uiNeutralSecondary">
+            ID
+          </Text>
+          <Text
+            callout
+            color="$uiNeutralPrimary"
+            onPress={() => {
+              setStringAsync(item.id).catch(handleError);
+              Alert.alert("Copied!", "The operation ID has been copied to the clipboard.");
+            }}
+            hitSlop={ms(15)}
+          >
+            {shortenAddress(item.id, 8, 8)}
+          </Text>
+        </XStack>
+
         <XStack justifyContent="space-between">
           <Text emphasized footnote color="$uiNeutralSecondary">
             Total
@@ -42,7 +63,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
               {item.mode > 1 && `${(item as InstallmentsActivity).borrow.installments.length}x`}&nbsp;
               {item.mode > 1 &&
                 Number(item.amount / (item as InstallmentsActivity).borrow.installments.length).toFixed(2)}
-              &nbsp;{item.currency}
+              &nbsp;USDC
             </Text>
           </XStack>
         )}
@@ -73,19 +94,37 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
 
         <XStack justifyContent="space-between">
           <Text emphasized footnote color="$uiNeutralSecondary">
-            ID
+            Date
           </Text>
-          <Text
-            callout
-            color="$uiNeutralPrimary"
+          <Text callout color="$uiNeutralPrimary">
+            {format(item.timestamp, "yyyy-MM-dd")}
+          </Text>
+        </XStack>
+        <XStack justifyContent="space-between">
+          <Text emphasized footnote color="$uiNeutralSecondary">
+            Time
+          </Text>
+          <Text callout color="$uiNeutralPrimary">
+            {format(item.timestamp, "HH:mm:ss")}
+          </Text>
+        </XStack>
+
+        <XStack justifyContent="space-between">
+          <Text emphasized footnote color="$uiNeutralSecondary">
+            Transaction hash
+          </Text>
+          <XStack
+            alignItems="center"
+            gap="$s3"
             onPress={() => {
-              setStringAsync(item.id).catch(handleError);
-              Alert.alert("Copied!", "The operation ID has been copied to the clipboard.");
+              openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${item.transactionHash}`).catch(handleError);
             }}
-            hitSlop={ms(15)}
           >
-            {shortenAddress(item.id, 8, 8)}
-          </Text>
+            <Text textDecorationLine="underline" callout color="$uiNeutralPrimary">
+              {shortenAddress(item.transactionHash, 7, 7)}
+            </Text>
+            <SquareArrowOutUpRight size={ms(20)} color="$uiNeutralSecondary" />
+          </XStack>
         </XStack>
       </YStack>
     </YStack>
