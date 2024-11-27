@@ -1,5 +1,6 @@
 import type { Base64URL } from "@exactly/common/validation";
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { sentry } from "@hono/sentry";
 import { captureException, close } from "@sentry/node";
 import { Hono } from "hono";
@@ -52,6 +53,17 @@ app.get("/.well-known/assetlinks.json", (c) =>
       },
     },
   ]),
+);
+app.use(
+  "/*",
+  serveStatic({
+    root: "app",
+    rewriteRequestPath: (path) => {
+      if (path.endsWith("/")) return `${path}/index.html`;
+      if (path.includes(".")) return path;
+      return `${path}.html`;
+    },
+  }),
 );
 
 app.onError((error, c) => {
