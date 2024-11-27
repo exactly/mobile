@@ -59,7 +59,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
               Installments
             </Text>
             <Text emphasized callout color="$uiNeutralPrimary">
-              {item.mode === 1 && `1x ${Number(item.amount + item.borrow.fee).toFixed(2)}`}
+              {item.mode === 1 && `1x ${Number(item.usdAmount + item.borrow.fee).toFixed(2)}`}
               {item.mode > 1 && `${(item as InstallmentsActivity).borrow.installments.length}x`}&nbsp;
               {item.mode > 1 &&
                 Number(item.usdAmount / (item as InstallmentsActivity).borrow.installments.length).toFixed(2)}
