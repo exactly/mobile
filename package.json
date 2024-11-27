@@ -15,6 +15,7 @@
     "test:build": "expo export --platform web",
     "test:ts:expo": "tsc",
     "test:ts:node": "tsc -p tsconfig.node.json",
+    "test:changeset": "changeset status --since origin/main",
     "test:eslint": "eslint --max-warnings 0 --color ."
   },
   "engines": {
