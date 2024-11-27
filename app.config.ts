@@ -18,7 +18,6 @@ if (process.env.EAS_BUILD_RUNNER === "eas-build") {
   process.env.EXPO_PUBLIC_DOMAIN ??= "web.exactly.app";
   process.env.EXPO_PUBLIC_ALCHEMY_API_KEY ??= "Wz728rhq_yGIAXdRmCy4VuKIAFjSmlpc";
   process.env.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID ??= "cb9db554-658f-46eb-ae73-8bff8ed2556b";
-  process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID ??= "31d4be98-1fa3-4a8c-9657-dc21c991adc7";
   process.env.EXPO_PUBLIC_SENTRY_DSN ??=
     "https://ac8875331e4cecd67dd0a7519a36dfeb@o1351734.ingest.us.sentry.io/4506186349674496";
 }

@@ -1,11 +1,10 @@
+import appId from "@exactly/common/onesignalAppId";
 import { useState, useEffect } from "react";
 import { Platform } from "react-native";
 import type * as OneSignalNative from "react-native-onesignal";
 import type * as OneSignalWeb from "react-onesignal";
 
 import handleError from "./handleError";
-
-const appId = process.env.EXPO_PUBLIC_ONE_SIGNAL_APP_ID;
 
 const { initialization, login, logout } = (
   Platform.OS === "web" && typeof window !== "undefined"
