@@ -34,31 +34,12 @@ const appClient = testClient(app);
 const authorization = {
   header: { "x-webhook-key": "cryptomate" },
   json: {
+    product: "CARDS",
     event_type: "AUTHORIZATION",
-    status: "PENDING",
-    product: "CARDS",
     operation_id: "op",
+    status: "PENDING",
     data: {
-      bill_currency_code: "USD",
-      bill_currency_number: "840",
-      bill_amount: 100,
       card_id: "card",
-      created_at: new Date().toISOString(),
-      metadata: { account: zeroAddress },
-      signature: "0x",
-    },
-  },
-} as const;
-
-const clearing = {
-  header: { "x-webhook-key": "cryptomate" },
-  json: {
-    product: "CARDS",
-    event_type: "CLEARING",
-    operation_id: "op",
-    status: "PENDING",
-    data: {
-      card_id: "id",
       bill_amount: 45.23,
       bill_currency_number: "840",
       bill_currency_code: "USD",
@@ -270,27 +251,23 @@ describe("card operations", () => {
       it("clears debit", async () => {
         const balance = await collectorBalance();
 
-        const operation = "clears_debit_operation";
-        await database.insert(cards).values([{ id: "clears", credentialId: "cred", lastFour: "3456", mode: 0 }]);
+        const operation = "debits";
+        await database.insert(cards).values([{ id: "debits", credentialId: "cred", lastFour: "3456", mode: 0 }]);
         const response = await appClient.index.$post({
-          ...clearing,
+          ...authorization,
           json: {
-            ...clearing.json,
+            ...authorization.json,
+            event_type: "CLEARING",
             operation_id: operation,
-            data: { ...clearing.json.data, card_id: "clears", metadata: { account } },
+            data: { ...authorization.json.data, card_id: "debits", metadata: { account } },
           },
         });
-
-        const card = await database.query.transactions.findFirst({
-          where: eq(transactions.id, operation),
-        });
-
+        const card = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
         await publicClient.waitForTransactionReceipt({ hash: card?.hash as Hex });
 
         await expect(collectorBalance()).resolves.toBe(
-          balance + BigInt(Math.round(clearing.json.data.bill_amount * 1e6)),
+          balance + BigInt(Math.round(authorization.json.data.bill_amount * 1e6)),
         );
-
         expect(response.status).toBe(200);
       });
 
@@ -298,25 +275,21 @@ describe("card operations", () => {
         const balance = await collectorBalance();
         const amount = 10;
 
-        const operation = "clears_credit_operation";
-        await database.insert(cards).values([{ id: "clears_credit", credentialId: "cred", lastFour: "7890", mode: 1 }]);
+        const operation = "credits";
+        await database.insert(cards).values([{ id: "credits", credentialId: "cred", lastFour: "7890", mode: 1 }]);
         const response = await appClient.index.$post({
-          ...clearing,
+          ...authorization,
           json: {
-            ...clearing.json,
+            ...authorization.json,
+            event_type: "CLEARING",
             operation_id: operation,
-            data: { ...clearing.json.data, card_id: "clears_credit", bill_amount: amount, metadata: { account } },
+            data: { ...authorization.json.data, card_id: "credits", bill_amount: amount, metadata: { account } },
           },
         });
-
-        const transaction = await database.query.transactions.findFirst({
-          where: eq(transactions.id, operation),
-        });
-
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
         await publicClient.waitForTransactionReceipt({ hash: transaction?.hash as Hex });
 
         await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
-
         expect(response.status).toBe(200);
       });
 
@@ -324,27 +297,23 @@ describe("card operations", () => {
         const balance = await collectorBalance();
         const amount = 100;
 
-        const operation = "clears_installments_operation";
-        await database
-          .insert(cards)
-          .values([{ id: "clears_installments", credentialId: "cred", lastFour: "6754", mode: 6 }]);
+        const operation = "splits";
+        await database.insert(cards).values([{ id: "splits", credentialId: "cred", lastFour: "6754", mode: 6 }]);
         const response = await appClient.index.$post({
-          ...clearing,
+          ...authorization,
           json: {
-            ...clearing.json,
+            ...authorization.json,
+            event_type: "CLEARING",
             operation_id: operation,
-            data: { ...clearing.json.data, card_id: "clears_installments", bill_amount: amount, metadata: { account } },
+            data: { ...authorization.json.data, card_id: "splits", bill_amount: amount, metadata: { account } },
           },
         });
-
         const transaction = await database.query.transactions.findFirst({
           where: eq(transactions.id, operation),
         });
-
         await publicClient.waitForTransactionReceipt({ hash: transaction?.hash as Hex });
 
         await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
-
         expect(response.status).toBe(200);
       });
 
@@ -368,16 +337,17 @@ describe("card operations", () => {
 
         const amount = 50;
 
-        const operation = "duplicate_clearing_operation";
-        const cardId = "handle_duplicated_clearing";
-        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "777", mode: 6 }]);
+        const operation = "dupe";
+        const cardId = "dupe";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "7777", mode: 6 }]);
         await database.insert(transactions).values([{ id: operation, cardId, hash: zeroHash, payload: {} }]);
         const response = await appClient.index.$post({
-          ...clearing,
+          ...authorization,
           json: {
-            ...clearing.json,
+            ...authorization.json,
+            event_type: "CLEARING",
             operation_id: operation,
-            data: { ...clearing.json.data, card_id: cardId, bill_amount: amount, metadata: { account } },
+            data: { ...authorization.json.data, card_id: cardId, bill_amount: amount, metadata: { account } },
           },
         });
 
@@ -392,16 +362,15 @@ describe("card operations", () => {
 
         vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
 
-        const operation = "timeout_clearing_operation";
-        await database
-          .insert(cards)
-          .values([{ id: "failed_installments", credentialId: "cred", lastFour: "777", mode: 6 }]);
+        const operation = "timeout";
+        await database.insert(cards).values([{ id: "timeout", credentialId: "cred", lastFour: "7777", mode: 6 }]);
         const response = await appClient.index.$post({
-          ...clearing,
+          ...authorization,
           json: {
-            ...clearing.json,
+            ...authorization.json,
+            event_type: "CLEARING",
             operation_id: operation,
-            data: { ...clearing.json.data, card_id: "failed_installments", bill_amount: 60, metadata: { account } },
+            data: { ...authorization.json.data, card_id: "timeout", bill_amount: 60, metadata: { account } },
           },
         });
 
@@ -424,16 +393,15 @@ describe("card operations", () => {
           logs: [],
         });
 
-        const operation = "revert_clearing_operation";
-        await database
-          .insert(cards)
-          .values([{ id: "revert_installments", credentialId: "cred", lastFour: "888", mode: 5 }]);
+        const operation = "revert";
+        await database.insert(cards).values([{ id: "revert", credentialId: "cred", lastFour: "8888", mode: 5 }]);
         const response = await appClient.index.$post({
-          ...clearing,
+          ...authorization,
           json: {
-            ...clearing.json,
+            ...authorization.json,
+            event_type: "CLEARING",
             operation_id: operation,
-            data: { ...clearing.json.data, card_id: "revert_installments", bill_amount: 70, metadata: { account } },
+            data: { ...authorization.json.data, card_id: "revert", bill_amount: 70, metadata: { account } },
           },
         });
 
@@ -452,14 +420,15 @@ describe("card operations", () => {
 
         vi.spyOn(publicClient, "simulateContract").mockRejectedValue(new Error("Unexpected Error"));
 
-        const cardId = "unexpected_error_card";
-        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "888", mode: 4 }]);
+        const cardId = "unexpected";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 4 }]);
         const response = await appClient.index.$post({
-          ...clearing,
+          ...authorization,
           json: {
-            ...clearing.json,
-            operation_id: "unexpected_error_clearing_operation",
-            data: { ...clearing.json.data, card_id: cardId, bill_amount: 90, metadata: { account } },
+            ...authorization.json,
+            event_type: "CLEARING",
+            operation_id: "unexpected",
+            data: { ...authorization.json.data, card_id: cardId, bill_amount: 90, metadata: { account } },
           },
         });
 
