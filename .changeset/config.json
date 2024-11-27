@@ -4,6 +4,5 @@
   "baseBranch": "origin/main",
   "access": "restricted",
   "privatePackages": { "version": true, "tag": true },
-  "linked": [["@exactly/mobile", "@exactly/common", "@exactly/server"]],
   "commit": "./commit.js"
 }
