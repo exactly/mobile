@@ -4,6 +4,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 import { zeroAddress } from "viem";
 
+import Empty from "./Empty";
 import NextPayment from "./NextPayment";
 import UpcomingPayments from "./UpcomingPayments";
 import { useReadPreviewerExactly } from "../../generated/contracts";
@@ -32,7 +33,7 @@ export default function Payments() {
       <View fullScreen backgroundColor="$backgroundMild">
         <ScrollView
           flex={1}
-          backgroundColor="$backgroundMild"
+          backgroundColor={usdDue === 0n ? "$backgroundSoft" : "$backgroundMild"}
           refreshControl={
             <RefreshControl
               backgroundColor="$backgroundSoft"
@@ -45,42 +46,48 @@ export default function Payments() {
             />
           }
         >
-          <View padded gap="$s5" backgroundColor="$backgroundSoft">
-            <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-              <Text fontSize={ms(20)} fontWeight="bold">
-                Payments
-              </Text>
-            </View>
-            <View gap="$s8">
-              <View gap="$s6">
-                <View flexDirection="column" justifyContent="center" alignItems="center">
-                  <Text
-                    sensitive
-                    textAlign="center"
-                    fontFamily="$mono"
-                    fontSize={ms(40)}
-                    fontWeight="bold"
-                    overflow="hidden"
-                  >
-                    {(Number(usdDue) / 1e18).toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD",
-                      currencyDisplay: "narrowSymbol",
-                    })}
+          {usdDue === 0n ? (
+            <Empty />
+          ) : (
+            <>
+              <View padded gap="$s5" backgroundColor="$backgroundSoft">
+                <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+                  <Text fontSize={ms(20)} fontWeight="bold">
+                    Payments
                   </Text>
                 </View>
-                <View gap="$s3" alignItems="center">
-                  <Text emphasized title3 color="$uiNeutralSecondary">
-                    Total debt
-                  </Text>
+                <View gap="$s8">
+                  <View gap="$s6">
+                    <View flexDirection="column" justifyContent="center" alignItems="center">
+                      <Text
+                        sensitive
+                        textAlign="center"
+                        fontFamily="$mono"
+                        fontSize={ms(40)}
+                        fontWeight="bold"
+                        overflow="hidden"
+                      >
+                        {(Number(usdDue) / 1e18).toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                          currencyDisplay: "narrowSymbol",
+                        })}
+                      </Text>
+                    </View>
+                    <View gap="$s3" alignItems="center">
+                      <Text emphasized title3 color="$uiNeutralSecondary">
+                        Total debt
+                      </Text>
+                    </View>
+                  </View>
                 </View>
               </View>
-            </View>
-          </View>
-          <View padded gap="$s6">
-            <NextPayment />
-            <UpcomingPayments />
-          </View>
+              <View padded gap="$s6">
+                <NextPayment />
+                <UpcomingPayments />
+              </View>
+            </>
+          )}
         </ScrollView>
       </View>
     </SafeView>
