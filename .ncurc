@@ -8,6 +8,7 @@
     "@tamagui/babel-plugin",
     "@tamagui/config",
     "@tamagui/lucide-icons",
+    "@tamagui/toast",
     "@types/react",
     "account-abstraction",
     "eslint",
