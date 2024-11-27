@@ -37,11 +37,11 @@ export default function CardStatus() {
         overflow="hidden"
         height={88}
       >
-        <View pl="$s5">
-          <MiniCardExa preserveAspectRatio="xMaxYMid" shouldRasterizeIOS />
+        <View paddingLeft="$s5" height="100%" width="25%">
+          <MiniCardExa preserveAspectRatio="xMaxYMid" height="100%" width="100%" shouldRasterizeIOS />
         </View>
-        <View>
-          <MiniCardVisa preserveAspectRatio="xMaxYMid" shouldRasterizeIOS />
+        <View height="100%" width="50%">
+          <MiniCardVisa preserveAspectRatio="xMaxYMid" height="100%" width="100%" shouldRasterizeIOS />
         </View>
       </View>
 
