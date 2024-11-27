@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import React, { useMemo } from "react";
 import { FlatList, RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
-import { styled } from "tamagui";
+import { styled, useTheme } from "tamagui";
 
 import ActivityItem from "./ActivityItem";
 import handleError from "../../utils/handleError";
@@ -15,6 +15,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Activity() {
+  const theme = useTheme();
   const { data: activity, refetch, isPending } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
   const { queryKey } = useMarketAccount();
   const groupedActivity = useMemo(() => {
@@ -27,12 +28,11 @@ export default function Activity() {
     }
     return Object.entries(groups).map(([date, events]) => ({ date, events }));
   }, [activity]);
-
   const data = groupedActivity.flatMap(({ date, events }) => [
     { type: "header" as const, date },
     ...events.map((event) => ({ type: "event" as const, event })),
   ]);
-
+  const style = { backgroundColor: theme.backgroundSoft.val, margin: -5 };
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View gap="$s5" flex={1} backgroundColor="$backgroundMild">
@@ -40,7 +40,7 @@ export default function Activity() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              style={refreshControlStyle}
+              style={style}
               refreshing={isPending}
               onRefresh={() => {
                 refetch().catch(handleError);
@@ -113,6 +113,4 @@ type ActivityItemType =
       type: "event";
       event: Awaited<ReturnType<typeof getActivity>>[number];
     };
-
 const StyledFlatList = styled(FlatList<ActivityItemType>, { backgroundColor: "$backgroundMild" });
-const refreshControlStyle = { backgroundColor: "$backgroundSoft", margin: -5 };

@@ -4,7 +4,7 @@ import { TimeToFullDisplay } from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { RefreshControl } from "react-native";
-import { ScrollView } from "tamagui";
+import { ScrollView, useTheme } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -25,6 +25,7 @@ import View from "../shared/View";
 const HEALTH_FACTOR_THRESHOLD = (WAD * 11n) / 10n;
 
 export default function Home() {
+  const theme = useTheme();
   const {
     data: activity,
     refetch: refetchActivity,
@@ -53,6 +54,7 @@ export default function Home() {
     }
   }
   const isPending = isPendingActivity || isPendingPreviewer;
+  const style = { backgroundColor: theme.backgroundSoft.val, margin: -5 };
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View fullScreen backgroundColor="$backgroundMild">
@@ -95,5 +97,3 @@ export default function Home() {
     </SafeView>
   );
 }
-
-const style = { backgroundColor: "$backgroundSoft", margin: -5 };

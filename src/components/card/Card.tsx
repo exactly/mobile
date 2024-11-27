@@ -6,7 +6,7 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, XStack } from "tamagui";
+import { ScrollView, useTheme, XStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -32,6 +32,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Card() {
+  const theme = useTheme();
   const { presentContent } = useIntercom();
   const [cardDetailsOpen, setCardDetailsOpen] = useState(false);
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
@@ -121,6 +122,7 @@ export default function Card() {
       }
     },
   });
+  const style = { backgroundColor: theme.backgroundSoft.val, margin: -5 };
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View fullScreen backgroundColor="$backgroundMild">
@@ -206,5 +208,3 @@ export default function Card() {
     </SafeView>
   );
 }
-
-const style = { backgroundColor: "$backgroundSoft", margin: -5 };

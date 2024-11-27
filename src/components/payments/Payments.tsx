@@ -2,7 +2,7 @@ import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/c
 import React from "react";
 import { RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView } from "tamagui";
+import { ScrollView, useTheme } from "tamagui";
 import { zeroAddress } from "viem";
 
 import Empty from "./Empty";
@@ -17,6 +17,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Payments() {
+  const theme = useTheme();
   const { market, account } = useMarketAccount(marketUSDCAddress);
   const { refetch, isPending } = useReadPreviewerExactly({
     address: previewerAddress,
@@ -28,6 +29,7 @@ export default function Payments() {
       usdDue += ((position.principal + position.fee) * market.usdPrice) / 10n ** BigInt(market.decimals);
     }
   }
+  const style = { backgroundColor: theme.backgroundSoft.val, margin: -5 };
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View fullScreen backgroundColor="$backgroundMild">
@@ -92,5 +94,3 @@ export default function Payments() {
     </SafeView>
   );
 }
-
-const style = { backgroundColor: "$backgroundSoft", margin: -5 };
