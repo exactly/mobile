@@ -110,7 +110,16 @@ export default new Hono().post(
     switch (payload.event_type) {
       case "AUTHORIZATION": {
         const { account, amount, call, transaction } = await prepareCollection(payload);
+        const authorize = () => {
+          track({
+            userId: account,
+            event: "TransactionAuthorized",
+            properties: { usdAmount: payload.data.bill_amount },
+          });
+          return c.json({ response_code: "00" });
+        };
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
+        if (!transaction) return authorize();
         try {
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
             traceClient.traceCall(transaction),
@@ -143,12 +152,7 @@ export default new Hono().post(
             captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { call, trace } } });
             return c.json({ response_code: "51" });
           }
-          track({
-            userId: account,
-            event: "TransactionAuthorized",
-            properties: { usdAmount: payload.data.bill_amount },
-          });
-          return c.json({ response_code: "00" });
+          return authorize();
         } catch (error: unknown) {
           captureException(error, { contexts: { tx: { call } } });
           return c.json({ response_code: "05" });
@@ -158,6 +162,7 @@ export default new Hono().post(
         if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
         const { account, call } = await prepareCollection(payload);
+        if (!call) return c.json({});
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
           try {
             const collect = {
@@ -227,6 +232,7 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
   setUser({ id: account });
   setTag("exa.mode", card.mode);
   const amount = BigInt(Math.round(payload.data.bill_amount * 1e6));
+  if (amount === 0n) return { account, amount, call: null, transaction: null };
   const call = await (async () => {
     const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
     const signature = await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }); // TODO replace with payload signature

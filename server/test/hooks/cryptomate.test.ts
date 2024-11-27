@@ -206,6 +206,19 @@ describe("card operations", () => {
         await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
       });
 
+      it("authorizes zero", async () => {
+        const response = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            data: { ...authorization.json.data, bill_amount: 0, metadata: { account } },
+          },
+        });
+
+        expect(response.status).toBe(200);
+        await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+      });
+
       it("fails when tracing", async () => {
         const captureException = vi.spyOn(sentry, "captureException");
         captureException.mockImplementation(() => "");
