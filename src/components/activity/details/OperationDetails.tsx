@@ -62,7 +62,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
               {item.mode === 1 && `1x ${Number(item.amount + item.borrow.fee).toFixed(2)}`}
               {item.mode > 1 && `${(item as InstallmentsActivity).borrow.installments.length}x`}&nbsp;
               {item.mode > 1 &&
-                Number(item.amount / (item as InstallmentsActivity).borrow.installments.length).toFixed(2)}
+                Number(item.usdAmount / (item as InstallmentsActivity).borrow.installments.length).toFixed(2)}
               &nbsp;USDC
             </Text>
           </XStack>
