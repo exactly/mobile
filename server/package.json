@@ -48,8 +48,8 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.14",
-    "@exactly/common": "workspace:*",
-    "@exactly/plugin": "workspace:*",
+    "@exactly/common": "workspace:^0.0.1",
+    "@exactly/plugin": "workspace:^0.0.1",
     "@sentry/cli": "^2.39.1",
     "@types/ioredis-mock": "^8.2.5",
     "@types/node": "^22.10.0",

@@ -59,16 +59,16 @@ importers:
         specifier: ^3.19.0
         version: 3.19.0(typescript@5.7.2)(viem@2.21.51(bufferutil@4.0.8)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))
       '@exactly/common':
-        specifier: workspace:*
+        specifier: workspace:^0.0.1
         version: link:common
       '@exactly/lib':
         specifier: exactly/lib#a8895cd
         version: https://codeload.github.com/exactly/lib/tar.gz/a8895cd
       '@exactly/plugin':
-        specifier: workspace:*
+        specifier: workspace:^0.0.1
         version: link:contracts
       '@exactly/server':
-        specifier: workspace:*
+        specifier: workspace:^0.0.1
         version: link:server
       '@expo/metro-runtime':
         specifier: ~4.0.0
@@ -420,7 +420,7 @@ importers:
         specifier: ^3.19.0
         version: 3.19.0(typescript@5.7.2)(viem@2.21.51(bufferutil@4.0.8)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))
       '@exactly/plugin':
-        specifier: workspace:*
+        specifier: workspace:^0.0.1
         version: link:../contracts
       valibot:
         specifier: ^0.42.1
@@ -557,10 +557,10 @@ importers:
         specifier: ^0.2.14
         version: 0.2.14
       '@exactly/common':
-        specifier: workspace:*
+        specifier: workspace:^0.0.1
         version: link:../common
       '@exactly/plugin':
-        specifier: workspace:*
+        specifier: workspace:^0.0.1
         version: link:../contracts
       '@sentry/cli':
         specifier: ^2.39.1
@@ -2150,7 +2150,7 @@ packages:
 
   '@expo/bunyan@4.0.1':
     resolution: {integrity: sha512-+Lla7nYSiHZirgK+U/uYzsLv/X+HaJienbD5AKX1UQZHYfWaP+9uuQluRB4GrEVWF0GZ7vEVp/jzaOT9k/SQlg==}
-    engines: {node: '>=0.10.0'}
+    engines: {'0': node >=0.10.0}
 
   '@expo/cli@0.21.8':
     resolution: {integrity: sha512-gU+NlL/XS9r7LEfLhjDDKuv3jEtOh+rVnk/k7Lp8WrUwaMCoEGfmQpSqLXetFCCC4UFXSaj1cdMGoy2UBw4rew==}
