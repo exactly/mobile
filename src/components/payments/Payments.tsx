@@ -1,5 +1,6 @@
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import React from "react";
+import { RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 import { zeroAddress } from "viem";
@@ -11,7 +12,6 @@ import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
-import RefreshControl from "../shared/RefreshControl";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -36,8 +36,7 @@ export default function Payments() {
           backgroundColor={usdDue === 0n ? "$backgroundSoft" : "$backgroundMild"}
           refreshControl={
             <RefreshControl
-              backgroundColor="$backgroundSoft"
-              margin={-5}
+              style={style}
               refreshing={isPending}
               onRefresh={() => {
                 refetch().catch(handleError);
@@ -93,3 +92,5 @@ export default function Payments() {
     </SafeView>
   );
 }
+
+const style = { backgroundColor: "$backgroundSoft", margin: -5 };

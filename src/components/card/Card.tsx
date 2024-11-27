@@ -4,7 +4,7 @@ import { Eye, EyeOff, Info } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Pressable } from "react-native";
+import { Pressable, RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, XStack } from "tamagui";
 import { zeroAddress } from "viem";
@@ -27,7 +27,6 @@ import useMarketAccount from "../../utils/useMarketAccount";
 import InfoBadge from "../shared/InfoBadge";
 import LatestActivity from "../shared/LatestActivity";
 import PluginUpgrade from "../shared/PluginUpgrade";
-import RefreshControl from "../shared/RefreshControl";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -130,8 +129,7 @@ export default function Card() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              backgroundColor="$backgroundSoft"
-              margin={-5}
+              style={style}
               refreshing={isPending}
               onRefresh={() => {
                 refetchCard().catch(handleError);
@@ -208,3 +206,5 @@ export default function Card() {
     </SafeView>
   );
 }
+
+const style = { backgroundColor: "$backgroundSoft", margin: -5 };

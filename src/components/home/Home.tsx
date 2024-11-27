@@ -3,6 +3,7 @@ import { healthFactor, WAD } from "@exactly/lib";
 import { TimeToFullDisplay } from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
+import { RefreshControl } from "react-native";
 import { ScrollView } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -18,7 +19,6 @@ import { getActivity, getKYCStatus } from "../../utils/server";
 import AlertBadge from "../shared/AlertBadge";
 import LatestActivity from "../shared/LatestActivity";
 import ProfileHeader from "../shared/ProfileHeader";
-import RefreshControl from "../shared/RefreshControl";
 import SafeView from "../shared/SafeView";
 import View from "../shared/View";
 
@@ -61,8 +61,7 @@ export default function Home() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              backgroundColor="$backgroundSoft"
-              margin={-5}
+              style={style}
               refreshing={isPending}
               onRefresh={() => {
                 refetchActivity().catch(handleError);
@@ -96,3 +95,5 @@ export default function Home() {
     </SafeView>
   );
 }
+
+const style = { backgroundColor: "$backgroundSoft", margin: -5 };

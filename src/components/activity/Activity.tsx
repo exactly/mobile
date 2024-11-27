@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import React, { useMemo } from "react";
-import { FlatList } from "react-native";
+import { FlatList, RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
 import { styled } from "tamagui";
 
@@ -10,7 +10,6 @@ import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import { getActivity } from "../../utils/server";
 import useMarketAccount from "../../utils/useMarketAccount";
-import RefreshControl from "../shared/RefreshControl";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -41,8 +40,7 @@ export default function Activity() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              backgroundColor="$backgroundSoft"
-              margin={-5}
+              style={refreshControlStyle}
               refreshing={isPending}
               onRefresh={() => {
                 refetch().catch(handleError);
@@ -115,4 +113,6 @@ type ActivityItemType =
       type: "event";
       event: Awaited<ReturnType<typeof getActivity>>[number];
     };
+
 const StyledFlatList = styled(FlatList<ActivityItemType>, { backgroundColor: "$backgroundMild" });
+const refreshControlStyle = { backgroundColor: "$backgroundSoft", margin: -5 };
