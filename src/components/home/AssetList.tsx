@@ -1,6 +1,8 @@
 import { previewerAddress, ratePreviewerAddress } from "@exactly/common/generated/chain";
 import { floatingDepositRates } from "@exactly/lib";
+import { Skeleton } from "moti/skeleton";
 import React from "react";
+import { Appearance } from "react-native";
 import { ms, vs } from "react-native-size-matters";
 import { View } from "tamagui";
 import { zeroAddress } from "viem";
@@ -41,30 +43,42 @@ export default function AssetList() {
           alignItems="center"
           justifyContent="space-between"
           borderBottomWidth={index === positions.length - 1 ? 0 : 1}
+          borderTopWidth={index === 0 ? 1 : 0}
           borderColor="$borderNeutralSoft"
         >
           <View flexDirection="row" alignItems="center" paddingVertical={vs(10)} flex={1}>
             <View flexDirection="row" gap={ms(10)} flex={1} alignItems="center">
-              <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
+              <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
               <View gap={ms(5)}>
-                <Text fontSize={ms(15)} fontWeight="bold">
+                <Text emphasized subHeadline>
                   {symbol}
                 </Text>
-                <Text>
-                  {(
-                    Number(rates.find((r: { market: string; rate: bigint }) => r.market === market)?.rate) / 1e18
-                  ).toLocaleString(undefined, {
-                    style: "percent",
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
+              </View>
+            </View>
+            <View flexDirection="row" gap={ms(10)} alignItems="center" justifyContent="flex-end">
+              <View gap={ms(5)}>
+                {rates.find((r: { market: string; rate: bigint }) => r.market === market)?.rate ? (
+                  <Text emphasized subHeadline>
+                    {(
+                      Number(rates.find((r: { market: string; rate: bigint }) => r.market === market)?.rate) / 1e18
+                    ).toLocaleString(undefined, {
+                      style: "percent",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                ) : (
+                  <Skeleton height={ms(20)} width={ms(50)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                )}
+
+                <Text footnote textAlign="right">
                   APR
                 </Text>
               </View>
             </View>
             <View gap={ms(5)} flex={1}>
               <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
+                <Text sensitive emphasized subHeadline textAlign="right">
                   {(Number(usdValue) / 1e18).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
@@ -72,7 +86,7 @@ export default function AssetList() {
                   })}
                 </Text>
               </View>
-              <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+              <Text sensitive footnote color="$uiNeutralSecondary" textAlign="right">
                 {`${(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: Math.min(

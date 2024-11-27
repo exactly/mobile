@@ -8,6 +8,8 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import Balance from "./Balance";
+import CardLimits from "./CardLimits";
+import CardStatus from "./CardStatus";
 import GettingStarted from "./GettingStarted";
 import HomeActions from "./HomeActions";
 import { useReadPreviewerExactly } from "../../generated/contracts";
@@ -71,12 +73,18 @@ export default function Home() {
           }
         >
           <ProfileHeader />
-          <View gap="$s4_5" flex={1}>
+          <View flex={1}>
             <View backgroundColor="$backgroundSoft" padded gap="$s4">
               {markets && healthFactor(markets) < HEALTH_FACTOR_THRESHOLD && <AlertBadge />}
-              <Balance usdBalance={usdBalance} />
+              <CardLimits />
               <HomeActions />
+              <Balance usdBalance={usdBalance} />
             </View>
+
+            <View backgroundColor="cardCreditBackground" padded>
+              <CardStatus />
+            </View>
+
             <View padded gap="$s5">
               <GettingStarted hasFunds={usdBalance > 0n} hasKYC={KYCStatus === "ok"} />
               <LatestActivity activity={activity} />
