@@ -47,10 +47,10 @@
     "viem": "^2.21.51"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.2.13",
+    "@electric-sql/pglite": "^0.2.14",
     "@exactly/common": "workspace:*",
     "@exactly/plugin": "workspace:*",
-    "@sentry/cli": "^2.39.0",
+    "@sentry/cli": "^2.39.1",
     "@types/ioredis-mock": "^8.2.5",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.10",
