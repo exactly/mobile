@@ -21,7 +21,6 @@ import { OnboardingProvider } from "../components/context/OnboardingProvider";
 import ThemeProvider from "../components/context/ThemeProvider";
 import handleError from "../utils/handleError";
 import queryClient, { persister } from "../utils/queryClient";
-import useOneSignal from "../utils/useOneSignal";
 import wagmiConfig from "../utils/wagmi";
 
 SplashScreen.preventAutoHideAsync().catch(handleError);
@@ -48,7 +47,6 @@ const devtools = !!JSON.parse(process.env.EXPO_PUBLIC_DEVTOOLS ?? "false");
 export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
 
-  useOneSignal();
   useServerFonts({
     "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
     "BDOGrotesk-Regular": BDOGroteskRegular as FontSource,

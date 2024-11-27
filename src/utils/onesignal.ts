@@ -1,5 +1,4 @@
 import appId from "@exactly/common/onesignalAppId";
-import { useState, useEffect } from "react";
 import { Platform } from "react-native";
 import type * as OneSignalNative from "react-native-onesignal";
 import type * as OneSignalWeb from "react-onesignal";
@@ -14,8 +13,14 @@ const { initialization, login, logout } = (
           initialization: appId
             ? OneSignal.init({ appId, allowLocalhostAsSecureOrigin: __DEV__ }).catch(handleError)
             : Promise.resolve(),
-          login: (userId: string) => OneSignal.login(userId),
-          logout: () => OneSignal.logout(),
+          login: (userId: string) => {
+            if (appId) return OneSignal.login(userId);
+            return Promise.resolve();
+          },
+          logout: () => {
+            if (appId) return OneSignal.logout();
+            return Promise.resolve();
+          },
         };
       }
     : () => {
@@ -26,29 +31,15 @@ const { initialization, login, logout } = (
             return Promise.resolve();
           })(),
           login: (userId: string) => {
-            OneSignal.login(userId);
+            if (appId) OneSignal.login(userId);
             return Promise.resolve();
           },
           logout: () => {
-            OneSignal.logout();
+            if (appId) OneSignal.logout();
             return Promise.resolve();
           },
         };
       }
 )();
 
-export default function useOneSignal({ userId }: { userId?: string } = {}) {
-  const [initialized, setInitialized] = useState(false);
-  useEffect(() => {
-    initialization
-      .then(() => {
-        setInitialized(true);
-      })
-      .catch(handleError);
-    if (userId && initialized) login(userId).catch(handleError);
-    return () => {
-      if (userId) logout().catch(handleError);
-    };
-  }, [userId, initialized]);
-  return initialized;
-}
+export { initialization, login, logout };
