@@ -34,6 +34,14 @@ interface IExaAccount {
     bytes calldata signature
   ) external;
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external;
+  function collectCollateral(
+    uint256 amount,
+    IMarket collateral,
+    uint256 amountIn,
+    uint256 timestamp,
+    bytes memory route,
+    bytes calldata signature
+  ) external;
   function collectInstallments(
     uint256 firstMaturity,
     uint256[] calldata amounts,

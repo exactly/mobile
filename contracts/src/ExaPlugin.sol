@@ -232,6 +232,35 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _checkLiquidity(msg.sender);
   }
 
+  function collectCollateral(
+    uint256 amount,
+    IMarket collateral,
+    uint256 amountIn,
+    uint256 timestamp,
+    bytes memory route,
+    bytes calldata signature
+  ) external {
+    bytes memory data = _hash(
+      abi.encodePacked(
+        bytes1(0x03),
+        abi.encode(
+          CollectCollateralCallbackData({
+            debit: amount,
+            owner: msg.sender,
+            collateral: collateral,
+            amountIn: amountIn,
+            route: route
+          })
+        )
+      )
+    );
+    ISSUER_CHECKER.checkIssuer(msg.sender, amount, timestamp, signature);
+    IPluginExecutor(msg.sender).executeFromPluginExternal(
+      address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn))
+    );
+    _flashLoan(amount, data);
+  }
+
   function collectInstallments(
     uint256 firstMaturity,
     uint256[] calldata amounts,
@@ -399,7 +428,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](13);
+    manifest.executionFunctions = new bytes4[](14);
     manifest.executionFunctions[0] = this.propose.selector;
     manifest.executionFunctions[1] = this.repay.selector;
     manifest.executionFunctions[2] = this.crossRepay.selector;
@@ -407,12 +436,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.executionFunctions[4] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
     manifest.executionFunctions[5] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
     manifest.executionFunctions[6] = this.collectDebit.selector;
-    manifest.executionFunctions[7] = this.collectInstallments.selector;
-    manifest.executionFunctions[8] = this.lifiSwap.selector;
-    manifest.executionFunctions[9] = this.poke.selector;
-    manifest.executionFunctions[10] = this.pokeETH.selector;
-    manifest.executionFunctions[11] = this.withdraw.selector;
-    manifest.executionFunctions[12] = this.receiveFlashLoan.selector;
+    manifest.executionFunctions[7] = this.collectCollateral.selector;
+    manifest.executionFunctions[8] = this.collectInstallments.selector;
+    manifest.executionFunctions[9] = this.lifiSwap.selector;
+    manifest.executionFunctions[10] = this.poke.selector;
+    manifest.executionFunctions[11] = this.pokeETH.selector;
+    manifest.executionFunctions[12] = this.withdraw.selector;
+    manifest.executionFunctions[13] = this.receiveFlashLoan.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -429,7 +459,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_BALANCER),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](13);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](14);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
@@ -463,22 +493,26 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectInstallments.selector,
+      executionSelector: IExaAccount.collectCollateral.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.poke.selector,
+      executionSelector: IExaAccount.collectInstallments.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.pokeETH.selector,
+      executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[11] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.withdraw.selector,
+      executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.withdraw.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
       executionSelector: this.receiveFlashLoan.selector,
       associatedFunction: balancerRuntimeValidationFunction
     });
@@ -523,28 +557,38 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     assert(msg.sender == address(BALANCER_VAULT) && callHash == keccak256(data));
     delete callHash;
 
-    uint256 actualRepay;
     if (data[0] == 0x01) {
       RepayCallbackData memory r = abi.decode(data[1:], (RepayCallbackData));
-      actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower).min(
+      uint256 actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower).min(
         EXA_USDC.maxWithdraw(r.borrower)
       );
 
       if (actualRepay < r.maxRepay) EXA_USDC.deposit(r.maxRepay - actualRepay, r.borrower);
 
       EXA_USDC.withdraw(r.maxRepay, address(BALANCER_VAULT), r.borrower);
-      
+
       _checkLiquidity(r.borrower);
     } else if (data[0] == 0x02) {
       CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
-      actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
+      uint256 actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
 
       c.marketIn.withdraw(c.amountIn, address(this), c.borrower);
       uint256 out = _lifiSwap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.amountIn, actualRepay, c.route);
       IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
       EXA_USDC.deposit(out - actualRepay, c.borrower);
-      
+
       _checkLiquidity(c.borrower);
+    } else {
+      CollectCollateralCallbackData memory c = abi.decode(data[1:], (CollectCollateralCallbackData));
+
+      c.collateral.withdraw(c.amountIn, address(this), c.owner);
+      uint256 out = _lifiSwap(IERC20(c.collateral.asset()), IERC20(EXA_USDC.asset()), c.amountIn, c.debit, c.route);
+
+      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.debit);
+      IERC20(EXA_USDC.asset()).safeTransfer(collector, c.debit);
+      if (out > c.debit) EXA_USDC.deposit(out - c.debit, c.owner);
+
+      _checkLiquidity(c.owner);
     }
   }
 
@@ -705,6 +749,14 @@ struct CrossRepayCallbackData {
   uint256 positionAssets;
   uint256 maxRepay;
   IMarket marketIn;
+  uint256 amountIn;
+  bytes route;
+}
+
+struct CollectCollateralCallbackData {
+  uint256 debit;
+  address owner;
+  IMarket collateral;
   uint256 amountIn;
   bytes route;
 }
