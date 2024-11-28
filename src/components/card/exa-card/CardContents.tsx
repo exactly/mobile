@@ -2,6 +2,7 @@ import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/c
 import { borrowLimit, withdrawLimit } from "@exactly/lib";
 import { ChevronRight, Dot, Loader, LockKeyhole, Snowflake } from "@tamagui/lucide-icons";
 import React from "react";
+import { Platform } from "react-native";
 import { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { ms } from "react-native-size-matters";
 import { AnimatePresence, XStack, YStack } from "tamagui";
@@ -126,7 +127,12 @@ export default function CardContents({
         </XStack>
       </YStack>
       <XStack animation="moderate" position="absolute" right={0} left={0} top={0} bottom={0} justifyContent="flex-end">
-        <Card preserveAspectRatio="xMaxYMid" height="100%" width="50%" shouldRasterizeIOS />
+        <Card
+          width="50%"
+          height="100%"
+          preserveAspectRatio="xMaxYMid"
+          {...(Platform.OS === "web" ? undefined : { shouldRasterizeIOS: true })}
+        />
       </XStack>
     </XStack>
   );

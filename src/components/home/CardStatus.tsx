@@ -2,7 +2,7 @@ import { ChevronRight } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React from "react";
-import { Pressable } from "react-native";
+import { Platform, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 
@@ -43,10 +43,20 @@ export default function CardStatus() {
         height={88}
       >
         <View paddingLeft="$s5" height="100%" width="25%">
-          <MiniCardExa preserveAspectRatio="xMaxYMid" height="100%" width="100%" shouldRasterizeIOS />
+          <MiniCardExa
+            width="100%"
+            height="100%"
+            preserveAspectRatio="xMaxYMid"
+            {...(Platform.OS === "web" ? undefined : { shouldRasterizeIOS: true })}
+          />
         </View>
         <View height="100%" width="50%">
-          <MiniCardVisa preserveAspectRatio="xMaxYMid" height="100%" width="100%" shouldRasterizeIOS />
+          <MiniCardVisa
+            width="100%"
+            height="100%"
+            preserveAspectRatio="xMaxYMid"
+            {...(Platform.OS === "web" ? undefined : { shouldRasterizeIOS: true })}
+          />
         </View>
       </View>
       <View
