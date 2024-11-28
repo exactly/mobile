@@ -12,6 +12,7 @@
     "@types/react",
     "account-abstraction",
     "eslint",
+    "expo-asset",
     "expo-build-properties",
     "expo-clipboard",
     "expo-dev-client",
