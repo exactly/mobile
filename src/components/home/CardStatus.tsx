@@ -25,7 +25,12 @@ export default function CardStatus() {
   const frozen = cardDetails?.status === "FROZEN";
   const isCredit = card ? card.mode > 0 : false;
   return (
-    <>
+    <Pressable
+      hitSlop={ms(15)}
+      onPress={() => {
+        router.push("/card");
+      }}
+    >
       <View
         zIndex={2}
         backgroundColor="black"
@@ -44,7 +49,6 @@ export default function CardStatus() {
           <MiniCardVisa preserveAspectRatio="xMaxYMid" height="100%" width="100%" shouldRasterizeIOS />
         </View>
       </View>
-
       <View
         borderColor={frozen ? "$borderNeutralDisabled" : isCredit ? "$cardCreditBorder" : "$cardDebitBorder"}
         borderRadius="$r4"
@@ -77,33 +81,25 @@ export default function CardStatus() {
                 {isCredit ? "CREDIT MODE ENABLED" : "DEBIT MODE ENABLED"}
               </Text>
             </View>
-
-            <Pressable
-              hitSlop={ms(15)}
-              onPress={() => {
-                router.push("/card");
-              }}
-            >
-              <View flexDirection="row" gap="$s1" alignItems="center">
-                <Text
-                  fontSize={ms(13)}
-                  color={isCredit ? "$cardCreditInteractive" : "$cardDebitInteractive"}
-                  emphasized
-                  footnote
-                  fontWeight="bold"
-                >
-                  Go to Card
-                </Text>
-                <ChevronRight
-                  size={ms(16)}
-                  color={isCredit ? "$cardCreditInteractive" : "$cardDebitInteractive"}
-                  fontWeight="bold"
-                />
-              </View>
-            </Pressable>
+            <View flexDirection="row" gap="$s1" alignItems="center">
+              <Text
+                fontSize={ms(13)}
+                color={isCredit ? "$cardCreditInteractive" : "$cardDebitInteractive"}
+                emphasized
+                footnote
+                fontWeight="bold"
+              >
+                Go to Card
+              </Text>
+              <ChevronRight
+                size={ms(16)}
+                color={isCredit ? "$cardCreditInteractive" : "$cardDebitInteractive"}
+                fontWeight="bold"
+              />
+            </View>
           </XStack>
         </YStack>
       </View>
-    </>
+    </Pressable>
   );
 }
