@@ -1,12 +1,16 @@
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
-import React from "react";
-import { RefreshControl } from "react-native";
+import { CircleHelp, Eye, EyeOff } from "@tamagui/lucide-icons";
+import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import { Pressable, RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, useTheme } from "tamagui";
+import { ScrollView, useTheme, XStack } from "tamagui";
 import { zeroAddress } from "viem";
 
 import Empty from "./Empty";
 import NextPayment from "./NextPayment";
+import PaymentSheet from "./PaymentSheet";
 import UpcomingPayments from "./UpcomingPayments";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
@@ -18,7 +22,12 @@ import View from "../shared/View";
 
 export default function Payments() {
   const theme = useTheme();
+  const [paySheetOpen, setPaySheetOpen] = useState(false);
   const { market, account } = useMarketAccount(marketUSDCAddress);
+  const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
+  function toggle() {
+    queryClient.setQueryData(["settings", "sensitive"], !hidden);
+  }
   const { refetch, isPending } = useReadPreviewerExactly({
     address: previewerAddress,
     args: [account ?? zeroAddress],
@@ -51,42 +60,46 @@ export default function Payments() {
             <Empty />
           ) : (
             <>
-              <View padded gap="$s5" backgroundColor="$backgroundSoft">
-                <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+              <View padded backgroundColor="$backgroundSoft">
+                <XStack gap={ms(10)} justifyContent="space-between" alignItems="center">
                   <Text fontSize={ms(20)} fontWeight="bold">
-                    Payments
+                    Next Payment Due
                   </Text>
-                </View>
-                <View gap="$s8">
-                  <View gap="$s6">
-                    <View flexDirection="column" justifyContent="center" alignItems="center">
-                      <Text
-                        sensitive
-                        textAlign="center"
-                        fontFamily="$mono"
-                        fontSize={ms(40)}
-                        fontWeight="bold"
-                        overflow="hidden"
-                      >
-                        {(Number(usdDue) / 1e18).toLocaleString(undefined, {
-                          style: "currency",
-                          currency: "USD",
-                          currencyDisplay: "narrowSymbol",
-                        })}
-                      </Text>
-                    </View>
-                    <View gap="$s3" alignItems="center">
-                      <Text emphasized title3 color="$uiNeutralSecondary">
-                        Total debt
-                      </Text>
-                    </View>
-                  </View>
-                </View>
+                  <XStack alignItems="center" gap={16}>
+                    <Pressable onPress={toggle} hitSlop={ms(15)}>
+                      {hidden ? (
+                        <EyeOff size={24} color="$uiNeutralPrimary" />
+                      ) : (
+                        <Eye size={24} color="$uiNeutralPrimary" />
+                      )}
+                    </Pressable>
+                    <Pressable
+                      // TODO implement
+                      // onPress={() => {
+                      //   presentContent("9994746").catch(handleError);
+                      // }}
+                      hitSlop={ms(15)}
+                    >
+                      <CircleHelp size={24} color="$uiNeutralPrimary" />
+                    </Pressable>
+                  </XStack>
+                </XStack>
+                <NextPayment />
               </View>
               <View padded gap="$s6">
-                <NextPayment />
-                <UpcomingPayments />
+                <UpcomingPayments
+                  onSelect={(maturity) => {
+                    router.setParams({ maturity: maturity.toString() });
+                    setPaySheetOpen(true);
+                  }}
+                />
               </View>
+              <PaymentSheet
+                open={paySheetOpen}
+                onClose={() => {
+                  setPaySheetOpen(false);
+                }}
+              />
             </>
           )}
         </ScrollView>

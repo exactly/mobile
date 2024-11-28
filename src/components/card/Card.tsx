@@ -1,6 +1,6 @@
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/validation";
-import { Eye, EyeOff, Info } from "@tamagui/lucide-icons";
+import { CircleHelp, Eye, EyeOff } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -153,7 +153,11 @@ export default function Card() {
                   </Text>
                   <View display="flex" flexDirection="row" alignItems="center" gap={16}>
                     <Pressable onPress={toggle} hitSlop={ms(15)}>
-                      {hidden ? <EyeOff color="$uiNeutralPrimary" /> : <Eye color="$uiNeutralPrimary" />}
+                      {hidden ? (
+                        <EyeOff size={24} color="$uiNeutralPrimary" />
+                      ) : (
+                        <Eye size={24} color="$uiNeutralPrimary" />
+                      )}
                     </Pressable>
                     <Pressable
                       onPress={() => {
@@ -161,7 +165,7 @@ export default function Card() {
                       }}
                       hitSlop={ms(15)}
                     >
-                      <Info color="$uiNeutralPrimary" />
+                      <CircleHelp size={24} color="$uiNeutralPrimary" />
                     </Pressable>
                   </View>
                 </XStack>

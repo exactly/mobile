@@ -1,11 +1,13 @@
 import { marketUSDCAddress } from "@exactly/common/generated/chain";
 import { WAD } from "@exactly/lib";
-import { Coins } from "@tamagui/lucide-icons";
+import { Coins, Info } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
-import { formatDistance, intlFormat, isAfter } from "date-fns";
+import { format, formatDistance, isAfter } from "date-fns";
 import { router } from "expo-router";
 import React from "react";
+import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
+import { XStack } from "tamagui";
 
 import useMarketAccount from "../../utils/useMarketAccount";
 import Button from "../shared/Button";
@@ -15,7 +17,6 @@ import View from "../shared/View";
 export default function NextPayment() {
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   const { market: USDCMarket } = useMarketAccount(marketUSDCAddress);
-
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (USDCMarket) {
     const { fixedBorrowPositions, usdPrice, decimals } = USDCMarket;
@@ -30,60 +31,39 @@ export default function NextPayment() {
   const duePayment = usdDue.get(maturity ?? 0n);
   const discount = duePayment ? Number(WAD - (duePayment.previewValue * WAD) / duePayment.position) / 1e18 : 0;
   return (
-    <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s5">
+    <View backgroundColor="$backgroundSoft" paddingTop="$s8">
       {maturity ? (
         <>
-          <View>
-            <View flexDirection="row" alignItems="center" justifyContent="space-between">
-              <Text
-                emphasized
-                headline
-                color={
-                  isAfter(new Date(Number(maturity) * 1000), new Date()) ? "$uiNeutralPrimary" : "$uiErrorSecondary"
-                }
-              >
-                {isAfter(new Date(Number(maturity) * 1000), new Date())
-                  ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
-                  : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`}
-              </Text>
-            </View>
-            <Text footnote color="$uiNeutralSecondary">
-              {intlFormat(new Date(Number(maturity) * 1000), { dateStyle: "medium" }).toUpperCase()}
-            </Text>
-          </View>
           {duePayment && (
             <View gap="$s5">
-              <View flexDirection="column" justifyContent="center" alignItems="center" gap="$s4">
-                {!hidden && (
-                  <>
-                    <Text
-                      pill
-                      caption2
-                      padding="$s2"
-                      backgroundColor={
-                        discount > 0 ? "$interactiveBaseSuccessSoftDefault" : "$interactiveBaseErrorSoftDefault"
-                      }
-                      color={discount > 0 ? "$uiSuccessSecondary" : "$uiErrorSecondary"}
-                    >
-                      {discount > 0 ? "PAY NOW AND SAVE " : "DAILY PENALTIES "}
-                      {(discount > 0 ? discount : discount * -1).toLocaleString(undefined, {
-                        style: "percent",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </Text>
-                  </>
-                )}
-
-                {discount > 0 && (
-                  <Text sensitive body strikeThrough color="$uiNeutralSecondary">
-                    {(Number(duePayment.position) / 1e18).toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD",
-                      currencyDisplay: "narrowSymbol",
-                    })}
+              <XStack alignItems="center" justifyContent="center" gap="$s3">
+                <Text
+                  secondary
+                  textAlign="center"
+                  emphasized
+                  subHeadline
+                  color={
+                    isAfter(new Date(Number(maturity) * 1000), new Date()) ? "$uiNeutralSecondary" : "$uiErrorSecondary"
+                  }
+                >
+                  {isAfter(new Date(Number(maturity) * 1000), new Date())
+                    ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
+                    : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`}
+                  <Text secondary textAlign="center" emphasized subHeadline color="$uiNeutralSecondary">
+                    &nbsp;-&nbsp;{format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}
                   </Text>
-                )}
+                </Text>
+                <Pressable
+                  // TODO implement
+                  // onPress={() => {
+                  //   presentContent("9994746").catch(handleError);
+                  // }}
+                  hitSlop={ms(15)}
+                >
+                  <Info size={16} color="$uiNeutralPrimary" />
+                </Pressable>
+              </XStack>
+              <View flexDirection="column" justifyContent="center" alignItems="center" gap="$s4">
                 <Text
                   sensitive
                   textAlign="center"
@@ -101,6 +81,33 @@ export default function NextPayment() {
                     currencyDisplay: "narrowSymbol",
                   })}
                 </Text>
+                {discount > 0 && (
+                  <Text sensitive body strikeThrough color="$uiNeutralSecondary">
+                    {(Number(duePayment.position) / 1e18).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      currencyDisplay: "narrowSymbol",
+                    })}
+                  </Text>
+                )}
+                {!hidden && (
+                  <Text
+                    pill
+                    caption2
+                    padding="$s2"
+                    backgroundColor={
+                      discount > 0 ? "$interactiveBaseSuccessSoftDefault" : "$interactiveBaseErrorSoftDefault"
+                    }
+                    color={discount > 0 ? "$uiSuccessSecondary" : "$uiErrorSecondary"}
+                  >
+                    {discount > 0 ? "PAY NOW AND SAVE " : "DAILY PENALTIES "}
+                    {(discount > 0 ? discount : discount * -1).toLocaleString(undefined, {
+                      style: "percent",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                )}
               </View>
               <View
                 flexDirection="row"
@@ -112,13 +119,13 @@ export default function NextPayment() {
               >
                 <Button
                   onPress={() => {
-                    router.push("/pay");
+                    router.push({ pathname: "/pay", params: { maturity: maturity.toString() } });
                   }}
                   contained
                   main
                   spaced
                   halfWidth
-                  iconAfter={<Coins color="$interactiveOnBaseBrandDefault" />}
+                  iconAfter={<Coins color="$interactiveOnBaseBrandDefault" strokeWidth={2.5} />}
                 >
                   Pay
                 </Button>
