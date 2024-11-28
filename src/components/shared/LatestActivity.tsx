@@ -5,6 +5,7 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 
+import queryClient from "../../utils/queryClient";
 import type { getActivity } from "../../utils/server";
 import InfoCard from "../home/InfoCard";
 import Text from "../shared/Text";
@@ -46,7 +47,16 @@ export default function LatestActivity({
       {activity?.slice(0, 4).map((item) => {
         const { amount, id, usdAmount, currency, type, timestamp } = item;
         return (
-          <View key={id} flexDirection="row" gap="$s4" alignItems="center">
+          <View
+            key={id}
+            flexDirection="row"
+            gap="$s4"
+            alignItems="center"
+            onPress={() => {
+              queryClient.setQueryData(["activity", "details"], item);
+              router.push({ pathname: "/activity-details" });
+            }}
+          >
             <View
               width={ms(40)}
               height={ms(40)}
