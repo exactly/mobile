@@ -361,6 +361,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if (!hasRole(KEEPER_ROLE, sender)) revert Unauthorized();
       return;
     }
+    if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF)) {
+      if (hasRole(KEEPER_ROLE, sender) || msg.sender == sender) return;
+      revert Unauthorized();
+    }
     if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_BALANCER)) {
       if (msg.sender != address(BALANCER_VAULT)) revert Unauthorized();
       return;
@@ -454,6 +458,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER),
       dependencyIndex: 0
     });
+    ManifestFunction memory keeperOrSelfRuntimeValidationFunction = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.SELF,
+      functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF),
+      dependencyIndex: 0
+    });
     ManifestFunction memory balancerRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_BALANCER),
@@ -466,11 +475,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     });
     manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.repay.selector,
-      associatedFunction: selfRuntimeValidationFunction
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.crossRepay.selector,
-      associatedFunction: selfRuntimeValidationFunction
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.lifiSwap.selector,
@@ -698,6 +707,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 enum FunctionId {
   RUNTIME_VALIDATION_SELF,
   RUNTIME_VALIDATION_KEEPER,
+  RUNTIME_VALIDATION_KEEPER_OR_SELF,
   RUNTIME_VALIDATION_BALANCER,
   PRE_EXEC_VALIDATION_PROPOSED
 }
