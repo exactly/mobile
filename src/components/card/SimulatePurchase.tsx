@@ -109,7 +109,7 @@ export default function SimulatePurchase({ installments }: { installments: numbe
               </XStack>
               <XStack alignItems="center" justifyContent="space-between" width="100%">
                 <Text primary subHeadline>
-                  Fixed APR
+                  Fixed Borrow APR
                 </Text>
                 <Text primary headline maxWidth="50%" flexShrink={1}>
                   {installments > 1
