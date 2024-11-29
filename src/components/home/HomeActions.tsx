@@ -1,15 +1,35 @@
+import { exaPluginAddress } from "@exactly/common/generated/chain";
 import { ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { PixelRatio } from "react-native";
 import { ms } from "react-native-size-matters";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
+import { useReadExaPluginProposals } from "../../generated/contracts";
+import queryClient from "../../utils/queryClient";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function HomeActions() {
   const fontScale = PixelRatio.getFontScale();
+  const { address } = useAccount();
+
+  const { data: proposal } = useReadExaPluginProposals({
+    address: exaPluginAddress,
+    args: [address ?? zeroAddress],
+  });
+
+  const handleSend = () => {
+    if (proposal && proposal[0] > 0n) {
+      queryClient.setQueryData(["proposal", "withdrawal"], proposal);
+      router.push(`/send-funds/processing-transaction`);
+    } else {
+      router.push(`/send-funds`);
+    }
+  };
   return (
     <View flexDirection="row" display="flex" gap="$s4" justifyContent="center" alignItems="center">
       <Button
@@ -37,7 +57,7 @@ export default function HomeActions() {
         main
         spaced
         onPress={() => {
-          router.push("/send-funds");
+          handleSend();
         }}
         iconAfter={<ArrowUpRight size={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />}
         backgroundColor="$interactiveBaseBrandSoftDefault"
