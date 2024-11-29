@@ -81,7 +81,7 @@ export default function NextPayment() {
                     currencyDisplay: "narrowSymbol",
                   })}
                 </Text>
-                {discount > 0 && (
+                {discount >= 0 && (
                   <Text sensitive body strikeThrough color="$uiNeutralSecondary">
                     {(Number(duePayment.position) / 1e18).toLocaleString(undefined, {
                       style: "currency",
@@ -96,12 +96,12 @@ export default function NextPayment() {
                     caption2
                     padding="$s2"
                     backgroundColor={
-                      discount > 0 ? "$interactiveBaseSuccessSoftDefault" : "$interactiveBaseErrorSoftDefault"
+                      discount >= 0 ? "$interactiveBaseSuccessSoftDefault" : "$interactiveBaseErrorSoftDefault"
                     }
-                    color={discount > 0 ? "$uiSuccessSecondary" : "$uiErrorSecondary"}
+                    color={discount >= 0 ? "$uiSuccessSecondary" : "$uiErrorSecondary"}
                   >
-                    {discount > 0 ? "PAY NOW AND SAVE " : "DAILY PENALTIES "}
-                    {(discount > 0 ? discount : discount * -1).toLocaleString(undefined, {
+                    {discount >= 0 ? "PAY NOW AND SAVE " : "DAILY PENALTIES "}
+                    {(discount >= 0 ? discount : discount * -1).toLocaleString(undefined, {
                       style: "percent",
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
