@@ -115,9 +115,13 @@ export default function AddCrypto() {
                 </View>
               </View>
             </View>
-
-            <AddressDialog open={alertShown} onActionPress={copy} />
-
+            <AddressDialog
+              open={alertShown}
+              onActionPress={copy}
+              onClose={() => {
+                setAlertShown(false);
+              }}
+            />
             <View
               flex={1}
               gap="$s4"

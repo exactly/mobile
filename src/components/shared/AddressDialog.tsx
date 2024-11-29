@@ -9,11 +9,20 @@ import Text from "./Text";
 import View from "./View";
 import OptimismImage from "../../assets/images/optimism.svg";
 
-export default function AddressDialog({ open, onActionPress }: { open: boolean; onActionPress: () => void }) {
+export default function AddressDialog({
+  open,
+  onActionPress,
+  onClose,
+}: {
+  open: boolean;
+  onActionPress: () => void;
+  onClose: () => void;
+}) {
   return (
     <AlertDialog open={open}>
       <AlertDialog.Portal>
         <AlertDialog.Overlay
+          onPress={onClose}
           key="overlay"
           backgroundColor="black"
           opacity={0.5}
@@ -41,7 +50,6 @@ export default function AddressDialog({ open, onActionPress }: { open: boolean; 
                 </Text>
               </AlertDialog.Title>
             </XStack>
-
             <YStack gap="$s6">
               <YStack gap="$s5">
                 <XStack gap="$s3" alignItems="center">

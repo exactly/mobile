@@ -83,8 +83,13 @@ export default function ProfileHeader() {
               </View>
             </Pressable>
           )}
-
-          <AddressDialog open={alertShown} onActionPress={copy} />
+          <AddressDialog
+            open={alertShown}
+            onActionPress={copy}
+            onClose={() => {
+              setAlertShown(false);
+            }}
+          />
         </View>
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
           <Pressable onPress={toggle} hitSlop={ms(15)}>
