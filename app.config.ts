@@ -14,11 +14,7 @@ import versionCode from "./src/generated/versionCode.js";
 const { Mode } = require("onesignal-expo-plugin/build/types/types") as typeof OneSignalPlugin; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
 
 if (process.env.APP_DOMAIN) process.env.EXPO_PUBLIC_DOMAIN ??= process.env.APP_DOMAIN;
-if (process.env.EAS_BUILD_RUNNER === "eas-build") {
-  process.env.EXPO_PUBLIC_DOMAIN ??= "web.exactly.app";
-  process.env.EXPO_PUBLIC_ALCHEMY_API_KEY ??= "Wz728rhq_yGIAXdRmCy4VuKIAFjSmlpc";
-  process.env.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID ??= "cb9db554-658f-46eb-ae73-8bff8ed2556b";
-}
+if (process.env.EAS_BUILD_RUNNER === "eas-build") process.env.EXPO_PUBLIC_DOMAIN ??= "web.exactly.app";
 process.env.EXPO_PUBLIC_INTERCOM_APP_ID ??= "eknd6y0s";
 
 export default {
