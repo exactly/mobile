@@ -524,6 +524,22 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), 0);
   }
 
+  function test_exitMarket_reverts() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_AUDITOR_CALL,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.execute(address(auditor), 0, abi.encodeCall(IAuditor.exitMarket, exaEXA));
+  }
+
   function test_withdraw_transfersAsset_asOwner() external {
     uint256 amount = 100 ether;
     address receiver = address(0x420);

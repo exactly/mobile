@@ -105,6 +105,7 @@ interface IAuditor {
   function allMarkets() external view returns (IMarket[] memory);
   function assetPrice(IPriceFeed priceFeed) external view returns (uint256);
   function enterMarket(IMarket market) external;
+  function exitMarket(IMarket market) external;
   function marketList(uint256 index) external view returns (IMarket);
   function markets(IMarket market) external view returns (MarketData memory);
 

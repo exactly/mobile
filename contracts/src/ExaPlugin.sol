@@ -379,6 +379,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     override
     returns (bytes memory)
   {
+    if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION_AUDITOR_CALL)) {
+      address target = address(bytes20(callData[16:36]));
+      if (target != address(AUDITOR)) return "";
+
+      bytes4 selector = bytes4(callData[132:136]);
+      if (selector == IAuditor.exitMarket.selector) revert Unauthorized();
+      return "";
+    }
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION_PROPOSED)) {
       IMarket target = IMarket(address(bytes20(callData[16:36])));
       if (!_isMarket(target)) return "";
@@ -421,6 +429,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       proposals[msg.sender].amount -= abi.decode(preExecHookData, (uint256));
       return;
     }
+    if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION_AUDITOR_CALL)) return;
     revert NotImplemented(msg.sig, functionId);
   }
 
@@ -531,7 +540,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.PRE_EXEC_VALIDATION_PROPOSED),
       dependencyIndex: 0
     });
-    manifest.executionHooks = new ManifestExecutionHook[](3);
+    ManifestFunction memory exitMarketValidationFunction = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.SELF,
+      functionId: uint8(FunctionId.PRE_EXEC_VALIDATION_AUDITOR_CALL),
+      dependencyIndex: 0
+    });
+    manifest.executionHooks = new ManifestExecutionHook[](6);
     manifest.executionHooks[0] = ManifestExecutionHook({
       executionSelector: IStandardExecutor.execute.selector,
       preExecHook: proposedValidationFunction,
@@ -546,6 +560,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       executionSelector: IPluginExecutor.executeFromPluginExternal.selector,
       preExecHook: proposedValidationFunction,
       postExecHook: proposedValidationFunction
+    });
+    manifest.executionHooks[3] = ManifestExecutionHook({
+      executionSelector: IStandardExecutor.execute.selector,
+      preExecHook: exitMarketValidationFunction,
+      postExecHook: exitMarketValidationFunction
+    });
+    manifest.executionHooks[4] = ManifestExecutionHook({
+      executionSelector: IStandardExecutor.executeBatch.selector,
+      preExecHook: exitMarketValidationFunction,
+      postExecHook: exitMarketValidationFunction
+    });
+    manifest.executionHooks[5] = ManifestExecutionHook({
+      executionSelector: IPluginExecutor.executeFromPluginExternal.selector,
+      preExecHook: exitMarketValidationFunction,
+      postExecHook: exitMarketValidationFunction
     });
 
     manifest.permitAnyExternalAddress = true;
@@ -709,7 +738,8 @@ enum FunctionId {
   RUNTIME_VALIDATION_KEEPER,
   RUNTIME_VALIDATION_KEEPER_OR_SELF,
   RUNTIME_VALIDATION_BALANCER,
-  PRE_EXEC_VALIDATION_PROPOSED
+  PRE_EXEC_VALIDATION_PROPOSED,
+  PRE_EXEC_VALIDATION_AUDITOR_CALL
 }
 
 error ZeroAddress();
