@@ -1,6 +1,5 @@
-import { beforeEach } from "node:test";
 import { inspect } from "node:util";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
 
 const contexts = new Map<string, unknown>();
 
@@ -15,7 +14,6 @@ vi.mock("@sentry/node", async () => ({
   setContext: (key: string, value: unknown) => contexts.set(key, value),
 }));
 
-// eslint-disable-next-line @vitest/require-hook
 beforeEach(() => {
   contexts.clear();
 });
