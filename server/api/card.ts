@@ -11,6 +11,7 @@ import { integer, maxValue, minValue, number, parse, picklist, pipe, strictObjec
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
 import { createCard, getPAN } from "../utils/cryptomate";
+import { isPanda, getCard, getSecrets } from "../utils/panda";
 import { getInquiry } from "../utils/persona";
 import { track } from "../utils/segment";
 
@@ -44,7 +45,19 @@ export default app
     if (!inquiry) return c.json("kyc required", 403);
     if (credential.cards.length > 0 && credential.cards[0]) {
       const { id, lastFour, status, mode } = credential.cards[0];
-      return c.json({ url: await getPAN(id), lastFour, status, mode }, 200);
+      if (await isPanda(account)) {
+        const session = c.req.header("SessionId");
+        if (!session) return c.json("SessionId header required", 400);
+        return await Promise.all([getSecrets(id, session), getCard(id)]).then(
+          ([pan, { expirationMonth, expirationYear }]) =>
+            c.json(
+              // TODO fix display name
+              { ...pan, provider: "panda", displayName: "DN", expirationMonth, expirationYear, lastFour, status, mode },
+              200,
+            ),
+        );
+      }
+      return c.json({ provider: "cryptomate", url: await getPAN(id), lastFour, status, mode }, 200);
     } else {
       return c.json("card not found", 404);
     }
