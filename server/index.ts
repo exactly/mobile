@@ -16,6 +16,9 @@ import passkey from "./api/passkey";
 import activityHook from "./hooks/activity";
 import block from "./hooks/block";
 import cryptomate from "./hooks/cryptomate";
+import panda from "./hooks/panda";
+import persona from "./hooks/persona";
+
 import androidFingerprint from "./utils/android/fingerprint";
 import appOrigin from "./utils/appOrigin";
 import { closeAndFlush } from "./utils/segment";
@@ -39,6 +42,9 @@ export type ExaServer = typeof api;
 app.route("/hooks/activity", activityHook);
 app.route("/hooks/block", block);
 app.route("/hooks/cryptomate", cryptomate);
+app.route("/hooks/panda", panda);
+app.route("/hooks/persona", persona);
+
 app.get("/.well-known/assetlinks.json", (c) =>
   c.json([
     {
