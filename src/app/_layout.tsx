@@ -6,6 +6,7 @@ import { ToastProvider } from "@tamagui/toast";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { isRunningInExpoGo } from "expo";
+import { useAssets } from "expo-asset";
 import { type FontSource, useFonts } from "expo-font";
 import { SplashScreen, Stack, useNavigationContainerRef } from "expo-router";
 import React, { useEffect } from "react";
@@ -17,6 +18,7 @@ import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
 import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
+import AppIcon from "../assets/icon.png";
 import { OnboardingProvider } from "../components/context/OnboardingProvider";
 import ThemeProvider from "../components/context/ThemeProvider";
 import handleError from "../utils/handleError";
@@ -42,6 +44,7 @@ init({
   spotlight: __DEV__,
 });
 const useServerFonts = typeof window === "undefined" ? useFonts : () => undefined;
+const useServerAssets = typeof window === "undefined" ? useAssets : () => undefined;
 const devtools = !!JSON.parse(process.env.EXPO_PUBLIC_DEVTOOLS ?? "false");
 
 export default wrap(function RootLayout() {
@@ -54,6 +57,7 @@ export default wrap(function RootLayout() {
     "IBMPlexMono-Regular": IBMPlexMonoRegular as FontSource,
     "IBMPlexMono-SemiBold": IBMPlexMonoSemiBold as FontSource,
   });
+  useServerAssets([AppIcon]);
   useEffect(() => {
     routingInstrumentation.registerNavigationContainer(navigationContainer);
   }, [navigationContainer]);
