@@ -41,6 +41,7 @@ import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
 import COLLECTOR from "../utils/COLLECTOR";
 import keeper from "../utils/keeper";
+import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
 import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
@@ -56,7 +57,10 @@ const OperationData = v.object({
   bill_amount: v.number(),
   bill_currency_number: v.literal("840"),
   bill_currency_code: v.literal("USD"),
+  transaction_amount: v.number(),
+  transaction_currency_code: v.pipe(v.string(), v.length(3)),
   created_at: v.pipe(v.string(), v.isoTimestamp()),
+  merchant_data: v.object({ name: v.string() }),
   metadata: v.nullish(v.object({ account: v.nullish(Address) })),
 });
 
@@ -161,7 +165,7 @@ export default new Hono().post(
       case "CLEARING": {
         if (payload.status !== "PENDING") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
-        const { account, call } = await prepareCollection(payload);
+        const { account, call, mode } = await prepareCollection(payload);
         if (!call) return c.json({});
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
           try {
@@ -193,6 +197,16 @@ export default new Hono().post(
                 });
               })
               .catch((error: unknown) => captureException(error));
+            sendPushNotification({
+              userId: account,
+              headings: { en: "Exa Card Purchase" },
+              contents: {
+                en: `${payload.data.transaction_amount.toLocaleString(undefined, {
+                  style: "currency",
+                  currency: payload.data.transaction_currency_code,
+                })} at ${payload.data.merchant_data.name}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC.`,
+              },
+            }).catch((error: unknown) => captureException(error, { level: "error" }));
             return c.json({});
           } catch (error: unknown) {
             if (
@@ -283,6 +297,7 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
     account,
     amount,
     call,
+    mode: card.mode,
     transaction: {
       from: keeper.account.address,
       to: account,
