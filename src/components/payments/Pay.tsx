@@ -1,31 +1,45 @@
+import fixedRate from "@exactly/common/fixedRate";
 import { exaPluginAbi, marketUSDCAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
-import { WAD } from "@exactly/lib";
-import { CheckCircle2, Coins, X, XCircle } from "@tamagui/lucide-icons";
+import { WAD, withdrawLimit } from "@exactly/lib";
+import { ArrowLeft, ChevronRight, Coins } from "@tamagui/lucide-icons";
+import { format, formatDistance, isAfter } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { Pressable } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Spinner } from "tamagui";
+import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
 import { zeroAddress } from "viem";
 import { useSimulateContract, useWriteContract } from "wagmi";
 
-import AssetSelector from "../../components/shared/AssetSelector";
+import AssetSelectionSheet from "./AssetSelectionSheet";
+import Failure from "./Failure";
+import Pending from "./Pending";
+import Success from "./Success";
 import Button from "../../components/shared/Button";
 import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
 import { auditorAbi, marketAbi } from "../../generated/contracts";
+import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
-import Details from "../shared/Details";
-import ExaSpinner from "../shared/Spinner";
+import AssetLogo from "../shared/AssetLogo";
 
 export default function Pay() {
+  const insets = useSafeAreaInsets();
+  const [assetSelectionOpen, setAssetSelectionOpen] = useState(false);
   const { account, market: USDCMarket, markets, queryKey: marketAccount } = useMarketAccount(marketUSDCAddress);
-  const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
+  const [selectedMarket, setSelectedMarket] = useState<Address | undefined>(parse(Address, marketUSDCAddress));
+
+  const [cachedValues, setCachedValues] = useState<{ previewValue: number; positionValue: number }>({
+    previewValue: 0,
+    positionValue: 0,
+  });
+
   const { success, output: maturity } = safeParse(
     pipe(string(), nonEmpty("no maturity")),
     useLocalSearchParams().maturity,
@@ -85,15 +99,30 @@ export default function Pay() {
     },
   });
 
+  const timestamp = BigInt(Math.floor(Date.now() / 1000));
   const isUSDCSelected = selectedMarket === parse(Address, marketUSDCAddress);
-  const currentSimulation = isUSDCSelected ? repaySimulation : selectedMarket ? crossRepaySimulation : undefined;
-  const isSimulating = isUSDCSelected ? isSimulatingRepay : selectedMarket ? isSimulatingCrossRepay : false;
-  const isPending = isUSDCSelected ? isRepaying : selectedMarket ? isCrossRepaying : false;
-  const isSuccess = isUSDCSelected ? isRepaySuccess : isCrossRepaySuccess;
-  const error = isUSDCSelected ? repayError : crossRepayError;
-  const hash = isUSDCSelected ? repayHash : selectedMarket ? crossRepayHash : undefined;
+  const borrow = USDCMarket?.fixedBorrowPositions.find((b) => b.maturity === BigInt(success ? maturity : 0));
+  const previewValue = borrow
+    ? (borrow.previewValue * (USDCMarket ? USDCMarket.usdPrice : 0n)) /
+      10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
+    : 0n;
+  const positionValue = borrow
+    ? ((borrow.position.principal + borrow.position.fee) * (USDCMarket ? USDCMarket.usdPrice : 0n)) /
+      10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
+    : 0n;
+  const discount = borrow ? Number(WAD - (previewValue * WAD) / positionValue) / 1e18 : 0;
+  const feeValue = borrow
+    ? (fixedRate(borrow.maturity, borrow.position.principal, borrow.position.fee, timestamp) *
+        borrow.position.principal) /
+      10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
+    : 0n;
 
   const handlePayment = useCallback(() => {
+    setCachedValues({
+      previewValue: Number(previewValue) / 1e18,
+      positionValue: Number(positionValue) / 1e18,
+    });
+
     if (isUSDCSelected) {
       if (!repaySimulation) throw new Error("no repay simulation");
       repay(repaySimulation.request);
@@ -101,17 +130,14 @@ export default function Pay() {
       if (!crossRepaySimulation) throw new Error("no cross repay simulation");
       crossRepay(crossRepaySimulation.request);
     }
-  }, [isUSDCSelected, repaySimulation, crossRepaySimulation, repay, crossRepay]);
+  }, [previewValue, positionValue, isUSDCSelected, repaySimulation, repay, crossRepaySimulation, crossRepay]);
 
-  // if (!success || !USDCMarket) return;
-
-  // const { fixedBorrowPositions, usdPrice, decimals } = USDCMarket;
-  // const borrow = fixedBorrowPositions.find((b) => b.maturity === BigInt(maturity));
-  // const previewValue = borrow ? (borrow.previewValue * usdPrice) / 10n ** BigInt(decimals) : 0n;
-  // const positionValue = borrow
-  //   ? ((borrow.position.principal + borrow.position.fee) * usdPrice) / 10n ** BigInt(decimals)
-  //   : 0n;
-  // const discount = borrow ? Number(WAD - (previewValue * WAD) / positionValue) / 1e18 : 0n; // TODO implement in UI
+  const currentSimulation = isUSDCSelected ? repaySimulation : selectedMarket ? crossRepaySimulation : undefined;
+  const isSimulating = isUSDCSelected ? isSimulatingRepay : selectedMarket ? isSimulatingCrossRepay : false;
+  const isPending = isUSDCSelected ? isRepaying : selectedMarket ? isCrossRepaying : false;
+  const isSuccess = isUSDCSelected ? isRepaySuccess : isCrossRepaySuccess;
+  const error = isUSDCSelected ? repayError : crossRepayError;
+  const hash = isUSDCSelected ? repayHash : selectedMarket ? crossRepayHash : undefined;
 
   const positions = markets
     ?.map((market) => ({
@@ -119,157 +145,273 @@ export default function Pay() {
       symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
-    .filter(({ floatingDepositAssets, assetSymbol }) => floatingDepositAssets > 0 && assetSymbol !== "WBTC"); // TODO remove this limitation when new swap pool is available
+    .filter(({ floatingDepositAssets, assetSymbol }) => floatingDepositAssets > 0 && assetSymbol !== "WBTC");
+  const repayMarket = markets?.find((m) => m.market === selectedMarket);
+  const repayMarketAvailable = markets && selectedMarket ? withdrawLimit(markets, selectedMarket) : 0n;
+  const repayMarketPosition = positions?.find((p) => p.market === selectedMarket);
 
-  return (
-    <SafeView fullScreen backgroundColor="$backgroundSoft">
-      <View fullScreen padded gap="$s5">
-        <View alignSelf="flex-end">
-          <Pressable
-            onPress={() => {
-              router.back();
-            }}
-          >
-            <X color="$uiNeutralSecondary" />
-          </Pressable>
-        </View>
-        <ScrollView>
-          {!isPending && !isSuccess && !error && (
-            <View gap="$s5">
-              <Text headline textAlign="center">
-                Choose an asset to pay with
+  if (!repayMarket || !repayMarketPosition || !success) return;
+  if (!isPending && !isSuccess && !error)
+    return (
+      <SafeView fullScreen backgroundColor="$backgroundMild" paddingBottom={0}>
+        <View fullScreen gap="$s5">
+          <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
+            <View padded position="absolute" left={0}>
+              <Pressable
+                onPress={() => {
+                  router.back();
+                }}
+              >
+                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+              </Pressable>
+            </View>
+            <Text color="$uiNeutralPrimary" emphasized subHeadline>
+              <Text
+                primary
+                textAlign="center"
+                emphasized
+                subHeadline
+                color={
+                  isAfter(new Date(Number(maturity) * 1000), new Date()) ? "$uiNeutralPrimary" : "$uiErrorSecondary"
+                }
+              >
+                {isAfter(new Date(Number(maturity) * 1000), new Date())
+                  ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
+                  : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`}
+                <Text primary textAlign="center" emphasized subHeadline>
+                  &nbsp;-&nbsp;{format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}
+                </Text>
               </Text>
-              <AssetSelector positions={positions} onSubmit={handleAssetSelect} />
-              <View>
-                <Button
-                  alignSelf="flex-end"
-                  onPress={handlePayment}
-                  contained
-                  disabled={!currentSimulation || isSimulating}
-                  main
-                  spaced
-                  fullwidth
-                  iconAfter={
-                    isSimulating ? (
-                      <Spinner color="$interactiveOnDisabled" />
-                    ) : (
-                      <Coins color={currentSimulation ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"} />
-                    )
-                  }
+            </Text>
+          </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ flex: 1, justifyContent: "space-between" }} // eslint-disable-line react-native/no-inline-styles
+          >
+            <View padded>
+              <YStack gap="$s4" paddingTop="$s5">
+                <XStack justifyContent="space-between" gap="$s3">
+                  <Text secondary callout textAlign="left">
+                    Purchases
+                  </Text>
+                  <Text primary title3 textAlign="right">
+                    {(Number(positionValue) / 1e18).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      currencyDisplay: "narrowSymbol",
+                    })}
+                  </Text>
+                </XStack>
+                {borrow && (
+                  <XStack justifyContent="space-between" gap="$s3">
+                    <Text secondary callout textAlign="left">
+                      Fixed borrow APR&nbsp;
+                      {(
+                        Number(fixedRate(borrow.maturity, borrow.position.principal, borrow.position.fee, timestamp)) /
+                        1e18
+                      )
+                        .toLocaleString(undefined, {
+                          style: "percent",
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                        .replaceAll(/\s+/g, "")}
+                    </Text>
+                    <Text primary title3 textAlign="right">
+                      {Number(feeValue) / 1e18 > 0.01
+                        ? (Number(feeValue) / 1e18).toLocaleString(undefined, {
+                            style: "currency",
+                            currency: "USD",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        : `< ${(0.01).toLocaleString(undefined, {
+                            style: "currency",
+                            currency: "USD",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`}
+                    </Text>
+                  </XStack>
+                )}
+                <XStack justifyContent="space-between" gap="$s3">
+                  <Text secondary callout textAlign="left">
+                    {discount >= 0
+                      ? `Early repay ${(discount >= 0 ? discount : discount * -1)
+                          .toLocaleString(undefined, {
+                            style: "percent",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                          .replaceAll(/\s+/g, "")} OFF`
+                      : `Late repay ${(discount >= 0 ? discount : discount * -1)
+                          .toLocaleString(undefined, {
+                            style: "percent",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                          .replaceAll(/\s+/g, "")} penalty`}
+                  </Text>
+                  <Text
+                    primary
+                    title3
+                    textAlign="right"
+                    color={discount >= 0 ? "$interactiveOnBaseSuccessSoft" : "$interactiveOnBaseErrorSoft"}
+                  >
+                    {discount >= 0 ? "-" : "+"}&nbsp;
+                    {Number(previewValue - positionValue) / 1e18 > 0.01
+                      ? ((Number(previewValue - positionValue) / 1e18) * -1).toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                          currencyDisplay: "narrowSymbol",
+                        })
+                      : `< ${(0.01).toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`}
+                  </Text>
+                </XStack>
+                <Separator height={1} borderColor="$borderNeutralSoft" paddingVertical="$s2" />
+                <XStack justifyContent="space-between" gap="$s3">
+                  <Text emphasized secondary callout textAlign="left">
+                    Total
+                  </Text>
+                  <Text emphasized primary title2 textAlign="right">
+                    {(Number(positionValue) / 1e18).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      currencyDisplay: "narrowSymbol",
+                    })}
+                  </Text>
+                </XStack>
+              </YStack>
+            </View>
+          </ScrollView>
+          <View
+            padded
+            flexShrink={1}
+            backgroundColor="$backgroundSoft"
+            borderRadius="$r4"
+            borderBottomLeftRadius={0}
+            borderBottomRightRadius={0}
+          >
+            <YStack gap="$s4" paddingBottom={insets.bottom}>
+              <XStack justifyContent="space-between" gap="$s3" alignItems="center">
+                <Text secondary callout textAlign="left">
+                  Pay with
+                </Text>
+                <XStack
+                  gap="$s3"
+                  alignItems="center"
+                  onPress={() => {
+                    setAssetSelectionOpen(true);
+                  }}
                 >
-                  Pay
-                </Button>
-              </View>
-            </View>
-          )}
-          {isPending && <Pending hash={hash} />}
-          {isSuccess && <Success hash={hash} />}
-          {error && <Failure hash={hash} message={error.message} />}
-        </ScrollView>
-      </View>
-    </SafeView>
-  );
-}
-
-function Pending({ hash }: { hash?: string }) {
-  return (
-    <View>
-      <View borderBottomColor="$borderNeutralSoft" borderBottomWidth={1}>
-        <View padded gap="$s5">
-          <View gap="$s4" alignItems="center">
-            <ExaSpinner />
-            <Text title3 color="$uiNeutralSecondary">
-              Processing payment...
-            </Text>
+                  <AssetLogo
+                    uri={assetLogos[repayMarket.assetSymbol as keyof typeof assetLogos]}
+                    width={ms(16)}
+                    height={ms(16)}
+                  />
+                  <Text primary emphasized headline textAlign="right">
+                    {repayMarket.assetSymbol}
+                  </Text>
+                  <ChevronRight size={ms(24)} color="$interactiveBaseBrandDefault" />
+                </XStack>
+              </XStack>
+              <XStack justifyContent="space-between" gap="$s3">
+                <Text secondary callout textAlign="left">
+                  Available
+                </Text>
+                <YStack gap="$s2">
+                  <Text emphasized headline primary textAlign="right">
+                    {(Number(repayMarketPosition.usdValue) / 1e18).toLocaleString(undefined, {
+                      style: "currency",
+                      currency: "USD",
+                      currencyDisplay: "narrowSymbol",
+                    })}
+                  </Text>
+                  <Text secondary footnote textAlign="right">
+                    {`${(Number(repayMarketAvailable) / 10 ** repayMarket.decimals).toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: Math.min(
+                        8,
+                        Math.max(
+                          0,
+                          repayMarket.decimals -
+                            Math.ceil(Math.log10(Math.max(1, Number(repayMarketPosition.usdValue) / 1e18))),
+                        ),
+                      ),
+                      useGrouping: false,
+                    })} ${repayMarket.assetSymbol}`}
+                  </Text>
+                </YStack>
+              </XStack>
+              <Button
+                flexBasis={ms(60)}
+                onPress={handlePayment}
+                contained
+                disabled={!currentSimulation || isSimulating}
+                main
+                spaced
+                fullwidth
+                iconAfter={
+                  isSimulating ? (
+                    <Spinner color="$interactiveOnDisabled" />
+                  ) : (
+                    <Coins
+                      strokeWidth={2.5}
+                      color={currentSimulation ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"}
+                    />
+                  )
+                }
+              >
+                Confirm payment
+              </Button>
+            </YStack>
           </View>
+          <AssetSelectionSheet
+            positions={positions}
+            isSimulating={isSimulating}
+            disabled={!currentSimulation || isSimulating}
+            symbol={repayMarket.assetSymbol}
+            onAssetSelected={handleAssetSelect}
+            open={assetSelectionOpen}
+            onClose={() => {
+              setAssetSelectionOpen(false);
+            }}
+          />
         </View>
-      </View>
-      <Details
-        hash={hash}
-        onClose={() => {
-          router.back();
-        }}
+      </SafeView>
+    );
+  if (isPending)
+    return (
+      <Pending
+        maturity={maturity}
+        usdAmount={cachedValues.previewValue}
+        amount={cachedValues.positionValue}
+        currency={repayMarket.assetSymbol}
       />
-    </View>
-  );
-}
-
-function Success({ hash }: { hash?: string }) {
-  return (
-    <View>
-      <View borderBottomColor="$borderNeutralSoft" borderBottomWidth={1}>
-        <View padded gap="$s5">
-          <View gap="$s4" alignItems="center">
-            <View
-              backgroundColor="$interactiveBaseSuccessSoftDefault"
-              width={ms(88)}
-              height={ms(88)}
-              justifyContent="center"
-              alignItems="center"
-              borderRadius="$r_0"
-              padding="$5"
-            >
-              <CheckCircle2 size={ms(56)} color="$interactiveOnBaseSuccessSoft" />
-            </View>
-            <Text title3 color="$uiSuccessSecondary">
-              Successfully paid
-            </Text>
-          </View>
-        </View>
-      </View>
-      <Details
+    );
+  if (isSuccess)
+    return (
+      <Success
+        maturity={maturity}
+        usdAmount={cachedValues.previewValue}
+        amount={cachedValues.positionValue}
+        currency={repayMarket.assetSymbol}
         hash={hash}
-        onClose={() => {
-          router.replace("/(app)/(home)/payments");
-        }}
       />
-    </View>
-  );
-}
-
-function Failure({ hash, message }: { hash?: string; message?: string }) {
-  return (
-    <>
-      <View borderBottomColor="$borderNeutralSoft" borderBottomWidth={1}>
-        <View padded gap="$s5">
-          <View gap="$s4" alignItems="center">
-            <View
-              backgroundColor="$interactiveBaseErrorSoftDefault"
-              width={ms(88)}
-              height={ms(88)}
-              justifyContent="center"
-              alignItems="center"
-              borderRadius="$r_0"
-              padding="$5"
-            >
-              <XCircle size={ms(56)} color="$interactiveOnBaseErrorSoft" />
-            </View>
-            <Text title3 color="$uiErrorSecondary">
-              Payment failed
-            </Text>
-            <Text color="$uiErrorPrimary">{message}</Text>
-          </View>
-        </View>
-      </View>
-      <Details
+    );
+  if (error)
+    return (
+      <Failure
+        maturity={maturity}
+        usdAmount={cachedValues.previewValue}
+        amount={cachedValues.positionValue}
+        currency={repayMarket.assetSymbol}
         hash={hash}
-        onClose={() => {
-          router.back();
-        }}
       />
-      <Button
-        alignSelf="flex-end"
-        onPress={() => {
-          router.back();
-        }}
-        contained
-        main
-        spaced
-        fullwidth
-        iconAfter={<X color="$interactiveOnBaseBrandDefault" />}
-      >
-        Close
-      </Button>
-    </>
-  );
+    );
 }
