@@ -85,7 +85,13 @@ export default defineConfig([
     ],
     plugins: [
       addresses({ issuerChecker: issuerChecker.contractAddress }),
-      foundry({ project: "contracts", include: ["IssuerChecker.sol/IssuerChecker.json"] }),
+      foundry({
+        project: "contracts",
+        include: [
+          "IssuerChecker.sol/IssuerChecker.json",
+          "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
+        ],
+      }),
     ],
   },
 ]);
