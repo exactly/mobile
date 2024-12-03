@@ -5,14 +5,32 @@ import type * as OneSignalWeb from "react-onesignal";
 
 import handleError from "./handleError";
 
-const { initialization, login, logout } = (
+const { initialization, enablePrompt, login, logout } = (
   Platform.OS === "web" && typeof window !== "undefined"
     ? () => {
         const { default: OneSignal } = require("react-onesignal") as typeof OneSignalWeb; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
+        let displayPrompt: (() => void) | undefined;
         return {
           initialization: appId
-            ? OneSignal.init({ appId, allowLocalhostAsSecureOrigin: __DEV__ }).catch(handleError)
+            ? OneSignal.init({
+                appId,
+                allowLocalhostAsSecureOrigin: __DEV__,
+                notifyButton: {
+                  enabled: true,
+                  showCredit: false,
+                  displayPredicate: () =>
+                    new Promise((resolve) => {
+                      displayPrompt = () => {
+                        displayPrompt = undefined;
+                        resolve(!OneSignal.Notifications.permission && OneSignal.Notifications.isPushSupported());
+                      };
+                    }),
+                },
+              }).catch(handleError)
             : Promise.resolve(),
+          enablePrompt: () => {
+            if (appId) initialization.then(() => displayPrompt?.()).catch(handleError);
+          },
           login: (userId: string) => {
             if (appId) return OneSignal.login(userId);
             return Promise.resolve();
@@ -30,6 +48,9 @@ const { initialization, login, logout } = (
             if (appId) OneSignal.initialize(appId);
             return Promise.resolve();
           })(),
+          enablePrompt: () => {
+            if (appId) OneSignal.InAppMessages.addTrigger("onboard", "1");
+          },
           login: (userId: string) => {
             if (appId) OneSignal.login(userId);
             return Promise.resolve();
@@ -42,4 +63,4 @@ const { initialization, login, logout } = (
       }
 )();
 
-export { initialization, login, logout };
+export { initialization, enablePrompt, login, logout };
