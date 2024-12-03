@@ -69,6 +69,7 @@ export default function LatestActivity({
               {type === "received" && <ArrowDownToLine color="$interactiveOnBaseSuccessSoft" />}
               {type === "sent" && <ArrowUpFromLine color="$interactiveOnBaseErrorSoft" />}
               {type === "repay" && <CircleDollarSign color="$interactiveOnBaseErrorSoft" />}
+              {type === "panda" && <ShoppingCart color="$uiNeutralPrimary" />}
             </View>
             <View flex={1} gap="$s2">
               <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
@@ -78,6 +79,7 @@ export default function LatestActivity({
                     {type === "received" && "Received"}
                     {type === "sent" && "Sent"}
                     {type === "repay" && "Debt Paid"}
+                    {type === "panda" && item.merchant.name}
                   </Text>
                   <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
                     {format(timestamp, "yyyy-MM-dd")}

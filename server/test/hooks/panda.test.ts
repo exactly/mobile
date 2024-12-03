@@ -1,6 +1,7 @@
 import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/onesignal";
+import "../mocks/panda";
 import "../mocks/redis";
 import "../mocks/sentry";
 
@@ -8,23 +9,12 @@ import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/ch
 import * as sentry from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
-import {
-  BaseError,
-  ContractFunctionRevertedError,
-  encodeErrorResult,
-  encodeFunctionData,
-  hexToBigInt,
-  padHex,
-  zeroAddress,
-  zeroHash,
-  type Hex,
-} from "viem";
+import { encodeFunctionData, hexToBigInt, padHex, zeroAddress, zeroHash, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import database, { cards, credentials, transactions } from "../../database";
-import { issuerCheckerAbi } from "../../generated/contracts";
-import app from "../../hooks/cryptomate";
+import app from "../../hooks/panda";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
 import publicClient from "../../utils/publicClient";
@@ -33,36 +23,31 @@ import traceClient from "../../utils/traceClient";
 const appClient = testClient(app);
 
 const authorization = {
-  header: { "x-webhook-key": "cryptomate" },
+  header: { signature: "056e8b40cbffe5d26487267e00d82ef2d3331d7a6756f05a8effd86d562a02fa" },
   json: {
-    product: "CARDS",
-    event_type: "AUTHORIZATION",
-    operation_id: "op",
-    status: "PENDING",
-    data: {
-      card_id: "card",
-      bill_amount: 45.23,
-      bill_currency_number: "840",
-      bill_currency_code: "USD",
-      exchange_rate: 1,
-      transaction_amount: 45.23,
-      transaction_currency_number: "840",
-      transaction_currency_code: "USD",
-      channel: "ECOMMERCE",
-      created_at: new Date().toISOString(),
-      fees: { atm_fees: 0, fx_fees: 0 },
-      merchant_data: {
-        id: "420429000207212",
-        name: "GetYourGuideOperations",
-        city: "185-5648235",
-        post_code: "1990",
-        state: "DE",
-        country: "USA",
-        mcc_category: "Tourist Attractions and Exhibits",
-        mcc_code: "7991",
+    resource: "transaction",
+    action: "requested",
+    body: {
+      id: "31eaa81e-ffd9-4a2e-97eb-dccbc5f029d7",
+      type: "spend",
+      spend: {
+        amount: 900,
+        cardId: "543c1771-beae-4f26-b662-44ea48b40dc6",
+        cardType: "virtual",
+        currency: "usd",
+        localAmount: 900,
+        localCurrency: "usd",
+        merchantName: "99999",
+        merchantCity: "buenos aires",
+        merchantCountry: "argentina",
+        merchantCategory: "food",
+        merchantCategoryCode: "FOOD",
+        userId: "2cf0c886-f7c0-40f3-a8cd-3c4ab3997b66",
+        userFirstName: "David",
+        userLastName: "Mayer",
+        userEmail: "mail@mail.com",
+        status: "pending",
       },
-      metadata: { account: zeroAddress },
-      signature: "0x",
     },
   },
 } as const;
@@ -129,17 +114,9 @@ beforeAll(async () => {
 
 describe("validation", () => {
   it("fails with bad key", async () => {
-    const response = await appClient.index.$post({ ...authorization, header: { "x-webhook-key": "bad" } });
+    const response = await appClient.index.$post({ ...authorization, header: { signature: "bad" } });
 
     expect(response.status).toBe(401);
-  });
-
-  it("accepts valid request", async () => {
-    vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
-    const response = await appClient.index.$post(authorization);
-
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toStrictEqual({ response_code: "51" });
   });
 });
 
@@ -175,49 +152,60 @@ describe("card operations", () => {
       it("authorizes credit", async () => {
         const response = await appClient.index.$post({
           ...authorization,
-          json: { ...authorization.json, data: { ...authorization.json.data, metadata: { account } } },
-        });
-
-        expect(response.status).toBe(200);
-        await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
-      });
-
-      it("authorizes debit", async () => {
-        await database.insert(cards).values([{ id: "debit", credentialId: "cred", lastFour: "5678", mode: 0 }]);
-        const response = await appClient.index.$post({
-          ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            data: { ...authorization.json.data, card_id: "debit", metadata: { account } },
+            body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "card" } },
           },
         });
 
         expect(response.status).toBe(200);
-        await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
+      });
+
+      it("authorizes debit", async () => {
+        await database.insert(cards).values([{ id: "debit", credentialId: "cred", lastFour: "5678", mode: 0 }]);
+
+        const response = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "debit" } },
+          },
+        });
+
+        expect(response.status).toBe(200);
       });
 
       it("authorizes installments", async () => {
         await database.insert(cards).values([{ id: "inst", credentialId: "cred", lastFour: "5678", mode: 6 }]);
+
         const response = await appClient.index.$post({
           ...authorization,
-          json: { ...authorization.json, data: { ...authorization.json.data, card_id: "inst", metadata: { account } } },
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "inst" } },
+          },
         });
 
         expect(response.status).toBe(200);
-        await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
       });
 
       it("authorizes zero", async () => {
         const response = await appClient.index.$post({
           ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            data: { ...authorization.json.data, bill_amount: 0, metadata: { account } },
+            body: {
+              ...authorization.json.body,
+              spend: { ...authorization.json.body.spend, cardId: "card", amount: 0 },
+            },
           },
         });
 
         expect(response.status).toBe(200);
-        await expect(response.json()).resolves.toStrictEqual({ response_code: "00" });
       });
 
       it("fails when tracing", async () => {
@@ -227,18 +215,19 @@ describe("card operations", () => {
         const trace = vi.spyOn(traceClient, "traceCall").mockResolvedValue({ ...callFrame, output: "0x" });
 
         await database.insert(cards).values([{ id: "failed_trace", credentialId: "cred", lastFour: "2222", mode: 4 }]);
+
         const response = await appClient.index.$post({
           ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            data: { ...authorization.json.data, card_id: "failed_trace", metadata: { account } },
+            body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "failed_trace" } },
           },
         });
 
         expect(trace).toHaveBeenCalledOnce();
         expect(captureException).toHaveBeenCalledWith(new Error("0x"), expect.anything());
-        expect(response.status).toBe(200);
-        await expect(response.json()).resolves.toStrictEqual({ response_code: "69" });
+        expect(response.status).toBe(400);
       });
     });
   });
@@ -266,22 +255,25 @@ describe("card operations", () => {
         const balance = await collectorBalance();
 
         const operation = "debits";
+        const cardId = "debits";
         await database.insert(cards).values([{ id: "debits", credentialId: "cred", lastFour: "3456", mode: 0 }]);
         const response = await appClient.index.$post({
           ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            event_type: "CLEARING",
-            operation_id: operation,
-            data: { ...authorization.json.data, card_id: "debits", metadata: { account } },
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId },
+            },
           },
         });
         const card = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
         await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(
-          balance + BigInt(Math.round(authorization.json.data.bill_amount * 1e6)),
-        );
+        await expect(collectorBalance()).resolves.toBe(balance + BigInt(authorization.json.body.spend.amount * 1e4));
         expect(response.status).toBe(200);
       });
 
@@ -290,21 +282,87 @@ describe("card operations", () => {
         const amount = 10;
 
         const operation = "credits";
+        const cardId = "credits";
         await database.insert(cards).values([{ id: "credits", credentialId: "cred", lastFour: "7890", mode: 1 }]);
+
         const response = await appClient.index.$post({
           ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            event_type: "CLEARING",
-            operation_id: operation,
-            data: { ...authorization.json.data, card_id: "credits", bill_amount: amount, metadata: { account } },
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount },
+            },
           },
         });
+
         const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
         await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
+        await expect(collectorBalance()).resolves.toBe(balance + BigInt(amount * 1e4));
         expect(response.status).toBe(200);
+      });
+
+      it("clears with transaction update", async () => {
+        const amount = 100;
+        const update = 50;
+
+        const operation = "transactionUpdate";
+        const cardId = "tUpdate";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 1 }]);
+        const createResponse = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
+            },
+          },
+        });
+
+        const updateResponse = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "updated",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: {
+                ...authorization.json.body.spend,
+                cardId,
+                authorizationUpdateAmount: update,
+                amount: amount + update,
+                localAmount: amount + update,
+              },
+            },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        await Promise.all(transaction!.hashes.map((h) => publicClient.waitForTransactionReceipt({ hash: h as Hex })));
+
+        expect(createResponse.status).toBe(200);
+        expect(updateResponse.status).toBe(200);
+
+        expect(transaction?.payload).toMatchObject({
+          bodies: [{ action: "created" }, { action: "updated", body: { spend: { amount: amount + update } } }],
+          merchant: {
+            city: "buenos aires",
+            country: "argentina",
+            name: "99999",
+          },
+        });
       });
 
       it("clears installments", async () => {
@@ -312,61 +370,29 @@ describe("card operations", () => {
         const amount = 100;
 
         const operation = "splits";
+        const cardId = "splits";
         await database.insert(cards).values([{ id: "splits", credentialId: "cred", lastFour: "6754", mode: 6 }]);
+
         const response = await appClient.index.$post({
           ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            event_type: "CLEARING",
-            operation_id: operation,
-            data: { ...authorization.json.data, card_id: "splits", bill_amount: amount, metadata: { account } },
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount },
+            },
           },
         });
+
         const transaction = await database.query.transactions.findFirst({
           where: eq(transactions.id, operation),
         });
         await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
-        expect(response.status).toBe(200);
-      });
-
-      it("handles duplicated clearing", async () => {
-        const captureException = vi.spyOn(sentry, "captureException");
-        captureException.mockImplementation(() => "");
-
-        vi.spyOn(publicClient, "simulateContract").mockRejectedValue(
-          new BaseError("Error", {
-            cause: new ContractFunctionRevertedError({
-              abi: issuerCheckerAbi,
-              functionName: "collectInstallments",
-              data: encodeErrorResult({ errorName: "Expired", abi: issuerCheckerAbi }),
-            }),
-          }),
-        );
-
-        const getTransactionReceipt = vi
-          .spyOn(publicClient, "getTransactionReceipt")
-          .mockResolvedValue({ ...receipt, logs: [] });
-
-        const amount = 50;
-
-        const operation = "dupe";
-        const cardId = "dupe";
-        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "7777", mode: 6 }]);
-        await database.insert(transactions).values([{ id: operation, cardId, hashes: [zeroHash], payload: {} }]);
-        const response = await appClient.index.$post({
-          ...authorization,
-          json: {
-            ...authorization.json,
-            event_type: "CLEARING",
-            operation_id: operation,
-            data: { ...authorization.json.data, card_id: cardId, bill_amount: amount, metadata: { account } },
-          },
-        });
-
-        expect(captureException).not.toHaveBeenCalled();
-        expect(getTransactionReceipt).toHaveBeenCalledOnce();
+        await expect(collectorBalance()).resolves.toBe(balance + BigInt(amount * 1e4));
         expect(response.status).toBe(200);
       });
 
@@ -377,14 +403,20 @@ describe("card operations", () => {
         vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
 
         const operation = "timeout";
-        await database.insert(cards).values([{ id: "timeout", credentialId: "cred", lastFour: "7777", mode: 6 }]);
+        const cardId = "timeout";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "7777", mode: 6 }]);
+
         const response = await appClient.index.$post({
           ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            event_type: "CLEARING",
-            operation_id: operation,
-            data: { ...authorization.json.data, card_id: "timeout", bill_amount: 60, metadata: { account } },
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount: 60 },
+            },
           },
         });
 
@@ -408,14 +440,20 @@ describe("card operations", () => {
         });
 
         const operation = "revert";
-        await database.insert(cards).values([{ id: "revert", credentialId: "cred", lastFour: "8888", mode: 5 }]);
+        const cardId = "revert";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 5 }]);
+
         const response = await appClient.index.$post({
           ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            event_type: "CLEARING",
-            operation_id: operation,
-            data: { ...authorization.json.data, card_id: "revert", bill_amount: 70, metadata: { account } },
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount: 70 },
+            },
           },
         });
 
@@ -434,15 +472,21 @@ describe("card operations", () => {
 
         vi.spyOn(publicClient, "simulateContract").mockRejectedValue(new Error("Unexpected Error"));
 
+        const operation = "unexpected";
         const cardId = "unexpected";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 4 }]);
+
         const response = await appClient.index.$post({
           ...authorization,
+          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
-            event_type: "CLEARING",
-            operation_id: "unexpected",
-            data: { ...authorization.json.data, card_id: cardId, bill_amount: 90, metadata: { account } },
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount: 90 },
+            },
           },
         });
 

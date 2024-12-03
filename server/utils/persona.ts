@@ -1,3 +1,5 @@
+import { vValidator } from "@hono/valibot-validator";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   array,
   type BaseIssue,
@@ -16,10 +18,12 @@ import appOrigin from "./appOrigin";
 if (!process.env.PERSONA_API_KEY) throw new Error("missing persona api key");
 if (!process.env.PERSONA_TEMPLATE_ID) throw new Error("missing persona template id");
 if (!process.env.PERSONA_URL) throw new Error("missing persona url");
+if (!process.env.PERSONA_WEBHOOK_SECRET) throw new Error("missing persona webhook secret");
 
 const authorization = `Bearer ${process.env.PERSONA_API_KEY}`;
 const templateId = process.env.PERSONA_TEMPLATE_ID;
 const baseURL = process.env.PERSONA_URL;
+const webhookSecret = process.env.PERSONA_WEBHOOK_SECRET;
 
 export async function getInquiry(referenceId: string) {
   const { data: approvedInquiries } = await request(
@@ -136,3 +140,21 @@ const GenerateOTLResponse = object({
   }),
   meta: object({ "one-time-link": string(), "one-time-link-short": string() }),
 });
+
+export function headerValidator() {
+  return vValidator("header", object({ "persona-signature": string() }), async (r, c) => {
+    if (!r.success) return c.text("bad request", 400);
+    const t = r.output["persona-signature"].split(",")[0]?.split("=")[1];
+    const hmac = createHmac("sha256", webhookSecret)
+      .update(`${t}.${await c.req.text()}`)
+      .digest("hex");
+    const isVerified = r.output["persona-signature"]
+      .split(" ")
+      .map((pair) => pair.split("v1=")[1])
+      .filter((s) => s !== undefined)
+      .some((signature) => {
+        return timingSafeEqual(Buffer.from(hmac), Buffer.from(signature));
+      });
+    return isVerified ? undefined : c.text("unauthorized", 401);
+  });
+}

@@ -24,14 +24,11 @@ import { Hono } from "hono";
 import type { UnofficialStatusCode } from "hono/utils/http-status";
 import * as v from "valibot";
 import {
-  BaseError,
-  ContractFunctionRevertedError,
   decodeErrorResult,
   decodeEventLog,
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
-  isHash,
   maxUint256,
   padHex,
 } from "viem";
@@ -42,56 +39,79 @@ import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from ".
 import collectors from "../utils/collectors";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
+import { headerValidator } from "../utils/panda";
 import publicClient from "../utils/publicClient";
 import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
 import transactionOptions from "../utils/transactionOptions";
 
-if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
-
-const debug = createDebug("exa:cryptomate");
+const debug = createDebug("exa:panda");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
-const OperationData = v.object({
-  card_id: v.string(),
-  bill_amount: v.number(),
-  bill_currency_number: v.literal("840"),
-  bill_currency_code: v.literal("USD"),
-  transaction_amount: v.number(),
-  transaction_currency_code: v.pipe(v.string(), v.length(3)),
-  created_at: v.pipe(v.string(), v.isoTimestamp()),
-  merchant_data: v.object({ name: v.string() }),
-  metadata: v.nullish(v.object({ account: v.nullish(Address) })),
-});
-
-const CollectData = v.object({
-  ...OperationData.entries,
-  metadata: v.object({ account: Address }),
-  signature: v.string(),
+const BaseTransaction = v.object({
+  id: v.string(),
+  type: v.string(),
+  spend: v.object({
+    amount: v.number(),
+    currency: v.literal("usd"),
+    cardId: v.string(),
+    cardType: v.literal("virtual"),
+    localAmount: v.number(),
+    localCurrency: v.pipe(v.string(), v.length(3)),
+    merchantCity: v.nullish(v.string()),
+    merchantCountry: v.nullish(v.string()),
+    merchantName: v.string(),
+    status: v.picklist(["completed", "declined", "pending", "reversed"]),
+  }),
 });
 
 const Payload = v.intersect([
-  v.variant("event_type", [
-    v.object({ event_type: v.literal("AUTHORIZATION"), status: v.literal("PENDING"), data: CollectData }),
-    v.variant("status", [
-      v.object({ event_type: v.literal("CLEARING"), status: v.literal("PENDING"), data: CollectData }),
-      v.object({ event_type: v.literal("CLEARING"), status: v.literal("SUCCESS") }),
-      v.object({ event_type: v.literal("CLEARING"), status: v.literal("FAILED") }),
-    ]),
-    v.object({ event_type: v.literal("DECLINED"), status: v.literal("FAILED") }),
-    v.object({ event_type: v.literal("REFUND"), status: v.literal("SUCCESS") }),
-    v.object({ event_type: v.literal("REVERSAL"), status: v.literal("SUCCESS") }),
+  v.variant("action", [
+    v.object({ action: v.literal("created") }),
+    v.object({
+      action: v.literal("updated"),
+      body: v.object({
+        ...BaseTransaction.entries,
+        spend: v.object({
+          ...BaseTransaction.entries.spend.entries,
+          authorizationUpdateAmount: v.number(),
+          status: v.picklist(["declined", "pending", "reversed"]),
+        }),
+      }),
+    }),
+    v.object({
+      action: v.literal("requested"),
+      body: v.object({
+        ...BaseTransaction.entries,
+        id: v.optional(v.string()),
+        spend: v.object({ ...BaseTransaction.entries.spend.entries, status: v.picklist(["declined", "pending"]) }),
+      }),
+    }),
+    v.object({
+      action: v.literal("completed"),
+      body: v.object({
+        ...BaseTransaction.entries,
+        spend: v.object({ ...BaseTransaction.entries.spend.entries, status: v.literal("completed") }),
+      }),
+    }),
   ]),
-  v.object({ product: v.literal("CARDS"), operation_id: v.string(), data: OperationData }),
+  v.object({ resource: v.literal("transaction"), body: BaseTransaction }),
 ]);
+
+function parseBodies(raw: unknown) {
+  const payload = v.safeParse(
+    v.object({
+      bodies: v.array(v.looseObject({})),
+    }),
+    raw,
+  );
+  if (!payload.success) throw new Error("invalid transaction payload");
+  return payload.output.bodies;
+}
 
 export default new Hono().post(
   "/",
-  vValidator(
-    "header",
-    v.object({ "x-webhook-key": v.literal(process.env.CRYPTOMATE_WEBHOOK_KEY) }),
-    ({ success }, c) => (success ? undefined : c.json("unauthorized", 401)),
-  ),
+  headerValidator(),
   vValidator("json", Payload, (validation, c) => {
     if (debug.enabled) {
       c.req
@@ -100,29 +120,34 @@ export default new Hono().post(
         .catch((error: unknown) => captureException(error));
     }
     if (!validation.success) {
-      captureException(new Error("bad cryptomate"), { contexts: { validation } });
-      return c.json("bad request", 400);
+      captureException(new Error("bad panda"), { contexts: { validation } });
+      return c.text("bad request", 400);
     }
   }),
   async (c) => {
     const payload = c.req.valid("json");
-    setTag("cryptomate.event", payload.event_type);
-    setTag("cryptomate.status", payload.status);
+    setTag("panda.event", payload.action);
+    setTag("panda.status", payload.body.spend.status);
     const jsonBody = await c.req.json(); // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-    setContext("cryptomate", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
+    setContext("panda", jsonBody); // eslint-disable-line @typescript-eslint/no-unsafe-argument
 
-    switch (payload.event_type) {
-      case "AUTHORIZATION": {
+    switch (payload.action) {
+      case "requested": {
         const { account, amount, call, transaction } = await prepareCollection(payload);
+        if (amount < 0) return c.json({}, 400);
         const authorize = () => {
-          track({
-            userId: account,
-            event: "TransactionAuthorized",
-            properties: { type: "cryptomate", usdAmount: payload.data.bill_amount },
-          });
-          return c.json({ response_code: "00" });
+          try {
+            track({
+              userId: account,
+              event: "TransactionAuthorized",
+              properties: { type: "panda", usdAmount: payload.body.spend.amount / 100 },
+            });
+          } catch (error: unknown) {
+            captureException(error, { level: "error" });
+          }
+          return c.json({});
         };
-        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
+        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "panda.authorization");
         if (!transaction) return authorize();
         try {
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
@@ -143,7 +168,7 @@ export default new Hono().post(
               }).errorName;
             } catch {} // eslint-disable-line no-empty
             captureException(new Error(error), { contexts: { tx: { call, trace } } });
-            return c.json({ response_code: "69" });
+            return c.json({}, 400);
           }
           if (
             usdcTransfersToCollectors(trace).reduce(
@@ -152,19 +177,20 @@ export default new Hono().post(
               0n,
             ) !== amount
           ) {
-            debug(`${payload.event_type}:${payload.status}`, payload.operation_id, "bad collection");
+            debug(`${payload.action}:${payload.body.spend.status}`, payload.body.id, "bad collection");
             captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { call, trace } } });
-            return c.json({ response_code: "51" });
+            return c.json({}, 400);
           }
           return authorize();
         } catch (error: unknown) {
           captureException(error, { contexts: { tx: { call } } });
-          return c.json({ response_code: "05" });
+          return c.json({}, 500);
         }
       }
-      case "CLEARING": {
-        if (payload.status !== "PENDING") return c.json({});
-        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
+      case "updated":
+      case "created": {
+        if (payload.body.spend.status !== "pending") return c.json({});
+        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.clearing`);
         const { account, call, mode } = await prepareCollection(payload);
         if (!call) return c.json({});
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
@@ -185,14 +211,37 @@ export default new Hono().post(
               keeper.writeContract(request as Parameters<typeof keeper.writeContract>[0]),
             );
             setContext("tx", { call, ...request, transactionHash: hash });
-            await database.insert(transactions).values([
-              {
-                id: payload.operation_id,
-                cardId: payload.data.card_id,
-                hashes: [hash],
-                payload: { ...jsonBody, type: "cryptomate" },
-              },
-            ]);
+
+            const tx = await database.query.transactions.findFirst({
+              where: and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
+            });
+            await (tx
+              ? database
+                  .update(transactions)
+                  .set({
+                    hashes: [...tx.hashes, hash],
+                    payload: {
+                      ...(tx.payload as object),
+                      bodies: [...parseBodies(tx.payload), { ...jsonBody, createdAt: new Date().toISOString() }],
+                    },
+                  })
+                  .where(and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)))
+              : database.insert(transactions).values([
+                  {
+                    id: payload.body.id,
+                    cardId: payload.body.spend.cardId,
+                    hashes: [hash],
+                    payload: {
+                      bodies: [{ ...jsonBody, createdAt: new Date().toISOString() }],
+                      type: "panda",
+                      merchant: {
+                        name: payload.body.spend.merchantName,
+                        city: payload.body.spend.merchantCity,
+                        country: payload.body.spend.merchantCountry,
+                      },
+                    },
+                  },
+                ]));
             startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
               .then((receipt) => {
                 if (receipt.status === "success") return;
@@ -202,35 +251,23 @@ export default new Hono().post(
                 });
               })
               .catch((error: unknown) => captureException(error));
-            sendPushNotification({
-              userId: account,
-              headings: { en: "Exa Card Purchase" },
-              contents: {
-                en: `${payload.data.transaction_amount.toLocaleString(undefined, {
-                  style: "currency",
-                  currency: payload.data.transaction_currency_code,
-                })} at ${payload.data.merchant_data.name}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
-              },
-            }).catch((error: unknown) => captureException(error, { level: "error" }));
+
+            if (!tx) {
+              sendPushNotification({
+                userId: account,
+                headings: { en: "Exa Card Purchase" },
+                contents: {
+                  en: `${payload.body.spend.localAmount.toLocaleString(undefined, {
+                    style: "currency",
+                    currency: payload.body.spend.localCurrency,
+                  })} at ${payload.body.spend.merchantName}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
+                },
+              }).catch((error: unknown) => captureException(error, { level: "error" }));
+            }
             return c.json({});
           } catch (error: unknown) {
-            if (
-              (error instanceof BaseError &&
-                error.cause instanceof ContractFunctionRevertedError &&
-                error.cause.data?.errorName === "Expired") ||
-              (error instanceof Error &&
-                error.message === 'duplicate key value violates unique constraint "transactions_pkey"')
-            ) {
-              const tx = await database.query.transactions.findFirst({
-                where: and(eq(transactions.id, payload.operation_id), eq(transactions.cardId, payload.data.card_id)),
-              });
-              if (tx?.hashes[0] && isHash(tx.hashes[0])) {
-                const receipt = await publicClient.getTransactionReceipt({ hash: tx.hashes[0] }).catch(() => undefined);
-                if (receipt?.status === "success") return c.json({});
-              }
-            }
             captureException(error, { level: "fatal", contexts: { tx: { call } } });
-            return c.json(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
+            return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
           }
         });
       }
@@ -243,25 +280,26 @@ export default new Hono().post(
 async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
   const card = await database.query.cards.findFirst({
     columns: { mode: true },
-    where: and(eq(cards.id, payload.data.card_id), eq(cards.status, "ACTIVE")),
+    where: and(eq(cards.id, payload.body.spend.cardId), eq(cards.status, "ACTIVE")),
     with: { credential: { columns: { account: true } } },
   });
   if (!card) throw new Error("card not found");
   const account = v.parse(Address, card.credential.account);
   setUser({ id: account });
   setTag("exa.mode", card.mode);
-  const amount = BigInt(Math.round(payload.data.bill_amount * 1e6));
+  const spent = payload.action === "updated" ? payload.body.spend.authorizationUpdateAmount : payload.body.spend.amount;
+  const amount = BigInt(Math.round(spent * 1e4));
   if (amount === 0n) return { account, amount, call: null, transaction: null };
   const call = await (async () => {
-    const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
-    const signature = await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }); // TODO replace with payload signature
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signature = await signIssuerOp({ account, amount: spent, timestamp }); // TODO replace with payload signature
     if (card.mode === 0) {
       return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
     }
     const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
     const firstMaturity =
       nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
-    if (card.mode === 1 || payload.data.bill_amount * 100 < card.mode || payload.event_type === "AUTHORIZATION") {
+    if (card.mode === 1 || spent < card.mode * 100 || payload.action === "requested") {
       return {
         functionName: "collectCredit",
         args: [BigInt(firstMaturity + (card.mode - 1) * MATURITY_INTERVAL), amount, BigInt(timestamp), signature],
@@ -347,6 +385,6 @@ function signIssuerOp({ account, amount, timestamp }: { account: Address; amount
       ],
     },
     primaryType: "Operation",
-    message: { account, amount: BigInt(Math.round(amount * 1e6)), timestamp },
+    message: { account, amount: BigInt(Math.round(amount * 1e4)), timestamp },
   });
 }

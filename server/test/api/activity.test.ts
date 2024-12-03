@@ -5,12 +5,12 @@ import "../mocks/sentry";
 
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
-import { parse, type InferOutput } from "valibot";
+import { safeParse, type InferOutput } from "valibot";
 import { zeroHash, padHex, type Hash, ContractFunctionExecutionError, BaseError, zeroAddress } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
-import app, { CreditActivity, DebitActivity, InstallmentsActivity } from "../../api/activity";
+import app, { CreditActivity, DebitActivity, InstallmentsActivity, PandaActivity } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
 import { marketAbi, previewerAbi } from "../../generated/contracts";
 import deriveAddress from "../../utils/deriveAddress";
@@ -68,7 +68,9 @@ describe("authenticated", () => {
   });
 
   describe("card", () => {
-    let activity: InferOutput<typeof DebitActivity | typeof CreditActivity | typeof InstallmentsActivity>[];
+    let activity: InferOutput<
+      typeof DebitActivity | typeof CreditActivity | typeof InstallmentsActivity | typeof PandaActivity
+    >[];
 
     beforeAll(async () => {
       await database.insert(cards).values([{ id: "activity", credentialId: account, lastFour: "1234" }]);
@@ -97,23 +99,80 @@ describe("authenticated", () => {
           .map(async ([hash, { blockNumber, events }], index) => {
             const blockTimestamp = timestamps.get(blockNumber)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
             const total = events.reduce((sum, { assets }) => sum + assets, 0n);
-            const payload = {
-              operation_id: String(index),
-              data: {
-                created_at: new Date(Number(blockTimestamp) * 1000).toISOString(),
-                bill_amount: Number(total) / 1e6,
-                transaction_amount: (1200 * Number(total)) / 1e6,
-                transaction_currency_code: "ARS",
-                merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "BA" },
-              },
-            };
-            await database.insert(transactions).values({ id: String(index), cardId: "activity", hash, payload });
-            return parse({ 0: DebitActivity, 1: CreditActivity }[events.length] ?? InstallmentsActivity, {
-              ...payload,
-              hash,
-              events,
-              blockTimestamp,
+            const payload =
+              index % 2 === 0
+                ? {
+                    bodies: [
+                      {
+                        body: {
+                          id: String(index),
+                          type: "spend",
+                          spend: {
+                            amount: Number(total) / 1e4,
+                            cardId: "ea4dd7e7-0774-431f-9871-5e4da9322505",
+                            status: "pending",
+                            userId: "f5eb6ea9-e9ba-4e2f-b16a-94a99f32385c",
+                            cardType: "virtual",
+                            currency: "usd",
+                            userEmail: "nic@exact.ly",
+                            localAmount: (1200 * Number(total)) / 1e4,
+                            merchantCity: "Buenos Aires",
+                            merchantName: "once",
+                            userLastName: "SAMPLEapproved",
+                            localCurrency: "ARS",
+                            userFirstName: "ALEXANDER J",
+                            merchantCountry: "ARG",
+                            authorizedAmount: 11,
+                            merchantCategory: "once - once",
+                            authorizationMethod: "Normal presentment",
+                            merchantCategoryCode: "once",
+                          },
+                        },
+                        action: "created",
+                        resource: "transaction",
+                        createdAt: new Date(Number(blockTimestamp) * 1000).toISOString(),
+                      },
+                    ],
+                    merchant: {
+                      name: "Apple Store",
+                      city: "Buenos Aires",
+                      country: "Argentina",
+                    },
+                    type: "panda",
+                  }
+                : {
+                    operation_id: String(index),
+                    type: "cryptomate",
+                    data: {
+                      created_at: new Date(Number(blockTimestamp) * 1000).toISOString(),
+                      bill_amount: Number(total) / 1e6,
+                      transaction_amount: (1200 * Number(total)) / 1e6,
+                      transaction_currency_code: "ARS",
+                      merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "BA" },
+                    },
+                  };
+            await database
+              .insert(transactions)
+              .values({ id: String(index), cardId: "activity", hashes: [hash], payload });
+
+            const panda = safeParse(PandaActivity, {
+              ...(payload as object),
+              hashes: [hash],
+              borrows: [{ blockNumber, events }],
             });
+            if (panda.success) return panda.output;
+
+            const cryptomate = safeParse(
+              { 0: DebitActivity, 1: CreditActivity }[events.length] ?? InstallmentsActivity,
+              {
+                ...(payload as object),
+                hash,
+                events,
+                blockTimestamp,
+              },
+            );
+            if (cryptomate.success) return cryptomate.output;
+            throw new Error("bad test setup");
           }),
       ).then((results) => results.sort((a, b) => b.timestamp.localeCompare(a.timestamp)));
     });
@@ -147,7 +206,7 @@ describe("authenticated", () => {
     });
 
     it("reports bad transaction", async () => {
-      await database.insert(transactions).values([{ id: "69", cardId: "activity", hash: "0x1", payload: {} }]);
+      await database.insert(transactions).values([{ id: "69", cardId: "activity", hashes: ["0x1"], payload: {} }]);
       captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "card" } },
@@ -158,7 +217,11 @@ describe("authenticated", () => {
       expect(captureException).toHaveBeenCalledWith(
         new Error("bad transaction"),
         expect.objectContaining({
-          contexts: expect.objectContaining({ validation: expect.objectContaining({ issues: expect.anything() }) }), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          contexts: expect.objectContaining({
+            cryptomate: expect.objectContaining({ issues: expect.anything() }), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            panda: expect.objectContaining({ issues: expect.anything() }), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+          }),
         }),
       );
       expect(response.status).toBe(200);

@@ -68,6 +68,7 @@ export default function ActivityDetails() {
                 {item.type === "received" && <ReceivedActivity item={item} />}
                 {item.type === "repay" && <RepayActivity item={item} />}
                 {item.type === "sent" && <SentActivity item={item} />}
+                {item.type === "panda" && <CardActivity item={item} />}
               </View>
               <View flex={2} justifyContent="flex-end">
                 <ActionButton

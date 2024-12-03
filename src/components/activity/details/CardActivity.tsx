@@ -1,4 +1,4 @@
-import type { CreditActivity, DebitActivity, InstallmentsActivity } from "@exactly/server/api/activity";
+import type { CreditActivity, DebitActivity, InstallmentsActivity, PandaActivity } from "@exactly/server/api/activity";
 import { ShoppingCart } from "@tamagui/lucide-icons";
 import React from "react";
 import { ms } from "react-native-size-matters";
@@ -9,7 +9,11 @@ import PurchaseDetails from "./PurchaseDetails";
 import TransactionDetails from "./TransactionDetails";
 import Text from "../../shared/Text";
 
-export default function CardActivity({ item }: { item: CreditActivity | DebitActivity | InstallmentsActivity }) {
+export default function CardActivity({
+  item,
+}: {
+  item: CreditActivity | DebitActivity | InstallmentsActivity | PandaActivity;
+}) {
   const { usdAmount } = item;
   return (
     <>
@@ -40,9 +44,22 @@ export default function CardActivity({ item }: { item: CreditActivity | DebitAct
         </YStack>
       </YStack>
       <YStack flex={1} gap="$s7">
-        <PurchaseDetails item={item} />
-        <PaymentDetails item={item} />
-        <TransactionDetails />
+        {item.type !== "panda" && (
+          <>
+            <PurchaseDetails item={item} />
+            <PaymentDetails item={item} />
+            <TransactionDetails />
+          </>
+        )}
+
+        {item.type === "panda" &&
+          item.operations.map((operation, index) => (
+            <>
+              <PurchaseDetails item={operation} />
+              <PaymentDetails item={operation} />
+              <TransactionDetails source={operation} />
+            </>
+          ))}
       </YStack>
     </>
   );

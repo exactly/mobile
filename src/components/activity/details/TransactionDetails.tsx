@@ -1,5 +1,6 @@
 import chain from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
+import type { CreditActivity, DebitActivity, InstallmentsActivity } from "@exactly/server/api/activity";
 import { Copy, SquareArrowOutUpRight } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
@@ -15,8 +16,13 @@ import handleError from "../../../utils/handleError";
 import type { ActivityItem } from "../../../utils/queryClient";
 import Text from "../../shared/Text";
 
-export default function TransactionDetails() {
-  const { data: item } = useQuery<ActivityItem>({ queryKey: ["activity", "details"] });
+export default function TransactionDetails({
+  source,
+}: {
+  source?: CreditActivity | DebitActivity | InstallmentsActivity;
+}) {
+  const query = useQuery<ActivityItem>({ queryKey: ["activity", "details"] });
+  const item = source ?? query.data;
   const toast = useToastController();
   return (
     <YStack gap="$s4">
@@ -90,7 +96,7 @@ export default function TransactionDetails() {
             </XStack>
           </>
         )}
-        {item?.transactionHash && (
+        {item?.type !== "panda" && item?.transactionHash && (
           <XStack justifyContent="space-between">
             <Text emphasized footnote color="$uiNeutralSecondary">
               Transaction hash

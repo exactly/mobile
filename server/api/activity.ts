@@ -11,8 +11,11 @@ import {
   bigint,
   type InferInput,
   type InferOutput,
+  intersect,
   isoTimestamp,
   length,
+  literal,
+  looseObject,
   minLength,
   nullish,
   number,
@@ -26,6 +29,7 @@ import {
   transform,
   undefined_,
   union,
+  variant,
 } from "valibot";
 import { withRetry, zeroAddress } from "viem";
 
@@ -58,7 +62,7 @@ export default app.get(
       with: {
         cards: {
           columns: {},
-          with: { transactions: { columns: { hash: true, payload: true } } },
+          with: { transactions: { columns: { hashes: true, payload: true } } },
           limit: ignore("card") ? 0 : undefined,
         },
       },
@@ -173,9 +177,24 @@ export default app.get(
     return c.json(
       [
         ...credential.cards.flatMap(({ transactions }) =>
-          transactions.map(({ hash, payload }) => {
+          transactions.map(({ hashes, payload }) => {
+            const panda = safeParse(PandaActivity, {
+              ...(payload as object),
+              hashes,
+              borrows: hashes.map((h) => {
+                const b = borrows?.get(h as Hash);
+                return {
+                  events: b?.events,
+                  timestamps: b?.blockNumber && timestamps.get(b.blockNumber),
+                };
+              }),
+            });
+            if (panda.success) return panda.output;
+
+            if (hashes.length !== 1) throw new Error("cryptomate transactions need to have only one hash");
+            const hash = hashes[0];
             const borrow = borrows?.get(hash as Hash);
-            const validation = safeParse(
+            const cryptomate = safeParse(
               { 0: DebitActivity, 1: CreditActivity }[borrow?.events.length ?? 0] ?? InstallmentsActivity,
               {
                 ...(payload as object),
@@ -184,8 +203,8 @@ export default app.get(
                 blockTimestamp: borrow?.blockNumber && timestamps.get(borrow.blockNumber),
               },
             );
-            if (validation.success) return validation.output;
-            captureException(new Error("bad transaction"), { level: "error", contexts: { validation } });
+            if (cryptomate.success) return cryptomate.output;
+            captureException(new Error("bad transaction"), { level: "error", contexts: { cryptomate, panda } });
           }),
         ),
         ...[...deposits, ...repays, ...withdraws].map(({ blockNumber, ...event }) => {
@@ -205,22 +224,94 @@ export default app.get(
 );
 
 const Borrow = object({ maturity: bigint(), assets: bigint(), fee: bigint() });
-const CardActivity = object({
-  operation_id: string(),
-  data: object({
-    created_at: pipe(string(), isoTimestamp()),
-    bill_amount: number(),
-    merchant_data: object({
+
+export const PandaActivity = pipe(
+  object({
+    bodies: array(looseObject({})),
+    borrows: array(object({ timestamp: optional(bigint()), events: array(Borrow) })),
+    hashes: array(Hash),
+    merchant: object({
       name: string(),
-      country: nullish(string()),
-      state: nullish(string()),
-      city: nullish(string()),
+      city: string(),
+      country: string(),
+      state: nullish(string(), ""),
     }),
-    transaction_amount: number(),
-    transaction_currency_code: nullish(string()),
+    type: literal("panda"),
   }),
-  hash: Hash,
-});
+  transform(({ bodies, borrows, hashes, merchant, type }) => {
+    const operations = hashes.map((hash, index) => {
+      const borrow = borrows[index];
+      const validation = safeParse(
+        { 0: DebitActivity, 1: CreditActivity }[borrow?.events.length ?? 0] ?? InstallmentsActivity,
+        {
+          ...bodies[index],
+          type,
+          hash,
+          events: borrow?.events,
+          blockTimestamp: borrow?.timestamp,
+        },
+      );
+      if (validation.success) return validation.output;
+      throw new Error("bad panda activity");
+    });
+
+    if (!operations[0]) throw new Error("First operation needs to be defined");
+    const { id, currency, timestamp } = operations[0];
+    return {
+      id,
+      currency,
+      amount: operations.at(-1)?.amount,
+      merchant,
+      operations,
+      timestamp,
+      type,
+      usdAmount: operations.reduce((sum, { usdAmount }) => sum + usdAmount, 0),
+    };
+  }),
+);
+
+const CardActivity = pipe(
+  variant("type", [
+    object({
+      type: literal("panda"),
+      createdAt: pipe(string(), isoTimestamp()),
+      body: object({
+        id: string(),
+        spend: object({
+          amount: number(),
+          currency: literal("usd"),
+          localAmount: number(),
+          localCurrency: string(),
+          merchantCity: nullish(string()),
+          merchantCountry: nullish(string()),
+          merchantName: string(),
+          authorizationUpdateAmount: optional(number()),
+        }),
+      }),
+      hash: Hash,
+    }),
+    object({
+      type: literal("cryptomate"),
+      operation_id: string(),
+      data: object({
+        created_at: pipe(string(), isoTimestamp()),
+        bill_amount: number(),
+        merchant_data: object({
+          name: string(),
+          country: nullish(string()),
+          state: nullish(string()),
+          city: nullish(string()),
+        }),
+        transaction_amount: number(),
+        transaction_currency_code: nullish(string()),
+      }),
+      hash: Hash,
+    }),
+  ]),
+  transform((activity) =>
+    activity.type === "panda" ? activity : { ...activity, createdAt: activity.data.created_at },
+  ),
+);
 
 function transformBorrow(borrow: InferOutput<typeof Borrow>, timestamp: bigint) {
   return {
@@ -229,46 +320,64 @@ function transformBorrow(borrow: InferOutput<typeof Borrow>, timestamp: bigint) 
   };
 }
 
-function transformCard({ operation_id, data, hash }: InferOutput<typeof CardActivity>) {
-  return {
-    type: "card" as const,
-    id: operation_id,
-    transactionHash: hash,
-    timestamp: data.created_at,
-    currency: data.transaction_currency_code,
-    amount: data.transaction_amount,
-    usdAmount: data.bill_amount,
-    merchant: {
-      name: data.merchant_data.name,
-      city: data.merchant_data.city,
-      country: data.merchant_data.country,
-      state: data.merchant_data.state,
-    },
-  };
+function transformCard(activity: InferOutput<typeof CardActivity>) {
+  return activity.type === "panda"
+    ? {
+        type: "card" as const,
+        id: activity.body.id,
+        transactionHash: activity.hash,
+        timestamp: activity.createdAt,
+        currency: activity.body.spend.currency,
+        amount: activity.body.spend.localAmount / 100,
+        usdAmount: activity.body.spend.authorizationUpdateAmount
+          ? activity.body.spend.authorizationUpdateAmount / 100
+          : activity.body.spend.amount / 100,
+        merchant: {
+          name: activity.body.spend.merchantName,
+          city: activity.body.spend.merchantCity,
+          country: activity.body.spend.merchantCountry,
+          state: "",
+        },
+      }
+    : {
+        type: "card" as const,
+        id: activity.operation_id,
+        transactionHash: activity.hash,
+        timestamp: activity.data.created_at,
+        currency: activity.data.transaction_currency_code,
+        amount: activity.data.transaction_amount,
+        usdAmount: activity.data.bill_amount,
+        merchant: {
+          name: activity.data.merchant_data.name,
+          city: activity.data.merchant_data.city,
+          country: activity.data.merchant_data.country,
+          state: activity.data.merchant_data.state,
+        },
+      };
 }
 
 export const DebitActivity = pipe(
-  object({ ...CardActivity.entries, events: undefined_(), blockTimestamp: undefined_() }),
+  intersect([CardActivity, object({ events: undefined_(), blockTimestamp: undefined_() })]),
   transform((activity) => ({ ...transformCard(activity), mode: 0 as const })),
 );
 
 export const CreditActivity = pipe(
-  object({ ...CardActivity.entries, events: pipe(array(Borrow), length(1)), blockTimestamp: optional(bigint()) }),
+  intersect([CardActivity, object({ events: pipe(array(Borrow), length(1)), blockTimestamp: optional(bigint()) })]),
   transform((activity) => ({
     ...transformCard(activity),
     mode: 1 as const,
     borrow: transformBorrow(
       activity.events[0]!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      activity.blockTimestamp ?? BigInt(Math.floor(new Date(activity.data.created_at).getTime() / 1000)),
+      activity.blockTimestamp ?? BigInt(Math.floor(new Date(activity.createdAt).getTime() / 1000)),
     ),
   })),
 );
 
 export const InstallmentsActivity = pipe(
-  object({ ...CardActivity.entries, events: pipe(array(Borrow), minLength(2)), blockTimestamp: optional(bigint()) }),
+  intersect([CardActivity, object({ events: pipe(array(Borrow), minLength(2)), blockTimestamp: optional(bigint()) })]),
   transform((activity) => {
-    const { data, events, blockTimestamp } = activity;
-    const timestamp = blockTimestamp ?? BigInt(Math.floor(new Date(data.created_at).getTime() / 1000));
+    const { createdAt, events, blockTimestamp } = activity;
+    const timestamp = blockTimestamp ?? BigInt(Math.floor(new Date(createdAt).getTime() / 1000));
     events.sort((a, b) => Number(a.maturity) - Number(b.maturity));
     return {
       ...transformCard(activity),
@@ -341,11 +450,12 @@ export const WithdrawActivity = pipe(
 );
 
 /* eslint-disable @typescript-eslint/no-redeclare */
-export type DebitActivity = InferOutput<typeof DebitActivity>;
 export type CreditActivity = InferOutput<typeof CreditActivity>;
-export type InstallmentsActivity = InferOutput<typeof InstallmentsActivity>;
+export type DebitActivity = InferOutput<typeof DebitActivity>;
 export type DepositActivity = InferOutput<typeof DepositActivity>;
+export type InstallmentsActivity = InferOutput<typeof InstallmentsActivity>;
+export type OnchainActivity = InferOutput<typeof OnchainActivity>;
+export type PandaActivity = InferOutput<typeof PandaActivity>;
 export type RepayActivity = InferOutput<typeof RepayActivity>;
 export type WithdrawActivity = InferOutput<typeof WithdrawActivity>;
-export type OnchainActivity = InferOutput<typeof OnchainActivity>;
 /* eslint-enable @typescript-eslint/no-redeclare */
