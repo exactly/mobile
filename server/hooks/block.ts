@@ -23,12 +23,15 @@ import {
   decodeEventLog,
   encodeErrorResult,
   ExecutionRevertedError,
+  formatUnits,
 } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
+import { marketAbi } from "../generated/contracts";
 import { headerValidator, jsonValidator, webhooksKey } from "../utils/alchemy";
 import appOrigin from "../utils/appOrigin";
 import keeper from "../utils/keeper";
+import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
 import redis from "../utils/redis";
 import transactionOptions from "../utils/transactionOptions";
@@ -176,6 +179,21 @@ function scheduleWithdraw(message: string) {
               setContext("tx", { ...request, ...receipt });
               if (receipt.status !== "success") throw new Error("tx reverted");
               parent.setStatus({ code: 1, message: "ok" });
+              Promise.all([
+                publicClient.readContract({ address: market, abi: marketAbi, functionName: "decimals" }),
+                publicClient.readContract({ address: market, abi: marketAbi, functionName: "symbol" }),
+                publicClient.getEnsName({ address: receiver }),
+              ])
+                .then(([decimals, symbol, ensName]) =>
+                  sendPushNotification({
+                    userId: account,
+                    headings: { en: "Withdraw completed" },
+                    contents: {
+                      en: `${formatUnits(amount, decimals)} ${symbol.slice(3)} sent to ${ensName ?? receiver}.`,
+                    },
+                  }),
+                )
+                .catch((error: unknown) => captureException(error));
               return redis.zrem("withdraw", message);
             },
           ).catch((error: unknown) => {
