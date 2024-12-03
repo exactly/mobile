@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/web-manifest.json",
+  "short_name": "Exa",
+  "name": "Exa",
+  "icons": [
+    { "src": "favicon.ico", "type": "image/x-icon", "sizes": "48x48" },
+    { "src": "assets/src/assets/icon.f9538ae2aa18c66272006c460191b34f.png", "type": "image/png", "sizes": "1024x1024" }
+  ],
+  "id": "/",
+  "lang": "en",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0BD8B6",
+  "background_color": "#171918",
+  "prefer_related_applications": true,
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "app.exactly",
+      "url": "https://play.google.com/store/apps/details?id=app.exactly"
+    }
+  ]
+}

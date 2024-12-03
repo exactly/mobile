@@ -11,6 +11,7 @@ export default function HTML({ children }: { children: ReactNode }) {
           name="viewport"
           content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1.00001,viewport-fit=cover"
         />
+        <link rel="manifest" href="/manifest.json" />
         <ScrollViewStyleReset />
       </head>
       <body>{children}</body>
