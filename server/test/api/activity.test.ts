@@ -97,17 +97,37 @@ describe("authenticated", () => {
           .map(async ([hash, { blockNumber, events }], index) => {
             const blockTimestamp = timestamps.get(blockNumber)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
             const total = events.reduce((sum, { assets }) => sum + assets, 0n);
-            const payload = {
-              operation_id: String(index),
-              data: {
-                created_at: new Date(Number(blockTimestamp) * 1000).toISOString(),
-                bill_amount: Number(total) / 1e6,
-                transaction_amount: (1200 * Number(total)) / 1e6,
-                transaction_currency_code: "ARS",
-                merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "CABA" },
-              },
-            };
-            await database.insert(transactions).values({ id: String(index), cardId: "activity", hash, payload });
+            const payload =
+              index % 2 === 0
+                ? {
+                    body: {
+                      id: String(index),
+                      spend: {
+                        amount: Number(total) / 1e4,
+                        currency: "usd",
+                        localAmount: (1200 * Number(total)) / 1e4,
+                        merchantCity: "Buenos Aires",
+                        merchantName: "Merchant",
+                        localCurrency: "ARS",
+                        merchantCountry: "ARG",
+                      },
+                    },
+                    createdAt: new Date(Number(blockTimestamp) * 1000).toISOString(),
+                    type: "panda",
+                  }
+                : {
+                    operation_id: String(index),
+                    data: {
+                      created_at: new Date(Number(blockTimestamp) * 1000).toISOString(),
+                      bill_amount: Number(total) / 1e6,
+                      transaction_amount: (1200 * Number(total)) / 1e6,
+                      transaction_currency_code: "ARS",
+                      merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "CABA" },
+                    },
+                  };
+            await database
+              .insert(transactions)
+              .values({ id: String(index), cardId: "activity", hashes: [hash], payload });
             return parse({ 0: DebitActivity, 1: CreditActivity }[events.length] ?? InstallmentsActivity, {
               ...payload,
               hash,
@@ -147,7 +167,7 @@ describe("authenticated", () => {
     });
 
     it("reports bad transaction", async () => {
-      await database.insert(transactions).values([{ id: "69", cardId: "activity", hash: "0x1", payload: {} }]);
+      await database.insert(transactions).values([{ id: "69", cardId: "activity", hashes: ["0x1"], payload: {} }]);
       captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "card" } },

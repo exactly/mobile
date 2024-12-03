@@ -15,6 +15,7 @@ export const credentials = pgTable(
     transports: text("transports").array(),
     counter: integer("counter").notNull().default(0),
     kycId: text("kyc_id"),
+    pandaId: text("panda_id"),
   },
   (table) => [{ build: () => uniqueIndex("account_index").on(table.account) }],
 );
@@ -34,7 +35,7 @@ export const transactions = pgTable("transactions", {
   cardId: text("card_id")
     .references(() => cards.id)
     .notNull(),
-  hash: text("hash").notNull(),
+  hashes: text("hashes").array().notNull(),
   payload: jsonb("payload").notNull(),
 });
 
