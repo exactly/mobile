@@ -76,7 +76,19 @@ services:
         scope: RUN_TIME
       - key: PERSONA_URL
         scope: RUN_TIME
+      - key: PERSONA_WEBHOOK_SECRET
+        scope: RUN_TIME
       - key: SEGMENT_WRITE_KEY
+        scope: RUN_TIME
+      - key: PANDA_API_KEY
+        scope: RUN_TIME
+      - key: PANDA_API_URL
+        scope: RUN_TIME
+      - key: PANDA_COLLECTOR
+        scope: RUN_TIME
+      - key: PANDA_ISSUE_ENABLED
+        scope: RUN_TIME
+      - key: PANDA_MIGRATION_PLUGIN
         scope: RUN_TIME
 databases:
   - name: postgres
