@@ -15,6 +15,8 @@ export default defineConfig({
       EXPO_PUBLIC_ALCHEMY_API_KEY: " ",
       ISSUER_PRIVATE_KEY: padHex("0x420"),
       KEEPER_PRIVATE_KEY: padHex("0x69"),
+      PANDA_WEBHOOK_KEY: "panda",
+      PANDA_COLLECTOR: privateKeyToAddress(padHex("0x666")),
       POSTGRES_URL: "postgres",
       REDIS_URL: "redis",
       SEGMENT_WRITE_KEY: "segment",
