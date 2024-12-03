@@ -34,44 +34,58 @@ export default function ActivityDetails() {
         right={0}
         height={220}
         opacity={0.8}
-        colors={
-          item.type === "card"
-            ? [theme.backgroundMild.val, theme.backgroundSoft.val]
-            : item.type === "received"
-              ? [theme.interactiveBaseSuccessSoftDefault.val, theme.backgroundSoft.val]
-              : [theme.interactiveBaseErrorSoftDefault.val, theme.backgroundSoft.val]
-        }
+        colors={[theme.backgroundStrong.val, theme.backgroundSoft.val]}
       />
       <SafeView backgroundColor="transparent">
         <View fullScreen padded>
           <View fullScreen>
-            <ScrollView fullscreen showsVerticalScrollIndicator={false} stickyHeaderIndices={[0]}>
-              <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-                {canGoBack() && (
-                  <Pressable
-                    onPress={() => {
-                      router.back();
-                    }}
-                  >
-                    <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
-                  </Pressable>
-                )}
+            <ScrollView
+              fullscreen
+              showsVerticalScrollIndicator={false}
+              stickyHeaderIndices={[0]}
+              // eslint-disable-next-line react-native/no-inline-styles
+              contentContainerStyle={{
+                flexGrow: 1,
+                flexDirection: "column",
+                justifyContent: "space-between",
+              }}
+              stickyHeaderHiddenOnScroll
+            >
+              <View flex={1}>
+                <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+                  {canGoBack() && (
+                    <Pressable
+                      onPress={() => {
+                        router.back();
+                      }}
+                    >
+                      <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                    </Pressable>
+                  )}
+                </View>
+                {item.type === "card" && <CardActivity item={item} />}
+                {item.type === "received" && <ReceivedActivity item={item} />}
+                {item.type === "repay" && <RepayActivity item={item} />}
+                {item.type === "sent" && <SentActivity item={item} />}
               </View>
-              {item.type === "card" && <CardActivity item={item} />}
-              {item.type === "received" && <ReceivedActivity item={item} />}
-              {item.type === "repay" && <RepayActivity item={item} />}
-              {item.type === "sent" && <SentActivity item={item} />}
-              <ActionButton
-                danger
-                marginTop="$s4"
-                marginBottom="$s5"
-                onPress={() => {
-                  present().catch(handleError);
-                }}
-                iconAfter={<Headphones color="$interactiveOnBaseErrorSoft" />}
-              >
-                Contact support
-              </ActionButton>
+              <View flex={2} justifyContent="flex-end">
+                <ActionButton
+                  maxHeight={ms(60)}
+                  alignSelf="flex-end"
+                  marginTop="$s4"
+                  marginBottom="$s5"
+                  onPress={() => {
+                    present().catch(handleError);
+                  }}
+                  backgroundColor="transparent"
+                  borderWidth={1}
+                  borderColor="$interactiveBaseBrandDefault"
+                  color="$interactiveBaseBrandDefault"
+                  iconAfter={<Headphones color="$interactiveBaseBrandDefault" />}
+                >
+                  Contact support
+                </ActionButton>
+              </View>
             </ScrollView>
           </View>
         </View>

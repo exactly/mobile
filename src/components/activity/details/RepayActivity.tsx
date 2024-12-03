@@ -16,7 +16,7 @@ export default function RepayActivity({ item }: { item: Omit<RepayActivityType, 
     <>
       <YStack gap="$s7" paddingBottom="$s9">
         <XStack justifyContent="center" alignItems="center">
-          <Square borderRadius="$r4" backgroundColor="$interactiveBaseErrorSoftDefault" size={ms(80)}>
+          <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={ms(80)}>
             <ArrowUpFromLine size={ms(48)} color="$interactiveOnBaseErrorSoft" strokeWidth={2} />
           </Square>
         </XStack>

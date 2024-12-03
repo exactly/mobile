@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, ChevronRight, CircleDollarSign } from "@tamagui/lucide-icons";
+import { ArrowDownToLine, ArrowUpFromLine, ChevronRight, CircleDollarSign, ShoppingCart } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
 import { router } from "expo-router";
 import React from "react";
@@ -60,15 +60,15 @@ export default function LatestActivity({
             <View
               width={ms(40)}
               height={ms(40)}
-              backgroundColor="$backgroundBrandMild"
+              backgroundColor="$backgroundStrong"
               borderRadius="$r3"
               justifyContent="center"
               alignItems="center"
             >
-              {type === "card" && <CircleDollarSign color="$iconBrandDefault" />}
-              {type === "received" && <ArrowDownToLine color="$iconBrandDefault" />}
-              {type === "sent" && <ArrowUpFromLine color="$iconBrandDefault" />}
-              {type === "repay" && <CircleDollarSign color="$iconBrandDefault" />}
+              {type === "card" && <ShoppingCart color="$uiNeutralPrimary" />}
+              {type === "received" && <ArrowDownToLine color="$interactiveOnBaseSuccessSoft" />}
+              {type === "sent" && <ArrowUpFromLine color="$interactiveOnBaseErrorSoft" />}
+              {type === "repay" && <CircleDollarSign color="$interactiveOnBaseErrorSoft" />}
             </View>
             <View flex={1} gap="$s2">
               <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
