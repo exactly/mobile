@@ -34,6 +34,7 @@ import { auditorAbi, marketAbi, previewerAbi } from "../generated/contracts";
 import { headerValidator, jsonValidator } from "../utils/alchemy";
 import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";
+import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
 import transactionOptions from "../utils/transactionOptions";
 
@@ -112,12 +113,17 @@ export default app.post(
       exactly.map((market) => [v.parse(Address, market.asset), v.parse(Address, market.market)]),
     );
     const pokes = new Map<Address, { publicKey: Uint8Array; factory: Address; assets: Set<Address> }>();
-    for (const { toAddress: account, rawContract } of transfers) {
+    for (const { toAddress: account, rawContract, value, asset: assetSymbol } of transfers) {
       if (!accounts[account]) continue;
       const asset = rawContract.address ?? ETH;
       const underlying = asset === ETH ? v.parse(Address, wethAddress) : asset;
       if (!marketsByAsset.has(underlying)) continue;
 
+      sendPushNotification({
+        userId: account,
+        headings: { en: "Funds added" },
+        contents: { en: `${value ? `${value} ` : ""}${assetSymbol} received.` },
+      }).catch((error: unknown) => captureException(error));
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       if (pokes.has(account)) pokes.get(account)!.assets.add(asset);
       else {
