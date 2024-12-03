@@ -16,7 +16,7 @@ export default function ReceivedActivity({ item }: { item: Omit<DepositActivity,
     <>
       <YStack gap="$s7" paddingBottom="$s9">
         <XStack justifyContent="center" alignItems="center">
-          <Square borderRadius="$r4" backgroundColor="$interactiveBaseSuccessSoftDefault" size={ms(80)}>
+          <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={ms(80)}>
             <ArrowDownToLine size={ms(48)} color="$interactiveOnBaseSuccessSoft" strokeWidth={2} />
           </Square>
         </XStack>
