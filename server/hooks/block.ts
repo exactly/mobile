@@ -30,6 +30,7 @@ import { optimism, optimismSepolia } from "viem/chains";
 import { marketAbi } from "../generated/contracts";
 import { headerValidator, jsonValidator, webhooksKey } from "../utils/alchemy";
 import appOrigin from "../utils/appOrigin";
+import ensClient from "../utils/ensClient";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
@@ -182,7 +183,7 @@ function scheduleWithdraw(message: string) {
               Promise.all([
                 publicClient.readContract({ address: market, abi: marketAbi, functionName: "decimals" }),
                 publicClient.readContract({ address: market, abi: marketAbi, functionName: "symbol" }),
-                publicClient.getEnsName({ address: receiver }),
+                ensClient.getEnsName({ address: receiver }),
               ])
                 .then(([decimals, symbol, ensName]) =>
                   sendPushNotification({
