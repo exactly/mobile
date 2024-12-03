@@ -43,6 +43,7 @@ export default function Payments() {
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View fullScreen backgroundColor="$backgroundMild">
         <ScrollView
+          showsVerticalScrollIndicator={false}
           flex={1}
           backgroundColor={usdDue === 0n ? "$backgroundSoft" : "$backgroundMild"}
           refreshControl={

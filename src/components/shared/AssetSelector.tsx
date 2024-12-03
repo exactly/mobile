@@ -46,13 +46,11 @@ export default function AssetSelector({
   }
 
   return (
-    <YStack gap="$s2">
+    <YStack gap="$s2" borderWidth={1} borderRadius="$r3" borderColor="$borderNeutralSeparator">
       <ToggleGroup
         type="single"
         flexDirection="column"
         backgroundColor="transparent"
-        borderWidth={1}
-        borderColor="$borderNeutralSeparator"
         padding="$s3"
         onValueChange={(value) => {
           const market = safeParse(Address, value);
@@ -65,18 +63,17 @@ export default function AssetSelector({
         {positions.map(({ symbol, assetName, decimals, usdValue, market }, index) => {
           const available = markets ? withdrawLimit(markets, market) : 0n;
           return (
-            <ToggleGroup.Item
-              key={index}
-              value={market}
-              paddingHorizontal="$s4"
-              paddingVertical={0}
-              backgroundColor="transparent"
-              alignItems="stretch"
-              borderWidth={1}
-              borderRadius="$r_2"
-              borderColor={selectedMarket === market ? "$borderBrandStrong" : "transparent"}
-            >
-              <View flexDirection="row" alignItems="center" justifyContent="space-between" paddingVertical={vs(10)}>
+            <ToggleGroup.Item unstyled key={index} value={market} borderWidth={0}>
+              <View
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="space-between"
+                paddingVertical={vs(10)}
+                backgroundColor={selectedMarket === market ? "$interactiveBaseBrandSoftDefault" : "transparent"}
+                width="100%"
+                paddingHorizontal="$s4"
+                borderRadius="$r3"
+              >
                 <View flexDirection="row" gap={ms(10)} alignItems="center" maxWidth="50%">
                   <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
                   <View gap="$s2" alignItems="flex-start" flexShrink={1}>

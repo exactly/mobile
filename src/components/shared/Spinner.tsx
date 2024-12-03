@@ -5,7 +5,17 @@ import { ms } from "react-native-size-matters";
 
 import AnimatedView from "./AnimatedView";
 
-export default function Spinner() {
+export default function Spinner({
+  color = "$uiBrandSecondary",
+  backgroundColor = "$backgroundStrong",
+  containerSize = 88,
+  size = 56,
+}: {
+  color?: string;
+  backgroundColor?: string;
+  containerSize?: number;
+  size?: number;
+}) {
   const rotation = useSharedValue(0);
   const rStyle = useAnimatedStyle(() => {
     rotation.value += 1;
@@ -14,16 +24,16 @@ export default function Spinner() {
   });
   return (
     <AnimatedView
-      backgroundColor="$backgroundStrong"
-      width={ms(88)}
-      height={ms(88)}
+      backgroundColor={backgroundColor}
+      width={ms(containerSize)}
+      height={ms(containerSize)}
       justifyContent="center"
       alignItems="center"
       borderRadius="$r_0"
       padding="$5"
       style={rStyle}
     >
-      <Loader size={ms(56)} color="$uiBrandSecondary" />
+      <Loader size={ms(size)} color={color} />
     </AnimatedView>
   );
 }
