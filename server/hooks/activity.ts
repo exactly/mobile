@@ -122,7 +122,7 @@ export default app.post(
       sendPushNotification({
         userId: account,
         headings: { en: "Funds added" },
-        contents: { en: `${value ? `${value} ` : ""}${assetSymbol} received.` },
+        contents: { en: `${value ? `${value} ` : ""}${assetSymbol} received` },
       }).catch((error: unknown) => captureException(error));
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       if (pokes.has(account)) pokes.get(account)!.assets.add(asset);

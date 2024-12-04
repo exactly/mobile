@@ -190,7 +190,7 @@ function scheduleWithdraw(message: string) {
                     userId: account,
                     headings: { en: "Withdraw completed" },
                     contents: {
-                      en: `${formatUnits(amount, decimals)} ${symbol.slice(3)} sent to ${ensName ?? receiver}.`,
+                      en: `${formatUnits(amount, decimals)} ${symbol.slice(3)} sent to ${ensName ?? receiver}`,
                     },
                   }),
                 )

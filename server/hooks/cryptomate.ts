@@ -204,7 +204,7 @@ export default new Hono().post(
                 en: `${payload.data.transaction_amount.toLocaleString(undefined, {
                   style: "currency",
                   currency: payload.data.transaction_currency_code,
-                })} at ${payload.data.merchant_data.name}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC.`,
+                })} at ${payload.data.merchant_data.name}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
               },
             }).catch((error: unknown) => captureException(error, { level: "error" }));
             return c.json({});
