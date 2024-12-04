@@ -28,8 +28,6 @@ import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 import {
   CollectorSet,
   Disagreement,
-  FixedPool,
-  FixedPosition,
   IAuditor,
   IExaAccount,
   IMarket,
@@ -112,13 +110,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     emit Proposed(msg.sender, market, receiver, amount, block.timestamp + PROPOSAL_DELAY);
   }
 
-  function repay(uint256 maturity) external {
-    uint256 positionAssets;
-    uint256 maxRepay;
-    (positionAssets, maxRepay) = _previewRepay(maturity);
-
-    uint256 amount = maxRepay.min(EXA_USDC.maxWithdraw(msg.sender));
-    positionAssets = positionAssets.min(EXA_USDC.maxWithdraw(msg.sender));
+  function repay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external {
     bytes memory data = _hash(
       abi.encodePacked(
         bytes1(0x01),
@@ -126,17 +118,16 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
           RepayCallbackData({
             maturity: maturity,
             borrower: msg.sender,
-            positionAssets: positionAssets.min(EXA_USDC.maxWithdraw(msg.sender)),
-            maxRepay: amount
+            positionAssets: positionAssets,
+            maxRepay: maxRepay
           })
         )
       )
     );
-
     IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(amount)))
+      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(maxRepay)))
     );
-    _flashLoan(amount, data);
+    _flashLoan(maxRepay, data);
   }
 
   function crossRepay(
@@ -499,11 +490,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
-      executionSelector: bytes4(bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"))),
+      executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
-      executionSelector: bytes4(bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"))),
+      executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
@@ -597,9 +588,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     if (data[0] == 0x01) {
       RepayCallbackData memory r = abi.decode(data[1:], (RepayCallbackData));
-      uint256 actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower).min(
-        EXA_USDC.maxWithdraw(r.borrower)
-      );
+      uint256 actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower);
 
       if (actualRepay < r.maxRepay) EXA_USDC.deposit(r.maxRepay - actualRepay, r.borrower);
 
@@ -673,21 +662,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     BALANCER_VAULT.flashLoan(address(this), tokens, amounts, data);
   }
 
-  function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256 yield) {
-    FixedPool memory pool = market.fixedPools(maturity);
-    if (maturity > pool.lastAccrual) {
-      pool.unassignedEarnings -=
-        pool.unassignedEarnings.mulDiv(block.timestamp - pool.lastAccrual, maturity - pool.lastAccrual);
-    }
-    uint256 backupFee = 0;
-    uint256 backupSupplied = pool.borrowed - (pool.borrowed < pool.supplied ? pool.borrowed : pool.supplied);
-    if (backupSupplied != 0) {
-      yield = pool.unassignedEarnings.mulDiv(assets < backupSupplied ? assets : backupSupplied, backupSupplied);
-      backupFee = yield.mulWad(market.backupFeeRate());
-      yield -= backupFee;
-    }
-  }
-
   function _hash(bytes memory data) internal returns (bytes memory) {
     callHash = keccak256(data);
     return data;
@@ -708,14 +682,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     amountOut = assetOut.balanceOf(address(this)) - balance;
     if (amountOut < minOut) revert Disagreement();
-  }
-
-  function _previewRepay(uint256 maturity) internal view returns (uint256 positionAssets, uint256 maxRepay) {
-    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, msg.sender);
-    positionAssets = position.principal + position.fee;
-    maxRepay = block.timestamp < maturity
-      ? positionAssets - _fixedDepositYield(EXA_USDC, maturity, position.principal)
-      : positionAssets + positionAssets.mulWad((block.timestamp - maturity) * EXA_USDC.penaltyRate());
   }
 
   modifier onlyMarket(IMarket market) {
