@@ -22,5 +22,6 @@ jobs:
         with:
           title: 🔖 new release
           publish: pnpm changeset publish
+          version: ./.changeset/version.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
