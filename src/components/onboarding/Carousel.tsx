@@ -1,6 +1,8 @@
+import { createCoinbaseWalletSDK } from "@coinbase/wallet-sdk";
+import chain from "@exactly/common/generated/chain";
 import { Passkey } from "@exactly/common/validation";
 import { ArrowRight } from "@tamagui/lucide-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { type FC, useCallback, useEffect, useRef, useState } from "react";
 import type { StyleProp, ViewStyle, ViewToken } from "react-native";
@@ -71,6 +73,17 @@ const pages: [Page, ...Page[]] = [
 export default function Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const { connect, isPending: isConnecting } = useConnect();
+
+  const { data: coinbaseAccounts } = useQuery({
+    queryKey: ["coinbase", "accounts"],
+    queryFn: () =>
+      createCoinbaseWalletSDK({ appChainIds: [chain.id] })
+        .getProvider()
+        .request({ method: "eth_accounts" })
+        .catch((error: unknown) => {
+          handleError(error);
+        }) as Promise<string[]>,
+  });
 
   const flatListReference = useRef<Animated.FlatList<Page>>(null);
   const offsetX = useSharedValue(0);
@@ -202,19 +215,25 @@ export default function Carousel() {
             </View>
 
             <View flexDirection="row" justifyContent="center">
-              <Pressable
-                hitSlop={ms(15)}
-                onPress={() => {
-                  router.push("../onboarding/(passkeys)/passkeys");
-                }}
-              >
-                <Text fontSize={ms(13)} textAlign="center" color="$uiNeutralSecondary">
-                  New here?&nbsp;
-                  <Text emphasized color="$interactiveBaseBrandDefault">
-                    Create an account
-                  </Text>
+              {coinbaseAccounts ? (
+                <Text fontFamily="$mono" fontSize={ms(13)} textAlign="center" color="$uiNeutralSecondary">
+                  {Array.isArray(coinbaseAccounts) ? coinbaseAccounts.join(", ") : String(coinbaseAccounts)}
                 </Text>
-              </Pressable>
+              ) : (
+                <Pressable
+                  hitSlop={ms(15)}
+                  onPress={() => {
+                    router.push("../onboarding/(passkeys)/passkeys");
+                  }}
+                >
+                  <Text fontSize={ms(13)} textAlign="center" color="$uiNeutralSecondary">
+                    New here?&nbsp;
+                    <Text emphasized color="$interactiveBaseBrandDefault">
+                      Create an account
+                    </Text>
+                  </Text>
+                </Pressable>
+              )}
             </View>
           </View>
         </View>
