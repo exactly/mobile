@@ -4,10 +4,6 @@ FROM node:22.11.0-slim AS base
 
 ARG APP_DOMAIN="sandbox.exactly.app"
 ARG CHAIN_ID="11155420"
-ARG EXPO_PUBLIC_ALCHEMY_API_KEY=""
-ARG EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID=""
-ARG EXPO_PUBLIC_ONESIGNAL_APP_ID=""
-ARG EXPO_PUBLIC_SENTRY_DSN=""
 
 FROM base AS build
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

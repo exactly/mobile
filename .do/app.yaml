@@ -10,14 +10,6 @@ envs:
   - key: CHAIN_ID
     scope: BUILD_TIME
     value: "10"
-  - key: EXPO_PUBLIC_ALCHEMY_API_KEY
-    scope: RUN_AND_BUILD_TIME
-    type: SECRET
-  - key: EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID
-    scope: RUN_AND_BUILD_TIME
-    type: SECRET
-  - key: EXPO_PUBLIC_SENTRY_DSN
-    scope: RUN_AND_BUILD_TIME
 services:
   - name: server
     dockerfile_path: Dockerfile
