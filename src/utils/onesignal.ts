@@ -5,13 +5,12 @@ import type * as OneSignalWeb from "react-onesignal";
 
 import handleError from "./handleError";
 
-const { initialization, enablePrompt, login, logout } = (
-  Platform.OS === "web" && typeof window !== "undefined"
+const { enablePrompt, login, logout } = (
+  Platform.OS === "web"
     ? () => {
         const { default: OneSignal } = require("react-onesignal") as typeof OneSignalWeb; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
-        let displayPrompt: (() => void) | undefined;
-        return {
-          initialization: appId
+        const init =
+          appId && typeof window !== "undefined"
             ? OneSignal.init({
                 appId,
                 allowLocalhostAsSecureOrigin: __DEV__,
@@ -27,40 +26,35 @@ const { initialization, enablePrompt, login, logout } = (
                     }),
                 },
               }).catch(handleError)
-            : Promise.resolve(),
+            : undefined;
+        let displayPrompt: (() => void) | undefined;
+        return {
           enablePrompt: () => {
-            if (appId) initialization.then(() => displayPrompt?.()).catch(handleError);
+            init?.then(() => displayPrompt?.()).catch(handleError);
           },
           login: (userId: string) => {
-            if (appId) return OneSignal.login(userId);
-            return Promise.resolve();
+            init?.then(() => OneSignal.login(userId)).catch(handleError);
           },
           logout: () => {
-            if (appId) return OneSignal.logout();
-            return Promise.resolve();
+            init?.then(() => OneSignal.logout()).catch(handleError);
           },
         };
       }
     : () => {
         const { OneSignal } = require("react-native-onesignal") as typeof OneSignalNative; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
+        if (appId) OneSignal.initialize(appId);
         return {
-          initialization: (() => {
-            if (appId) OneSignal.initialize(appId);
-            return Promise.resolve();
-          })(),
           enablePrompt: () => {
             if (appId) OneSignal.InAppMessages.addTrigger("onboard", "1");
           },
           login: (userId: string) => {
             if (appId) OneSignal.login(userId);
-            return Promise.resolve();
           },
           logout: () => {
             if (appId) OneSignal.logout();
-            return Promise.resolve();
           },
         };
       }
 )();
 
-export { initialization, enablePrompt, login, logout };
+export { enablePrompt, login, logout };

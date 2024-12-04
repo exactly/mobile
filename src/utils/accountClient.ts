@@ -30,8 +30,7 @@ import {
   maxUint256,
 } from "viem";
 
-import handleError from "./handleError";
-import { initialization, login } from "./onesignal";
+import { login } from "./onesignal";
 import publicClient from "./publicClient";
 
 export default async function createAccountClient({ credentialId, factory, x, y }: Passkey) {
@@ -82,7 +81,7 @@ export default async function createAccountClient({ credentialId, factory, x, y 
     ...standardExecutor,
   });
   setUser({ id: account.address });
-  initialization.then(() => login(account.address)).catch(handleError);
+  login(account.address);
   return createSmartAccountClient({
     chain,
     transport,
