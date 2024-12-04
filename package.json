@@ -29,6 +29,7 @@
     "@alchemy/aa-accounts": "^3.19.0",
     "@alchemy/aa-alchemy": "^3.19.0",
     "@alchemy/aa-core": "^3.19.0",
+    "@coinbase/wallet-sdk": "^4.2.4",
     "@exactly/common": "workspace:^0.0.1",
     "@exactly/lib": "exactly/lib#a8895cd",
     "@exactly/plugin": "workspace:^0.0.1",
@@ -152,6 +153,7 @@
   },
   "pnpm": {
     "overrides": {
+      "@coinbase/wallet-sdk": "$@coinbase/wallet-sdk",
       "@tanstack/react-form": "$@tanstack/react-form",
       "@wagmi/core": "$@wagmi/core",
       "abitype": "$abitype",
