@@ -1,4 +1,5 @@
 import chain, { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
+import shortenHex from "@exactly/common/shortenHex";
 import { Address, Hash, Hex } from "@exactly/common/validation";
 import {
   captureException,
@@ -190,7 +191,7 @@ function scheduleWithdraw(message: string) {
                     userId: account,
                     headings: { en: "Withdraw completed" },
                     contents: {
-                      en: `${formatUnits(amount, decimals)} ${symbol.slice(3)} sent to ${ensName ?? receiver}`,
+                      en: `${formatUnits(amount, decimals)} ${symbol.slice(3)} sent to ${ensName ?? shortenHex(receiver)}`,
                     },
                   }),
                 )
