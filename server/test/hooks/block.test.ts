@@ -1,4 +1,5 @@
 import "../mocks/alchemy";
+import "../mocks/onesignal";
 import "../mocks/redis";
 import "../mocks/sentry";
 

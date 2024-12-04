@@ -1,6 +1,7 @@
 import "../mocks/alchemy";
 import "../mocks/database";
 import "../mocks/deployments";
+import "../mocks/onesignal";
 import "../mocks/sentry";
 
 import { previewerAddress, wethAddress } from "@exactly/common/generated/chain";
