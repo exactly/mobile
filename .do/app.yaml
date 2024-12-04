@@ -74,6 +74,9 @@ services:
       - key: KEEPER_PRIVATE_KEY
         scope: RUN_TIME
         type: SECRET
+      - key: ONESIGNAL_API_KEY
+        scope: RUN_TIME
+        type: SECRET
       - key: PERSONA_API_KEY
         scope: RUN_TIME
         type: SECRET
