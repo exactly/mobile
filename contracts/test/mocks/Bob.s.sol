@@ -88,7 +88,7 @@ contract BobScript is BaseScript {
     );
     vm.stopBroadcast();
     Call[] memory calls = new Call[](3);
-    calls[0] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.repay, (maturity)));
+    calls[0] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.repay, (maturity, 420e6, 420e6)));
     // calls[1] =
     //   Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.crossRepay, (maturity + FixedLib.INTERVAL, exaEXA)));
     calls[2] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, 69e6, address(0x69))));
