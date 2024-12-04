@@ -1,4 +1,4 @@
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import type { Address } from "@exactly/common/validation";
 import { User2 } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
@@ -49,7 +49,7 @@ export default function Contact({
         )}
       </XStack>
       <Text textAlign="right" subHeadline color="$uiNeutralSecondary" fontFamily="$mono">
-        {shortenAddress(address, 7, 7)}
+        {shortenHex(address)}
       </Text>
     </XStack>
   );

@@ -1,5 +1,5 @@
 import chain from "@exactly/common/generated/chain";
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import { User, Calendar, Hash, ExternalLink } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -30,7 +30,7 @@ export default function Details({ hash, onClose }: { hash?: string; onClose: () 
               To
             </Text>
           </XStack>
-          <Text fontFamily="$mono">{shortenAddress(data.receiver ?? "", 7, 7)}</Text>
+          <Text fontFamily="$mono">{shortenHex(data.receiver ?? "")}</Text>
         </XStack>
       )}
       <XStack justifyContent="space-between" alignItems="center">
@@ -59,7 +59,7 @@ export default function Details({ hash, onClose }: { hash?: string; onClose: () 
                 Transaction hash
               </Text>
             </XStack>
-            <Text fontFamily="$mono">{shortenAddress(hash, 7, 7)}</Text>
+            <Text fontFamily="$mono">{shortenHex(hash)}</Text>
           </XStack>
 
           <Button

@@ -1,4 +1,4 @@
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import type { WithdrawActivity } from "@exactly/server/api/activity";
 import { ArrowUpFromLine } from "@tamagui/lucide-icons";
 import React from "react";
@@ -26,7 +26,7 @@ export default function SentActivity({ item }: { item: Omit<WithdrawActivity, "b
             Sent to
             <Text emphasized primary body>
               &nbsp;
-              {shortenAddress(item.receiver, 8, 8)}
+              {shortenHex(item.receiver)}
             </Text>
           </Text>
           <Text title primary color="$uiErrorSecondary">

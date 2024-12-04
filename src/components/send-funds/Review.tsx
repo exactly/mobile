@@ -1,4 +1,4 @@
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import { ArrowRight } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -66,7 +66,7 @@ export default function Review({
               <Image backgroundColor="$backgroundBrand" width={ms(40)} height={ms(40)} borderRadius="$r_0" />
               <YStack>
                 <Text title color="$uiNeutralPrimary" fontFamily="$mono">
-                  {shortenAddress(withdraw?.receiver ?? "", 5, 5)}
+                  {shortenHex(withdraw?.receiver ?? "")}
                 </Text>
                 {isFirstSend && (
                   <Text subHeadline color="$uiNeutralSecondary">

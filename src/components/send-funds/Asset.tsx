@@ -1,5 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import { Address } from "@exactly/common/validation";
 import { ArrowLeft, ArrowRight, User, UserMinus, UserPlus } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -91,7 +91,7 @@ export default function AssetSelection() {
                     To:
                   </Text>
                   <Text emphasized callout color="$uiNeutralPrimary" fontFamily="$mono">
-                    {shortenAddress(withdraw.receiver, 7, 7)}
+                    {shortenHex(withdraw.receiver)}
                   </Text>
                 </XStack>
                 <Button

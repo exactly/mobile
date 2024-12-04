@@ -1,5 +1,5 @@
 import chain from "@exactly/common/generated/chain";
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import { ArrowLeft, Files, Info, Share as ShareIcon } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { setStringAsync } from "expo-clipboard";
@@ -90,7 +90,7 @@ export default function AddCrypto() {
                   >
                     {address && (
                       <Text fontFamily="$mono" fontSize={ms(18)} color="$uiNeutralPrimary" fontWeight="bold">
-                        {shortenAddress(address, 8, 8)}
+                        {shortenHex(address)}
                       </Text>
                     )}
                   </Pressable>

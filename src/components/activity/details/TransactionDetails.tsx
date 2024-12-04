@@ -1,5 +1,5 @@
 import chain from "@exactly/common/generated/chain";
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import { Copy, SquareArrowOutUpRight } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -41,7 +41,7 @@ export default function TransactionDetails() {
               }}
             >
               <Text callout textDecorationLine="underline">
-                {shortenAddress(item.receiver, 7, 7)}
+                {shortenHex(item.receiver)}
               </Text>
               <Copy size={ms(20)} color="$uiNeutralSecondary" />
             </XStack>
@@ -94,7 +94,7 @@ export default function TransactionDetails() {
             }}
           >
             <Text textDecorationLine="underline" callout color="$uiNeutralPrimary">
-              {shortenAddress(item.transactionHash, 7, 7)}
+              {shortenHex(item.transactionHash)}
             </Text>
             <SquareArrowOutUpRight size={ms(20)} color="$uiNeutralSecondary" />
           </XStack>

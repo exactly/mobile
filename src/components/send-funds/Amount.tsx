@@ -1,5 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import { withdrawLimit, WAD } from "@exactly/lib";
 import { ArrowLeft, ArrowRight, Coins, DollarSign, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
@@ -77,7 +77,7 @@ export default function Amount() {
                       To:
                     </Text>
                     <Text emphasized callout color="$uiNeutralPrimary" fontFamily="$mono">
-                      {shortenAddress(withdraw.receiver, 7, 7)}
+                      {shortenHex(withdraw.receiver)}
                     </Text>
                   </XStack>
                 </XStack>

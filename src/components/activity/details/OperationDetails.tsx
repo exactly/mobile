@@ -1,5 +1,5 @@
 import chain from "@exactly/common/generated/chain";
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import type { CreditActivity, DebitActivity, InstallmentsActivity } from "@exactly/server/api/activity";
 import { SquareArrowOutUpRight } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
@@ -36,7 +36,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
             }}
             hitSlop={ms(15)}
           >
-            {shortenAddress(item.id, 8, 8)}
+            {shortenHex(item.id)}
           </Text>
         </XStack>
 
@@ -121,7 +121,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
             }}
           >
             <Text textDecorationLine="underline" callout color="$uiNeutralPrimary">
-              {shortenAddress(item.transactionHash, 7, 7)}
+              {shortenHex(item.transactionHash)}
             </Text>
             <SquareArrowOutUpRight size={ms(20)} color="$uiNeutralSecondary" />
           </XStack>

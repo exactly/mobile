@@ -1,4 +1,4 @@
-import shortenAddress from "@exactly/common/shortenAddress";
+import shortenHex from "@exactly/common/shortenHex";
 import { Eye, EyeOff, Settings } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
@@ -78,7 +78,7 @@ export default function ProfileHeader() {
             >
               <View display="flex" flexDirection="row" alignItems="flex-start">
                 <Text fontSize={ms(17)} lineHeight={ms(23)} fontFamily="$mono">
-                  {shortenAddress(address, 6, 4).toLowerCase()}
+                  {shortenHex(address).toLowerCase()}
                 </Text>
               </View>
             </Pressable>
