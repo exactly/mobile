@@ -1,4 +1,5 @@
 import chain from "@exactly/common/generated/chain";
+import shortenAddress from "@exactly/common/shortenAddress";
 import { ArrowLeft, Files, Info, Share as ShareIcon } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { setStringAsync } from "expo-clipboard";
@@ -12,7 +13,6 @@ import { useAccount } from "wagmi";
 import OptimismImage from "../../assets/images/optimism.svg";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
-import shortenAddress from "../../utils/shortenAddress";
 import AddressDialog from "../shared/AddressDialog";
 import AssetLogo from "../shared/AssetLogo";
 import SafeView from "../shared/SafeView";

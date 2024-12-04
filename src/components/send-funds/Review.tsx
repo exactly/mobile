@@ -1,3 +1,4 @@
+import shortenAddress from "@exactly/common/shortenAddress";
 import { ArrowRight } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
@@ -9,7 +10,6 @@ import { ScrollView, XStack, YStack, Image } from "tamagui";
 import type { WithdrawDetails } from "./Withdraw";
 import assetLogos from "../../utils/assetLogos";
 import type { Withdraw } from "../../utils/queryClient";
-import shortenAddress from "../../utils/shortenAddress";
 import AssetLogo from "../shared/AssetLogo";
 import Button from "../shared/Button";
 import Text from "../shared/Text";

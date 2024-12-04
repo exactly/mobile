@@ -1,4 +1,5 @@
 import chain from "@exactly/common/generated/chain";
+import shortenAddress from "@exactly/common/shortenAddress";
 import type { CreditActivity, DebitActivity, InstallmentsActivity } from "@exactly/server/api/activity";
 import { SquareArrowOutUpRight } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
@@ -10,7 +11,6 @@ import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
 import handleError from "../../../utils/handleError";
-import shortenAddress from "../../../utils/shortenAddress";
 import Text from "../../shared/Text";
 
 export default function OperationDetails({ item }: { item: CreditActivity | DebitActivity | InstallmentsActivity }) {

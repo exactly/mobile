@@ -1,4 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
+import shortenAddress from "@exactly/common/shortenAddress";
 import { withdrawLimit, WAD } from "@exactly/lib";
 import { ArrowLeft, ArrowRight, Coins, DollarSign, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
@@ -15,7 +16,6 @@ import { zeroAddress } from "viem";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
-import shortenAddress from "../../utils/shortenAddress";
 import useMarketAccount from "../../utils/useMarketAccount";
 import AmountSelector from "../shared/AmountSelector";
 import Button from "../shared/Button";

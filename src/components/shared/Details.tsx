@@ -1,4 +1,5 @@
 import chain from "@exactly/common/generated/chain";
+import shortenAddress from "@exactly/common/shortenAddress";
 import { User, Calendar, Hash, ExternalLink } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -14,7 +15,6 @@ import Text from "./Text";
 import View from "./View";
 import handleError from "../../utils/handleError";
 import type { Withdraw } from "../../utils/queryClient";
-import shortenAddress from "../../utils/shortenAddress";
 
 export default function Details({ hash, onClose }: { hash?: string; onClose: () => void }) {
   const { data } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });

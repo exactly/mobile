@@ -1,3 +1,4 @@
+import shortenAddress from "@exactly/common/shortenAddress";
 import { Eye, EyeOff, Settings } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +14,6 @@ import AddressDialog from "./AddressDialog";
 import alchemyConnector from "../../utils/alchemyConnector";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
-import shortenAddress from "../../utils/shortenAddress";
 import Text from "../shared/Text";
 import View from "../shared/View";
 

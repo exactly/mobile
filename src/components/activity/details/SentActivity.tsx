@@ -1,3 +1,4 @@
+import shortenAddress from "@exactly/common/shortenAddress";
 import type { WithdrawActivity } from "@exactly/server/api/activity";
 import { ArrowUpFromLine } from "@tamagui/lucide-icons";
 import React from "react";
@@ -6,7 +7,6 @@ import { Square, XStack, YStack } from "tamagui";
 
 import TransactionDetails from "./TransactionDetails";
 import assetLogos from "../../../utils/assetLogos";
-import shortenAddress from "../../../utils/shortenAddress";
 import AssetLogo from "../../shared/AssetLogo";
 import Text from "../../shared/Text";
 

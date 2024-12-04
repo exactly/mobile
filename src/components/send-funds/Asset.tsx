@@ -1,4 +1,5 @@
 import { previewerAddress } from "@exactly/common/generated/chain";
+import shortenAddress from "@exactly/common/shortenAddress";
 import { Address } from "@exactly/common/validation";
 import { ArrowLeft, ArrowRight, User, UserMinus, UserPlus } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +14,6 @@ import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
-import shortenAddress from "../../utils/shortenAddress";
 import AssetSelector from "../shared/AssetSelector";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";

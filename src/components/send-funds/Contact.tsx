@@ -1,3 +1,4 @@
+import shortenAddress from "@exactly/common/shortenAddress";
 import type { Address } from "@exactly/common/validation";
 import { User2 } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
@@ -6,7 +7,6 @@ import { Alert } from "react-native";
 import { XStack } from "tamagui";
 
 import handleError from "../../utils/handleError";
-import shortenAddress from "../../utils/shortenAddress";
 import Text from "../shared/Text";
 import View from "../shared/View";
 

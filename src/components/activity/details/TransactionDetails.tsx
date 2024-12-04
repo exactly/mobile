@@ -1,4 +1,5 @@
 import chain from "@exactly/common/generated/chain";
+import shortenAddress from "@exactly/common/shortenAddress";
 import { Copy, SquareArrowOutUpRight } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -12,7 +13,6 @@ import { Separator, XStack, YStack } from "tamagui";
 import OptimismImage from "../../../assets/images/optimism.svg";
 import handleError from "../../../utils/handleError";
 import type { ActivityItem } from "../../../utils/queryClient";
-import shortenAddress from "../../../utils/shortenAddress";
 import Text from "../../shared/Text";
 
 export default function TransactionDetails() {
