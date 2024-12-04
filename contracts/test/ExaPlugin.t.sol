@@ -775,11 +775,35 @@ contract ExaPluginTest is ForkTest {
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 100e6);
+    uint256 positionAssets = position.principal + position.fee;
+
     vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity)));
+    account.execute(
+      address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity, positionAssets, positionAssets + 1))
+    );
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 0);
+  }
+
+  function test_repay_partiallyRepays() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 100e6);
+    uint256 positionAssets = position.principal + position.fee;
+
+    vm.startPrank(owner);
+    account.execute(
+      address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity, positionAssets / 2, positionAssets / 2))
+    );
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 50e6);
+    assertEq(position.principal + position.fee, positionAssets / 2);
   }
 
   function test_repay_repays_whenKeeper() external {
@@ -790,31 +814,29 @@ contract ExaPluginTest is ForkTest {
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 100e6);
-    account.repay(maturity);
+    uint256 positionAssets = position.principal + position.fee;
 
+    account.repay(maturity, positionAssets, positionAssets + 1);
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 0);
   }
 
-  function test_repay_partiallyRepays() external {
+  function test_repay_partiallyRepays_whenKeeper() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
-    account.poke(exaEXA);
     uint256 maturity = FixedLib.INTERVAL;
-    account.collectCredit(maturity, 100_000e6 + 1, block.timestamp, _issuerOp(100_000e6 + 1, block.timestamp));
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    uint256 prevPrincipal = position.principal;
-    assertGt(prevPrincipal, 0);
+    assertEq(position.principal, 100e6);
+    uint256 positionAssets = position.principal + position.fee;
 
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity)));
+    account.repay(maturity, positionAssets / 2, positionAssets / 2);
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertGt(prevPrincipal, position.principal, "fixed debt didn't decrease");
-    assertGt(position.principal, 0, "fixed debt is zero");
+    assertEq(position.principal, 50e6);
+    assertEq(position.principal + position.fee, positionAssets / 2);
   }
 
   function test_crossRepay_repays() external {
