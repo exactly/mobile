@@ -1,6 +1,7 @@
+import fixedRate from "@exactly/common/fixedRate";
 import { previewerAddress, exaPluginAddress, marketUSDCAddress } from "@exactly/common/generated/chain";
 import { Address, Hash, type Hex } from "@exactly/common/validation";
-import { effectiveRate, ONE_YEAR, WAD } from "@exactly/lib";
+import { effectiveRate, WAD } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser } from "@sentry/node";
 import { eq } from "drizzle-orm";
@@ -221,12 +222,11 @@ const CardActivity = object({
   hash: Hash,
 });
 
-function fixedRate({ maturity, assets, fee }: InferOutput<typeof Borrow>, timestamp: bigint) {
-  return ((((assets + fee) * WAD) / assets - WAD) * ONE_YEAR) / (maturity - timestamp);
-}
-
 function transformBorrow(borrow: InferOutput<typeof Borrow>, timestamp: bigint) {
-  return { fee: Number(borrow.fee) / 1e6, rate: Number(fixedRate(borrow, timestamp)) / 1e18 };
+  return {
+    fee: Number(borrow.fee) / 1e6,
+    rate: Number(fixedRate(borrow.maturity, borrow.assets, borrow.fee, timestamp)) / 1e18,
+  };
 }
 
 function transformCard({ operation_id, data, hash }: InferOutput<typeof CardActivity>) {
@@ -281,7 +281,7 @@ export const InstallmentsActivity = pipe(
               events.reduce((sum, { assets }) => sum + assets, 0n),
               Number(events[0]!.maturity), // eslint-disable-line @typescript-eslint/no-non-null-assertion
               events.map(({ assets, fee }) => assets + fee),
-              events.map((borrow) => fixedRate(borrow, timestamp)),
+              events.map((borrow) => fixedRate(borrow.maturity, borrow.assets, borrow.fee, timestamp)),
               Number(timestamp),
             ),
           ) / 1e18,
