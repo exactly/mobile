@@ -9,12 +9,15 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack } from "tamagui";
 
+import handleError from "../../utils/handleError";
+import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function NextPayment() {
+  const { presentArticle } = useIntercom();
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   const { market: USDCMarket } = useMarketAccount(marketUSDCAddress);
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
@@ -54,10 +57,9 @@ export default function NextPayment() {
                   </Text>
                 </Text>
                 <Pressable
-                  // TODO implement
-                  // onPress={() => {
-                  //   presentContent("9994746").catch(handleError);
-                  // }}
+                  onPress={() => {
+                    presentArticle("10245778").catch(handleError);
+                  }}
                   hitSlop={ms(15)}
                 >
                   <Info size={16} color="$uiNeutralPrimary" />
