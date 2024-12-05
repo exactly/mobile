@@ -1,6 +1,7 @@
 import { Passkey } from "@exactly/common/validation";
 import { ArrowRight } from "@tamagui/lucide-icons";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { canAddCard } from "expo-in-app-provisioning";
 import { router } from "expo-router";
 import React, { type FC, useCallback, useEffect, useRef, useState } from "react";
 import type { StyleProp, ViewStyle, ViewToken } from "react-native";
@@ -133,6 +134,8 @@ export default function Carousel() {
     };
   }, [activeIndex, progress, scrollToNextPage]);
 
+  const { data: card } = useQuery({ queryKey: ["provisioning", "canAddCard"], queryFn: () => canAddCard() });
+
   return (
     <View fullScreen>
       <View flexGrow={1} justifyContent="center" flexShrink={1}>
@@ -186,6 +189,8 @@ export default function Carousel() {
               )}
             </View>
           </View>
+
+          <Text>{`canAddCard ${card}`}</Text>
 
           <View alignItems="stretch" alignSelf="stretch" gap="$s5">
             <View flexDirection="row" alignSelf="stretch">

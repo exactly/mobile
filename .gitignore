@@ -9,6 +9,7 @@ web-build/
 /android/
 /ios/
 generated/
+*.xcassets
 
 *.orig.*
 *.jks

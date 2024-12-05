@@ -15,6 +15,7 @@
     ".expo/types/**/*.ts",
     "common/**/*.ts",
     "expo-env.d.ts",
+    "modules/**/*.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/index.js",

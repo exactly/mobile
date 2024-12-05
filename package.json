@@ -62,6 +62,7 @@
     "expo-camera": "^16.0.9",
     "expo-clipboard": "~7.0.0",
     "expo-font": "~13.0.1",
+    "expo-in-app-provisioning": "bold-org/expo-in-app-provisioning",
     "expo-insights": "~0.8.1",
     "expo-linear-gradient": "~14.0.1",
     "expo-linking": "~7.0.3",
