@@ -125,7 +125,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         )
       )
     );
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
+    _executeFromSender(
       address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(this), EXA_USDC.previewWithdraw(maxRepay)))
     );
     _flashLoan(maxRepay, data);
@@ -156,9 +156,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         )
       )
     );
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn))
-    );
+    _executeFromSender(address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn)));
     _flashLoan(maxRepay, data);
   }
 
@@ -167,11 +165,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     returns (uint256 amountOut)
   {
     uint256 balance = assetOut.balanceOf(msg.sender);
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(assetIn), 0, abi.encodeCall(IERC20.approve, (LIFI, amountIn))
-    );
+    _executeFromSender(address(assetIn), 0, abi.encodeCall(IERC20.approve, (LIFI, amountIn)));
 
-    IPluginExecutor(msg.sender).executeFromPluginExternal(LIFI, 0, route);
+    _executeFromSender(LIFI, 0, route);
 
     amountOut = assetOut.balanceOf(msg.sender) - balance;
     if (amountOut < minOut) revert Disagreement();
@@ -184,10 +180,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 maxBorrowAssets,
     uint256 percentage
   ) external {
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(DEBT_MANAGER), maxRepayAssets))
-    );
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
+    _executeFromSender(address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(DEBT_MANAGER), maxRepayAssets)));
+    _executeFromSender(
       address(DEBT_MANAGER),
       0,
       abi.encodeCall(
@@ -209,7 +203,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   ) public {
     _checkIssuer(msg.sender, amount, timestamp, signature);
 
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
+    _executeFromSender(
       address(EXA_USDC),
       0,
       abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, maxRepay, collector, msg.sender))
@@ -219,9 +213,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external {
     _checkIssuer(msg.sender, amount, timestamp, signature);
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender))
-    );
+    _executeFromSender(address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender)));
     _checkLiquidity(msg.sender);
   }
 
@@ -248,9 +240,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       )
     );
     _checkIssuer(msg.sender, amount, timestamp, signature);
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn))
-    );
+    _executeFromSender(address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn)));
     _flashLoan(amount, data);
   }
 
@@ -267,10 +257,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     }
     ISSUER_CHECKER.checkIssuer(msg.sender, totalAmount, timestamp, signature);
 
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(INSTALLMENTS_ROUTER), maxRepay))
-    );
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
+    _executeFromSender(address(EXA_USDC), 0, abi.encodeCall(IERC20.approve, (address(INSTALLMENTS_ROUTER), maxRepay)));
+    _executeFromSender(
       address(INSTALLMENTS_ROUTER),
       0,
       abi.encodeCall(IInstallmentsRouter.borrow, (EXA_USDC, firstMaturity, amounts, maxRepay, collector))
@@ -284,15 +272,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (balance == 0) revert NoBalance();
 
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market.asset()), 0, abi.encodeCall(IERC20.approve, (address(market), balance))
-    );
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(market), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender))
-    );
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market))
-    );
+    _executeFromSender(market.asset(), 0, abi.encodeCall(IERC20.approve, (address(market), balance)));
+    _executeFromSender(address(market), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender)));
+    _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
   }
 
   function pokeETH() external {
@@ -301,17 +283,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (balance == 0) revert NoBalance();
 
     address weth = EXA_WETH.asset();
-    IPluginExecutor(msg.sender).executeFromPluginExternal(weth, balance, abi.encodeCall(WETH.deposit, ()));
-
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      weth, 0, abi.encodeCall(IERC20.approve, (address(EXA_WETH), balance))
-    );
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(EXA_WETH), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender))
-    );
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (EXA_WETH))
-    );
+    _executeFromSender(weth, balance, abi.encodeCall(WETH.deposit, ()));
+    _executeFromSender(weth, 0, abi.encodeCall(IERC20.approve, (address(EXA_WETH), balance)));
+    _executeFromSender(address(EXA_WETH), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender)));
+    _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (EXA_WETH)));
   }
 
   function withdraw() external {
@@ -320,15 +295,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (market == address(0)) revert NoProposal();
 
     if (market != address(EXA_WETH)) {
-      IPluginExecutor(msg.sender).executeFromPluginExternal(
-        market, 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, proposal.receiver, msg.sender))
-      );
+      _executeFromSender(market, 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, proposal.receiver, msg.sender)));
       return;
     }
     uint256 amount = proposal.amount;
-    IPluginExecutor(msg.sender).executeFromPluginExternal(
-      market, 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), msg.sender))
-    );
+    _executeFromSender(market, 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), msg.sender)));
     WETH(payable(EXA_WETH.asset())).withdraw(amount);
     proposal.receiver.safeTransferETH(amount);
   }
@@ -689,6 +660,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     amountOut = assetOut.balanceOf(address(this)) - balance;
     if (amountOut < minOut) revert Disagreement();
+  }
+
+  function _executeFromSender(address target, uint256 value, bytes memory data) internal {
+    IPluginExecutor(msg.sender).executeFromPluginExternal(target, value, data);
   }
 
   function supportsInterface(bytes4 interfaceId) public view override(AccessControl, BasePlugin) returns (bool) {
