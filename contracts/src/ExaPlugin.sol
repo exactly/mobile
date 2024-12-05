@@ -228,7 +228,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IMarket collateral,
     uint256 amountIn,
     uint256 timestamp,
-    bytes memory route,
+    bytes calldata route,
     bytes calldata signature
   ) external {
     bytes memory data = _hash(
@@ -581,7 +581,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     metadata.author = AUTHOR;
   }
 
-  function receiveFlashLoan(IERC20[] memory, uint256[] memory, uint256[] memory, bytes calldata data) external {
+  function receiveFlashLoan(IERC20[] calldata, uint256[] calldata, uint256[] calldata, bytes calldata data) external {
     // slither-disable-next-line incorrect-equality -- hash comparison
     assert(msg.sender == address(BALANCER_VAULT) && callHash == keccak256(data));
     delete callHash;
