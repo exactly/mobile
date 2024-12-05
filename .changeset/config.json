@@ -4,5 +4,6 @@
   "baseBranch": "origin/main",
   "access": "restricted",
   "privatePackages": { "version": true, "tag": true },
+  "changedFilePatterns": ["**", "!pnpm-lock.yaml", "!package.json", "!CHANGELOG.md"],
   "commit": "./commit.js"
 }
