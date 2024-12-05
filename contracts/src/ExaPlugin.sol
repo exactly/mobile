@@ -105,7 +105,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
   }
 
-  function propose(IMarket market, uint256 amount, address receiver) external onlyMarket(market) {
+  function propose(IMarket market, uint256 amount, address receiver) external {
+    _checkMarket(market);
     proposals[msg.sender] = Proposal({ amount: amount, market: market, timestamp: block.timestamp, receiver: receiver });
     emit Proposed(msg.sender, market, receiver, amount, block.timestamp + PROPOSAL_DELAY);
   }
@@ -137,7 +138,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IMarket collateral,
     uint256 amountIn,
     bytes calldata route
-  ) external onlyMarket(collateral) {
+  ) external {
+    _checkMarket(collateral);
     bytes memory data = _hash(
       abi.encodePacked(
         bytes1(0x02),
@@ -204,7 +206,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 maxRepay,
     uint256 timestamp,
     bytes calldata signature
-  ) public onlyIssuer(amount, timestamp, signature) {
+  ) public {
+    _checkIssuer(msg.sender, amount, timestamp, signature);
+
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC),
       0,
@@ -213,10 +217,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _checkLiquidity(msg.sender);
   }
 
-  function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature)
-    external
-    onlyIssuer(amount, timestamp, signature)
-  {
+  function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external {
+    _checkIssuer(msg.sender, amount, timestamp, signature);
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(EXA_USDC), 0, abi.encodeCall(IERC4626.withdraw, (amount, collector, msg.sender))
     );
@@ -245,7 +247,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         )
       )
     );
-    ISSUER_CHECKER.checkIssuer(msg.sender, amount, timestamp, signature);
+    _checkIssuer(msg.sender, amount, timestamp, signature);
     IPluginExecutor(msg.sender).executeFromPluginExternal(
       address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn))
     );
@@ -276,7 +278,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _checkLiquidity(msg.sender);
   }
 
-  function poke(IMarket market) external onlyMarket(market) {
+  function poke(IMarket market) external {
+    _checkMarket(market);
     uint256 balance = IERC20(market.asset()).balanceOf(msg.sender);
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (balance == 0) revert NoBalance();
@@ -649,6 +652,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     }
   }
 
+  function _checkIssuer(address issuer, uint256 amount, uint256 timestamp, bytes calldata signature) internal {
+    ISSUER_CHECKER.checkIssuer(issuer, amount, timestamp, signature);
+  }
+
   function _checkMarket(IMarket market) internal view {
     if (!_isMarket(market)) revert NotMarket();
   }
@@ -682,16 +689,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
     amountOut = assetOut.balanceOf(address(this)) - balance;
     if (amountOut < minOut) revert Disagreement();
-  }
-
-  modifier onlyMarket(IMarket market) {
-    _checkMarket(market);
-    _;
-  }
-
-  modifier onlyIssuer(uint256 amount, uint256 timestamp, bytes calldata signature) {
-    ISSUER_CHECKER.checkIssuer(msg.sender, amount, timestamp, signature);
-    _;
   }
 
   function supportsInterface(bytes4 interfaceId) public view override(AccessControl, BasePlugin) returns (bool) {
