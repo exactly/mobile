@@ -33,7 +33,7 @@ import View from "../shared/View";
 
 export default function Card() {
   const theme = useTheme();
-  const { presentContent } = useIntercom();
+  const { presentArticle } = useIntercom();
   const [cardDetailsOpen, setCardDetailsOpen] = useState(false);
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   function toggle() {
@@ -161,7 +161,7 @@ export default function Card() {
                     </Pressable>
                     <Pressable
                       onPress={() => {
-                        presentContent("9994746").catch(handleError);
+                        presentArticle("9994746").catch(handleError);
                       }}
                       hitSlop={ms(15)}
                     >

@@ -15,6 +15,7 @@ import UpcomingPayments from "./UpcomingPayments";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -22,6 +23,7 @@ import View from "../shared/View";
 
 export default function Payments() {
   const theme = useTheme();
+  const { presentArticle } = useIntercom();
   const [paySheetOpen, setPaySheetOpen] = useState(false);
   const { market, account } = useMarketAccount(marketUSDCAddress);
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
@@ -75,10 +77,9 @@ export default function Payments() {
                       )}
                     </Pressable>
                     <Pressable
-                      // TODO implement
-                      // onPress={() => {
-                      //   presentContent("9994746").catch(handleError);
-                      // }}
+                      onPress={() => {
+                        presentArticle("10245778").catch(handleError);
+                      }}
                       hitSlop={ms(15)}
                     >
                       <CircleHelp size={24} color="$uiNeutralPrimary" />

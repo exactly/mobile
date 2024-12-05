@@ -10,6 +10,8 @@ import { ms } from "react-native-size-matters";
 import { Sheet, XStack } from "tamagui";
 import { nonEmpty, pipe, safeParse, string } from "valibot";
 
+import handleError from "../../utils/handleError";
+import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -17,6 +19,7 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function PaymentSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { presentArticle } = useIntercom();
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   const { market: USDCMarket } = useMarketAccount(marketUSDCAddress);
   const { maturity: currentMaturity } = useLocalSearchParams();
@@ -76,10 +79,9 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
                     </Text>
                   </Text>
                   <Pressable
-                    // TODO implement
-                    // onPress={() => {
-                    //   presentContent("9994746").catch(handleError);
-                    // }}
+                    onPress={() => {
+                      presentArticle("10245778").catch(handleError);
+                    }}
                     hitSlop={ms(15)}
                   >
                     <Info size={16} color="$uiNeutralPrimary" />

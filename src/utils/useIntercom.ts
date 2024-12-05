@@ -7,7 +7,7 @@ import handleError from "./handleError";
 
 const appId = process.env.EXPO_PUBLIC_INTERCOM_APP_ID;
 
-const { login, present, presentContent } = (
+const { login, present, presentArticle } = (
   Platform.OS === "web"
     ? () => {
         const { Intercom, showArticle, showSpace } = require("@intercom/messenger-js-sdk") as typeof IntercomWeb; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
@@ -21,7 +21,7 @@ const { login, present, presentContent } = (
             showSpace("home");
             return Promise.resolve(true);
           },
-          presentContent: (articleId: string) => {
+          presentArticle: (articleId: string) => {
             showArticle(articleId);
             return Promise.resolve(true);
           },
@@ -37,7 +37,7 @@ const { login, present, presentContent } = (
           login: (userId: string) =>
             appId ? Intercom.loginUserWithUserAttributes({ userId }) : Promise.resolve(false),
           present: () => Intercom.presentSpace(Space.home),
-          presentContent: (articleId: string) =>
+          presentArticle: (articleId: string) =>
             Intercom.presentContent(IntercomContent.articleWithArticleId(articleId)),
         };
       }
@@ -49,5 +49,5 @@ export default function useIntercom(userId?: string) {
     if (!userId || loggedIn) return;
     login(userId).then(setLoggedIn).catch(handleError);
   }, [userId, loggedIn]);
-  return { loggedIn, present, presentContent };
+  return { loggedIn, present, presentArticle };
 }
