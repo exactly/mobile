@@ -59,7 +59,7 @@ importers:
         specifier: ^3.19.0
         version: 3.19.0(typescript@5.7.2)(viem@2.21.54(bufferutil@4.0.8)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.23.8))
       '@exactly/common':
-        specifier: workspace:^0.0.1
+        specifier: workspace:^0.0.2
         version: link:common
       '@exactly/lib':
         specifier: exactly/lib#a8895cd
@@ -68,7 +68,7 @@ importers:
         specifier: workspace:^0.0.1
         version: link:contracts
       '@exactly/server':
-        specifier: workspace:^0.0.1
+        specifier: workspace:^0.0.2
         version: link:server
       '@expo/metro-runtime':
         specifier: ~4.0.0
@@ -557,7 +557,7 @@ importers:
         specifier: ^0.2.14
         version: 0.2.14
       '@exactly/common':
-        specifier: workspace:^0.0.1
+        specifier: workspace:^0.0.2
         version: link:../common
       '@exactly/plugin':
         specifier: workspace:^0.0.1
