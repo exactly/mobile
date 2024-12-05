@@ -1,6 +1,7 @@
 import { Passkey } from "@exactly/common/validation";
 import { ArrowRight } from "@tamagui/lucide-icons";
 import { useMutation } from "@tanstack/react-query";
+import { canAddCard } from "expo-in-app-provisioning";
 import { router } from "expo-router";
 import React, { type FC, useCallback, useEffect, useRef, useState } from "react";
 import type { StyleProp, ViewStyle, ViewToken } from "react-native";
@@ -19,6 +20,7 @@ import { useConnect } from "wagmi";
 
 import ListItem from "./ListItem";
 import Pagination from "./Pagination";
+import ExpoCardMode from "../../../modules/widget";
 import calendarBlob from "../../assets/images/calendar-blob.svg";
 import calendar from "../../assets/images/calendar.svg";
 import earningsBlob from "../../assets/images/earnings-blob.svg";
@@ -133,6 +135,13 @@ export default function Carousel() {
     };
   }, [activeIndex, progress, scrollToNextPage]);
 
+  const [card, setCard] = useState<boolean | undefined | null>(null);
+
+  useEffect(() => {
+    console.log("ExpoCardMode", 420);
+    ExpoCardMode.set("index", "420", "group.app.exactly");
+  }, []);
+
   return (
     <View fullScreen>
       <View flexGrow={1} justifyContent="center" flexShrink={1}>
@@ -187,7 +196,24 @@ export default function Carousel() {
             </View>
           </View>
 
+          <Text>{`canAddCard ${card}`}</Text>
+
           <View alignItems="stretch" alignSelf="stretch" gap="$s5">
+            <View flexDirection="row" alignSelf="stretch">
+              <ActionButton
+                onPress={() => {
+                  canAddCard()
+                    .then((canAdd) => {
+                      console.log("canAddCard", canAdd);
+                      setCard(canAdd);
+                    })
+                    .catch(handleError);
+                }}
+              >
+                Can add card?
+              </ActionButton>
+            </View>
+
             <View flexDirection="row" alignSelf="stretch">
               <ActionButton
                 isLoading={isPending || isConnecting}
