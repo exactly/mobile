@@ -56,6 +56,7 @@ export default {
     supportsTablet: false,
     buildNumber: String(versionCode),
     infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
       NSCameraUsageDescription: "This app uses the camera to verify your identity.",
       NSLocationWhenInUseUsageDescription: "This app uses your location to verify your identity.",
     },
