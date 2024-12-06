@@ -3,9 +3,12 @@ import domain from "@exactly/common/domain";
 import { Address, Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser } from "@sentry/node";
-import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
+import {
+  type AuthenticatorTransportFuture,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
+} from "@simplewebauthn/server";
 import { generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
