@@ -41,7 +41,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
 import keeper from "../utils/keeper";
-import webhookKey, { collector } from "../utils/panda";
+import key, { collector } from "../utils/panda";
 import publicClient from "../utils/publicClient";
 import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
@@ -90,7 +90,7 @@ export default new Hono().post(
   vValidator("header", v.object({ signature: v.string() }), async (r, c) => {
     if (!r.success) return c.text("bad request", 400);
     return r.output.signature ===
-      createHmac("sha256", webhookKey)
+      createHmac("sha256", key)
         .update(Buffer.from(await c.req.arrayBuffer()))
         .digest("hex")
       ? undefined

@@ -27,6 +27,7 @@ import { issuerCheckerAbi } from "../../generated/contracts";
 import app from "../../hooks/panda";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
+import key from "../../utils/panda";
 import publicClient from "../../utils/publicClient";
 import traceClient from "../../utils/traceClient";
 
@@ -89,9 +90,7 @@ const callFrame = {
 } as const;
 
 function sign(json: string) {
-  return createHmac("sha256", process.env.PANDA_WEBHOOK_KEY ?? "")
-    .update(Buffer.from(json))
-    .digest("hex");
+  return createHmac("sha256", key).update(Buffer.from(json)).digest("hex");
 }
 
 async function collectorBalance() {

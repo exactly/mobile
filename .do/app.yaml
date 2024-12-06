@@ -78,6 +78,12 @@ services:
         scope: RUN_TIME
       - key: SEGMENT_WRITE_KEY
         scope: RUN_TIME
+      - key: PANDA_API_KEY
+        scope: RUN_TIME
+      - key: PANDA_API_URL
+        scope: RUN_TIME
+      - key: PANDA_COLLECTOR
+        scope: RUN_TIME
 databases:
   - name: postgres
     cluster_name: exactly-postgres
