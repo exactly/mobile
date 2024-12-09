@@ -14,7 +14,13 @@ export default function ActionButton({
       main
       spaced
       {...rest}
-      iconAfter={isLoading ? <Spinner color="$interactiveOnBaseBrandDefault" /> : rest.iconAfter}
+      iconAfter={
+        isLoading ? (
+          <Spinner color={isLoading ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandDefault"} />
+        ) : (
+          rest.iconAfter
+        )
+      }
     >
       {isLoading ? loadingContent : (rest.children ?? rest.content)}
     </Button>
