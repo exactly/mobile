@@ -366,6 +366,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
         uint256 shares;
         (shares, receiver, owner) = abi.decode(callData[136:], (uint256, address, address));
         assets = target.convertToAssets(shares);
+      } else if (selector == IMarket.borrow.selector) {
+        (, receiver,) = abi.decode(callData[136:], (uint256, address, address));
+        if (receiver != collector) revert Unauthorized();
+        return "";
+      } else if (selector == IMarket.borrowAtMaturity.selector) {
+        (,,, receiver,) = abi.decode(callData[136:], (uint256, uint256, uint256, address, address));
+        if (receiver != collector) revert Unauthorized();
+        return "";
       } else {
         return "";
       }
