@@ -540,6 +540,40 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(auditor), 0, abi.encodeCall(IAuditor.exitMarket, exaEXA));
   }
 
+  function test_borrow_reverts_withUnauthorized_whenReceiverNotCollector() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.execute(address(exaUSDC), 0, abi.encodeCall(IMarket.borrow, (100e6, owner, owner)));
+  }
+
+  function test_borrowAtMaturity_reverts_withUnauthorized_whenReceiverNotCollector() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.execute(
+      address(exaUSDC), 0, abi.encodeCall(IMarket.borrowAtMaturity, (FixedLib.INTERVAL, 100e6, 100e6, owner, owner))
+    );
+  }
+
   function test_withdraw_transfersAsset_asOwner() external {
     uint256 amount = 100 ether;
     address receiver = address(0x420);
