@@ -1,5 +1,5 @@
 import { Passkey } from "@exactly/common/validation";
-import { ArrowRight } from "@tamagui/lucide-icons";
+import { Key } from "@tamagui/lucide-icons";
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { type FC, useCallback, useEffect, useRef, useState } from "react";
@@ -153,7 +153,6 @@ export default function Carousel() {
           contentContainerStyle={containerStyle}
         />
       </View>
-
       <View
         padded
         flexGrow={1}
@@ -166,7 +165,6 @@ export default function Carousel() {
           <View flexDirection="row" justifyContent="center">
             <Pagination length={pages.length} x={offsetX} progress={progress} />
           </View>
-
           <View flexDirection="column" gap="$s5">
             <Text emphasized title brand centered>
               {title}
@@ -186,32 +184,33 @@ export default function Carousel() {
               )}
             </View>
           </View>
-
           <View alignItems="stretch" alignSelf="stretch" gap="$s5">
             <View flexDirection="row" alignSelf="stretch">
               <ActionButton
+                disabled={isPending || isConnecting}
                 isLoading={isPending || isConnecting}
                 loadingContent="Logging in..."
                 onPress={() => {
-                  recoverAccount();
+                  if (isPending || isConnecting) return;
+                  router.push("../onboarding/(passkeys)/passkeys");
                 }}
-                iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
+                iconAfter={<Key color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
               >
-                Log in
+                Create an account
               </ActionButton>
             </View>
-
             <View flexDirection="row" justifyContent="center">
               <Pressable
                 hitSlop={ms(15)}
                 onPress={() => {
-                  router.push("../onboarding/(passkeys)/passkeys");
+                  if (isPending) return;
+                  recoverAccount();
                 }}
               >
                 <Text fontSize={ms(13)} textAlign="center" color="$uiNeutralSecondary">
-                  New here?&nbsp;
+                  Already have an account?&nbsp;
                   <Text emphasized color="$interactiveBaseBrandDefault">
-                    Create an account
+                    Log in
                   </Text>
                 </Text>
               </Pressable>

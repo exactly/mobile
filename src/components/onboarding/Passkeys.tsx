@@ -80,7 +80,6 @@ export default function Passkeys() {
               <PasskeysImage width="100%" height="100%" />
             </View>
           </View>
-
           <View gap="$s5" justifyContent="center">
             <Text emphasized title brand centered>
               A secure and easy way to access your account
@@ -91,7 +90,6 @@ export default function Passkeys() {
             </Text>
           </View>
         </View>
-
         <View alignItems="stretch" alignSelf="stretch">
           <View flexDirection="row" alignSelf="stretch" justifyContent="center">
             <Text fontSize={ms(11)} color="$uiNeutralPlaceholder">
@@ -101,7 +99,6 @@ export default function Passkeys() {
               Terms & Conditions
             </Text>
           </View>
-
           <View>
             <View flexDirection="row" alignSelf="stretch">
               <ActionButton
@@ -110,7 +107,13 @@ export default function Passkeys() {
                 marginBottom="$s5"
                 isLoading={isPending || isConnecting}
                 loadingContent="Creating account..."
-                iconAfter={<Key size={ms(20)} color="$interactiveOnBaseBrandDefault" fontWeight="bold" />}
+                iconAfter={
+                  <Key
+                    size={ms(20)}
+                    color={isPending ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandDefault"}
+                    fontWeight="bold"
+                  />
+                }
                 disabled={isPending}
                 onPress={() => {
                   createAccount();
@@ -119,7 +122,6 @@ export default function Passkeys() {
                 Set passkey and create account
               </ActionButton>
             </View>
-
             <View flexDirection="row" justifyContent="center">
               <Pressable onPress={learnMore}>
                 <Text textAlign="center" fontSize={ms(13)} fontWeight="bold" color="$interactiveBaseBrandDefault">
