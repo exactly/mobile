@@ -115,7 +115,7 @@ export default function Carousel() {
     onSuccess(passkey) {
       queryClient.setQueryData<Passkey>(["passkey"], parse(Passkey, passkey));
       connect({ connector: alchemyConnector });
-      router.replace("/(home)");
+      router.replace("/(app)/(home)");
     },
   });
 

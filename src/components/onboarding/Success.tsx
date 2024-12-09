@@ -35,7 +35,7 @@ export default function Success() {
               marginTop="$s4"
               marginBottom="$s5"
               onPress={() => {
-                router.replace("/(app)");
+                router.replace("/(app)/(home)");
               }}
               iconAfter={<ArrowRight color="$interactiveOnBaseBrandDefault" />}
             >

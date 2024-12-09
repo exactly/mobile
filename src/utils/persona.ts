@@ -14,11 +14,11 @@ export function createInquiry(passkey: Passkey) {
     .referenceId(passkey.credentialId)
     .onCanceled(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
-      router.replace("/(home)");
+      router.replace("/(app)/(home)");
     })
     .onComplete(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
-      router.replace("/(home)");
+      router.replace("/(app)/(home)");
     })
     .onError(handleError)
     .build()
@@ -30,11 +30,11 @@ export function resumeInquiry(inquiryId: string, sessionToken: string) {
     .sessionToken(sessionToken)
     .onCanceled(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
-      router.replace("/(home)");
+      router.replace("/(app)/(home)");
     })
     .onComplete(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
-      router.replace("/(home)");
+      router.replace("/(app)/(home)");
     })
     .build()
     .start();
