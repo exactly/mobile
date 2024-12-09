@@ -4,9 +4,12 @@ import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
 import { Address, Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser } from "@sentry/node";
-import { generateRegistrationOptions, verifyRegistrationResponse } from "@simplewebauthn/server";
+import {
+  type AuthenticatorTransportFuture,
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+} from "@simplewebauthn/server";
 import { cose, generateChallenge, isoBase64URL } from "@simplewebauthn/server/helpers";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
 import { any, array, check, literal, nullish, object, optional, parse, pipe, string, transform } from "valibot";
