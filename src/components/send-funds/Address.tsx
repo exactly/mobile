@@ -114,7 +114,7 @@ export default function AddressSelection() {
             </Field>
 
             {(recentContacts ?? savedContacts) && (
-              <ScrollView maxHeight={350} space="$s4">
+              <ScrollView maxHeight={350} gap="$s4">
                 {recentContacts && recentContacts.length > 0 && (
                   <RecentContacts
                     onContactPress={(address) => {
