@@ -9,7 +9,6 @@ import assetLogos from "../../../utils/assetLogos";
 import AssetLogo from "../../shared/AssetLogo";
 import Text from "../../shared/Text";
 
-// TODO review prop type
 export default function RepayActivity({ item }: { item: Omit<RepayActivityType, "blockNumber"> }) {
   const { amount, usdAmount, currency } = item;
   return (
