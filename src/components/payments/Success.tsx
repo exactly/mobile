@@ -91,20 +91,11 @@ export default function Success({
                       })}
                     </Text>
                     <XStack gap="$s2" alignItems="center">
-                      {currency === "USDC" ? (
-                        <Text emphasized secondary subHeadline>
-                          {Number(amount).toLocaleString(undefined, {
-                            maximumFractionDigits: 8,
-                            minimumFractionDigits: 0,
-                          })}
-                        </Text>
-                      ) : (
-                        <Text emphasized secondary subHeadline>
-                          Paid with&nbsp;
-                        </Text>
-                      )}
                       <Text emphasized secondary subHeadline>
-                        {currency}&nbsp;
+                        {Number(amount).toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                      </Text>
+                      <Text emphasized secondary subHeadline>
+                        &nbsp;{currency}&nbsp;
                       </Text>
                       <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={ms(16)} height={ms(16)} />
                     </XStack>
