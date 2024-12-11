@@ -20,7 +20,7 @@ export default function CardLimits() {
   const isCredit = card ? card.mode > 0 : false;
 
   const { address } = useAccount();
-  const { presentContent } = useIntercom();
+  const { presentArticle } = useIntercom();
 
   const { data: markets } = useReadPreviewerExactly({
     address: previewerAddress,
@@ -36,7 +36,7 @@ export default function CardLimits() {
         </Text>
         <Pressable
           onPress={() => {
-            presentContent(isCredit ? "9467331" : "9922633").catch(handleError);
+            presentArticle(isCredit ? "9467331" : "9922633").catch(handleError);
           }}
           hitSlop={ms(15)}
         >

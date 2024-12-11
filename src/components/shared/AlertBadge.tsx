@@ -8,7 +8,7 @@ import handleError from "../../utils/handleError";
 import useIntercom from "../../utils/useIntercom";
 
 export default function AlertBadge() {
-  const { presentContent } = useIntercom();
+  const { presentArticle } = useIntercom();
   return (
     <View
       borderRadius="$r6"
@@ -38,7 +38,7 @@ export default function AlertBadge() {
         </Text>
         <Pressable
           onPress={() => {
-            presentContent("9975910").catch(handleError);
+            presentArticle("9975910").catch(handleError);
           }}
         >
           <View flexDirection="row" gap={ms(2)} alignItems="center">

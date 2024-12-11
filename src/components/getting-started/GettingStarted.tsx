@@ -21,7 +21,7 @@ import View from "../shared/View";
 
 export default function GettingStarted() {
   const { steps } = useContext(OnboardingContext);
-  const { presentContent } = useIntercom();
+  const { presentArticle } = useIntercom();
   const { canGoBack } = router;
   return (
     <SafeView fullScreen backgroundColor="$backgroundBrandSoft" paddingBottom={0}>
@@ -96,7 +96,7 @@ export default function GettingStarted() {
                 icon={<ArrowDownToLine size={20} strokeWidth={2} color="$uiBrandSecondary" />}
                 completed={steps.find(({ id }) => id === "add-funds")?.completed ?? false}
                 onPress={() => {
-                  presentContent("8950805").catch(handleError);
+                  presentArticle("8950805").catch(handleError);
                 }}
               />
 
@@ -107,7 +107,7 @@ export default function GettingStarted() {
                 icon={<IdCard size={20} strokeWidth={2} color="$uiBrandSecondary" />}
                 completed={steps.find(({ id }) => id === "verify-identity")?.completed ?? false}
                 onPress={() => {
-                  presentContent("9448693").catch(handleError);
+                  presentArticle("9448693").catch(handleError);
                 }}
               />
             </YStack>
