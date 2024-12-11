@@ -711,17 +711,6 @@ interface IInstallmentsRouter {
     returns (uint256[] memory assetsOwed);
 }
 
-interface IVelodromeFactory {
-  function getFee(address pool, bool stable) external view returns (uint24);
-  function getPool(address tokenA, address tokenB, bool stable) external view returns (address);
-  function isPool(address pool) external view returns (bool);
-}
-
-interface IVelodromePool {
-  function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
-  function getReserves() external view returns (uint256 reserve0, uint256 reserve1, uint256 blockTimestampLast);
-}
-
 struct RepayCallbackData {
   uint256 maturity;
   address borrower;
