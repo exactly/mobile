@@ -1,8 +1,10 @@
 import fixedRate from "@exactly/common/fixedRate";
-import { exaPluginAbi, marketUSDCAddress } from "@exactly/common/generated/chain";
+import { exaPluginAbi, marketUSDCAddress, usdcAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { WAD, withdrawLimit } from "@exactly/lib";
+import { config } from "@lifi/sdk";
 import { ArrowLeft, ChevronRight, Coins } from "@tamagui/lucide-icons";
+import { useQuery } from "@tanstack/react-query";
 import { format, formatDistance, isAfter } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -11,7 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
-import { maxUint256, zeroAddress } from "viem";
+import { maxUint256, parseUnits, zeroAddress } from "viem";
 import { useSimulateContract, useWriteContract } from "wagmi";
 
 import AssetSelectionSheet from "./AssetSelectionSheet";
@@ -25,6 +27,7 @@ import View from "../../components/shared/View";
 import { auditorAbi, marketAbi } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
+import getRoute from "../../utils/lifi";
 import queryClient from "../../utils/queryClient";
 import useMarketAccount from "../../utils/useMarketAccount";
 import AssetLogo from "../shared/AssetLogo";
@@ -35,6 +38,16 @@ export default function Pay() {
   const { account, market: USDCMarket, markets, queryKey: marketAccount } = useMarketAccount(marketUSDCAddress);
 
   const [selectedMarket, setSelectedMarket] = useState<Address>();
+
+  config.set({ integrator: "exa_app", userId: account });
+  const { data: route } = useQuery({
+    initialData: null,
+    queryKey: ["lifi", "route"], // eslint-disable-line @tanstack/query/exhaustive-deps
+    queryFn: async () => {
+      if (!repayMarket || !borrow || !account) return null;
+      return await getRoute(repayMarket.asset, usdcAddress, borrow.previewValue, account);
+    },
+  });
 
   const [cachedValues, setCachedValues] = useState<{ previewValue: number; positionValue: number }>({
     previewValue: 0,
@@ -56,15 +69,6 @@ export default function Pay() {
     args: [success ? BigInt(maturity) : 0n, maxUint256, maxUint256], // TODO slippage control
     abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi],
     query: { enabled: !!account && !!USDCMarket },
-  });
-  const { data: crossRepaySimulation, isPending: isSimulatingCrossRepay } = useSimulateContract({
-    address: account,
-    functionName: "crossRepay",
-    args: [success ? BigInt(maturity) : 0n, selectedMarket ?? zeroAddress],
-    abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi, { type: "error", name: "InsufficientOutputAmount" }],
-    query: {
-      enabled: !!maturity && !!account && !!selectedMarket && selectedMarket !== parse(Address, marketUSDCAddress),
-    },
   });
 
   const {
@@ -112,23 +116,6 @@ export default function Pay() {
       10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
     : 0n;
 
-  const handlePayment = useCallback(() => {
-    setCachedValues({
-      previewValue: Number(previewValue) / 1e18,
-      positionValue: Number(positionValue) / 1e18,
-    });
-
-    if (isUSDCSelected) {
-      if (!repaySimulation) throw new Error("no repay simulation");
-      repay(repaySimulation.request);
-    } else {
-      if (!crossRepaySimulation) throw new Error("no cross repay simulation");
-      crossRepay(crossRepaySimulation.request);
-    }
-  }, [previewValue, positionValue, isUSDCSelected, repaySimulation, repay, crossRepaySimulation, crossRepay]);
-
-  const currentSimulation = isUSDCSelected ? repaySimulation : selectedMarket ? crossRepaySimulation : undefined;
-  const isSimulating = isUSDCSelected ? isSimulatingRepay : selectedMarket ? isSimulatingCrossRepay : false;
   const isPending = isUSDCSelected ? isRepaying : selectedMarket ? isCrossRepaying : false;
   const isSuccess = isUSDCSelected ? isRepaySuccess : isCrossRepaySuccess;
   const error = isUSDCSelected ? repayError : crossRepayError;
@@ -150,7 +137,66 @@ export default function Pay() {
   const repayMarket = positions?.find((p) => p.market === selectedMarket);
   const repayMarketAvailable = markets && selectedMarket ? withdrawLimit(markets, selectedMarket) : 0n;
 
+  const slippage: bigint = parseUnits("1.02", 18);
+  const positionAssets: bigint = borrow ? borrow.previewValue : 0n;
+  const maxAmountIn: bigint = route ? (route.fromAmount * slippage) / WAD : 0n;
+
+  const crossRepayArguments = [
+    success ? BigInt(maturity) : 0n, // { name: 'maturity', internalType: 'uint256', type: 'uint256' },
+    positionAssets, // { name: 'positionAssets', internalType: 'uint256', type: 'uint256' },
+    maxUint256, // { name: 'maxRepay', internalType: 'uint256', type: 'uint256' },
+    selectedMarket ?? zeroAddress, // { name: 'collateral', internalType: 'contract IMarket', type: 'address' },
+    maxAmountIn, // { name: 'maxAmountIn', internalType: 'uint256', type: 'uint256' },
+    route ? route.data : "0x", // { name: 'route', internalType: 'bytes', type: 'bytes' },
+  ];
+
+  const {
+    data: crossRepaySimulation,
+    error: crossRepaySimulationError,
+    isPending: isSimulatingCrossRepay,
+  } = useSimulateContract({
+    address: account,
+    functionName: "crossRepay",
+    args: crossRepayArguments,
+    abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi, { type: "error", name: "InsufficientOutputAmount" }],
+    query: {
+      enabled:
+        !!success &&
+        !!route &&
+        !!maturity &&
+        !!account &&
+        !!selectedMarket &&
+        selectedMarket !== parse(Address, marketUSDCAddress),
+    },
+  });
+
+  console.log("Arguments >>>", crossRepayArguments);
+  console.log("CrossRepay >>>", crossRepaySimulationError);
+
+  const handlePayment = useCallback(() => {
+    setCachedValues({
+      previewValue: Number(previewValue) / 1e18,
+      positionValue: Number(positionValue) / 1e18,
+    });
+    if (isUSDCSelected) {
+      if (!repaySimulation) throw new Error("no repay simulation");
+      repay(repaySimulation.request);
+    } else {
+      if (!crossRepaySimulation) throw new Error("no cross repay simulation");
+      crossRepay(crossRepaySimulation.request);
+    }
+  }, [previewValue, positionValue, isUSDCSelected, repaySimulation, repay, crossRepaySimulation, crossRepay]);
+
+  const currentSimulation = isUSDCSelected ? repaySimulation : selectedMarket ? crossRepaySimulation : undefined;
+  const isSimulating = isUSDCSelected ? isSimulatingRepay : selectedMarket ? isSimulatingCrossRepay : false;
+
+  if (!selectedMarket && positions?.[0]) {
+    const { market } = positions[0];
+    setSelectedMarket(parse(Address, market));
+  }
+
   if (!success || !repayMarket) return;
+
   if (!isPending && !isSuccess && !error)
     return (
       <SafeView fullScreen backgroundColor="$backgroundMild" paddingBottom={0}>
