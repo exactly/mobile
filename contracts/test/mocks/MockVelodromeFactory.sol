@@ -7,7 +7,15 @@ import { SafeERC20 } from "openzeppelin-contracts/contracts/token/ERC20/utils/Sa
 
 import { LibClone } from "solady/utils/LibClone.sol";
 
-import { IVelodromeFactory, IVelodromePool } from "../../src/ExaPlugin.sol";
+interface IVelodromeFactory {
+  function getFee(address pool, bool stable) external view returns (uint24);
+  function getPool(address tokenA, address tokenB, bool stable) external view returns (address);
+}
+
+interface IVelodromePool {
+  function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
+  function getReserves() external view returns (uint256 reserve0, uint256 reserve1, uint256 blockTimestampLast);
+}
 
 contract MockVelodromeFactory is IVelodromeFactory {
   using SafeERC20 for IERC20;
