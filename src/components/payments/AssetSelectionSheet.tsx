@@ -1,7 +1,7 @@
 import type { Address } from "@exactly/common/validation";
 import { Coins } from "@tamagui/lucide-icons";
 import React from "react";
-import { Sheet, Spinner } from "tamagui";
+import { Sheet } from "tamagui";
 
 import AssetSelector from "../shared/AssetSelector";
 import Button from "../shared/Button";
@@ -13,15 +13,12 @@ export default function AssetSelectionSheet({
   onClose,
   onAssetSelected,
   positions,
-
   symbol,
-  isSimulating,
   disabled,
 }: {
   open: boolean;
   onClose: () => void;
   onAssetSelected: (market: Address) => void;
-  isSimulating?: boolean;
   symbol?: string;
   positions?: {
     symbol: string;
@@ -63,19 +60,14 @@ export default function AssetSelectionSheet({
                   <Button
                     onPress={onClose}
                     contained
-                    disabled={disabled}
                     main
                     spaced
                     fullwidth
                     iconAfter={
-                      isSimulating ? (
-                        <Spinner color="$interactiveOnDisabled" />
-                      ) : (
-                        <Coins
-                          strokeWidth={2.5}
-                          color={disabled ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandDefault"}
-                        />
-                      )
+                      <Coins
+                        strokeWidth={2.5}
+                        color={disabled ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandDefault"}
+                      />
                     }
                   >
                     {symbol ? `Pay with ${symbol}` : "Select an asset"}
