@@ -1,13 +1,15 @@
-import { Snowflake, X } from "@tamagui/lucide-icons";
+import { Copy, Snowflake, X } from "@tamagui/lucide-icons";
+import { useToastController } from "@tamagui/toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { setStringAsync } from "expo-clipboard";
 import React from "react";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Sheet, Spinner, Square, Switch, XStack } from "tamagui";
-import { nonEmpty, pipe, safeParse, string, url } from "valibot";
+import { ScrollView, Sheet, Spinner, Square, Switch, XStack, YStack } from "tamagui";
 
 import CardBack from "./CardBack";
 import DismissableAlert from "./DismissableAlert";
 import handleError from "../../utils/handleError";
+import { decryptSecret } from "../../utils/panda";
 import queryClient from "../../utils/queryClient";
 import { getCard, setCardStatus } from "../../utils/server";
 import Button from "../shared/Button";
@@ -15,9 +17,9 @@ import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-export default function CardDetails({ open, onClose, uri }: { open: boolean; onClose: () => void; uri?: string }) {
+export default function CardDetails({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: alertShown } = useQuery({ queryKey: ["settings", "alertShown"] });
-  const { success, output } = safeParse(pipe(string(), nonEmpty("empty url"), url("bad url")), uri);
+  const toast = useToastController();
   const { data: card, isFetching: isFetchingCard } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
   const {
     mutateAsync: changeCardStatus,
@@ -31,6 +33,10 @@ export default function CardDetails({ open, onClose, uri }: { open: boolean; onC
     },
   });
   const displayStatus = isSettingCardStatus ? optimisticCardStatus : card?.status;
+  const cardNumber =
+    card && card.provider === "panda"
+      ? decryptSecret(card.encryptedPan.data, card.encryptedPan.iv, card.secretKey)
+      : "";
   return (
     <Sheet
       open={open}
@@ -56,8 +62,59 @@ export default function CardDetails({ open, onClose, uri }: { open: boolean; onC
           <ScrollView>
             <View fullScreen flex={1}>
               <View gap="$s5" flex={1} padded>
-                {success && <CardBack uri={output} />}
+                {card && card.provider === "cryptomate" && <CardBack uri={card.url} />}
 
+                {card && card.provider === "panda" && (
+                  <YStack
+                    borderRadius="$s3"
+                    borderWidth={1}
+                    borderColor="$borderNeutralSoft"
+                    backgroundColor="$uiNeutralPrimary"
+                    padding="$s5"
+                    paddingVertical="$s6"
+                    justifyContent="space-between"
+                    gap="$s6"
+                  >
+                    <XStack gap="$s4" alignItems="center">
+                      <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
+                        {cardNumber.match(/.{1,4}/g)?.join(" ") ?? ""}
+                      </Text>
+                      <Copy
+                        hitSlop={20}
+                        size={16}
+                        color="$uiNeutralInversePrimary"
+                        strokeWidth={2.5}
+                        onPress={() => {
+                          setStringAsync(cardNumber).catch(handleError);
+                          toast.show("Copied to clipboard!");
+                        }}
+                      />
+                    </XStack>
+                    <XStack gap="$s5" alignItems="center">
+                      <XStack alignItems="center" gap="$s3">
+                        <Text caption color="$uiNeutralInverseSecondary">
+                          Expires
+                        </Text>
+                        <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
+                          {`${card.expirationMonth}/${card.expirationYear}`}
+                        </Text>
+                      </XStack>
+                      <XStack alignItems="center" gap="$s3">
+                        <Text caption color="$uiNeutralInverseSecondary">
+                          CVV&nbsp;
+                        </Text>
+                        <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
+                          {decryptSecret(card.encryptedCvc.data, card.encryptedCvc.iv, card.secretKey)}
+                        </Text>
+                      </XStack>
+                    </XStack>
+                    <YStack>
+                      <Text emphasized headline letterSpacing={2} color="$uiNeutralInversePrimary">
+                        {card.displayName}
+                      </Text>
+                    </YStack>
+                  </YStack>
+                )}
                 <XStack
                   width="100%"
                   paddingHorizontal="$s4"
@@ -84,7 +141,6 @@ export default function CardDetails({ open, onClose, uri }: { open: boolean; onC
                       {displayStatus === "FROZEN" ? "Unfreeze card" : "Freeze card"}
                     </Text>
                   </XStack>
-
                   <Switch
                     height={24}
                     pointerEvents="none"
@@ -102,8 +158,7 @@ export default function CardDetails({ open, onClose, uri }: { open: boolean; onC
                     />
                   </Switch>
                 </XStack>
-
-                {success && alertShown && (
+                {card && card.provider === "cryptomate" && alertShown && (
                   <DismissableAlert
                     text="Manually add your card to Apple Pay & Google Pay to make contactless payments."
                     onDismiss={() => {
@@ -111,7 +166,6 @@ export default function CardDetails({ open, onClose, uri }: { open: boolean; onC
                     }}
                   />
                 )}
-
                 <Button
                   main
                   noFlex
