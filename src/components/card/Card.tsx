@@ -96,8 +96,8 @@ export default function Card() {
       if (isRevealing) return;
       if (!passkey) return;
       try {
-        const { isSuccess, data } = await refetchCard();
-        if (isSuccess && data.url) {
+        const { isSuccess } = await refetchCard();
+        if (isSuccess) {
           setCardDetailsOpen(true);
           return;
         }
@@ -105,7 +105,7 @@ export default function Card() {
         if (result === "ok") {
           await createCard();
           const { data: card } = await refetchCard();
-          if (card?.url) setCardDetailsOpen(true);
+          if (card) setCardDetailsOpen(true);
         } else {
           resumeInquiry(result.inquiryId, result.sessionToken).catch(handleError);
         }
@@ -206,7 +206,6 @@ export default function Card() {
           </View>
         </ScrollView>
         <CardDetails
-          uri={cardDetails?.url}
           open={cardDetailsOpen}
           onClose={() => {
             setCardDetailsOpen(false);
