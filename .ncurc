@@ -21,6 +21,7 @@
     "expo-linear-gradient",
     "expo-linking",
     "expo-router",
+    "expo-secure-store",
     "expo-status-bar",
     "expo-system-ui",
     "expo-updates",

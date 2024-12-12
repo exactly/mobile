@@ -51,7 +51,13 @@ export default {
   },
   ios: {
     icon: "src/assets/icon-ios.png",
+    appleTeamId: "665NDX7LBZ",
     bundleIdentifier: "app.exactly",
+    entitlements: {
+      "com.apple.developer.payment-pass-provisioning": true,
+      "com.apple.security.application-groups": ["group.app.exactly"],
+      "keychain-access-groups": ["665NDX7LBZ.app.exactly"],
+    },
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
     supportsTablet: false,
     buildNumber: String(versionCode),
@@ -118,6 +124,8 @@ export default {
         largeIcons: ["src/assets/notifications_default_large.png"],
       } satisfies OneSignalPlugin.OneSignalPluginProps,
     ],
+    "expo-secure-store",
+    "@bacons/apple-targets",
   ],
   experiments: { typedRoutes: true },
   extra: { eas: { projectId: "06bc0158-d23b-430b-a7e8-802df03c450b" } },

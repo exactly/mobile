@@ -1,0 +1,3 @@
+*.xcassets
+generated.entitlements
+Info.plist

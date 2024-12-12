@@ -1,3 +1,4 @@
+import { ExtensionStorage } from "@bacons/apple-targets";
 import { Passkey } from "@exactly/common/validation";
 import { Key } from "@tamagui/lucide-icons";
 import { useMutation } from "@tanstack/react-query";
@@ -132,6 +133,11 @@ export default function Carousel() {
       clearInterval(timer);
     };
   }, [activeIndex, progress, scrollToNextPage]);
+
+  useEffect(() => {
+    new ExtensionStorage("group.app.exactly").set("index", "666");
+    ExtensionStorage.reloadWidget();
+  }, []);
 
   return (
     <View fullScreen>
