@@ -89,6 +89,10 @@ export default function Card() {
   } = useMutation({
     mutationKey: ["card", "reveal"],
     mutationFn: async function handleReveal() {
+      if (usdBalance === 0n) {
+        router.push("/getting-started");
+        return;
+      }
       if (isRevealing) return;
       if (!passkey) return;
       try {
