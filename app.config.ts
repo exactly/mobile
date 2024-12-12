@@ -55,8 +55,8 @@ export default {
     associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
     supportsTablet: false,
     buildNumber: String(versionCode),
+    config: { usesNonExemptEncryption: false },
     infoPlist: {
-      ITSAppUsesNonExemptEncryption: false,
       NSCameraUsageDescription: "This app uses the camera to verify your identity.",
       NSLocationWhenInUseUsageDescription: "This app uses your location to verify your identity.",
     },
