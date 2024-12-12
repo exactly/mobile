@@ -25,7 +25,7 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
       try {
         const result = await getKYCStatus();
         if (result === "ok") return;
-        resumeInquiry(result.inquiryId, result.sessionToken);
+        resumeInquiry(result.inquiryId, result.sessionToken).catch(handleError);
       } catch (error) {
         if (!(error instanceof APIError)) {
           handleError(error);
@@ -37,7 +37,7 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
           (code === 404 && text === "kyc not found") ||
           (code === 400 && text === "kyc not started")
         ) {
-          createInquiry(passkey);
+          createInquiry(passkey).catch(handleError);
         }
         handleError(error);
       }
