@@ -107,7 +107,7 @@ export default function Card() {
           const { data: card } = await refetchCard();
           if (card?.url) setCardDetailsOpen(true);
         } else {
-          resumeInquiry(result.inquiryId, result.sessionToken);
+          resumeInquiry(result.inquiryId, result.sessionToken).catch(handleError);
         }
       } catch (error) {
         if (!(error instanceof APIError)) {
@@ -120,7 +120,7 @@ export default function Card() {
           (code === 404 && text === "kyc not found") ||
           (code === 400 && text === "kyc not started")
         ) {
-          createInquiry(passkey);
+          createInquiry(passkey).catch(handleError);
         }
         handleError(error);
       }
