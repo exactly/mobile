@@ -123,6 +123,7 @@ contract ExaPluginTest is ForkTest {
     vm.setEnv("BROADCAST_REFUNDER_ADDRESS", address(refunder).toHexString());
 
     refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
+    mockSwapper = new MockSwapper(p.velodromeFactory());
     exaPlugin = new ExaPlugin(
       IAuditor(address(auditor)),
       exaUSDC,
@@ -131,7 +132,8 @@ contract ExaPluginTest is ForkTest {
       IDebtManager(address(p.debtManager())),
       IInstallmentsRouter(address(p.installmentsRouter())),
       issuerChecker,
-      collector
+      collector,
+      address(mockSwapper)
     );
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
@@ -154,9 +156,6 @@ contract ExaPluginTest is ForkTest {
     exaUSDC.deposit(10_000e6, bob);
 
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
-
-    mockSwapper = new MockSwapper(p.velodromeFactory());
-    vm.etch(exaPlugin.SWAPPER(), address(mockSwapper).code);
 
     vm.stopPrank();
   }
@@ -1190,7 +1189,8 @@ contract ExaPluginTest is ForkTest {
       IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
-      acct("collector")
+      acct("collector"),
+      0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE
     );
 
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
