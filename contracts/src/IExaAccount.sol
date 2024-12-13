@@ -15,7 +15,7 @@ interface IExaAccount {
     uint256 amountIn,
     bytes calldata route
   ) external;
-  function lifiSwap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
+  function swap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
     external
     returns (uint256 received);
   function rollDebt(
