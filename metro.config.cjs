@@ -8,7 +8,6 @@ module.exports = {
   ...config,
   resolver: {
     ...config.resolver,
-    extraNodeModules: { crypto: require.resolve("react-native-quick-crypto") },
     assetExts: config.resolver?.assetExts?.filter((extension) => extension !== "svg"),
     sourceExts: [...(config.resolver?.sourceExts ?? []), "svg"],
     blockList: [
@@ -24,6 +23,12 @@ module.exports = {
       new RegExp(path.join(__dirname, "public/")),
       new RegExp(path.join(__dirname, "server/")),
     ],
+    resolveRequest: (context, moduleName, platform) => {
+      if (moduleName === "crypto" && platform !== "web") {
+        return context.resolveRequest(context, "react-native-quick-crypto", platform);
+      }
+      return context.resolveRequest(context, moduleName, platform);
+    },
   },
   transformer: {
     ...config.transformer,
