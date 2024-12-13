@@ -53,7 +53,7 @@ import { DeployRefunder } from "../script/Refunder.s.sol";
 
 import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
 
-import { MockLifi } from "./mocks/MockLifi.sol";
+import { MockSwapper } from "./mocks/MockSwapper.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
 // solhint-disable-next-line max-states-count
@@ -85,7 +85,7 @@ contract ExaPluginTest is ForkTest {
   IMarket internal exaWETH;
   MockERC20 internal exa;
   MockERC20 internal usdc;
-  MockLifi internal mockLifi;
+  MockSwapper internal mockSwapper;
 
   function setUp() external {
     vm.setEnv("DEPLOYER_ADDRESS", address(this).toHexString());
@@ -155,8 +155,8 @@ contract ExaPluginTest is ForkTest {
 
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
-    mockLifi = new MockLifi(p.velodromeFactory());
-    vm.etch(exaPlugin.LIFI(), address(mockLifi).code);
+    mockSwapper = new MockSwapper(p.velodromeFactory());
+    vm.etch(exaPlugin.SWAPPER(), address(mockSwapper).code);
 
     vm.stopPrank();
   }
@@ -414,7 +414,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 amountIn = 111e18;
     bytes memory route =
-      abi.encodeCall(MockLifi.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
     uint256 balance = usdc.balanceOf(exaPlugin.collector());
     account.collectCollateral(110e6, exaEXA, amountIn, block.timestamp, route, _issuerOp(110e6, block.timestamp));
     assertEq(usdc.balanceOf(exaPlugin.collector()), balance + 110e6, "collector's usdc != expected");
@@ -906,7 +906,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 amountIn = 111e18;
     bytes memory route =
-      abi.encodeCall(MockLifi.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
     vm.startPrank(address(account));
     account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
 
@@ -956,7 +956,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 amountIn = 111e18;
     bytes memory route =
-      abi.encodeCall(MockLifi.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
     account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -977,7 +977,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 amountIn = 111e18;
     bytes memory route =
-      abi.encodeCall(MockLifi.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
     vm.startPrank(vm.addr(0x1));
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -990,22 +990,22 @@ contract ExaPluginTest is ForkTest {
     account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
   }
 
-  function test_lifiSwap_swaps() external {
+  function test_swap_swaps() external {
     uint256 prevUSDC = usdc.balanceOf(address(account));
     uint256 prevEXA = exa.balanceOf(address(account));
 
     uint256 maxAmountIn = 111e18;
     uint256 amountOut = 110e6;
     bytes memory route =
-      abi.encodeCall(MockLifi.swapExactAmountOut, (address(exaEXA.asset()), maxAmountIn, address(usdc), amountOut));
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), maxAmountIn, address(usdc), amountOut));
     vm.startPrank(address(account));
-    account.lifiSwap(IERC20(exaEXA.asset()), IERC20(address(usdc)), maxAmountIn, amountOut, route);
+    account.swap(IERC20(exaEXA.asset()), IERC20(address(usdc)), maxAmountIn, amountOut, route);
 
     assertEq(usdc.balanceOf(address(account)), prevUSDC + amountOut);
     assertGe(exa.balanceOf(address(account)), prevEXA - maxAmountIn);
   }
 
-  function testFork_lifiSwap_swaps() external {
+  function testFork_swap_swaps() external {
     _setUpLifiFork();
     uint256 amount = 0.0004e8;
     IERC20 wbtc = IERC20(protocol("WBTC"));
@@ -1019,21 +1019,21 @@ contract ExaPluginTest is ForkTest {
 
     uint256 minAmount = 26_310_887;
     vm.startPrank(address(account));
-    account.lifiSwap(wbtc, IERC20(address(usdc)), amount, minAmount, route);
+    account.swap(wbtc, IERC20(address(usdc)), amount, minAmount, route);
     assertGe(usdc.balanceOf(address(account)), minAmount, "usdc dust");
   }
 
-  function test_lifiSwap_reverts_withDisagreement() external {
+  function test_swap_reverts_withDisagreement() external {
     uint256 prevUSDC = usdc.balanceOf(address(account));
     uint256 prevEXA = exa.balanceOf(address(account));
 
     uint256 amountIn = 111e18;
     uint256 amountOut = 110e6;
     bytes memory route =
-      abi.encodeCall(MockLifi.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), amountOut));
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), amountOut));
     vm.startPrank(address(account));
     vm.expectRevert(Disagreement.selector);
-    account.lifiSwap(IERC20(address(exa)), IERC20(address(usdc)), amountIn, amountOut * 2, route);
+    account.swap(IERC20(address(exa)), IERC20(address(usdc)), amountIn, amountOut * 2, route);
 
     assertEq(usdc.balanceOf(address(account)), prevUSDC);
     assertEq(exa.balanceOf(address(account)), prevEXA);
