@@ -5,7 +5,7 @@ import { WAD, withdrawLimit } from "@exactly/lib";
 import { ArrowLeft, ChevronRight, Coins } from "@tamagui/lucide-icons";
 import { format, formatDistance, isAfter } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ms } from "react-native-size-matters";
@@ -33,7 +33,8 @@ export default function Pay() {
   const insets = useSafeAreaInsets();
   const [assetSelectionOpen, setAssetSelectionOpen] = useState(false);
   const { account, market: USDCMarket, markets, queryKey: marketAccount } = useMarketAccount(marketUSDCAddress);
-  const [selectedMarket, setSelectedMarket] = useState<Address | undefined>(parse(Address, marketUSDCAddress));
+
+  const [selectedMarket, setSelectedMarket] = useState<Address>();
 
   const [cachedValues, setCachedValues] = useState<{ previewValue: number; positionValue: number }>({
     previewValue: 0,
@@ -145,12 +146,18 @@ export default function Pay() {
       symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
-    .filter(({ floatingDepositAssets, assetSymbol }) => floatingDepositAssets > 0 && assetSymbol !== "WBTC");
-  const repayMarket = markets?.find((m) => m.market === selectedMarket);
-  const repayMarketAvailable = markets && selectedMarket ? withdrawLimit(markets, selectedMarket) : 0n;
-  const repayMarketPosition = positions?.find((p) => p.market === selectedMarket);
+    .filter(({ floatingDepositAssets, assetSymbol }) => floatingDepositAssets > 0n && assetSymbol !== "WBTC");
 
-  if (!repayMarket || !repayMarketPosition || !success) return;
+  const repayMarket = positions?.find((p) => p.market === selectedMarket);
+  const repayMarketAvailable = markets && selectedMarket ? withdrawLimit(markets, selectedMarket) : 0n;
+
+  useEffect(() => {
+    if (selectedMarket || !positions?.[0]) return;
+    const { market } = positions[0];
+    setSelectedMarket(parse(Address, market));
+  }, [positions, selectedMarket]);
+
+  if (!success || !repayMarket) return;
   if (!isPending && !isSuccess && !error)
     return (
       <SafeView fullScreen backgroundColor="$backgroundMild" paddingBottom={0}>
@@ -326,7 +333,7 @@ export default function Pay() {
                 </Text>
                 <YStack gap="$s2">
                   <Text emphasized headline primary textAlign="right">
-                    {(Number(repayMarketPosition.usdValue) / 1e18).toLocaleString(undefined, {
+                    {(Number(repayMarket.usdValue) / 1e18).toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
                       currencyDisplay: "narrowSymbol",
@@ -340,7 +347,7 @@ export default function Pay() {
                         Math.max(
                           0,
                           repayMarket.decimals -
-                            Math.ceil(Math.log10(Math.max(1, Number(repayMarketPosition.usdValue) / 1e18))),
+                            Math.ceil(Math.log10(Math.max(1, Number(repayMarket.usdValue) / 1e18))),
                         ),
                       ),
                       useGrouping: false,
