@@ -5,7 +5,7 @@ import { WAD, withdrawLimit } from "@exactly/lib";
 import { ArrowLeft, ChevronRight, Coins } from "@tamagui/lucide-icons";
 import { format, formatDistance, isAfter } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ms } from "react-native-size-matters";
@@ -50,22 +50,14 @@ export default function Pay() {
     setSelectedMarket(market);
   };
 
-  const {
-    data: repaySimulation,
-    error: repayError,
-    isPending: isSimulatingRepay,
-  } = useSimulateContract({
+  const { data: repaySimulation, isPending: isSimulatingRepay } = useSimulateContract({
     address: account,
     functionName: "repay",
     args: [success ? BigInt(maturity) : 0n],
     abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi],
     query: { enabled: !!account && !!USDCMarket },
   });
-  const {
-    data: crossRepaySimulation,
-    error: crossRepayError,
-    isPending: isSimulatingCrossRepay,
-  } = useSimulateContract({
+  const { data: crossRepaySimulation, isPending: isSimulatingCrossRepay } = useSimulateContract({
     address: account,
     functionName: "crossRepay",
     args: [success ? BigInt(maturity) : 0n, selectedMarket ?? zeroAddress],
@@ -80,6 +72,7 @@ export default function Pay() {
     writeContract: repay,
     isPending: isRepaying,
     isSuccess: isRepaySuccess,
+    error: repayError,
   } = useWriteContract({
     mutation: {
       onSuccess: () => {
@@ -92,6 +85,7 @@ export default function Pay() {
     writeContract: crossRepay,
     isPending: isCrossRepaying,
     isSuccess: isCrossRepaySuccess,
+    error: crossRepayError,
   } = useWriteContract({
     mutation: {
       onSuccess: () => {
@@ -146,16 +140,15 @@ export default function Pay() {
       symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
-    .filter(({ floatingDepositAssets, assetSymbol }) => floatingDepositAssets > 0n && assetSymbol !== "WBTC");
+    .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0n);
+
+  if (!selectedMarket && positions?.[0]) {
+    const { market } = positions[0];
+    setSelectedMarket(parse(Address, market));
+  }
 
   const repayMarket = positions?.find((p) => p.market === selectedMarket);
   const repayMarketAvailable = markets && selectedMarket ? withdrawLimit(markets, selectedMarket) : 0n;
-
-  useEffect(() => {
-    if (selectedMarket || !positions?.[0]) return;
-    const { market } = positions[0];
-    setSelectedMarket(parse(Address, market));
-  }, [positions, selectedMarket]);
 
   if (!success || !repayMarket) return;
   if (!isPending && !isSuccess && !error)
