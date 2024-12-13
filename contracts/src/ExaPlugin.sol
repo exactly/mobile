@@ -138,7 +138,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 positionAssets,
     uint256 maxRepay,
     IMarket collateral,
-    uint256 amountIn,
+    uint256 maxAmountIn,
     bytes calldata route
   ) external {
     _checkMarket(collateral);
@@ -152,27 +152,31 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
             positionAssets: positionAssets,
             maxRepay: maxRepay,
             marketIn: collateral,
-            amountIn: amountIn,
+            maxAmountIn: maxAmountIn,
             route: route
           })
         )
       )
     );
-    _executeFromSender(address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn)));
+    _executeFromSender(address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), maxAmountIn)));
     _flashLoan(maxRepay, data);
   }
 
-  function swap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
+  function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     external
-    returns (uint256 amountOut)
+    returns (uint256 amountIn, uint256 amountOut)
   {
-    uint256 balance = assetOut.balanceOf(msg.sender);
-    _executeFromSender(address(assetIn), 0, abi.encodeCall(IERC20.approve, (SWAPPER, amountIn)));
+    uint256 balanceIn = assetIn.balanceOf(msg.sender);
+    uint256 balanceOut = assetOut.balanceOf(msg.sender);
 
+    _executeFromSender(address(assetIn), 0, abi.encodeCall(IERC20.approve, (SWAPPER, maxAmountIn)));
     _executeFromSender(SWAPPER, 0, route);
 
-    amountOut = assetOut.balanceOf(msg.sender) - balance;
-    if (amountOut < minOut) revert Disagreement();
+    amountOut = assetOut.balanceOf(msg.sender) - balanceOut;
+    if (amountOut < minAmountOut) revert Disagreement();
+
+    _executeFromSender(address(assetIn), 0, abi.encodeCall(IERC20.approve, (SWAPPER, 0)));
+    amountIn = balanceIn - assetIn.balanceOf(msg.sender);
   }
 
   function rollDebt(
@@ -222,20 +226,27 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   function collectCollateral(
     uint256 amount,
     IMarket collateral,
-    uint256 amountIn,
+    uint256 maxAmountIn,
     uint256 timestamp,
     bytes calldata route,
     bytes calldata signature
-  ) external {
+  ) external returns (uint256 amountIn, uint256 amountOut) {
     _checkIssuer(msg.sender, amount, timestamp, signature);
     _checkMarket(collateral);
 
-    _executeFromSender(address(collateral), 0, abi.encodeCall(IERC4626.withdraw, (amountIn, address(this), msg.sender)));
-    uint256 out = _swap(IERC20(collateral.asset()), IERC20(EXA_USDC.asset()), amountIn, amount, route);
-
+    _executeFromSender(
+      address(collateral), 0, abi.encodeCall(IERC4626.withdraw, (maxAmountIn, address(this), msg.sender))
+    );
+    (amountIn, amountOut) = _swap(IERC20(collateral.asset()), IERC20(EXA_USDC.asset()), maxAmountIn, amount, route);
     IERC20(EXA_USDC.asset()).safeTransfer(collector, amount);
 
-    if (out > amount) EXA_USDC.deposit(out - amount, msg.sender);
+    uint256 unused = maxAmountIn - amountIn;
+    if (unused != 0) {
+      IERC20(collateral.asset()).approve(address(collateral), unused);
+      collateral.deposit(unused, msg.sender);
+    }
+    uint256 usdcLeft = amountOut - amount;
+    if (usdcLeft != 0) EXA_USDC.deposit(usdcLeft, msg.sender);
 
     _checkLiquidity(msg.sender);
   }
@@ -580,11 +591,19 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
     actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
 
-    c.marketIn.withdraw(c.amountIn, address(this), c.borrower);
-    uint256 out = _swap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.amountIn, actualRepay, c.route);
+    c.marketIn.withdraw(c.maxAmountIn, address(this), c.borrower);
+    (uint256 amountIn, uint256 amountOut) =
+      _swap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.maxAmountIn, c.maxRepay, c.route);
     IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
-    EXA_USDC.deposit(out - actualRepay, c.borrower);
 
+    uint256 usdcLeft = amountOut - actualRepay;
+    if (usdcLeft != 0) EXA_USDC.deposit(usdcLeft, c.borrower);
+
+    uint256 unused = c.maxAmountIn - amountIn;
+    if (unused != 0) {
+      IERC20(c.marketIn.asset()).approve(address(c.marketIn), unused);
+      c.marketIn.deposit(unused, c.borrower);
+    }
     _checkLiquidity(c.borrower);
   }
 
@@ -644,17 +663,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     return AUDITOR.markets(market).isListed;
   }
 
-  function _swap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
+  function _swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     internal
-    returns (uint256 amountOut)
+    returns (uint256 amountIn, uint256 amountOut)
   {
-    uint256 balance = assetOut.balanceOf(address(this));
-    assetIn.approve(SWAPPER, amountIn);
+    uint256 balanceIn = assetIn.balanceOf(address(this));
+    uint256 balanceOut = assetOut.balanceOf(address(this));
 
+    assetIn.approve(SWAPPER, maxAmountIn);
     SWAPPER.functionCall(route);
 
-    amountOut = assetOut.balanceOf(address(this)) - balance;
-    if (amountOut < minOut) revert Disagreement();
+    amountOut = assetOut.balanceOf(address(this)) - balanceOut;
+    if (minAmountOut > amountOut) revert Disagreement();
+
+    assetIn.approve(SWAPPER, 0);
+    amountIn = balanceIn - assetIn.balanceOf(address(this));
   }
 
   function _executeFromSender(address target, uint256 value, bytes memory data) internal {
@@ -711,6 +734,6 @@ struct CrossRepayCallbackData {
   uint256 positionAssets;
   uint256 maxRepay;
   IMarket marketIn;
-  uint256 amountIn;
+  uint256 maxAmountIn;
   bytes route;
 }
