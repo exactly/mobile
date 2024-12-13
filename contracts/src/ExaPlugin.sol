@@ -61,7 +61,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
-  address public constant LIFI = 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE;
+  address public constant SWAPPER = 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE;
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
   IMarket public immutable EXA_WETH;
@@ -160,14 +160,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _flashLoan(maxRepay, data);
   }
 
-  function lifiSwap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
+  function swap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
     external
     returns (uint256 amountOut)
   {
     uint256 balance = assetOut.balanceOf(msg.sender);
-    _executeFromSender(address(assetIn), 0, abi.encodeCall(IERC20.approve, (LIFI, amountIn)));
+    _executeFromSender(address(assetIn), 0, abi.encodeCall(IERC20.approve, (SWAPPER, amountIn)));
 
-    _executeFromSender(LIFI, 0, route);
+    _executeFromSender(SWAPPER, 0, route);
 
     amountOut = assetOut.balanceOf(msg.sender) - balance;
     if (amountOut < minOut) revert Disagreement();
@@ -424,7 +424,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.executionFunctions[6] = this.collectDebit.selector;
     manifest.executionFunctions[7] = this.collectCollateral.selector;
     manifest.executionFunctions[8] = this.collectInstallments.selector;
-    manifest.executionFunctions[9] = this.lifiSwap.selector;
+    manifest.executionFunctions[9] = this.swap.selector;
     manifest.executionFunctions[10] = this.poke.selector;
     manifest.executionFunctions[11] = this.pokeETH.selector;
     manifest.executionFunctions[12] = this.withdraw.selector;
@@ -464,7 +464,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.lifiSwap.selector,
+      executionSelector: IExaAccount.swap.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
@@ -582,7 +582,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       uint256 actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
 
       c.marketIn.withdraw(c.amountIn, address(this), c.borrower);
-      uint256 out = _lifiSwap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.amountIn, actualRepay, c.route);
+      uint256 out = _swap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.amountIn, actualRepay, c.route);
       IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
       EXA_USDC.deposit(out - actualRepay, c.borrower);
 
@@ -591,7 +591,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       CollectCollateralCallbackData memory c = abi.decode(data[1:], (CollectCollateralCallbackData));
 
       c.collateral.withdraw(c.amountIn, address(this), c.owner);
-      uint256 out = _lifiSwap(IERC20(c.collateral.asset()), IERC20(EXA_USDC.asset()), c.amountIn, c.debit, c.route);
+      uint256 out = _swap(IERC20(c.collateral.asset()), IERC20(EXA_USDC.asset()), c.amountIn, c.debit, c.route);
 
       IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.debit);
       IERC20(EXA_USDC.asset()).safeTransfer(collector, c.debit);
@@ -657,14 +657,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     return AUDITOR.markets(market).isListed;
   }
 
-  function _lifiSwap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
+  function _swap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
     internal
     returns (uint256 amountOut)
   {
     uint256 balance = assetOut.balanceOf(address(this));
-    assetIn.approve(LIFI, amountIn);
+    assetIn.approve(SWAPPER, amountIn);
 
-    LIFI.functionCall(route);
+    SWAPPER.functionCall(route);
 
     amountOut = assetOut.balanceOf(address(this)) - balance;
     if (amountOut < minOut) revert Disagreement();
