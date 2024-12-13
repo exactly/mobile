@@ -27,6 +27,7 @@ contract DeployScript is BaseScript {
   address public keeper;
   address public deployer;
   address public collector;
+  address public swapper;
 
   function setUp() external {
     ownerPlugin = WebauthnOwnerPlugin(dependency("webauthn-owner-plugin", "WebauthnOwnerPlugin", "Plugin", 0));
@@ -43,13 +44,15 @@ contract DeployScript is BaseScript {
     keeper = acct("keeper");
     deployer = acct("deployer");
     collector = acct("collector");
+    swapper = acct("swapper");
   }
 
   function run() external {
     vm.startBroadcast(deployer);
 
-    exaPlugin =
-      new ExaPlugin(auditor, exaUSDC, exaWETH, balancerVault, debtManager, installmentsRouter, issuerChecker, collector);
+    exaPlugin = new ExaPlugin(
+      auditor, exaUSDC, exaWETH, balancerVault, debtManager, installmentsRouter, issuerChecker, collector, swapper
+    );
     factory = new ExaAccountFactory(deployer, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 
     factory.addStake{ value: 0.1 ether }(1 days, 0.1 ether);
