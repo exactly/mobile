@@ -60,11 +60,17 @@ export async function verifyRegistration(attestation: RegistrationResponseJSON) 
 }
 
 export async function getCard() {
+  console.log("authing");
   await auth();
+  console.log("authed");
   const session = generateSessionId();
+  console.log("panda session", session);
   const response = await client.api.card.$get({}, { headers: { SessionId: session.sessionId } });
+  console.log("panda response", response);
   if (!response.ok) throw new APIError(response.status, await response.json());
+  console.log("ok panda response");
   const card = await response.json();
+  console.log("panda card", card);
   return { ...card, ...session };
 }
 
