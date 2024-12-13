@@ -40,6 +40,7 @@ contract ExaAccountFactoryTest is Test {
       IDebtManager(address(this)),
       IInstallmentsRouter(address(this)),
       IssuerChecker(address(this)),
+      address(this),
       address(this)
     );
 

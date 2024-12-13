@@ -61,7 +61,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
-  address public constant SWAPPER = 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE;
+  address public immutable SWAPPER;
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
   IMarket public immutable EXA_WETH;
@@ -88,7 +88,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IDebtManager debtManager,
     IInstallmentsRouter installmentsRouter,
     IssuerChecker issuerChecker,
-    address collector_
+    address collector_,
+    address swapper
   ) {
     AUDITOR = auditor;
     EXA_USDC = exaUSDC;
@@ -97,6 +98,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     DEBT_MANAGER = debtManager;
     INSTALLMENTS_ROUTER = installmentsRouter;
     ISSUER_CHECKER = issuerChecker;
+    if (swapper == address(0)) revert ZeroAddress();
+    SWAPPER = swapper;
 
     _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     setCollector(collector_);
