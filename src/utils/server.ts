@@ -8,7 +8,7 @@ import { get as assert } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 import { check, number, parse, pipe, safeParse } from "valibot";
 
-import { generateSessionId } from "./panda";
+import { session } from "./panda";
 import queryClient from "./queryClient";
 
 queryClient.setQueryDefaults<number | undefined>(["auth"], {
@@ -64,12 +64,11 @@ export async function verifyRegistration(attestation: RegistrationResponseJSON) 
 
 export async function getCard() {
   await auth();
-  const session = generateSessionId();
-  const response = await client.api.card.$get({}, { headers: { SessionId: session.sessionId } });
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  const card = (await JSON.parse(text)) as Awaited<ReturnType<typeof response.json>>;
-  return { ...card, ...session };
+  const { id, secret } = await session();
+  const response = await client.api.card.$get({}, { headers: { SessionId: id } });
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  const card = await response.json();
+  return { ...card, secret };
 }
 
 export async function createCard() {

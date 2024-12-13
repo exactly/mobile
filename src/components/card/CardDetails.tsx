@@ -2,14 +2,14 @@ import { Copy, Snowflake, X } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Sheet, Spinner, Square, Switch, XStack, YStack } from "tamagui";
 
 import CardBack from "./CardBack";
 import DismissableAlert from "./DismissableAlert";
 import handleError from "../../utils/handleError";
-import { decryptSecret } from "../../utils/panda";
+import { decrypt } from "../../utils/panda";
 import queryClient from "../../utils/queryClient";
 import { getCard, setCardStatus } from "../../utils/server";
 import Button from "../shared/Button";
@@ -33,10 +33,19 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
     },
   });
   const displayStatus = isSettingCardStatus ? optimisticCardStatus : card?.status;
-  const cardNumber =
-    card && card.provider === "panda"
-      ? decryptSecret(card.encryptedPan.data, card.encryptedPan.iv, card.secretKey)
-      : "";
+  const [details, setDetails] = useState({ pan: "", cvc: "" });
+  useEffect(() => {
+    if (card && card.provider === "panda") {
+      Promise.all([
+        decrypt(card.encryptedPan.data, card.encryptedPan.iv, card.secret),
+        decrypt(card.encryptedCvc.data, card.encryptedCvc.iv, card.secret),
+      ])
+        .then(([pan, cvc]) => {
+          setDetails({ pan, cvc });
+        })
+        .catch(handleError);
+    }
+  }, [card]);
   return (
     <Sheet
       open={open}
@@ -77,7 +86,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                   >
                     <XStack gap="$s4" alignItems="center">
                       <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
-                        {cardNumber.match(/.{1,4}/g)?.join(" ") ?? ""}
+                        {details.pan.match(/.{1,4}/g)?.join(" ") ?? ""}
                       </Text>
                       <Copy
                         hitSlop={20}
@@ -85,7 +94,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                         color="$uiNeutralInversePrimary"
                         strokeWidth={2.5}
                         onPress={() => {
-                          setStringAsync(cardNumber).catch(handleError);
+                          setStringAsync(details.pan).catch(handleError);
                           toast.show("Copied to clipboard!");
                         }}
                       />
@@ -104,7 +113,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                           CVV&nbsp;
                         </Text>
                         <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
-                          {decryptSecret(card.encryptedCvc.data, card.encryptedCvc.iv, card.secretKey)}
+                          {details.cvc}
                         </Text>
                       </XStack>
                     </XStack>
