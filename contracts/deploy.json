@@ -14,6 +14,9 @@
     },
     "issuer": {
       "default": "0xe2D63e18Fb136ef84557f79052BFE8EFa90F69Bd"
+    },
+    "swapper": {
+      "default": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE"
     }
   }
 }
