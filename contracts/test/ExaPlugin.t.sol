@@ -416,20 +416,30 @@ contract ExaPluginTest is ForkTest {
 
     uint256 prevCollateral = exaEXA.balanceOf(address(account));
 
-    uint256 amountIn = 111e18;
+    uint256 maxAmountIn = 111e18;
+    uint256 minAmountOut = 110e6;
     bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (exaEXA.asset(), maxAmountIn, address(usdc), minAmountOut));
     uint256 balance = usdc.balanceOf(exaPlugin.collector());
-    account.collectCollateral(110e6, exaEXA, amountIn, block.timestamp, route, _issuerOp(110e6, block.timestamp));
-    assertEq(usdc.balanceOf(exaPlugin.collector()), balance + 110e6, "collector's usdc != expected");
-    assertEq(exaEXA.balanceOf(address(account)) + amountIn, prevCollateral, "account's collateral != expected");
+    (uint256 amountIn, uint256 amountOut) = account.collectCollateral(
+      minAmountOut, exaEXA, maxAmountIn, block.timestamp, route, _issuerOp(minAmountOut, block.timestamp)
+    );
+
+    assertEq(usdc.balanceOf(exaPlugin.collector()), balance + minAmountOut, "collector's usdc != expected");
+    assertEq(exaUSDC.balanceOf(address(account)), amountOut - minAmountOut, "account's usdc != expected");
+    assertEq(exaEXA.balanceOf(address(account)), prevCollateral - amountIn, "account's collateral != expected");
+
+    assertEq(exaEXA.balanceOf(address(exaPlugin)), 0, "collateral dust");
+    assertEq(IERC20(exaEXA.asset()).balanceOf(address(exaPlugin)), 0, "collateral asset dust");
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc asset dust");
+    assertEq(exaUSDC.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
 
   function testFork_debitCollateral_collects() external {
     _setUpLifiFork();
-    uint256 amount = 0.0004e8;
+    uint256 maxAmountIn = 0.0004e8;
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
-    deal(exaWBTC.asset(), address(account), amount);
+    deal(exaWBTC.asset(), address(account), maxAmountIn);
 
     vm.startPrank(keeper);
     account.poke(exaWBTC);
@@ -441,7 +451,7 @@ contract ExaPluginTest is ForkTest {
     );
 
     uint256 balance = usdc.balanceOf(exaPlugin.collector());
-    account.collectCollateral(21e6, exaWBTC, amount, block.timestamp, route, _issuerOp(21e6, block.timestamp));
+    account.collectCollateral(21e6, exaWBTC, maxAmountIn, block.timestamp, route, _issuerOp(21e6, block.timestamp));
     assertEq(usdc.balanceOf(exaPlugin.collector()) - balance, 21e6);
   }
 
@@ -916,7 +926,7 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
-    assertEq(prevCollateral, amountIn + exaEXA.balanceOf(address(account)), "collateral didn't decrease");
+    assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
     assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 0, "debt not fully repaid");
   }
 
@@ -940,6 +950,7 @@ contract ExaPluginTest is ForkTest {
 
     vm.startPrank(address(account));
     account.crossRepay(maturity, 21e6, 25e6, exaWBTC, amount, route);
+
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(prevCollateral, exaWBTC.balanceOf(address(account)), "collateral didn't decrease");
 
@@ -965,7 +976,7 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
-    assertEq(prevCollateral, amountIn + exaEXA.balanceOf(address(account)), "collateral didn't decrease");
+    assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
     assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 0, "debt not fully repaid");
   }
 
