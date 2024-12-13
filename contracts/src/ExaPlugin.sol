@@ -228,23 +228,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     bytes calldata route,
     bytes calldata signature
   ) external {
-    bytes memory data = _hash(
-      abi.encodePacked(
-        bytes1(0x03),
-        abi.encode(
-          CollectCollateralCallbackData({
-            debit: amount,
-            owner: msg.sender,
-            collateral: collateral,
-            amountIn: amountIn,
-            route: route
-          })
-        )
-      )
-    );
     _checkIssuer(msg.sender, amount, timestamp, signature);
-    _executeFromSender(address(collateral), 0, abi.encodeCall(IERC20.approve, (address(this), amountIn)));
-    _flashLoan(amount, data);
+    _checkMarket(collateral);
+
+    _executeFromSender(address(collateral), 0, abi.encodeCall(IERC4626.withdraw, (amountIn, address(this), msg.sender)));
+    uint256 out = _swap(IERC20(collateral.asset()), IERC20(EXA_USDC.asset()), amountIn, amount, route);
+
+    IERC20(EXA_USDC.asset()).safeTransfer(collector, amount);
+
+    if (out > amount) EXA_USDC.deposit(out - amount, msg.sender);
+
+    _checkLiquidity(msg.sender);
   }
 
   function collectInstallments(
@@ -571,37 +565,28 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     assert(msg.sender == address(BALANCER_VAULT) && callHash == keccak256(data));
     delete callHash;
 
+    uint256 actualRepay;
     if (data[0] == 0x01) {
       RepayCallbackData memory r = abi.decode(data[1:], (RepayCallbackData));
-      uint256 actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower);
+      actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower);
 
       if (actualRepay < r.maxRepay) EXA_USDC.deposit(r.maxRepay - actualRepay, r.borrower);
 
       EXA_USDC.withdraw(r.maxRepay, address(BALANCER_VAULT), r.borrower);
 
       _checkLiquidity(r.borrower);
-    } else if (data[0] == 0x02) {
-      CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
-      uint256 actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
-
-      c.marketIn.withdraw(c.amountIn, address(this), c.borrower);
-      uint256 out = _swap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.amountIn, actualRepay, c.route);
-      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
-      EXA_USDC.deposit(out - actualRepay, c.borrower);
-
-      _checkLiquidity(c.borrower);
-    } else {
-      CollectCollateralCallbackData memory c = abi.decode(data[1:], (CollectCollateralCallbackData));
-
-      c.collateral.withdraw(c.amountIn, address(this), c.owner);
-      uint256 out = _swap(IERC20(c.collateral.asset()), IERC20(EXA_USDC.asset()), c.amountIn, c.debit, c.route);
-
-      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.debit);
-      IERC20(EXA_USDC.asset()).safeTransfer(collector, c.debit);
-      if (out > c.debit) EXA_USDC.deposit(out - c.debit, c.owner);
-
-      _checkLiquidity(c.owner);
+      return;
     }
+
+    CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
+    actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
+
+    c.marketIn.withdraw(c.amountIn, address(this), c.borrower);
+    uint256 out = _swap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.amountIn, actualRepay, c.route);
+    IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
+    EXA_USDC.deposit(out - actualRepay, c.borrower);
+
+    _checkLiquidity(c.borrower);
   }
 
   receive() external payable { } // solhint-disable-line no-empty-blocks
@@ -727,14 +712,6 @@ struct CrossRepayCallbackData {
   uint256 positionAssets;
   uint256 maxRepay;
   IMarket marketIn;
-  uint256 amountIn;
-  bytes route;
-}
-
-struct CollectCollateralCallbackData {
-  uint256 debit;
-  address owner;
-  IMarket collateral;
   uint256 amountIn;
   bytes route;
 }
