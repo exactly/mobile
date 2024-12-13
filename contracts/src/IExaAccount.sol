@@ -15,9 +15,9 @@ interface IExaAccount {
     uint256 amountIn,
     bytes calldata route
   ) external;
-  function swap(IERC20 assetIn, IERC20 assetOut, uint256 amountIn, uint256 minOut, bytes memory route)
+  function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     external
-    returns (uint256 received);
+    returns (uint256 amountIn, uint256 amountOut);
   function rollDebt(
     uint256 repayMaturity,
     uint256 borrowMaturity,
@@ -37,11 +37,11 @@ interface IExaAccount {
   function collectCollateral(
     uint256 amount,
     IMarket collateral,
-    uint256 amountIn,
+    uint256 maxAmountIn,
     uint256 timestamp,
     bytes memory route,
     bytes calldata signature
-  ) external;
+  ) external returns (uint256, uint256);
   function collectInstallments(
     uint256 firstMaturity,
     uint256[] calldata amounts,
