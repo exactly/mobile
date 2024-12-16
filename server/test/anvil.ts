@@ -63,9 +63,10 @@ export default async function setup({ provide }: GlobalSetupContext) {
   const marketUSDC = protocol[13];
   const weth = protocol[19];
   const marketWETH = protocol[21];
-  const previewer = protocol[27];
-  const installmentsRouter = protocol[28];
-  const balancer = protocol[29];
+  const balancer = protocol[27];
+  const debtManager = protocol[28];
+  const previewer = protocol[30];
+  const installmentsRouter = protocol[31];
 
   if (initialize) {
     shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor.contractAddress;
@@ -75,15 +76,27 @@ export default async function setup({ provide }: GlobalSetupContext) {
     shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC.contractAddress;
     shell.env.PROTOCOL_WETH_ADDRESS = weth.contractAddress;
     shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH.contractAddress;
+    shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
+    shell.env.PROTOCOL_DEBTMANAGER_ADDRESS = debtManager.contractAddress;
     shell.env.PROTOCOL_PREVIEWER_ADDRESS = previewer.contractAddress;
     shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter.contractAddress;
-    shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
+    await $(shell)`forge script test/mocks/Mocks.s.sol
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/InstallmentsPreviewer.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/IssuerChecker.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
+  const [, swapper] = parse(
+    object({
+      transactions: tuple([
+        object({ contractName: literal("MockVelodromeFactory"), contractAddress: Address }),
+        object({ contractName: literal("MockSwapper"), contractAddress: Address }),
+      ]),
+    }),
+    await import(`@exactly/plugin/broadcast/Mocks.s.sol/${foundry.id}/run-latest.json`),
+  ).transactions;
   const [issuerChecker] = parse(
     object({
       transactions: tuple([object({ contractName: literal("IssuerChecker"), contractAddress: Address })]),
@@ -92,6 +105,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   ).transactions;
 
   if (initialize) {
+    shell.env.SWAPPER_ADDRESS = swapper.contractAddress;
     shell.env.BROADCAST_ISSUERCHECKER_ADDRESS = issuerChecker.contractAddress;
     await $(shell)`forge script script/Refunder.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
@@ -156,6 +170,7 @@ export default async function setup({ provide }: GlobalSetupContext) {
   provide("MarketWETH", marketWETH.contractAddress);
   provide("Previewer", previewer.contractAddress);
   provide("Refunder", refunder.contractAddress);
+  provide("Swapper", swapper.contractAddress);
   provide("USDC", usdc.contractAddress);
   provide("WETH", weth.contractAddress);
 
@@ -193,19 +208,19 @@ const Protocol = object({
     object({ transactionType: literal("CALL") }),
     object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
     object({ transactionType: literal("CALL") }),
+    object({
+      transactionType: literal("CREATE"),
+      contractName: literal("MockBalancerVault"),
+      contractAddress: Address,
+    }),
+    object({ transactionType: literal("CREATE"), contractName: literal("DebtManager"), contractAddress: Address }),
+    object({ transactionType: literal("CALL") }),
     object({ transactionType: literal("CREATE"), contractName: literal("Previewer"), contractAddress: Address }),
     object({
       transactionType: literal("CREATE"),
       contractName: literal("InstallmentsRouter"),
       contractAddress: Address,
     }),
-    object({
-      transactionType: literal("CREATE"),
-      contractName: literal("MockBalancerVault"),
-      contractAddress: Address,
-    }),
-    object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CALL") }),
   ]),
 });
 
@@ -223,6 +238,7 @@ declare module "vitest" {
     MarketWETH: Address;
     Previewer: Address;
     Refunder: Address;
+    Swapper: Address;
     USDC: Address;
     WETH: Address;
   }
