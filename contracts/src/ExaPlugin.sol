@@ -70,7 +70,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
   IssuerChecker public immutable ISSUER_CHECKER;
 
-  uint256 public immutable PROPOSAL_DELAY = 5 minutes;
+  uint256 public immutable PROPOSAL_DELAY = 1 minutes;
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
   address public collector;
