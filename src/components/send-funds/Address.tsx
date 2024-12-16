@@ -138,6 +138,9 @@ export default function AddressSelection() {
                 &nbsp;Learn more about sending funds
               </Text>
             </Text>
+            <Text color="$uiNeutralPlaceholder" caption2 textAlign="justify">
+              Arrival time ≈ 5 min.
+            </Text>
 
             <Subscribe selector={({ canSubmit }) => canSubmit}>
               {(canSubmit) => {
