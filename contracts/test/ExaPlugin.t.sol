@@ -54,6 +54,7 @@ import { DeployRefunder } from "../script/Refunder.s.sol";
 import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
 
 import { MockSwapper } from "./mocks/MockSwapper.sol";
+import { DeployMocks } from "./mocks/Mocks.s.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
 // solhint-disable-next-line max-states-count
@@ -85,7 +86,6 @@ contract ExaPluginTest is ForkTest {
   IMarket internal exaWETH;
   MockERC20 internal exa;
   MockERC20 internal usdc;
-  MockSwapper internal mockSwapper;
 
   function setUp() external {
     vm.setEnv("DEPLOYER_ADDRESS", address(this).toHexString());
@@ -102,14 +102,20 @@ contract ExaPluginTest is ForkTest {
     new DeployAccount().run();
     DeployProtocol p = new DeployProtocol();
     p.run();
-
     auditor = p.auditor();
     exaEXA = IMarket(address(p.exaEXA()));
     exaUSDC = IMarket(address(p.exaUSDC()));
     exaWETH = IMarket(address(p.exaWETH()));
     exa = p.exa();
     usdc = p.usdc();
+    vm.setEnv("PROTOCOL_AUDITOR_ADDRESS", address(auditor).toHexString());
     vm.setEnv("PROTOCOL_MARKETUSDC_ADDRESS", address(exaUSDC).toHexString());
+    vm.setEnv("PROTOCOL_USDC_ADDRESS", address(usdc).toHexString());
+
+    DeployMocks m = new DeployMocks();
+    m.setUp();
+    m.run();
+    vm.setEnv("SWAPPER_ADDRESS", address(m.swapper()).toHexString());
 
     DeployIssuerChecker ic = new DeployIssuerChecker();
     ic.run();
@@ -123,7 +129,6 @@ contract ExaPluginTest is ForkTest {
     vm.setEnv("BROADCAST_REFUNDER_ADDRESS", address(refunder).toHexString());
 
     refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
-    mockSwapper = new MockSwapper(p.velodromeFactory());
     exaPlugin = new ExaPlugin(
       IAuditor(address(auditor)),
       exaUSDC,
@@ -133,7 +138,7 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(address(p.installmentsRouter())),
       issuerChecker,
       collector,
-      address(mockSwapper)
+      address(m.swapper())
     );
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
@@ -1172,7 +1177,10 @@ contract ExaPluginTest is ForkTest {
     vm.setEnv("DEPLOYER_ADDRESS", "");
     vm.setEnv("KEEPER_ADDRESS", "");
     vm.setEnv("ISSUER_ADDRESS", "");
+    vm.setEnv("SWAPPER_ADDRESS", "");
+    vm.setEnv("PROTOCOL_AUDITOR_ADDRESS", "");
     vm.setEnv("PROTOCOL_MARKETUSDC_ADDRESS", "");
+    vm.setEnv("PROTOCOL_USDC_ADDRESS", "");
     vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", "");
     vm.setEnv("BROADCAST_REFUNDER_ADDRESS", "");
 

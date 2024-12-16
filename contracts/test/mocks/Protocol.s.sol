@@ -19,7 +19,6 @@ import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { BaseScript } from "../../script/Base.s.sol";
 import { IBalancerVault } from "../../src/ExaPlugin.sol";
-import { MockVelodromeFactory, MockVelodromePool } from "./MockVelodromeFactory.sol";
 
 contract DeployProtocol is BaseScript {
   Auditor public auditor;
@@ -34,7 +33,6 @@ contract DeployProtocol is BaseScript {
   InstallmentsRouter public installmentsRouter;
 
   IBalancerVault public balancer;
-  MockVelodromeFactory public velodromeFactory;
 
   function run() external {
     vm.startBroadcast(acct("deployer"));
@@ -92,14 +90,6 @@ contract DeployProtocol is BaseScript {
     exa.mint(address(balancer), 1_000_000e18);
     usdc.mint(address(balancer), 1_000_000e6);
     vm.label(address(balancer), "BalancerVault");
-
-    velodromeFactory = new MockVelodromeFactory();
-    MockVelodromePool pool = velodromeFactory.createPool(address(exa), address(usdc), false);
-    exa.mint(address(pool), 1_000_000e18);
-    usdc.mint(address(pool), 1_000_000e6);
-    pool.poke();
-    vm.label(address(velodromeFactory), "VelodromeFactory");
-    vm.label(address(pool), "EXA/USDC");
 
     vm.stopBroadcast();
   }
