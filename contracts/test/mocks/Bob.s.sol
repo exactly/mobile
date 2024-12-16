@@ -17,6 +17,8 @@ import { ExaAccountFactory } from "../../src/ExaAccountFactory.sol";
 import { IExaAccount, IMarket } from "../../src/IExaAccount.sol";
 import { IssuerChecker } from "../../src/IssuerChecker.sol";
 
+import { MockSwapper } from "./MockSwapper.sol";
+
 contract BobScript is BaseScript {
   using OwnersLib for address[];
   using LibString for address;
@@ -89,8 +91,21 @@ contract BobScript is BaseScript {
     vm.stopBroadcast();
     Call[] memory calls = new Call[](3);
     calls[0] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.repay, (maturity, 420e6, 420e6)));
-    // calls[1] =
-    //   Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.crossRepay, (maturity + FixedLib.INTERVAL, exaEXA)));
+    calls[1] = Call(
+      address(bobAccount),
+      0,
+      abi.encodeCall(
+        IExaAccount.crossRepay,
+        (
+          maturity + FixedLib.INTERVAL,
+          type(uint256).max,
+          82e6,
+          exaEXA,
+          100e18,
+          abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exa), 100e18, address(usdc), 82e6))
+        )
+      )
+    );
     calls[2] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, 69e6, address(0x69))));
     vm.broadcast(bob);
     IStandardExecutor(address(bobAccount)).executeBatch(calls);
