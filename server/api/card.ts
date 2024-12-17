@@ -1,7 +1,7 @@
 import MAX_INSTALLMENTS from "@exactly/common/MAX_INSTALLMENTS";
 import { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
-import { setUser } from "@sentry/node";
+import { setContext, setUser } from "@sentry/node";
 import { Mutex } from "async-mutex";
 import { eq, inArray, ne } from "drizzle-orm";
 import { Hono } from "hono";
@@ -73,6 +73,13 @@ export default app
             ? inquiry.attributes["phone-number"]
             : `+${inquiry.attributes["phone-number"]}`,
         );
+        setContext("phone", {
+          inquiry: inquiry.id,
+          phone: inquiry.attributes["phone-number"],
+          countryCode: phone.countryCallingCode,
+          number: phone.nationalNumber,
+        });
+
         const card = await createCard({
           account,
           email: inquiry.attributes["email-address"],
