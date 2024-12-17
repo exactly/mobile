@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
-import { zeroAddress } from "viem";
+import { maxUint256, zeroAddress } from "viem";
 import { useSimulateContract, useWriteContract } from "wagmi";
 
 import AssetSelectionSheet from "./AssetSelectionSheet";
@@ -53,7 +53,7 @@ export default function Pay() {
   const { data: repaySimulation, isPending: isSimulatingRepay } = useSimulateContract({
     address: account,
     functionName: "repay",
-    args: [success ? BigInt(maturity) : 0n],
+    args: [success ? BigInt(maturity) : 0n, maxUint256, maxUint256], // TODO slippage control
     abi: [...exaPluginAbi, ...auditorAbi, ...marketAbi],
     query: { enabled: !!account && !!USDCMarket },
   });
