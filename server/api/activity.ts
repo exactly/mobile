@@ -11,8 +11,10 @@ import {
   bigint,
   type InferInput,
   type InferOutput,
+  intersect,
   isoTimestamp,
   length,
+  literal,
   minLength,
   nullish,
   number,
@@ -26,6 +28,7 @@ import {
   transform,
   undefined_,
   union,
+  variant,
 } from "valibot";
 import { withRetry, zeroAddress } from "viem";
 
@@ -205,22 +208,65 @@ export default app.get(
 );
 
 const Borrow = object({ maturity: bigint(), assets: bigint(), fee: bigint() });
-const CardActivity = object({
-  operation_id: string(),
-  data: object({
-    created_at: pipe(string(), isoTimestamp()),
-    bill_amount: number(),
-    merchant_data: object({
-      name: string(),
-      country: nullish(string()),
-      state: nullish(string()),
-      city: nullish(string()),
+
+const CardActivity = pipe(
+  variant("type", [
+    object({
+      type: literal("panda"),
+      createdAt: pipe(string(), isoTimestamp()),
+      body: object({
+        id: string(),
+        spend: object({
+          amount: number(),
+          currency: literal("usd"),
+          localAmount: number(),
+          localCurrency: string(),
+          merchantCity: nullish(string()),
+          merchantCountry: nullish(string()),
+          merchantName: string(),
+        }),
+      }),
+      hash: Hash,
     }),
-    transaction_amount: number(),
-    transaction_currency_code: nullish(string()),
-  }),
-  hash: Hash,
-});
+    object({
+      type: undefined_(),
+      operation_id: string(),
+      data: object({
+        created_at: pipe(string(), isoTimestamp()),
+        bill_amount: number(),
+        merchant_data: object({
+          name: string(),
+          country: nullish(string()),
+          state: nullish(string()),
+          city: nullish(string()),
+        }),
+        transaction_amount: number(),
+        transaction_currency_code: nullish(string()),
+      }),
+      hash: Hash,
+    }),
+  ]),
+  transform((activity) =>
+    activity.type === "panda" ? activity : { ...activity, createdAt: activity.data.created_at },
+  ),
+);
+
+// const CardActivity = object({
+//   operation_id: string(),
+//   data: object({
+//     created_at: pipe(string(), isoTimestamp()),
+//     bill_amount: number(),
+//     merchant_data: object({
+//       name: string(),
+//       country: nullish(string()),
+//       state: nullish(string()),
+//       city: nullish(string()),
+//     }),
+//     transaction_amount: number(),
+//     transaction_currency_code: nullish(string()),
+//   }),
+//   hash: Hash,
+// });
 
 function transformBorrow(borrow: InferOutput<typeof Borrow>, timestamp: bigint) {
   return {
@@ -229,46 +275,62 @@ function transformBorrow(borrow: InferOutput<typeof Borrow>, timestamp: bigint) 
   };
 }
 
-function transformCard({ operation_id, data, hash }: InferOutput<typeof CardActivity>) {
-  return {
-    type: "card" as const,
-    id: operation_id,
-    transactionHash: hash,
-    timestamp: data.created_at,
-    currency: data.transaction_currency_code,
-    amount: data.transaction_amount,
-    usdAmount: data.bill_amount,
-    merchant: {
-      name: data.merchant_data.name,
-      city: data.merchant_data.city,
-      country: data.merchant_data.country,
-      state: data.merchant_data.state,
-    },
-  };
+function transformCard(activity: InferOutput<typeof CardActivity>) {
+  return activity.type === "panda"
+    ? {
+        type: "card" as const,
+        id: activity.body.id,
+        transactionHash: activity.hash,
+        timestamp: activity.createdAt,
+        currency: activity.body.spend.currency,
+        amount: activity.body.spend.localAmount,
+        usdAmount: activity.body.spend.amount,
+        merchant: {
+          name: activity.body.spend.merchantName,
+          city: activity.body.spend.merchantCity,
+          country: activity.body.spend.merchantCountry,
+          state: "",
+        },
+      }
+    : {
+        type: "card" as const,
+        id: activity.operation_id,
+        transactionHash: activity.hash,
+        timestamp: activity.data.created_at,
+        currency: activity.data.transaction_currency_code,
+        amount: activity.data.transaction_amount,
+        usdAmount: activity.data.bill_amount,
+        merchant: {
+          name: activity.data.merchant_data.name,
+          city: activity.data.merchant_data.city,
+          country: activity.data.merchant_data.country,
+          state: activity.data.merchant_data.state,
+        },
+      };
 }
 
 export const DebitActivity = pipe(
-  object({ ...CardActivity.entries, events: undefined_(), blockTimestamp: undefined_() }),
+  intersect([CardActivity, object({ events: undefined_(), blockTimestamp: undefined_() })]),
   transform((activity) => ({ ...transformCard(activity), mode: 0 as const })),
 );
 
 export const CreditActivity = pipe(
-  object({ ...CardActivity.entries, events: pipe(array(Borrow), length(1)), blockTimestamp: optional(bigint()) }),
+  intersect([CardActivity, object({ events: pipe(array(Borrow), length(1)), blockTimestamp: optional(bigint()) })]),
   transform((activity) => ({
     ...transformCard(activity),
     mode: 1 as const,
     borrow: transformBorrow(
       activity.events[0]!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-      activity.blockTimestamp ?? BigInt(Math.floor(new Date(activity.data.created_at).getTime() / 1000)),
+      activity.blockTimestamp ?? BigInt(Math.floor(new Date(activity.createdAt).getTime() / 1000)),
     ),
   })),
 );
 
 export const InstallmentsActivity = pipe(
-  object({ ...CardActivity.entries, events: pipe(array(Borrow), minLength(2)), blockTimestamp: optional(bigint()) }),
+  intersect([CardActivity, object({ events: pipe(array(Borrow), minLength(2)), blockTimestamp: optional(bigint()) })]),
   transform((activity) => {
-    const { data, events, blockTimestamp } = activity;
-    const timestamp = blockTimestamp ?? BigInt(Math.floor(new Date(data.created_at).getTime() / 1000));
+    const { createdAt, events, blockTimestamp } = activity;
+    const timestamp = blockTimestamp ?? BigInt(Math.floor(new Date(createdAt).getTime() / 1000));
     events.sort((a, b) => Number(a.maturity) - Number(b.maturity));
     return {
       ...transformCard(activity),

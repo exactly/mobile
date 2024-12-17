@@ -189,9 +189,14 @@ export default new Hono().post(
               keeper.writeContract(request as Parameters<typeof keeper.writeContract>[0]),
             );
             setContext("tx", { call, ...request, transactionHash: hash });
-            await database
-              .insert(transactions)
-              .values([{ id: payload.body.id, cardId: payload.body.spend.cardId, hash, payload: jsonBody }]);
+            await database.insert(transactions).values([
+              {
+                id: payload.body.id,
+                cardId: payload.body.spend.cardId,
+                hash,
+                payload: { ...jsonBody, createdAt: new Date().toISOString(), type: "panda" },
+              },
+            ]);
             startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
               .then((receipt) => {
                 if (receipt.status === "success") return;
