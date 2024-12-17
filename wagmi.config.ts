@@ -66,6 +66,7 @@ export default defineConfig([
           "ExaAccountFactory.sol/ExaAccountFactory.json",
           "ExaPlugin.sol/ExaPlugin.json",
           "InstallmentsPreviewer.sol/InstallmentsPreviewer.json",
+          "MockSwapper.sol/MockSwapper.json",
           "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
         ],
       }),
