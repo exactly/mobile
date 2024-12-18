@@ -52,7 +52,10 @@ export async function registrationOptions() {
 
 export async function verifyRegistration(attestation: RegistrationResponseJSON) {
   const response = await client.api.auth.registration.$post({ json: attestation });
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   const { auth: expires, ...passkey } = await response.json();
   await queryClient.setQueryData(["auth"], parse(Auth, expires));
   return parse(Passkey, passkey);
@@ -61,49 +64,70 @@ export async function verifyRegistration(attestation: RegistrationResponseJSON) 
 export async function getCard() {
   await auth();
   const response = await client.api.card.$get();
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   return response.json();
 }
 
 export async function createCard() {
   await auth();
   const response = await client.api.card.$post();
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   return response.json();
 }
 
 export async function setCardStatus(status: "ACTIVE" | "FROZEN") {
   await auth();
   const response = await client.api.card.$patch({ json: { status } });
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   return response.json();
 }
 
 export async function setCardMode(mode: number) {
   await auth();
   const response = await client.api.card.$patch({ json: { mode } });
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   return response.json();
 }
 
 export async function getKYCLink() {
   await auth();
   const response = await client.api.kyc.$post();
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   return response.json();
 }
 
 export async function getKYCStatus() {
   await auth();
   const response = await client.api.kyc.$get();
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   return response.json();
 }
 
 export async function getPasskey() {
   await auth();
   const response = await client.api.passkey.$get();
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   return response.json();
 }
 
@@ -112,7 +136,10 @@ export async function getActivity(parameters?: NonNullable<Parameters<typeof cli
   const response = await client.api.activity.$get(
     parameters?.include === undefined ? undefined : { query: { include: parameters.include } },
   );
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) {
+    const raw = response.clone();
+    throw new APIError(response.status, await response.json().catch(() => raw.text()));
+  }
   return response.json();
 }
 
