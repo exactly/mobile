@@ -83,6 +83,22 @@ const personaPayload = {
               emailAddress: "a444q444s007@gmail.com",
               phoneNumber: "+886 999 999 999",
               fields: {
+                inputSelect: {
+                  type: "choices",
+                  value: "IT and computing",
+                },
+                anualSalary: {
+                  type: "string",
+                  value: "25000",
+                },
+                expectedMonthlyVolume: {
+                  type: "string",
+                  value: "1500",
+                },
+                accountPurpose: {
+                  type: "choices",
+                  value: "Everyday purchases",
+                },
                 cryptoWalletAddress: {
                   type: "string",
                   value: null,
@@ -189,10 +205,6 @@ const personaPayload = {
                   type: "string",
                   value: null,
                 },
-                inputSelect: {
-                  type: "choices",
-                  value: "m",
-                },
                 illegalActivites: {
                   type: "choices",
                   value: "No",
@@ -293,6 +305,128 @@ const personaPayload = {
             },
           },
           included: [
+            {
+              type: "account",
+              id: "act_dkWXaYgsZD3P5QEoMP5M7pWQYdtN",
+              attributes: {
+                referenceId: "OpidDnEeUt2tmSFHAJnNZ3QeGXE",
+                createdAt: "2024-12-18T17:19:08.000Z",
+                updatedAt: "2024-12-18T17:27:19.000Z",
+                redactedAt: null,
+                accountTypeName: "User",
+                fields: {
+                  name: {
+                    type: "hash",
+                    value: {
+                      first: {
+                        type: "string",
+                        value: null,
+                      },
+                      middle: {
+                        type: "string",
+                        value: null,
+                      },
+                      last: {
+                        type: "string",
+                        value: null,
+                      },
+                    },
+                  },
+                  address: {
+                    type: "hash",
+                    value: {
+                      street_1: {
+                        type: "string",
+                        value: null,
+                      },
+                      street_2: {
+                        type: "string",
+                        value: null,
+                      },
+                      city: {
+                        type: "string",
+                        value: null,
+                      },
+                      subdivision: {
+                        type: "string",
+                        value: null,
+                      },
+                      postal_code: {
+                        type: "string",
+                        value: null,
+                      },
+                      country_code: {
+                        type: "string",
+                        value: null,
+                      },
+                    },
+                  },
+                  identification_numbers: {
+                    type: "array",
+                    value: [],
+                  },
+                  birthdate: {
+                    type: "date",
+                    value: null,
+                  },
+                  phone_number: {
+                    type: "string",
+                    value: null,
+                  },
+                  email_address: {
+                    type: "string",
+                    value: null,
+                  },
+                  selfie_photo: {
+                    type: "file",
+                    value: {
+                      filename: "center_photo_processed.jpg",
+                      byte_size: 102_850,
+                      url: "https://files.w8m1Q",
+                    },
+                  },
+                },
+                nameFirst: null,
+                nameMiddle: null,
+                nameLast: null,
+                socialSecurityNumber: null,
+                addressStreet1: null,
+                addressStreet2: null,
+                addressCity: null,
+                addressSubdivision: null,
+                addressPostalCode: null,
+                countryCode: null,
+                birthdate: null,
+                phoneNumber: null,
+                emailAddress: null,
+                tags: [],
+                identificationNumbers: {},
+              },
+              relationships: {
+                accountType: {
+                  data: {
+                    type: "account-type",
+                    id: "acttp_4a4T1s2JdSXCodbkgpRMmY3i",
+                  },
+                },
+              },
+            },
+            {
+              type: "inquiry-template",
+              id: "itmpl_8uim4FvD5P3kFpKHX37CW817",
+              attributes: {
+                status: "active",
+                name: "KYC: Government ID + Selfie",
+              },
+              relationships: {
+                latestPublishedVersion: {
+                  data: {
+                    type: "inquiry-template-version",
+                    id: "itmplv_unUfccv8RvdmfXiJMLL3WaeKqkZw",
+                  },
+                },
+              },
+            },
             {
               type: "inquiry-session",
               id: "",

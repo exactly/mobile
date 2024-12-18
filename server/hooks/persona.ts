@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { getName } from "i18n-iso-countries/index";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
-import { array, length, literal, nullable, object, pipe, string, variant } from "valibot";
+import { array, length, literal, nullable, object, pipe, string, transform, variant, type InferInput } from "valibot";
 
 import database, { credentials } from "../database/index";
 import { createUser } from "../utils/panda";
@@ -13,6 +13,15 @@ import { headerValidator } from "../utils/persona";
 
 const debug = createDebug("exa:persona");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
+
+const GovernmentID = object({
+  type: literal("verification/government-id"),
+  attributes: object({ status: literal("passed"), countryCode: pipe(string(), length(2)) }),
+});
+const IpAddress = object({
+  type: literal("inquiry-session"),
+  attributes: object({ status: literal("active"), ipAddress: string() }),
+});
 
 const Payload = object({
   data: object({
@@ -38,18 +47,27 @@ const Payload = object({
               selectedCountryCode: object({
                 value: pipe(string(), length(2)),
               }),
+              inputSelect: object({
+                value: string(),
+              }),
+              anualSalary: object({
+                value: string(),
+              }),
+              expectedMonthlyVolume: object({
+                value: string(),
+              }),
+              accountPurpose: object({
+                value: string(),
+              }),
             }),
           }),
         }),
         included: array(
           variant("type", [
+            GovernmentID,
+            IpAddress,
             object({
-              type: literal("verification/government-id"),
-              attributes: object({ status: literal("passed"), countryCode: pipe(string(), length(2)) }),
-            }),
-            object({
-              type: literal("inquiry-session"),
-              attributes: object({ status: literal("active"), ipAddress: string() }),
+              type: string(),
             }),
           ]),
         ),
@@ -97,11 +115,12 @@ export default new Hono().post(
     } = payload.data.attributes.payload;
 
     const phone = parsePhoneNumberWithError(phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`);
-
-    const govermentId = included.find((x) => x.type === "verification/government-id");
+    const govermentId = included.find(
+      (x): x is InferInput<typeof GovernmentID> => x.type === "verification/government-id",
+    );
     if (!govermentId) return c.text("no government id", 400);
 
-    const session = included.find((x) => x.type === "inquiry-session");
+    const session = included.find((x): x is InferInput<typeof IpAddress> => x.type === "inquiry-session");
     if (!session) return c.text("no active inquiry session", 400);
 
     const { id } = await createUser({
@@ -123,10 +142,10 @@ export default new Hono().post(
       phoneCountryCode: phone.countryCallingCode,
       phoneNumber: phone.nationalNumber,
       ipAddress: session.attributes.ipAddress,
-      occupation: "developer",
-      annualSalary: "10001001",
-      accountPurpose: "usage  in exa",
-      expectedMonthlyVolume: "10000",
+      occupation: fields.inputSelect.value,
+      annualSalary: fields.anualSalary.value,
+      accountPurpose: fields.accountPurpose.value,
+      expectedMonthlyVolume: fields.expectedMonthlyVolume.value,
       isTermsOfServiceAccepted: true,
     });
 
