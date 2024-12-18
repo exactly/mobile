@@ -128,7 +128,8 @@ export default new Hono().post(
       lastName: process.env.NODE_ENV === "production" ? nameLast : nameLast + "approved",
       birthDate: birthdate,
       nationalId: identificationNumber,
-      countryOfIssue: govermentId.attributes.countryCode,
+      countryOfIssue:
+        process.env.NODE_ENV === "production" ? govermentId.attributes.countryCode : fields.selectedCountryCode.value,
       email: emailAddress,
       address: {
         line1: addressStreet1,
