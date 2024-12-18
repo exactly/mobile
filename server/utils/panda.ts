@@ -5,6 +5,7 @@ import {
   type BaseSchema,
   length,
   literal,
+  maxLength,
   number,
   object,
   parse,
@@ -133,7 +134,7 @@ const CreateCardRequest = object({
       "perAuthorization",
     ]),
   }),
-  configuration: object({ displayName: pipe(string(), length(30)) }),
+  configuration: object({ displayName: pipe(string(), maxLength(30)) }),
 });
 
 const CardResponse = object({
@@ -153,7 +154,7 @@ const CardResponse = object({
     ]),
   }),
   last4: pipe(string(), length(4)),
-  expirationMonth: pipe(string(), length(2)),
+  expirationMonth: pipe(string(), maxLength(2)),
   expirationYear: pipe(string(), length(4)),
 });
 

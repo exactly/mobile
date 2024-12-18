@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { getName } from "i18n-iso-countries/index";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
-import { array, length, literal, nullable, object, pipe, string, transform, variant, type InferInput } from "valibot";
+import { array, length, literal, nullable, object, pipe, string, variant, type InferInput } from "valibot";
 
 import database, { credentials } from "../database/index";
 import { createUser } from "../utils/panda";
