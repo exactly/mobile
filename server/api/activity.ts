@@ -251,23 +251,6 @@ const CardActivity = pipe(
   ),
 );
 
-// const CardActivity = object({
-//   operation_id: string(),
-//   data: object({
-//     created_at: pipe(string(), isoTimestamp()),
-//     bill_amount: number(),
-//     merchant_data: object({
-//       name: string(),
-//       country: nullish(string()),
-//       state: nullish(string()),
-//       city: nullish(string()),
-//     }),
-//     transaction_amount: number(),
-//     transaction_currency_code: nullish(string()),
-//   }),
-//   hash: Hash,
-// });
-
 function transformBorrow(borrow: InferOutput<typeof Borrow>, timestamp: bigint) {
   return {
     fee: Number(borrow.fee) / 1e6,
@@ -283,8 +266,8 @@ function transformCard(activity: InferOutput<typeof CardActivity>) {
         transactionHash: activity.hash,
         timestamp: activity.createdAt,
         currency: activity.body.spend.currency,
-        amount: activity.body.spend.localAmount,
-        usdAmount: activity.body.spend.amount,
+        amount: activity.body.spend.localAmount / 100,
+        usdAmount: activity.body.spend.amount / 100,
         merchant: {
           name: activity.body.spend.merchantName,
           city: activity.body.spend.merchantCity,
