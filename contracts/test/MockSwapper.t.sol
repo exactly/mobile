@@ -40,7 +40,9 @@ contract MockSwapperTest is ForkTest {
     uint256 balanceIn = exa.balanceOf(address(this));
     uint256 amountOut = 100e6;
     exa.approve(address(mockSwapper), type(uint256).max);
+    uint256 expectedIn = mockSwapper.getAmountIn(address(exa), amountOut, address(usdc));
     uint256 amountIn = mockSwapper.swapExactAmountOut(address(exa), type(uint256).max, address(usdc), amountOut);
+    assertEq(expectedIn, amountIn);
     assertEq(usdc.balanceOf(address(this)), balanceOut + amountOut);
     assertEq(exa.balanceOf(address(this)), balanceIn - amountIn);
   }
@@ -50,7 +52,9 @@ contract MockSwapperTest is ForkTest {
     uint256 balanceIn = exa.balanceOf(address(this));
     uint256 amountIn = 100e18;
     exa.approve(address(mockSwapper), type(uint256).max);
+    uint256 expectedOut = mockSwapper.getAmountOut(address(exa), amountIn, address(usdc));
     uint256 amountOut = mockSwapper.swapExactAmountIn(address(exa), amountIn, address(usdc), 0);
+    assertEq(amountOut, expectedOut);
     assertEq(usdc.balanceOf(address(this)), balanceOut + amountOut);
     assertEq(exa.balanceOf(address(this)), balanceIn - amountIn);
   }
