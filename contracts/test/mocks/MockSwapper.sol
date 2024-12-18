@@ -19,6 +19,20 @@ contract MockSwapper {
     VELODROME_FACTORY = velodromeFactory;
   }
 
+  function getAmountIn(address tokenIn, uint256 amountOut, address tokenOut) external view returns (uint256 amountIn) {
+    address pool = VELODROME_FACTORY.getPool(tokenIn, tokenOut, false);
+    uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
+    bool isToken0 = tokenOut > tokenIn;
+    return _getAmountIn(pool, amountOut, isToken0, swapFee);
+  }
+
+  function getAmountOut(address tokenIn, uint256 amountIn, address tokenOut) external view returns (uint256 amountOut) {
+    address pool = VELODROME_FACTORY.getPool(tokenIn, tokenOut, false);
+    uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
+    bool isToken0 = tokenOut > tokenIn;
+    return _getAmountOut(pool, amountIn, isToken0, swapFee);
+  }
+
   function swapExactAmountOut(address tokenIn, uint256 maxAmountIn, address tokenOut, uint256 amountOut)
     external
     returns (uint256 amountIn)
