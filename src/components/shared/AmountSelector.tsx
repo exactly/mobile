@@ -2,7 +2,6 @@ import { previewerAddress } from "@exactly/common/generated/chain";
 import { WAD, withdrawLimit } from "@exactly/lib";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-adapter";
 import React, { useCallback, useState } from "react";
 import type { TextInput } from "react-native";
 import { StyleSheet } from "react-native";
@@ -36,7 +35,7 @@ export default function AmountSelector({ onChange }: { onChange: (value: bigint)
 
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { market, account } = useMarketAccount(withdraw?.market);
-  const { Field, setFieldValue } = useForm<{ assetInput: string; usdInput: string }, ValibotValidator>({
+  const { Field, setFieldValue } = useForm<{ assetInput: string; usdInput: string }>({
     defaultValues: { assetInput: "", usdInput: "" },
   });
   const { data: markets } = useReadPreviewerExactly({
@@ -93,11 +92,7 @@ export default function AmountSelector({ onChange }: { onChange: (value: bigint)
       </Button>
 
       <View borderRadius="$r3" gap="$s3" backgroundColor="$backgroundBrandSoft" padding="$s3">
-        <Field
-          name="assetInput"
-          validatorAdapter={valibotValidator()}
-          validators={{ onChange: pipe(string(), nonEmpty("empty amount")) }}
-        >
+        <Field name="assetInput" validators={{ onChange: pipe(string(), nonEmpty("empty amount")) }}>
           {({ state: { value } }) => (
             <AmountInput
               onFocus={() => {
@@ -110,11 +105,7 @@ export default function AmountSelector({ onChange }: { onChange: (value: bigint)
             />
           )}
         </Field>
-        <Field
-          name="usdInput"
-          validatorAdapter={valibotValidator()}
-          validators={{ onChange: pipe(string(), nonEmpty("empty amount")) }}
-        >
+        <Field name="usdInput" validators={{ onChange: pipe(string(), nonEmpty("empty amount")) }}>
           {({ state: { value } }) => (
             <View
               onPress={() => {

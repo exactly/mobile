@@ -3,7 +3,6 @@ import { Address } from "@exactly/common/validation";
 import { ArrowLeft, ArrowRight, QrCode } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-adapter";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
@@ -31,10 +30,7 @@ export default function AddressSelection() {
   });
   const { canGoBack } = router;
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
-  const { Field, Subscribe, handleSubmit, setFieldValue, validateAllFields } = useForm<
-    { receiver: string },
-    ValibotValidator
-  >({
+  const { Field, Subscribe, handleSubmit, setFieldValue, validateAllFields } = useForm<{ receiver: string }>({
     defaultValues: { receiver: withdraw?.receiver ?? "" },
     onSubmit: ({ value }) => {
       const receiver = parse(Address, value.receiver);
@@ -74,7 +70,7 @@ export default function AddressSelection() {
         </View>
         <ScrollView flex={1}>
           <YStack gap="$s5">
-            <Field name="receiver" validatorAdapter={valibotValidator()} validators={{ onChange: Address }}>
+            <Field name="receiver" validators={{ onChange: Address }}>
               {({ state: { value, meta }, handleChange }) => (
                 <YStack gap="$s2">
                   <XStack flexDirection="row">

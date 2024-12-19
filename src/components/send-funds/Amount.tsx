@@ -4,7 +4,6 @@ import { withdrawLimit, WAD } from "@exactly/lib";
 import { ArrowLeft, ArrowRight, Coins, DollarSign, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
-import { valibotValidator, type ValibotValidator } from "@tanstack/valibot-form-adapter";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
@@ -32,7 +31,7 @@ export default function Amount() {
     account,
     args: [account ?? zeroAddress],
   });
-  const { Field, Subscribe, handleSubmit } = useForm<{ amount: bigint }, ValibotValidator>({
+  const { Field, Subscribe, handleSubmit } = useForm<{ amount: bigint }>({
     defaultValues: { amount: withdraw?.amount ?? 0n },
     onSubmit: ({ value: { amount } }) => {
       queryClient.setQueryData<Withdraw>(["withdrawal"], (old) => (old ? { ...old, amount } : { amount }));
@@ -143,7 +142,6 @@ export default function Amount() {
 
             <Field
               name="amount"
-              validatorAdapter={valibotValidator()}
               validators={{
                 onChange: pipe(
                   bigint(),
