@@ -1,6 +1,5 @@
 import type { Base64URL } from "@exactly/common/validation";
 import { serve } from "@hono/node-server";
-import { serveStatic } from "@hono/node-server/serve-static";
 import { sentry } from "@hono/sentry";
 import { captureException, close } from "@sentry/node";
 import { Hono } from "hono";
@@ -24,7 +23,6 @@ const app = new Hono();
 app.use(sentry());
 app.use(trimTrailingSlash());
 app.use("/api/*", cors({ origin: appOrigin, credentials: true }));
-app.use("/.well-known/*", serveStatic());
 
 const api = app
   .route("/api/auth/authentication", authentication)
@@ -39,6 +37,10 @@ export type ExaServer = typeof api;
 app.route("/hooks/activity", activityHook);
 app.route("/hooks/block", block);
 app.route("/hooks/cryptomate", cryptomate);
+
+app.get("/.well-known/apple-app-site-association", (c) =>
+  c.json({ webcredentials: { apps: ["665NDX7LBZ.app.exactly"] } }),
+);
 app.get("/.well-known/assetlinks.json", (c) =>
   c.json([
     {
