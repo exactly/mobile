@@ -1005,6 +1005,19 @@ contract ExaPluginTest is ForkTest {
     account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
   }
 
+  function test_crossRepay_reverts_whenDisagreement() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    bytes memory route =
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), 60e18, address(usdc), 10e6));
+
+    vm.expectRevert(Disagreement.selector);
+    account.crossRepay(maturity, 110e6, 110e6, exaEXA, 60e18, route);
+  }
+
   function test_swap_swaps() external {
     uint256 prevUSDC = usdc.balanceOf(address(account));
     uint256 prevEXA = exa.balanceOf(address(account));
