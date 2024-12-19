@@ -6,7 +6,10 @@ import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.s
 
 interface IExaAccount {
   function propose(IMarket market, uint256 amount, address receiver) external;
-  function repay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external;
+  function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
+    external
+    returns (uint256 amountIn, uint256 amountOut);
+
   function crossRepay(
     uint256 maturity,
     uint256 positionAssets,
@@ -15,9 +18,7 @@ interface IExaAccount {
     uint256 amountIn,
     bytes calldata route
   ) external;
-  function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
-    external
-    returns (uint256 amountIn, uint256 amountOut);
+  function repay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external;
   function rollDebt(
     uint256 repayMaturity,
     uint256 borrowMaturity,
@@ -25,6 +26,16 @@ interface IExaAccount {
     uint256 maxBorrowAssets,
     uint256 percentage
   ) external;
+  function withdraw() external;
+
+  function collectCollateral(
+    uint256 amount,
+    IMarket collateral,
+    uint256 maxAmountIn,
+    uint256 timestamp,
+    bytes memory route,
+    bytes calldata signature
+  ) external returns (uint256, uint256);
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature) external;
   function collectCredit(
     uint256 maturity,
@@ -34,14 +45,6 @@ interface IExaAccount {
     bytes calldata signature
   ) external;
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external;
-  function collectCollateral(
-    uint256 amount,
-    IMarket collateral,
-    uint256 maxAmountIn,
-    uint256 timestamp,
-    bytes memory route,
-    bytes calldata signature
-  ) external returns (uint256, uint256);
   function collectInstallments(
     uint256 firstMaturity,
     uint256[] calldata amounts,
@@ -51,7 +54,6 @@ interface IExaAccount {
   ) external;
   function poke(IMarket market) external;
   function pokeETH() external;
-  function withdraw() external;
 }
 
 event CollectorSet(address indexed collector, address indexed account);

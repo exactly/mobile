@@ -167,6 +167,494 @@ contract ExaPluginTest is ForkTest {
 
   // solhint-disable func-name-mixedcase
 
+  // self runtime validation
+  function test_propose_emitsProposed() external {
+    uint256 amount = 1;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit Proposed(address(account), exaEXA, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+  }
+
+  function test_swap_swaps() external {
+    uint256 prevUSDC = usdc.balanceOf(address(account));
+    uint256 prevEXA = exa.balanceOf(address(account));
+
+    uint256 maxAmountIn = 111e18;
+    uint256 amountOut = 110e6;
+    bytes memory route =
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), maxAmountIn, address(usdc), amountOut));
+    vm.startPrank(address(account));
+    account.swap(IERC20(exaEXA.asset()), IERC20(address(usdc)), maxAmountIn, amountOut, route);
+
+    assertEq(usdc.balanceOf(address(account)), prevUSDC + amountOut);
+    assertGe(exa.balanceOf(address(account)), prevEXA - maxAmountIn);
+  }
+
+  function testFork_swap_swaps() external {
+    _setUpLifiFork();
+    uint256 amount = 0.0004e8;
+    IERC20 wbtc = IERC20(protocol("WBTC"));
+    deal(address(wbtc), address(account), amount);
+
+    bytes memory route = bytes.concat(
+      hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",
+      abi.encodePacked(address(account)),
+      hex"00000000000000000000000000000000000000000000000000000000018f7705000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000034578610000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a30783030303030303030303030303030303030303030303030303030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000111111125421ca6dc452d289314280a0f8842a65000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000004e807ed2379000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff85000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba0000000000000000000000001231deb6f5749ef6ce6943a275a1d3e7486f4eae0000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000018f770400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000039600000000000000000000000000000000000000000000000000000000037800a007e5c0d20000000000000000000000000000000000000000000000000003540000f051204c4af8dbc524681930a27b2f1af5bcc8062e6fb768f180fcce6836688e9084f035309e29bf0a209500447dc2038200000000000000000000000068f180fcce6836688e9084f035309e29bf0a209500000000000000000000000042000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000002495763e3d93b6000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000042f527f50f16a103b6ccab48bccca214500c102100a0c9e75c480000000000000013130c0000000000000000000000000000000000000000000002360001d300006302a000000000000000000000000000000000000000000000000000000000005f6305ee63c1e580c1738d90e2e26c35784a0d3e3d8a9f795074bca44200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a655106a062ae8a9c5e11aaa026fc2670b0d65ccc8b285842000000000000000000000000000000000000060004cac88ea9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009708bd00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000000000000000000000000000000000000671fb839000000000000000000000000000000000000000000000000000000000000000100000000000000000000000042000000000000000000000000000000000000060000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f1046053aa5682b4f9a81b5481394da16be5ff5a02a0000000000000000000000000000000000000000000000000000000000097095eee63c1e580d4cb5566b5c16ef2f4a08b1438052013171212a24200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a65000000000000000000002a94d114000000000000000000000000000000000000000000000000"
+    );
+
+    uint256 minAmount = 26_310_887;
+    vm.startPrank(address(account));
+    account.swap(wbtc, IERC20(address(usdc)), amount, minAmount, route);
+    assertGe(usdc.balanceOf(address(account)), minAmount, "usdc dust");
+  }
+
+  function test_swap_reverts_withDisagreement() external {
+    uint256 prevUSDC = usdc.balanceOf(address(account));
+    uint256 prevEXA = exa.balanceOf(address(account));
+
+    uint256 amountIn = 111e18;
+    uint256 amountOut = 110e6;
+    bytes memory route =
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), amountOut));
+    vm.startPrank(address(account));
+    vm.expectRevert(Disagreement.selector);
+    account.swap(IERC20(address(exa)), IERC20(address(usdc)), amountIn, amountOut * 2, route);
+
+    assertEq(usdc.balanceOf(address(account)), prevUSDC);
+    assertEq(exa.balanceOf(address(account)), prevEXA);
+  }
+
+  // keeper or self runtime validation
+
+  function test_repay_repays() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 100e6);
+    uint256 positionAssets = position.principal + position.fee;
+
+    vm.startPrank(owner);
+    account.execute(
+      address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity, positionAssets, positionAssets + 1))
+    );
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 0);
+  }
+
+  function test_repay_partiallyRepays() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 100e6);
+    uint256 positionAssets = position.principal + position.fee;
+
+    vm.startPrank(owner);
+    account.execute(
+      address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity, positionAssets / 2, positionAssets / 2))
+    );
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 50e6);
+    assertEq(position.principal + position.fee, positionAssets / 2);
+  }
+
+  function test_repay_repays_whenKeeper() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 100e6);
+    uint256 positionAssets = position.principal + position.fee;
+
+    account.repay(maturity, positionAssets, positionAssets + 1);
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 0);
+  }
+
+  function test_repay_partiallyRepays_whenKeeper() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 100e6);
+    uint256 positionAssets = position.principal + position.fee;
+
+    account.repay(maturity, positionAssets / 2, positionAssets / 2);
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 50e6);
+    assertEq(position.principal + position.fee, positionAssets / 2);
+  }
+
+  function test_crossRepay_repays() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    uint256 prevCollateral = exaEXA.balanceOf(address(account));
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertGt(position.principal, 0);
+
+    uint256 amountIn = 111e18;
+    bytes memory route =
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+    vm.startPrank(address(account));
+    account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
+
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
+    assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
+    assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 0, "debt not fully repaid");
+  }
+
+  function testFork_crossRepay_repays() external {
+    _setUpLifiFork();
+    uint256 amount = 0.0004e8;
+    IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
+    deal(address(exaWBTC), address(account), amount);
+
+    uint256 maturity = block.timestamp + 2 * FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
+
+    bytes memory route = bytes.concat(
+      hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",
+      abi.encodePacked(address(exaPlugin)),
+      hex"00000000000000000000000000000000000000000000000000000000018f7705000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000034578610000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a30783030303030303030303030303030303030303030303030303030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000111111125421ca6dc452d289314280a0f8842a65000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000004e807ed2379000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff85000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba0000000000000000000000001231deb6f5749ef6ce6943a275a1d3e7486f4eae0000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000018f770400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000039600000000000000000000000000000000000000000000000000000000037800a007e5c0d20000000000000000000000000000000000000000000000000003540000f051204c4af8dbc524681930a27b2f1af5bcc8062e6fb768f180fcce6836688e9084f035309e29bf0a209500447dc2038200000000000000000000000068f180fcce6836688e9084f035309e29bf0a209500000000000000000000000042000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000002495763e3d93b6000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000042f527f50f16a103b6ccab48bccca214500c102100a0c9e75c480000000000000013130c0000000000000000000000000000000000000000000002360001d300006302a000000000000000000000000000000000000000000000000000000000005f6305ee63c1e580c1738d90e2e26c35784a0d3e3d8a9f795074bca44200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a655106a062ae8a9c5e11aaa026fc2670b0d65ccc8b285842000000000000000000000000000000000000060004cac88ea9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009708bd00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000000000000000000000000000000000000671fb839000000000000000000000000000000000000000000000000000000000000000100000000000000000000000042000000000000000000000000000000000000060000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f1046053aa5682b4f9a81b5481394da16be5ff5a02a0000000000000000000000000000000000000000000000000000000000097095eee63c1e580d4cb5566b5c16ef2f4a08b1438052013171212a24200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a65000000000000000000002a94d114000000000000000000000000000000000000000000000000"
+    );
+    uint256 prevCollateral = exaWBTC.balanceOf(address(account));
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    uint256 prevPrincipal = position.principal;
+    assertGt(prevPrincipal, 0);
+
+    vm.startPrank(address(account));
+    account.crossRepay(maturity, 21e6, 25e6, exaWBTC, amount, route);
+
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    assertGt(prevCollateral, exaWBTC.balanceOf(address(account)), "collateral didn't decrease");
+
+    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertGt(prevPrincipal, position.principal, "fixed debt didn't decrease");
+  }
+
+  function test_crossRepay_repays_whenKeeper() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    uint256 prevCollateral = exaEXA.balanceOf(address(account));
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    uint256 prevPrincipal = position.principal;
+    assertGt(prevPrincipal, 0);
+
+    uint256 amountIn = 111e18;
+    bytes memory route =
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+    account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
+
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
+    assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
+    assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 0, "debt not fully repaid");
+  }
+
+  function test_crossRepay_reverts_whenNotKeeper() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    uint256 prevPrincipal = position.principal;
+    assertGt(prevPrincipal, 0);
+
+    uint256 amountIn = 111e18;
+    bytes memory route =
+      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+    vm.startPrank(vm.addr(0x1));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
+  }
+
+  function test_rollDebt_rolls() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 assets = 100e6;
+    uint256 maxAssets = 110e6;
+    account.collectCredit(FixedLib.INTERVAL, assets, block.timestamp, _issuerOp(assets, block.timestamp));
+
+    vm.startPrank(address(account));
+    account.rollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 100e18);
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
+    assertEq(position.principal, 0);
+    assertEq(position.fee, 0);
+    position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL * 2, address(account));
+    assertGt(position.principal, assets);
+    assertGt(position.fee, 0);
+    assertLe(position.principal, maxAssets);
+  }
+
+  function test_rollDebt_rolls_asKeeper() external {
+    vm.startPrank(keeper);
+
+    account.poke(exaUSDC);
+    uint256 assets = 100e6;
+    uint256 maxAssets = 110e6;
+    account.collectCredit(FixedLib.INTERVAL, assets, maxAssets, block.timestamp, _issuerOp(assets, block.timestamp));
+
+    account.rollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 100e18);
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
+    assertEq(position.principal, 0);
+    assertEq(position.fee, 0);
+    position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL * 2, address(account));
+    assertGt(position.principal, assets);
+    assertGt(position.fee, 0);
+    assertLe(position.principal, maxAssets);
+  }
+
+  function test_marketWithdraw_transfersAsset_asOwner() external {
+    uint256 amount = 100 ether;
+    address receiver = address(0x420);
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(exa.balanceOf(receiver), 0);
+    vm.prank(owner);
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, receiver, address(account))));
+    assertEq(exa.balanceOf(receiver), amount, "receiver balance doesn't match");
+  }
+
+  function test_withdraw_transfersAsset_asKeeper() external {
+    uint256 amount = 100 ether;
+    address receiver = address(0x420);
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(exa.balanceOf(receiver), 0);
+    vm.prank(keeper);
+    account.withdraw();
+    assertEq(exa.balanceOf(receiver), amount);
+  }
+
+  function test_withdraw_withdrawsProposed() external {
+    uint256 amount = 100 ether;
+    address receiver = address(0x420);
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(address(account));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(exa.balanceOf(receiver), 0);
+    account.withdraw();
+    assertEq(exa.balanceOf(receiver), amount);
+  }
+
+  function test_withdrawWETH_transfersETH() external {
+    uint256 amount = 100 ether;
+    address receiver = address(0x420);
+    vm.prank(keeper);
+    account.pokeETH();
+
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaWETH, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(receiver.balance, 0);
+    vm.prank(keeper);
+    account.withdraw();
+    assertEq(receiver.balance, amount);
+  }
+
+  function test_withdraw_reverts_whenReceiverIsContractAndMarketNotWETH() external {
+    uint256 amount = 100 ether;
+    address receiver = address(0x420);
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(exa.balanceOf(receiver), 0);
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), address(account))));
+  }
+
+  function test_withdraw_reverts_whenNoProposal() external {
+    uint256 amount = 1;
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.prank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+  }
+
+  function test_withdraw_reverts_whenNoProposalKeeper() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.expectRevert(NoProposal.selector);
+    account.withdraw();
+  }
+
+  function test_withdraw_reverts_whenTimelocked() external {
+    uint256 amount = 1;
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(Timelocked.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+  }
+
+  function test_withdraw_reverts_whenTimelockedKeeper() external {
+    uint256 amount = 1;
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
+
+    vm.prank(keeper);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(Timelocked.selector)
+      )
+    );
+    account.withdraw();
+  }
+
+  function test_withdraw_reverts_whenWrongAmount() external {
+    uint256 amount = 1;
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(
+      address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount + 1, address(account), address(account)))
+    );
+  }
+
+  function test_withdraw_reverts_whenWrongMarket() external {
+    uint256 amount = 1;
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, amount, address(account))));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
+  }
+
+  function test_withdraw_reverts_whenWrongReceiver() external {
+    uint256 amount = 1;
+    address receiver = address(0x420);
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(0x123), address(account))));
+  }
+
+  function test_withdraw_reverts_whenNotKeeper() external {
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.withdraw();
+  }
+
+  // keeper runtime validation
   function test_collectCredit_collects() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);
@@ -559,6 +1047,22 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), 0);
   }
 
+  function test_poke() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+  }
+
+  function test_pokeETH_deposits() external {
+    uint256 balance = address(account).balance;
+
+    vm.startPrank(keeper);
+    account.pokeETH();
+
+    assertEq(address(account).balance, 0, "ETH unwrapped");
+    assertEq(exaWETH.maxWithdraw(address(account)), balance, "WETH left");
+  }
+
+  // runtime validations
   function test_exitMarket_reverts() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);
@@ -609,505 +1113,7 @@ contract ExaPluginTest is ForkTest {
     );
   }
 
-  function test_marketWithdraw_transfersAsset_asOwner() external {
-    uint256 amount = 100 ether;
-    address receiver = address(0x420);
-    vm.prank(keeper);
-    account.poke(exaEXA);
-
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
-
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    assertEq(exa.balanceOf(receiver), 0);
-    vm.prank(owner);
-    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, receiver, address(account))));
-    assertEq(exa.balanceOf(receiver), amount, "receiver balance doesn't match");
-  }
-
-  function test_withdraw_transfersAsset_asKeeper() external {
-    uint256 amount = 100 ether;
-    address receiver = address(0x420);
-    vm.prank(keeper);
-    account.poke(exaEXA);
-
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
-
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    assertEq(exa.balanceOf(receiver), 0);
-    vm.prank(keeper);
-    account.withdraw();
-    assertEq(exa.balanceOf(receiver), amount);
-  }
-
-  function test_withdraw_withdrawsProposed() external {
-    uint256 amount = 100 ether;
-    address receiver = address(0x420);
-    vm.prank(keeper);
-    account.poke(exaEXA);
-
-    vm.startPrank(address(account));
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
-
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    assertEq(exa.balanceOf(receiver), 0);
-    account.withdraw();
-    assertEq(exa.balanceOf(receiver), amount);
-  }
-
-  function test_withdrawWETH_transfersETH() external {
-    uint256 amount = 100 ether;
-    address receiver = address(0x420);
-    vm.prank(keeper);
-    account.pokeETH();
-
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaWETH, amount, receiver)));
-
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    assertEq(receiver.balance, 0);
-    vm.prank(keeper);
-    account.withdraw();
-    assertEq(receiver.balance, amount);
-  }
-
-  function test_withdraw_reverts_whenReceiverIsContractAndMarketNotWETH() external {
-    uint256 amount = 100 ether;
-    address receiver = address(0x420);
-    vm.prank(keeper);
-    account.poke(exaEXA);
-
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
-
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    assertEq(exa.balanceOf(receiver), 0);
-    vm.startPrank(owner);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(NoProposal.selector)
-      )
-    );
-    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), address(account))));
-  }
-
-  function test_withdraw_reverts_whenNoProposal() external {
-    uint256 amount = 1;
-    vm.prank(keeper);
-    account.poke(exaEXA);
-
-    vm.prank(owner);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(NoProposal.selector)
-      )
-    );
-    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
-  }
-
-  function test_withdraw_reverts_whenNoProposalKeeper() external {
-    vm.startPrank(keeper);
-    account.poke(exaEXA);
-
-    vm.expectRevert(NoProposal.selector);
-    account.withdraw();
-  }
-
-  function test_withdraw_reverts_whenTimelocked() external {
-    uint256 amount = 1;
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(Timelocked.selector)
-      )
-    );
-    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
-  }
-
-  function test_withdraw_reverts_whenTimelockedKeeper() external {
-    uint256 amount = 1;
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
-
-    vm.prank(keeper);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(Timelocked.selector)
-      )
-    );
-    account.withdraw();
-  }
-
-  function test_withdraw_reverts_whenWrongAmount() external {
-    uint256 amount = 1;
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(NoProposal.selector)
-      )
-    );
-    account.execute(
-      address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount + 1, address(account), address(account)))
-    );
-  }
-
-  function test_withdraw_reverts_whenWrongMarket() external {
-    uint256 amount = 1;
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, amount, address(account))));
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(NoProposal.selector)
-      )
-    );
-    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(account), address(account))));
-  }
-
-  function test_withdraw_reverts_whenWrongReceiver() external {
-    uint256 amount = 1;
-    address receiver = address(0x420);
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
-    skip(exaPlugin.PROPOSAL_DELAY());
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION_PROPOSED,
-        abi.encodePacked(NoProposal.selector)
-      )
-    );
-    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount, address(0x123), address(account))));
-  }
-
-  function test_withdraw_reverts_whenNotKeeper() external {
-    vm.prank(keeper);
-    account.poke(exaEXA);
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
-        exaPlugin,
-        FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF,
-        abi.encodeWithSelector(Unauthorized.selector)
-      )
-    );
-    account.withdraw();
-  }
-
-  function test_poke() external {
-    vm.startPrank(keeper);
-    account.poke(exaEXA);
-  }
-
-  function test_pokeETH_deposits() external {
-    uint256 balance = address(account).balance;
-
-    vm.startPrank(keeper);
-    account.pokeETH();
-
-    assertEq(address(account).balance, 0, "ETH unwrapped");
-    assertEq(exaWETH.maxWithdraw(address(account)), balance, "WETH left");
-  }
-
-  function test_propose_emitsProposed() external {
-    uint256 amount = 1;
-    address receiver = address(0x420);
-
-    vm.startPrank(owner);
-
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit Proposed(address(account), exaEXA, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
-  }
-
-  function test_repay_repays() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-    uint256 maturity = FixedLib.INTERVAL;
-    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertEq(position.principal, 100e6);
-    uint256 positionAssets = position.principal + position.fee;
-
-    vm.startPrank(owner);
-    account.execute(
-      address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity, positionAssets, positionAssets + 1))
-    );
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertEq(position.principal, 0);
-  }
-
-  function test_repay_partiallyRepays() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-    uint256 maturity = FixedLib.INTERVAL;
-    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertEq(position.principal, 100e6);
-    uint256 positionAssets = position.principal + position.fee;
-
-    vm.startPrank(owner);
-    account.execute(
-      address(account), 0, abi.encodeCall(IExaAccount.repay, (maturity, positionAssets / 2, positionAssets / 2))
-    );
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertEq(position.principal, 50e6);
-    assertEq(position.principal + position.fee, positionAssets / 2);
-  }
-
-  function test_repay_repays_whenKeeper() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-    uint256 maturity = FixedLib.INTERVAL;
-    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertEq(position.principal, 100e6);
-    uint256 positionAssets = position.principal + position.fee;
-
-    account.repay(maturity, positionAssets, positionAssets + 1);
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertEq(position.principal, 0);
-  }
-
-  function test_repay_partiallyRepays_whenKeeper() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-    uint256 maturity = FixedLib.INTERVAL;
-    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertEq(position.principal, 100e6);
-    uint256 positionAssets = position.principal + position.fee;
-
-    account.repay(maturity, positionAssets / 2, positionAssets / 2);
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertEq(position.principal, 50e6);
-    assertEq(position.principal + position.fee, positionAssets / 2);
-  }
-
-  function test_crossRepay_repays() external {
-    vm.startPrank(keeper);
-    account.poke(exaEXA);
-    uint256 maturity = FixedLib.INTERVAL;
-    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-
-    uint256 prevCollateral = exaEXA.balanceOf(address(account));
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertGt(position.principal, 0);
-
-    uint256 amountIn = 111e18;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
-    vm.startPrank(address(account));
-    account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
-
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
-    assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
-    assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 0, "debt not fully repaid");
-  }
-
-  function testFork_crossRepay_repays() external {
-    _setUpLifiFork();
-    uint256 amount = 0.0004e8;
-    IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
-    deal(address(exaWBTC), address(account), amount);
-
-    uint256 maturity = block.timestamp + 2 * FixedLib.INTERVAL - (block.timestamp % FixedLib.INTERVAL);
-
-    bytes memory route = bytes.concat(
-      hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",
-      abi.encodePacked(address(exaPlugin)),
-      hex"00000000000000000000000000000000000000000000000000000000018f7705000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000034578610000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a30783030303030303030303030303030303030303030303030303030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000111111125421ca6dc452d289314280a0f8842a65000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000004e807ed2379000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff85000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba0000000000000000000000001231deb6f5749ef6ce6943a275a1d3e7486f4eae0000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000018f770400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000039600000000000000000000000000000000000000000000000000000000037800a007e5c0d20000000000000000000000000000000000000000000000000003540000f051204c4af8dbc524681930a27b2f1af5bcc8062e6fb768f180fcce6836688e9084f035309e29bf0a209500447dc2038200000000000000000000000068f180fcce6836688e9084f035309e29bf0a209500000000000000000000000042000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000002495763e3d93b6000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000042f527f50f16a103b6ccab48bccca214500c102100a0c9e75c480000000000000013130c0000000000000000000000000000000000000000000002360001d300006302a000000000000000000000000000000000000000000000000000000000005f6305ee63c1e580c1738d90e2e26c35784a0d3e3d8a9f795074bca44200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a655106a062ae8a9c5e11aaa026fc2670b0d65ccc8b285842000000000000000000000000000000000000060004cac88ea9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009708bd00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000000000000000000000000000000000000671fb839000000000000000000000000000000000000000000000000000000000000000100000000000000000000000042000000000000000000000000000000000000060000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f1046053aa5682b4f9a81b5481394da16be5ff5a02a0000000000000000000000000000000000000000000000000000000000097095eee63c1e580d4cb5566b5c16ef2f4a08b1438052013171212a24200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a65000000000000000000002a94d114000000000000000000000000000000000000000000000000"
-    );
-    uint256 prevCollateral = exaWBTC.balanceOf(address(account));
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    uint256 prevPrincipal = position.principal;
-    assertGt(prevPrincipal, 0);
-
-    vm.startPrank(address(account));
-    account.crossRepay(maturity, 21e6, 25e6, exaWBTC, amount, route);
-
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    assertGt(prevCollateral, exaWBTC.balanceOf(address(account)), "collateral didn't decrease");
-
-    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    assertGt(prevPrincipal, position.principal, "fixed debt didn't decrease");
-  }
-
-  function test_crossRepay_repays_whenKeeper() external {
-    vm.startPrank(keeper);
-    account.poke(exaEXA);
-    uint256 maturity = FixedLib.INTERVAL;
-    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-
-    uint256 prevCollateral = exaEXA.balanceOf(address(account));
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    uint256 prevPrincipal = position.principal;
-    assertGt(prevPrincipal, 0);
-
-    uint256 amountIn = 111e18;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
-    account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
-
-    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-    assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
-    assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
-    assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 0, "debt not fully repaid");
-  }
-
-  function test_crossRepay_reverts_whenNotKeeper() external {
-    vm.startPrank(keeper);
-    account.poke(exaEXA);
-    uint256 maturity = FixedLib.INTERVAL;
-    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-    uint256 prevPrincipal = position.principal;
-    assertGt(prevPrincipal, 0);
-
-    uint256 amountIn = 111e18;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
-    vm.startPrank(vm.addr(0x1));
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
-        exaPlugin,
-        FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF,
-        abi.encodeWithSelector(Unauthorized.selector)
-      )
-    );
-    account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
-  }
-
-  function test_swap_swaps() external {
-    uint256 prevUSDC = usdc.balanceOf(address(account));
-    uint256 prevEXA = exa.balanceOf(address(account));
-
-    uint256 maxAmountIn = 111e18;
-    uint256 amountOut = 110e6;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), maxAmountIn, address(usdc), amountOut));
-    vm.startPrank(address(account));
-    account.swap(IERC20(exaEXA.asset()), IERC20(address(usdc)), maxAmountIn, amountOut, route);
-
-    assertEq(usdc.balanceOf(address(account)), prevUSDC + amountOut);
-    assertGe(exa.balanceOf(address(account)), prevEXA - maxAmountIn);
-  }
-
-  function testFork_swap_swaps() external {
-    _setUpLifiFork();
-    uint256 amount = 0.0004e8;
-    IERC20 wbtc = IERC20(protocol("WBTC"));
-    deal(address(wbtc), address(account), amount);
-
-    bytes memory route = bytes.concat(
-      hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",
-      abi.encodePacked(address(account)),
-      hex"00000000000000000000000000000000000000000000000000000000018f7705000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000034578610000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a30783030303030303030303030303030303030303030303030303030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000111111125421ca6dc452d289314280a0f8842a65000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000004e807ed2379000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff85000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba0000000000000000000000001231deb6f5749ef6ce6943a275a1d3e7486f4eae0000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000018f770400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000039600000000000000000000000000000000000000000000000000000000037800a007e5c0d20000000000000000000000000000000000000000000000000003540000f051204c4af8dbc524681930a27b2f1af5bcc8062e6fb768f180fcce6836688e9084f035309e29bf0a209500447dc2038200000000000000000000000068f180fcce6836688e9084f035309e29bf0a209500000000000000000000000042000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000002495763e3d93b6000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000042f527f50f16a103b6ccab48bccca214500c102100a0c9e75c480000000000000013130c0000000000000000000000000000000000000000000002360001d300006302a000000000000000000000000000000000000000000000000000000000005f6305ee63c1e580c1738d90e2e26c35784a0d3e3d8a9f795074bca44200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a655106a062ae8a9c5e11aaa026fc2670b0d65ccc8b285842000000000000000000000000000000000000060004cac88ea9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009708bd00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000000000000000000000000000000000000671fb839000000000000000000000000000000000000000000000000000000000000000100000000000000000000000042000000000000000000000000000000000000060000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f1046053aa5682b4f9a81b5481394da16be5ff5a02a0000000000000000000000000000000000000000000000000000000000097095eee63c1e580d4cb5566b5c16ef2f4a08b1438052013171212a24200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a65000000000000000000002a94d114000000000000000000000000000000000000000000000000"
-    );
-
-    uint256 minAmount = 26_310_887;
-    vm.startPrank(address(account));
-    account.swap(wbtc, IERC20(address(usdc)), amount, minAmount, route);
-    assertGe(usdc.balanceOf(address(account)), minAmount, "usdc dust");
-  }
-
-  function test_swap_reverts_withDisagreement() external {
-    uint256 prevUSDC = usdc.balanceOf(address(account));
-    uint256 prevEXA = exa.balanceOf(address(account));
-
-    uint256 amountIn = 111e18;
-    uint256 amountOut = 110e6;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), amountOut));
-    vm.startPrank(address(account));
-    vm.expectRevert(Disagreement.selector);
-    account.swap(IERC20(address(exa)), IERC20(address(usdc)), amountIn, amountOut * 2, route);
-
-    assertEq(usdc.balanceOf(address(account)), prevUSDC);
-    assertEq(exa.balanceOf(address(account)), prevEXA);
-  }
-
-  function test_rollDebt_rolls() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-    uint256 assets = 100e6;
-    uint256 maxAssets = 110e6;
-    account.collectCredit(FixedLib.INTERVAL, assets, block.timestamp, _issuerOp(assets, block.timestamp));
-
-    vm.startPrank(address(account));
-    account.rollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 100e18);
-
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
-    assertEq(position.principal, 0);
-    assertEq(position.fee, 0);
-    position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL * 2, address(account));
-    assertGt(position.principal, assets);
-    assertGt(position.fee, 0);
-    assertLe(position.principal, maxAssets);
-  }
-
-  function test_rollDebt_rolls_asKeeper() external {
-    vm.startPrank(keeper);
-
-    account.poke(exaUSDC);
-    uint256 assets = 100e6;
-    uint256 maxAssets = 110e6;
-    account.collectCredit(FixedLib.INTERVAL, assets, maxAssets, block.timestamp, _issuerOp(assets, block.timestamp));
-
-    account.rollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 100e18);
-
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
-    assertEq(position.principal, 0);
-    assertEq(position.fee, 0);
-    position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL * 2, address(account));
-    assertGt(position.principal, assets);
-    assertGt(position.fee, 0);
-    assertLe(position.principal, maxAssets);
-  }
-
+  // base plugin
   function test_onUninstall_uninstalls() external {
     vm.startPrank(owner);
     account.uninstallPlugin(address(exaPlugin), "", "");
@@ -1116,6 +1122,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(plugins[0], address(ownerPlugin));
   }
 
+  // refunder
   function test_refund_refunds() external {
     vm.startPrank(keeper);
 
@@ -1125,6 +1132,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
   }
 
+  // admin functions
   function test_setCollector_sets_whenAdmin() external {
     exaPlugin.setCollector(address(0x1));
     assertEq(exaPlugin.collector(), address(0x1));
