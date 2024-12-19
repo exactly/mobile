@@ -19,7 +19,7 @@ const personaTemplate = {
   id: "inquiry-id",
   type: "inquiry",
   attributes: {
-    status: "completed",
+    status: "approved",
     "name-middle": null,
     "reference-id": "ref-id",
     "name-first": "First",
@@ -107,7 +107,7 @@ describe("authenticated", () => {
     expect(response.status).toBe(200);
     expect(json).toStrictEqual({
       ...panTemplate,
-      displayName: "DN",
+      displayName: "First Last",
       expirationMonth: "9",
       expirationYear: "2029",
       lastFour: "1234",
@@ -124,10 +124,7 @@ describe("authenticated", () => {
       .values([{ id, publicKey: new Uint8Array(), account, factory: zeroAddress, pandaId: "anyPanda" }]);
     vi.spyOn(panda, "createCard").mockResolvedValueOnce({ ...cardTemplate, id: "cretesCard" });
 
-    vi.spyOn(persona, "getInquiry").mockResolvedValueOnce({
-      ...personaTemplate,
-      attributes: { ...personaTemplate.attributes, status: "approved" },
-    });
+    vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
 
     const response = await appClient.index.$post({ header: { "test-credential-id": id } });
     const json = await response.json();

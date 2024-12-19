@@ -11,7 +11,7 @@ import { integer, maxValue, minValue, number, parse, picklist, pipe, strictObjec
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
 import { createCard, getPAN } from "../utils/cryptomate";
-import { issueEnabled, createCard as createPandaCard, isPanda, getCard, getSecrets } from "../utils/panda";
+import { createCard as createPandaCard, displayName, getCard, getSecrets, isPanda, issueEnabled } from "../utils/panda";
 import { getInquiry } from "../utils/persona";
 import { track } from "../utils/segment";
 
@@ -43,27 +43,30 @@ export default app
     setUser({ id: account });
     const inquiry = await getInquiry(credentialId);
     if (!inquiry) return c.json("kyc required", 403);
+    if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
     if (credential.cards.length > 0 && credential.cards[0]) {
       const { id, lastFour, status, mode } = credential.cards[0];
       if (await isPanda(account)) {
         const session = c.req.header("SessionId");
         if (!session) return c.json("SessionId header required", 400);
-        const panda = await Promise.all([getSecrets(id, session), getCard(id)]).then(
-          ([pan, { expirationMonth, expirationYear }]) => {
-            return {
-              ...pan,
-              provider: "panda" as const,
-              // TODO implement displayName
-              displayName: "DN",
-              expirationMonth,
-              expirationYear,
-              lastFour,
-              status,
-              mode,
-            };
+        const [pan, { expirationMonth, expirationYear }] = await Promise.all([getSecrets(id, session), getCard(id)]);
+        return c.json(
+          {
+            ...pan,
+            provider: "panda" as const,
+            displayName: displayName({
+              first: inquiry.attributes["name-first"],
+              middle: inquiry.attributes["name-middle"],
+              last: inquiry.attributes["name-last"],
+            }),
+            expirationMonth,
+            expirationYear,
+            lastFour,
+            status,
+            mode,
           },
+          200,
         );
-        return c.json({ ...panda }, 200);
       }
       return c.json({ provider: "cryptomate" as const, url: await getPAN(id), lastFour, status, mode }, 200);
     } else {

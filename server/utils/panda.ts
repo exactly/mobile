@@ -33,6 +33,12 @@ if (!process.env.PANDA_API_KEY) throw new Error("missing panda api key");
 const key = process.env.PANDA_API_KEY;
 export default key;
 
+export function displayName({ first, middle, last }: { first: string; middle: string | null; last: string }) {
+  let cardholder = [first, middle, last].filter(Boolean).join(" ");
+  if (cardholder.length > 30 && middle) cardholder = `${first} ${last}`;
+  return removeAccents(cardholder.slice(0, 30));
+}
+
 export async function createCard({
   userId,
   name,
@@ -50,7 +56,7 @@ export async function createCard({
       type: "virtual",
       status: "active",
       limit: { amount: 10_000, frequency: "per7DayPeriod" },
-      configuration: { displayName: removeAccents(cardholder.slice(0, 30)) },
+      configuration: { displayName: displayName(name) },
     }),
     "POST",
   );

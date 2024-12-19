@@ -18,7 +18,6 @@ import block from "./hooks/block";
 import cryptomate from "./hooks/cryptomate";
 import panda from "./hooks/panda";
 import persona from "./hooks/persona";
-
 import androidFingerprint from "./utils/android/fingerprint";
 import appOrigin from "./utils/appOrigin";
 import { closeAndFlush } from "./utils/segment";
