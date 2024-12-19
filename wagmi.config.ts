@@ -3,7 +3,7 @@ import { defineConfig, type Plugin } from "@wagmi/cli";
 import { foundry, react } from "@wagmi/cli/plugins";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { type Abi, getAddress } from "viem";
+import { type Abi, getAddress, zeroAddress } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
 const easBuild = process.env.EAS_BUILD_RUNNER === "eas-build";
@@ -26,6 +26,8 @@ const weth = loadDeployment("WETH");
 const [exaPlugin, factory] = loadBroadcast("Deploy").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
 const [installmentsPreviewer] = loadBroadcast("InstallmentsPreviewer").transactions;
+const [, mockSwapper] =
+  chainId === optimismSepolia.id ? loadBroadcast("Mocks").transactions : [{}, { contractAddress: zeroAddress }];
 if (!exaPlugin || !factory || !issuerChecker || !installmentsPreviewer) throw new Error("missing contracts");
 
 export default defineConfig([
@@ -55,6 +57,7 @@ export default defineConfig([
         installmentsPreviewer: installmentsPreviewer.contractAddress,
         marketUSDC: marketUSDC.address,
         marketWETH: marketWETH.address,
+        mockSwapper: mockSwapper.contractAddress,
         previewer: previewer.address,
         ratePreviewer: ratePreviewer.address,
         usdc: usdc.address,
@@ -66,6 +69,7 @@ export default defineConfig([
           "ExaAccountFactory.sol/ExaAccountFactory.json",
           "ExaPlugin.sol/ExaPlugin.json",
           "InstallmentsPreviewer.sol/InstallmentsPreviewer.json",
+          "MockSwapper.sol/MockSwapper.json",
           "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
         ],
       }),
