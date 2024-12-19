@@ -889,6 +889,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 0);
+    assertEq(position.fee, 0);
   }
 
   function test_repay_partiallyRepays_whenKeeper() external {
@@ -928,6 +929,7 @@ contract ExaPluginTest is ForkTest {
     assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
     assertGt(prevCollateral, exaEXA.balanceOf(address(account)), "collateral didn't decrease");
     assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 0, "debt not fully repaid");
+    assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).fee, 0, "debt not fully repaid");
   }
 
   function testFork_crossRepay_repays() external {
@@ -1154,21 +1156,6 @@ contract ExaPluginTest is ForkTest {
 
   // solhint-enable func-name-mixedcase
 
-  function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256 yield) {
-    FixedPool memory pool = market.fixedPools(maturity);
-    if (maturity > pool.lastAccrual) {
-      pool.unassignedEarnings -=
-        pool.unassignedEarnings.mulDiv(block.timestamp - pool.lastAccrual, maturity - pool.lastAccrual);
-    }
-    uint256 backupFee = 0;
-    uint256 backupSupplied = pool.borrowed - (pool.borrowed < pool.supplied ? pool.borrowed : pool.supplied);
-    if (backupSupplied != 0) {
-      yield = pool.unassignedEarnings.mulDiv(assets < backupSupplied ? assets : backupSupplied, backupSupplied);
-      backupFee = yield.mulWad(market.backupFeeRate());
-      yield -= backupFee;
-    }
-  }
-
   function _op(bytes memory callData, uint256 privateKey) internal view returns (UserOperation memory op) {
     op = _op(callData, privateKey, 0);
   }
@@ -1180,18 +1167,6 @@ contract ExaPluginTest is ForkTest {
   {
     op = _unsignedOp(callData, index);
     op.signature = _sign(privateKey, ENTRYPOINT.getUserOpHash(op).toEthSignedMessageHash());
-  }
-
-  function _previewRepay(uint256 maturity, address _account)
-    internal
-    view
-    returns (uint256 positionAssets, uint256 maxRepay)
-  {
-    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, _account);
-    positionAssets = position.principal + position.fee;
-    maxRepay = block.timestamp < maturity
-      ? positionAssets - _fixedDepositYield(exaUSDC, maturity, position.principal)
-      : positionAssets + positionAssets.mulWad((block.timestamp - maturity) * exaUSDC.penaltyRate());
   }
 
   function _setUpLifiFork() internal {
