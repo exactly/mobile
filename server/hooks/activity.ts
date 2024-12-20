@@ -190,6 +190,7 @@ export default app.post(
                                   functionName: "poke",
                                   args: [marketsByAsset.get(asset)!], // eslint-disable-line @typescript-eslint/no-non-null-assertion
                                 }),
+                            ...transactionOptions,
                           }),
                         );
                         setContext("tx", request);
