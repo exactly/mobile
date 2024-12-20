@@ -53,7 +53,7 @@ export default function ExaCard({ disabled = false, revealing, frozen, onPress }
 
   function toggle() {
     if (!card) return;
-    mutateMode(isCredit ? 0 : 1).catch(handleError);
+    mutateMode(isDebit ? 1 : 0).catch(handleError);
   }
 
   function setInstallments(installments: number) {
@@ -62,7 +62,7 @@ export default function ExaCard({ disabled = false, revealing, frozen, onPress }
   }
 
   const isLoading = isTogglingMode || isFetchingCardMode;
-  const isCredit = card ? card.mode > 0 : false;
+  const isDebit = card?.mode === 0;
 
   return (
     <AnimatedYStack
@@ -76,7 +76,7 @@ export default function ExaCard({ disabled = false, revealing, frozen, onPress }
     >
       <View zIndex={3} backgroundColor="black" borderColor="black" borderRadius="$r4" borderWidth={1} overflow="hidden">
         <CardContents
-          isCredit={isCredit}
+          isCredit={!isDebit}
           disabled={disabled}
           lastFour={card?.lastFour}
           frozen={frozen}
@@ -85,9 +85,7 @@ export default function ExaCard({ disabled = false, revealing, frozen, onPress }
       </View>
       <View
         zIndex={2}
-        borderColor={
-          disabled || frozen ? "$borderNeutralDisabled" : isCredit ? "$cardCreditBorder" : "$cardDebitBorder"
-        }
+        borderColor={disabled || frozen ? "$borderNeutralDisabled" : isDebit ? "$cardDebitBorder" : "$cardCreditBorder"}
         borderRadius="$r4"
         borderWidth={1}
         borderTopLeftRadius={0}
@@ -98,11 +96,11 @@ export default function ExaCard({ disabled = false, revealing, frozen, onPress }
           toggle();
         }}
       >
-        <ModeSelector isCredit={isCredit} disabled={disabled} frozen={frozen} />
+        <ModeSelector isCredit={!isDebit} disabled={disabled} frozen={frozen} />
       </View>
       {exaPluginAddress === installedPlugins?.[0] && (
         <InstallmentsSelector
-          isCredit={isCredit}
+          isCredit={!isDebit}
           disabled={disabled || frozen}
           value={card?.mode ?? 0}
           onChange={setInstallments}
