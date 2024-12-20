@@ -19,14 +19,7 @@ import createDebug from "debug";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import * as v from "valibot";
-import {
-  BaseError,
-  bytesToBigInt,
-  ContractFunctionRevertedError,
-  WaitForTransactionReceiptTimeoutError,
-  zeroAddress,
-  withRetry,
-} from "viem";
+import { BaseError, bytesToBigInt, ContractFunctionRevertedError, zeroAddress, withRetry } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
@@ -164,9 +157,6 @@ export default app.post(
                     return receipt.status === "success";
                   } catch (error: unknown) {
                     captureException(error, { level: "error" });
-                    if (error instanceof WaitForTransactionReceiptTimeoutError) {
-                      return true;
-                    }
                     return false;
                   }
                 }))
