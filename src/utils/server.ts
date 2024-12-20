@@ -9,7 +9,9 @@ import { check, number, parse, pipe, safeParse } from "valibot";
 
 import queryClient from "./queryClient";
 
-queryClient.setQueryDefaults<number | undefined>(["auth"], {
+queryClient.setQueryDefaults<number>(["auth"], {
+  staleTime: Infinity,
+  initialData: 0,
   retry: false,
   queryFn: async () => {
     try {
@@ -34,9 +36,9 @@ queryClient.setQueryDefaults<number | undefined>(["auth"], {
           error.message === "The operation couldn’t be completed. Device must be unlocked to perform request." ||
           error.message === "UserCancelled")
       ) {
-        return;
+        return 0;
       }
-      throw error;
+      return 0;
     }
   },
 });
