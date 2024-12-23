@@ -33,6 +33,7 @@ contract ExaAccountFactoryTest is Test {
   function setUp() external {
     ownerPlugin = new WebauthnOwnerPlugin();
     exaPlugin = new ExaPlugin(
+      address(this),
       IAuditor(address(0)),
       IMarket(address(new MockERC4626(new MockERC20()))),
       IMarket(address(new MockERC4626(new MockERC20()))),
@@ -40,6 +41,7 @@ contract ExaAccountFactoryTest is Test {
       IDebtManager(address(this)),
       IInstallmentsRouter(address(this)),
       IssuerChecker(address(this)),
+      address(this),
       address(this),
       address(this)
     );
