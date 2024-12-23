@@ -1,3 +1,4 @@
+import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
 import { Passkey } from "@exactly/common/validation";
 import type { ExaServer } from "@exactly/server";
@@ -9,9 +10,9 @@ import { check, number, parse, pipe, safeParse } from "valibot";
 
 import queryClient from "./queryClient";
 
-queryClient.setQueryDefaults<number>(["auth"], {
-  staleTime: Infinity,
-  initialData: 0,
+queryClient.setQueryDefaults<number | undefined>(["auth"], {
+  staleTime: AUTH_EXPIRY,
+  gcTime: AUTH_EXPIRY,
   retry: false,
   queryFn: async () => {
     try {
@@ -36,9 +37,9 @@ queryClient.setQueryDefaults<number>(["auth"], {
           error.message === "The operation couldn’t be completed. Device must be unlocked to perform request." ||
           error.message === "UserCancelled")
       ) {
-        return 0;
+        return;
       }
-      return 0;
+      throw error;
     }
   },
 });
@@ -132,7 +133,7 @@ export async function getActivity(parameters?: NonNullable<Parameters<typeof cli
 export async function auth() {
   if (queryClient.isFetching({ queryKey: ["auth"] })) return;
   const { success } = safeParse(Auth, queryClient.getQueryData<number | undefined>(["auth"]));
-  if (!success) await queryClient.fetchQuery({ queryKey: ["auth"] });
+  if (!success) await queryClient.fetchQuery<number | undefined>({ queryKey: ["auth"] });
 }
 
 const Auth = pipe(
@@ -143,7 +144,6 @@ const Auth = pipe(
 export class APIError extends Error {
   code: number;
   text: string;
-
   constructor(code: number, text: string) {
     super(`${code} ${text}`);
     this.code = code;
