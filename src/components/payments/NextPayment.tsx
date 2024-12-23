@@ -1,15 +1,19 @@
-import { marketUSDCAddress } from "@exactly/common/generated/chain";
-import { WAD } from "@exactly/lib";
-import { Coins, Info } from "@tamagui/lucide-icons";
+import { exaPluginAbi, marketUSDCAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
+import { MATURITY_INTERVAL, WAD } from "@exactly/lib";
+import { Coins, Info, RefreshCcw } from "@tamagui/lucide-icons";
+import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistance, isAfter } from "date-fns";
 import { router } from "expo-router";
-import React from "react";
+import React, { useCallback } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { XStack } from "tamagui";
+import { Spinner, XStack } from "tamagui";
+import { useSimulateContract, useWriteContract } from "wagmi";
 
+import { auditorAbi, marketAbi } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
+import queryClient from "../../utils/queryClient";
 import useIntercom from "../../utils/useIntercom";
 import useMarketAccount from "../../utils/useMarketAccount";
 import Button from "../shared/Button";
@@ -17,9 +21,10 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function NextPayment() {
+  const toast = useToastController();
   const { presentArticle } = useIntercom();
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
-  const { market: USDCMarket } = useMarketAccount(marketUSDCAddress);
+  const { market: USDCMarket, account, queryKey } = useMarketAccount(marketUSDCAddress);
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (USDCMarket) {
     const { fixedBorrowPositions, usdPrice, decimals } = USDCMarket;
@@ -33,6 +38,48 @@ export default function NextPayment() {
   const maturity = usdDue.keys().next().value;
   const duePayment = usdDue.get(maturity ?? 0n);
   const discount = duePayment ? Number(WAD - (duePayment.previewValue * WAD) / duePayment.position) / 1e18 : 0;
+  const followingMaturity = Number(maturity) + MATURITY_INTERVAL;
+
+  const repayMaturity = maturity ?? 0n;
+  const borrowMaturity = BigInt(followingMaturity);
+  const maxRepayAssets = duePayment ? duePayment.position : 0n;
+  const maxBorrowAssets = duePayment ? duePayment.position : 0n;
+  const percentage = WAD;
+
+  const {
+    data: rolloverSimulation,
+    isPending: isSimulatingRollover,
+    error: rolloverSimulationError,
+  } = useSimulateContract({
+    abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
+    args: [repayMaturity, borrowMaturity, maxRepayAssets, maxBorrowAssets, percentage],
+    query: { retry: false, enabled: maxRepayAssets !== 0n && maxBorrowAssets !== 0n }, // TODO remove
+    functionName: "rollDebt",
+    address: account,
+    account,
+  });
+
+  const { writeContract: rollover, isPending: isRollingDebt } = useWriteContract({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey }).catch(handleError);
+        toast.show("Success", { customData: { type: "success" } });
+      },
+      onError: (error) => {
+        if (error.name === "ContractFunctionExecutionError" && error.details === "AA23 reverted (or OOG)") {
+          toast.show("Cancelled", { customData: { type: "error" } });
+          return;
+        }
+        toast.show("An error ocurred", { customData: { type: "error" } });
+      },
+    },
+  });
+
+  const rollDebt = useCallback(() => {
+    if (!rolloverSimulation || rolloverSimulationError || isRollingDebt) throw new Error("no rollover simulation");
+    rollover(rolloverSimulation.request);
+  }, [isRollingDebt, rollover, rolloverSimulation, rolloverSimulationError]);
+
   return (
     <View backgroundColor="$backgroundSoft" paddingTop="$s8">
       {maturity ? (
@@ -131,6 +178,37 @@ export default function NextPayment() {
                 >
                   Pay
                 </Button>
+                <Button
+                  main
+                  spaced
+                  halfWidth
+                  {...outlined}
+                  onPress={rollDebt}
+                  iconAfter={
+                    isRollingDebt || isSimulatingRollover ? (
+                      <Spinner color="$interactiveOnDisabled" />
+                    ) : (
+                      <RefreshCcw color="$interactiveOnBaseBrandSoft" strokeWidth={2.5} />
+                    )
+                  }
+                  backgroundColor="$interactiveBaseBrandSoftDefault"
+                  disabled={isRollingDebt || isSimulatingRollover}
+                  color={
+                    isRollingDebt || isSimulatingRollover ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandSoft"
+                  }
+                >
+                  <Text
+                    fontSize={ms(15)}
+                    emphasized
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    color={
+                      isRollingDebt || isSimulatingRollover ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandSoft"
+                    }
+                  >
+                    Rollover
+                  </Text>
+                </Button>
               </View>
             </View>
           )}
@@ -145,3 +223,11 @@ export default function NextPayment() {
     </View>
   );
 }
+
+const outlined = {
+  hoverStyle: { backgroundColor: "$interactiveBaseBrandSoftHover" },
+  pressStyle: {
+    backgroundColor: "$interactiveBaseBrandSoftPressed",
+    color: "$interactiveOnBaseBrandSoft",
+  },
+};
