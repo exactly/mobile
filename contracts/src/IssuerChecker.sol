@@ -17,9 +17,9 @@ contract IssuerChecker is AccessControl, EIP712 {
   address public issuer;
   mapping(address account => bytes32 hash) public issuerOperations;
 
-  constructor(address issuer_) {
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    setIssuer(issuer_);
+  constructor(address owner, address issuer_) {
+    _grantRole(DEFAULT_ADMIN_ROLE, owner);
+    _setIssuer(issuer_);
   }
 
   function checkIssuer(address account, uint256 amount, uint256 timestamp, bytes calldata signature) external {
@@ -42,10 +42,8 @@ contract IssuerChecker is AccessControl, EIP712 {
     issuerOperations[account] = hash;
   }
 
-  function setIssuer(address issuer_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    if (issuer_ == address(0)) revert ZeroAddress();
-    issuer = issuer_;
-    emit IssuerSet(issuer_, msg.sender);
+  function setIssuer(address issuer_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setIssuer(issuer_);
   }
 
   // solhint-disable-next-line func-name-mixedcase
@@ -56,6 +54,12 @@ contract IssuerChecker is AccessControl, EIP712 {
   function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
     name = NAME;
     version = VERSION;
+  }
+
+  function _setIssuer(address issuer_) internal {
+    if (issuer_ == address(0)) revert ZeroAddress();
+    issuer = issuer_;
+    emit IssuerSet(issuer_, msg.sender);
   }
 }
 

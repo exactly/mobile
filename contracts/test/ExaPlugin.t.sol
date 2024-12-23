@@ -127,8 +127,8 @@ contract ExaPluginTest is ForkTest {
     refunder = r.refunder();
     vm.setEnv("BROADCAST_REFUNDER_ADDRESS", address(refunder).toHexString());
 
-    refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
     exaPlugin = new ExaPlugin(
+      address(this),
       IAuditor(address(auditor)),
       exaUSDC,
       exaWETH,
@@ -137,9 +137,9 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(address(p.installmentsRouter())),
       issuerChecker,
       collector,
-      address(m.swapper())
+      address(m.swapper()),
+      keeper
     );
-    exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     ownerPlugin = new WebauthnOwnerPlugin();
     ExaAccountFactory factory = new ExaAccountFactory(
@@ -1248,6 +1248,7 @@ contract ExaPluginTest is ForkTest {
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
     exaPlugin = new ExaPlugin(
+      address(this),
       IAuditor(protocol("Auditor")),
       IMarket(protocol("MarketUSDC")),
       IMarket(protocol("MarketWETH")),
@@ -1256,10 +1257,10 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
       acct("collector"),
-      0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE
+      0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
+      keeper
     );
 
-    exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
     usdc = MockERC20(protocol("USDC"));
     exaUSDC = IMarket(protocol("MarketUSDC"));
 

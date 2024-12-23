@@ -80,6 +80,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   bytes32 private callHash;
 
   constructor(
+    address owner,
     IAuditor auditor,
     IMarket exaUSDC,
     IMarket exaWETH,
@@ -88,7 +89,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     IInstallmentsRouter installmentsRouter,
     IssuerChecker issuerChecker,
     address collector_,
-    address swapper
+    address swapper,
+    address firstKeeper
   ) {
     AUDITOR = auditor;
     EXA_USDC = exaUSDC;
@@ -100,9 +102,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (swapper == address(0)) revert ZeroAddress();
     SWAPPER = swapper;
 
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    setCollector(collector_);
-    setMinHealthFactor(1e18);
+    _grantRole(KEEPER_ROLE, firstKeeper);
+    _grantRole(DEFAULT_ADMIN_ROLE, owner);
+    _setCollector(collector_);
+    _setMinHealthFactor(1e18);
 
     IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
   }
@@ -350,16 +353,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   receive() external payable { } // solhint-disable-line no-empty-blocks
 
-  function setCollector(address collector_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    if (collector_ == address(0)) revert ZeroAddress();
-    collector = collector_;
-    emit CollectorSet(collector_, msg.sender);
+  function setCollector(address collector_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setCollector(collector_);
   }
 
-  function setMinHealthFactor(uint256 minHealthFactor_) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    if (minHealthFactor_ < 1e18) revert WrongValue();
-    minHealthFactor = minHealthFactor_;
-    emit MinHealthFactorSet(minHealthFactor_, msg.sender);
+  function setMinHealthFactor(uint256 minHealthFactor_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setMinHealthFactor(minHealthFactor_);
   }
 
   /// @inheritdoc BasePlugin
@@ -665,6 +664,18 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function _isMarket(IMarket market) internal view returns (bool) {
     return AUDITOR.markets(market).isListed;
+  }
+
+  function _setCollector(address collector_) internal {
+    if (collector_ == address(0)) revert ZeroAddress();
+    collector = collector_;
+    emit CollectorSet(collector_, msg.sender);
+  }
+
+  function _setMinHealthFactor(uint256 minHealthFactor_) internal {
+    if (minHealthFactor_ < 1e18) revert WrongValue();
+    minHealthFactor = minHealthFactor_;
+    emit MinHealthFactorSet(minHealthFactor_, msg.sender);
   }
 
   function _swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)

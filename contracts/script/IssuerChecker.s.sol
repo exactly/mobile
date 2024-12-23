@@ -10,6 +10,6 @@ contract DeployIssuerChecker is BaseScript {
 
   function run() external {
     vm.broadcast(acct("deployer"));
-    issuerChecker = new IssuerChecker(acct("issuer"));
+    issuerChecker = new IssuerChecker(acct("admin"), acct("issuer"));
   }
 }

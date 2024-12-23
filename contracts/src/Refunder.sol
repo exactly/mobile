@@ -14,11 +14,12 @@ contract Refunder is AccessControl {
   IssuerChecker public immutable ISSUER_CHECKER;
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
-  constructor(IMarket exaUSDC, IssuerChecker issuerChecker) {
+  constructor(address owner, IMarket exaUSDC, IssuerChecker issuerChecker, address firstKeeper) {
     EXA_USDC = exaUSDC;
     IERC20(EXA_USDC.asset()).approve(address(EXA_USDC), type(uint256).max);
     ISSUER_CHECKER = issuerChecker;
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    _grantRole(KEEPER_ROLE, firstKeeper);
+    _grantRole(DEFAULT_ADMIN_ROLE, owner);
   }
 
   function refund(address account, uint256 amount, uint256 timestamp, bytes calldata signature)

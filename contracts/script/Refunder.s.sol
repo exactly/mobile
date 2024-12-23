@@ -22,12 +22,7 @@ contract DeployRefunder is BaseScript {
   }
 
   function run() external {
-    vm.startBroadcast(deployer);
-
-    refunder = new Refunder(exaUSDC, issuerChecker);
-
-    refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
-
-    vm.stopBroadcast();
+    vm.broadcast(deployer);
+    refunder = new Refunder(acct("admin"), exaUSDC, issuerChecker, keeper);
   }
 }
