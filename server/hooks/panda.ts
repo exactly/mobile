@@ -118,12 +118,17 @@ export default new Hono().post(
     switch (payload.action) {
       case "requested": {
         const { account, amount, call, transaction } = await prepareCollection(payload);
+        if (amount < 0) return c.json({}, 400);
         const authorize = () => {
-          track({
-            userId: account,
-            event: "TransactionAuthorized",
-            properties: { usdAmount: payload.body.spend.amount }, //has different decimals than cryptomate
-          });
+          try {
+            track({
+              userId: account,
+              event: "TransactionAuthorized",
+              properties: { usdAmount: payload.body.spend.amount / 100 },
+            });
+          } catch (error: unknown) {
+            captureException(error, { level: "error" });
+          }
           return c.json({});
         };
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "panda.authorization");
