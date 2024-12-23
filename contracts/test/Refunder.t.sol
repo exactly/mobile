@@ -38,10 +38,9 @@ contract RefunderTest is ForkTest {
     (keeper, keeperKey) = makeAddrAndKey("keeper");
     (issuer, issuerKey) = makeAddrAndKey("issuer");
 
-    issuerChecker = new IssuerChecker(issuer);
+    issuerChecker = new IssuerChecker(address(this), issuer);
 
-    refunder = new Refunder(exaUSDC, issuerChecker);
-    refunder.grantRole(refunder.KEEPER_ROLE(), keeper);
+    refunder = new Refunder(address(this), exaUSDC, issuerChecker, keeper);
 
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
     deal(address(usdc), address(refunder), 10_000e6);

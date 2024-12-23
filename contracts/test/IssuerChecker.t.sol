@@ -9,7 +9,7 @@ contract IssuerCheckerTest is ForkTest {
   IssuerChecker internal issuerChecker;
 
   function setUp() external {
-    issuerChecker = new IssuerChecker(address(this));
+    issuerChecker = new IssuerChecker(address(this), address(this));
   }
 
   // solhint-disable func-name-mixedcase
