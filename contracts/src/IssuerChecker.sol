@@ -45,6 +45,7 @@ contract IssuerChecker is AccessControl, EIP712 {
   function setIssuer(address issuer_) public onlyRole(DEFAULT_ADMIN_ROLE) {
     if (issuer_ == address(0)) revert ZeroAddress();
     issuer = issuer_;
+    emit IssuerSet(issuer_, msg.sender);
   }
 
   // solhint-disable-next-line func-name-mixedcase
@@ -57,6 +58,8 @@ contract IssuerChecker is AccessControl, EIP712 {
     version = VERSION;
   }
 }
+
+event IssuerSet(address indexed issuer, address indexed account);
 
 error Expired();
 error Timelocked();
