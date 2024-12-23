@@ -24,6 +24,7 @@ contract DeployScript is BaseScript {
   Refunder public refunder;
   IBalancerVault public balancerVault;
 
+  address public admin;
   address public keeper;
   address public deployer;
   address public collector;
@@ -41,6 +42,7 @@ contract DeployScript is BaseScript {
 
     balancerVault = IBalancerVault(protocol("BalancerVault"));
 
+    admin = acct("admin");
     keeper = acct("keeper");
     deployer = acct("deployer");
     collector = acct("collector");
@@ -51,13 +53,21 @@ contract DeployScript is BaseScript {
     vm.startBroadcast(deployer);
 
     exaPlugin = new ExaPlugin(
-      auditor, exaUSDC, exaWETH, balancerVault, debtManager, installmentsRouter, issuerChecker, collector, swapper
+      admin,
+      auditor,
+      exaUSDC,
+      exaWETH,
+      balancerVault,
+      debtManager,
+      installmentsRouter,
+      issuerChecker,
+      collector,
+      swapper,
+      keeper
     );
-    factory = new ExaAccountFactory(deployer, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
+    factory = new ExaAccountFactory(admin, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 
     factory.addStake{ value: 0.1 ether }(1 days, 0.1 ether);
-
-    exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
     vm.stopBroadcast();
   }
