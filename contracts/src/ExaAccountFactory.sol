@@ -35,6 +35,10 @@ contract ExaAccountFactory is WebauthnModularAccountFactory {
     _EXA_PLUGIN_MANIFEST_HASH = keccak256(abi.encode(exaPlugin.pluginManifest()));
   }
 
+  function donateStake() external payable {
+    ENTRYPOINT.addStake{ value: msg.value }(1 days);
+  }
+
   function _initializeAccount(IAccountInitializable account, bytes memory owners) internal override {
     address[] memory plugins = new address[](2);
     plugins[0] = WEBAUTHN_OWNER_PLUGIN;

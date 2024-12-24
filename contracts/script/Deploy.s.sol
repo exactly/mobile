@@ -55,7 +55,7 @@ contract DeployScript is BaseScript {
     );
     factory = new ExaAccountFactory(deployer, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
 
-    factory.addStake{ value: 0.1 ether }(1 days, 0.1 ether);
+    factory.donateStake{ value: 0.1 ether }();
 
     exaPlugin.grantRole(exaPlugin.KEEPER_ROLE(), keeper);
 
