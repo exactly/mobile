@@ -9,7 +9,7 @@ import { ScrollView, Sheet, Spinner, Square, Switch, XStack, YStack } from "tama
 import CardBack from "./CardBack";
 import DismissableAlert from "./DismissableAlert";
 import handleError from "../../utils/handleError";
-import { decryptSecret } from "../../utils/panda";
+import { decrypt } from "../../utils/panda";
 import queryClient from "../../utils/queryClient";
 import { getCard, setCardStatus } from "../../utils/server";
 import Button from "../shared/Button";
@@ -37,8 +37,8 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
   useEffect(() => {
     if (card && card.provider === "panda") {
       Promise.all([
-        decryptSecret(card.encryptedPan.data, card.encryptedPan.iv, card.secretKey),
-        decryptSecret(card.encryptedCvc.data, card.encryptedCvc.iv, card.secretKey),
+        decrypt(card.encryptedPan.data, card.encryptedPan.iv, card.secret),
+        decrypt(card.encryptedCvc.data, card.encryptedCvc.iv, card.secret),
       ])
         .then(([pan, cvc]) => {
           setDetails({ pan, cvc });
