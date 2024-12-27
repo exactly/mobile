@@ -1056,6 +1056,25 @@ contract ExaPluginTest is ForkTest {
 
   function test_rollDebt_rolls() external {
     vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 assets = 100e6;
+    uint256 maxAssets = 110e6;
+    account.collectCredit(FixedLib.INTERVAL, assets, block.timestamp, _issuerOp(assets, block.timestamp));
+
+    vm.startPrank(address(account));
+    account.rollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 100e18);
+
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
+    assertEq(position.principal, 0);
+    assertEq(position.fee, 0);
+    position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL * 2, address(account));
+    assertGt(position.principal, assets);
+    assertGt(position.fee, 0);
+    assertLe(position.principal, maxAssets);
+  }
+
+  function test_rollDebt_rolls_asKeeper() external {
+    vm.startPrank(keeper);
 
     account.poke(exaUSDC);
     uint256 assets = 100e6;
