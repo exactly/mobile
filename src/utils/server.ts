@@ -55,10 +55,7 @@ export async function registrationOptions() {
 
 export async function verifyRegistration(attestation: RegistrationResponseJSON) {
   const response = await client.api.auth.registration.$post({ json: attestation });
-  if (!response.ok) {
-    const raw = response.clone();
-    throw new APIError(response.status, await response.json().catch(() => raw.text()));
-  }
+  if (!response.ok) throw new APIError(response.status, await response.json());
   const { auth: expires, ...passkey } = await response.json();
   await queryClient.setQueryData(["auth"], parse(Auth, expires));
   return parse(Passkey, passkey);
@@ -67,57 +64,50 @@ export async function verifyRegistration(attestation: RegistrationResponseJSON) 
 export async function getCard() {
   await auth();
   const response = await client.api.card.$get();
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  return JSON.parse(text) as Awaited<ReturnType<typeof response.json>>;
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  return response.json();
 }
 
 export async function createCard() {
   await auth();
   const response = await client.api.card.$post();
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  return JSON.parse(text) as Awaited<ReturnType<typeof response.json>>;
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  return response.json();
 }
 
 export async function setCardStatus(status: "ACTIVE" | "FROZEN") {
   await auth();
   const response = await client.api.card.$patch({ json: { status } });
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  return JSON.parse(text) as Awaited<ReturnType<typeof response.json>>;
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  return response.json();
 }
 
 export async function setCardMode(mode: number) {
   await auth();
   const response = await client.api.card.$patch({ json: { mode } });
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  return JSON.parse(text) as Awaited<ReturnType<typeof response.json>>;
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  return response.json();
 }
 
 export async function getKYCLink() {
   await auth();
   const response = await client.api.kyc.$post();
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  return JSON.parse(text) as Awaited<ReturnType<typeof response.json>>;
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  return response.json();
 }
 
 export async function getKYCStatus() {
   await auth();
   const response = await client.api.kyc.$get();
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  return JSON.parse(text) as Awaited<ReturnType<typeof response.json>>;
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  return response.json();
 }
 
 export async function getPasskey() {
   await auth();
   const response = await client.api.passkey.$get();
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  return JSON.parse(text) as Awaited<ReturnType<typeof response.json>>;
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  return response.json();
 }
 
 export async function getActivity(parameters?: NonNullable<Parameters<typeof client.api.activity.$get>[0]>["query"]) {
@@ -125,9 +115,8 @@ export async function getActivity(parameters?: NonNullable<Parameters<typeof cli
   const response = await client.api.activity.$get(
     parameters?.include === undefined ? undefined : { query: { include: parameters.include } },
   );
-  const text = await response.text();
-  if (!response.ok) throw new APIError(response.status, text);
-  return JSON.parse(text) as Awaited<ReturnType<typeof response.json>>;
+  if (!response.ok) throw new APIError(response.status, await response.json());
+  return response.json();
 }
 
 export async function auth() {
