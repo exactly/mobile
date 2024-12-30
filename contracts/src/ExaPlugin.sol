@@ -508,7 +508,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     });
     manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.withdraw.selector,
-      associatedFunction: keeperRuntimeValidationFunction
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
       executionSelector: this.receiveFlashLoan.selector,

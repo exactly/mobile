@@ -609,7 +609,7 @@ contract ExaPluginTest is ForkTest {
     );
   }
 
-  function test_withdraw_transfersAsset_asOwner() external {
+  function test_marketWithdraw_transfersAsset_asOwner() external {
     uint256 amount = 100 ether;
     address receiver = address(0x420);
     vm.prank(keeper);
@@ -639,6 +639,22 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(exa.balanceOf(receiver), 0);
     vm.prank(keeper);
+    account.withdraw();
+    assertEq(exa.balanceOf(receiver), amount);
+  }
+
+  function test_withdraw_withdrawsProposed() external {
+    uint256 amount = 100 ether;
+    address receiver = address(0x420);
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(address(account));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(exa.balanceOf(receiver), 0);
     account.withdraw();
     assertEq(exa.balanceOf(receiver), amount);
   }
@@ -803,7 +819,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
         exaPlugin,
-        FunctionId.RUNTIME_VALIDATION_KEEPER,
+        FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
