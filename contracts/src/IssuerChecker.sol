@@ -16,10 +16,12 @@ contract IssuerChecker is AccessControl, EIP712 {
 
   address public issuer;
   mapping(address account => bytes32 hash) public issuerOperations;
+  uint256 public operationExpiry;
 
-  constructor(address owner, address issuer_) {
+  constructor(address owner, address issuer_, uint256 operationExpiry_) {
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _setIssuer(issuer_);
+    _setOperationExpiry(operationExpiry_);
   }
 
   function checkIssuer(address account, uint256 amount, uint256 timestamp, bytes calldata signature) external {
@@ -46,6 +48,10 @@ contract IssuerChecker is AccessControl, EIP712 {
     _setIssuer(issuer_);
   }
 
+  function setOperationExpiry(uint256 operationExpiry_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setOperationExpiry(operationExpiry_);
+  }
+
   // solhint-disable-next-line func-name-mixedcase
   function DOMAIN_SEPARATOR() public view returns (bytes32) {
     return _domainSeparator();
@@ -61,11 +67,20 @@ contract IssuerChecker is AccessControl, EIP712 {
     issuer = issuer_;
     emit IssuerSet(issuer_, msg.sender);
   }
+
+  function _setOperationExpiry(uint256 operationExpiry_) internal {
+    if (operationExpiry_ == 0) revert InvalidOperationExpiry();
+    operationExpiry = operationExpiry_;
+    emit OperationExpirySet(operationExpiry_, msg.sender);
+  }
 }
 
 event IssuerSet(address indexed issuer, address indexed account);
 
+event OperationExpirySet(uint256 operationExpiry, address indexed account);
+
 error Expired();
+error InvalidOperationExpiry();
 error Timelocked();
 error Unauthorized();
 error ZeroAddress();

@@ -23,5 +23,6 @@
       "11155420": "0x7AF28c94757628378E625AD8B6f51f2Ac1391eda",
       "default": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE"
     }
-  }
+  },
+  "issuerChecker": { "operationExpiry": 54000 }
 }
