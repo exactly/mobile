@@ -678,6 +678,38 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), 100e6);
   }
 
+  function test_collectCredit_collects_withPrevIssuerSignature() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    assertEq(usdc.balanceOf(collector), 0);
+
+    bytes memory prevIssuerSignature = _issuerOp(100e6, block.timestamp);
+
+    vm.startPrank(acct("admin"));
+    issuerChecker.setIssuer(address(0x420));
+
+    vm.startPrank(keeper);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, prevIssuerSignature);
+    assertEq(usdc.balanceOf(collector), 100e6);
+  }
+
+  function test_collectCredit_reverts_whenPrevSignatureNotValidAnymore() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    assertEq(usdc.balanceOf(collector), 0);
+
+    bytes memory prevIssuerSignature = _issuerOp(100e6, block.timestamp);
+
+    vm.startPrank(acct("admin"));
+    issuerChecker.setIssuer(address(0x420));
+
+    skip(issuerChecker.prevIssuerWindow() + 1);
+
+    vm.startPrank(keeper);
+    vm.expectRevert(Unauthorized.selector);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, prevIssuerSignature);
+  }
+
   function test_collectCredit_toleratesTimeDrift() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);

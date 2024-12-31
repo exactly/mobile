@@ -14,7 +14,10 @@ contract DeployIssuerChecker is BaseScript {
     string memory deploy = vm.readFile("deploy.json");
     vm.broadcast(acct("deployer"));
     issuerChecker = new IssuerChecker(
-      acct("admin"), acct("issuer"), abi.decode(deploy.parseRaw(".issuerChecker.operationExpiry"), (uint256))
+      acct("admin"),
+      acct("issuer"),
+      abi.decode(deploy.parseRaw(".issuerChecker.operationExpiry"), (uint256)),
+      abi.decode(deploy.parseRaw(".issuerChecker.prevIssuerWindow"), (uint256))
     );
   }
 }

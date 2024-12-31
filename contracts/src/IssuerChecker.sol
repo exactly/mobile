@@ -15,13 +15,17 @@ contract IssuerChecker is AccessControl, EIP712 {
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
   address public issuer;
+  address public prevIssuer;
+  uint256 public prevIssuerTimestamp;
+  uint256 public prevIssuerWindow;
   mapping(address account => bytes32 hash) public issuerOperations;
   uint256 public operationExpiry;
 
-  constructor(address owner, address issuer_, uint256 operationExpiry_) {
+  constructor(address owner, address issuer_, uint256 operationExpiry_, uint256 prevIssuerWindow_) {
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _setIssuer(issuer_);
     _setOperationExpiry(operationExpiry_);
+    _setPrevIssuerWindow(prevIssuerWindow_);
   }
 
   function checkIssuer(address account, uint256 amount, uint256 timestamp, bytes calldata signature) external {
@@ -31,17 +35,18 @@ contract IssuerChecker is AccessControl, EIP712 {
     bytes32 hash = keccak256(abi.encode(amount, timestamp));
     if (issuerOperations[account] == hash) revert Expired();
 
-    if (
-      _hashTypedData(
-        keccak256(
-          abi.encode(
-            keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
-          )
-        )
-      ).recoverCalldata(signature) != issuer
-    ) revert Unauthorized();
+    address recovered = _hashTypedData(
+      keccak256(
+        abi.encode(keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp)
+      )
+    ).recoverCalldata(signature);
 
-    issuerOperations[account] = hash;
+    if (recovered == issuer || (recovered == prevIssuer && block.timestamp <= prevIssuerWindow + prevIssuerTimestamp)) {
+      issuerOperations[account] = hash;
+      return;
+    }
+
+    revert Unauthorized();
   }
 
   function setIssuer(address issuer_) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -50,6 +55,10 @@ contract IssuerChecker is AccessControl, EIP712 {
 
   function setOperationExpiry(uint256 operationExpiry_) external onlyRole(DEFAULT_ADMIN_ROLE) {
     _setOperationExpiry(operationExpiry_);
+  }
+
+  function setPrevIssuerWindow(uint256 prevIssuerWindow_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setPrevIssuerWindow(prevIssuerWindow_);
   }
 
   // solhint-disable-next-line func-name-mixedcase
@@ -64,6 +73,8 @@ contract IssuerChecker is AccessControl, EIP712 {
 
   function _setIssuer(address issuer_) internal {
     if (issuer_ == address(0)) revert ZeroAddress();
+    prevIssuer = issuer;
+    prevIssuerTimestamp = block.timestamp;
     issuer = issuer_;
     emit IssuerSet(issuer_, msg.sender);
   }
@@ -73,11 +84,18 @@ contract IssuerChecker is AccessControl, EIP712 {
     operationExpiry = operationExpiry_;
     emit OperationExpirySet(operationExpiry_, msg.sender);
   }
+
+  function _setPrevIssuerWindow(uint256 prevIssuerWindow_) internal {
+    prevIssuerWindow = prevIssuerWindow_;
+    emit PrevIssuerWindowSet(prevIssuerWindow_, msg.sender);
+  }
 }
 
 event IssuerSet(address indexed issuer, address indexed account);
 
 event OperationExpirySet(uint256 operationExpiry, address indexed account);
+
+event PrevIssuerWindowSet(uint256 prevIssuerWindow, address indexed account);
 
 error Expired();
 error InvalidOperationExpiry();

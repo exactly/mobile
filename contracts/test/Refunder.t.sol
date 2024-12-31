@@ -38,7 +38,7 @@ contract RefunderTest is ForkTest {
     (keeper, keeperKey) = makeAddrAndKey("keeper");
     (issuer, issuerKey) = makeAddrAndKey("issuer");
 
-    issuerChecker = new IssuerChecker(address(this), issuer, 15 minutes);
+    issuerChecker = new IssuerChecker(address(this), issuer, 15 minutes, 10 days);
 
     refunder = new Refunder(address(this), exaUSDC, issuerChecker, keeper);
 
