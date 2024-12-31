@@ -32,9 +32,9 @@ export default function PasskeysAbout() {
           marginTop="$s3"
           backgroundColor="$backgroundMild"
         />
-        <View flex={1} paddingVertical="$s8" paddingHorizontal="$s6" alignItems="center">
+        <View flex={1} paddingVertical="$s8" paddingHorizontal="$s4" alignItems="center">
           <View flex={1} flexDirection="column" justifyContent="space-between" gap="$s5">
-            <ScrollView flex={1}>
+            <ScrollView flex={1} showsVerticalScrollIndicator={false}>
               <View flex={1} gap="$s8">
                 <View gap="$s5">
                   <Text fontSize={ms(17)} fontWeight={700} textAlign="left">
@@ -71,7 +71,6 @@ export default function PasskeysAbout() {
                 </View>
               </View>
             </ScrollView>
-
             <Button
               outlined
               main
