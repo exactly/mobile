@@ -112,12 +112,28 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function propose(IMarket market, uint256 amount, address receiver) external {
     _checkMarket(market);
-    proposals[msg.sender] = Proposal({ amount: amount, market: market, timestamp: block.timestamp, receiver: receiver });
+    proposals[msg.sender] =
+      Proposal({ amount: amount, market: market, timestamp: block.timestamp, receiver: receiver, swapData: "" });
     emit Proposed(msg.sender, market, receiver, amount, block.timestamp + PROPOSAL_DELAY);
   }
 
-  function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
+  // TODO add to manifest, only self. or merge with propose
+  function proposeSwap(IMarket market, uint256 amount, IERC20 assetOut, uint256 minAmountOut, bytes memory route)
     external
+  {
+    _checkMarket(market);
+    proposals[msg.sender] = Proposal({
+      amount: amount,
+      market: market,
+      timestamp: block.timestamp,
+      receiver: msg.sender,
+      swapData: abi.encode(SwapData({ assetOut: assetOut, minAmountOut: minAmountOut, route: route }))
+    });
+    // TODO emit
+  }
+
+  function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
+    public
     returns (uint256 amountIn, uint256 amountOut)
   {
     uint256 balanceIn = assetIn.balanceOf(msg.sender);
@@ -204,14 +220,19 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     address market = address(proposal.market);
     if (market == address(0)) revert NoProposal();
 
-    if (market != address(EXA_WETH)) {
-      _executeFromSender(market, 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, proposal.receiver, msg.sender)));
-      return;
-    }
     uint256 amount = proposal.amount;
-    _executeFromSender(market, 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), msg.sender)));
-    WETH(payable(EXA_WETH.asset())).withdraw(amount);
-    proposal.receiver.safeTransferETH(amount);
+    if (market != address(EXA_WETH)) {
+      _executeFromSender(market, 0, abi.encodeCall(IERC4626.withdraw, (amount, proposal.receiver, msg.sender)));
+    } else {
+      _executeFromSender(market, 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), msg.sender)));
+      WETH(payable(EXA_WETH.asset())).withdraw(amount);
+      proposal.receiver.safeTransferETH(amount);
+    }
+
+    if (proposal.swapData.length != 0) {
+      SwapData memory data = abi.decode(proposal.swapData, (SwapData));
+      swap(IERC20(proposal.market.asset()), data.assetOut, amount, data.minAmountOut, data.route);
+    }
   }
 
   function collectCollateral(
@@ -747,4 +768,10 @@ struct RepayCallbackData {
   address borrower;
   uint256 positionAssets;
   uint256 maxRepay;
+}
+
+struct SwapData {
+  IERC20 assetOut;
+  uint256 minAmountOut;
+  bytes route;
 }
