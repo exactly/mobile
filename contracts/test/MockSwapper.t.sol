@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
-import { LibString } from "solady/utils/LibString.sol";
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { ForkTest } from "./Fork.t.sol";
@@ -10,8 +9,6 @@ import { DeployMocks } from "./mocks/Mocks.s.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
 contract MockSwapperTest is ForkTest {
-  using LibString for address;
-
   MockSwapper internal mockSwapper;
   MockERC20 internal exa;
   MockERC20 internal usdc;
@@ -21,12 +18,13 @@ contract MockSwapperTest is ForkTest {
     p.run();
     exa = p.exa();
     usdc = p.usdc();
-    vm.setEnv("PROTOCOL_AUDITOR_ADDRESS", address(p.auditor()).toHexString());
-    vm.setEnv("PROTOCOL_USDC_ADDRESS", address(usdc).toHexString());
 
     DeployMocks m = new DeployMocks();
-    m.setUp();
+    set("Auditor", address(p.auditor()));
+    set("USDC", address(usdc));
     m.run();
+    unset("Auditor");
+    unset("USDC");
     mockSwapper = m.swapper();
 
     exa.mint(address(this), 10_000e18);

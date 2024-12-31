@@ -17,18 +17,13 @@ contract DeployMocks is BaseScript {
   using FixedPointMathLib for uint256;
   using LibString for string;
 
-  Auditor public auditor;
-  MockERC20 public usdc;
-
   MockVelodromeFactory public velodromeFactory;
   MockSwapper public swapper;
 
-  function setUp() external {
-    auditor = Auditor(protocol("Auditor"));
-    usdc = MockERC20(protocol("USDC"));
-  }
-
   function run() external {
+    Auditor auditor = Auditor(protocol("Auditor"));
+    MockERC20 usdc = MockERC20(protocol("USDC"));
+
     vm.startBroadcast(acct("deployer"));
 
     velodromeFactory = new MockVelodromeFactory();

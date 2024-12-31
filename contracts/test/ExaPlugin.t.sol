@@ -18,7 +18,6 @@ import { Address } from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
-import { LibString } from "solady/utils/LibString.sol";
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
@@ -60,7 +59,6 @@ import { DeployProtocol } from "./mocks/Protocol.s.sol";
 contract ExaPluginTest is ForkTest {
   using FixedPointMathLib for uint256;
   using OwnersLib for address[];
-  using LibString for address;
   using Address for address;
   using ECDSA for bytes32;
 
@@ -87,16 +85,12 @@ contract ExaPluginTest is ForkTest {
   MockERC20 internal usdc;
 
   function setUp() external {
-    vm.setEnv("DEPLOYER_ADDRESS", address(this).toHexString());
-
     collector = payable(makeAddr("collector"));
     (owner, ownerKey) = makeAddrAndKey("owner");
     owners = new address[](1);
     owners[0] = owner;
     (keeper, keeperKey) = makeAddrAndKey("keeper");
     (issuer, issuerKey) = makeAddrAndKey("issuer");
-    vm.setEnv("KEEPER_ADDRESS", keeper.toHexString());
-    vm.setEnv("ISSUER_ADDRESS", issuer.toHexString());
 
     new DeployAccount().run();
     DeployProtocol p = new DeployProtocol();
@@ -107,25 +101,29 @@ contract ExaPluginTest is ForkTest {
     exaWETH = IMarket(address(p.exaWETH()));
     exa = p.exa();
     usdc = p.usdc();
-    vm.setEnv("PROTOCOL_AUDITOR_ADDRESS", address(auditor).toHexString());
-    vm.setEnv("PROTOCOL_MARKETUSDC_ADDRESS", address(exaUSDC).toHexString());
-    vm.setEnv("PROTOCOL_USDC_ADDRESS", address(usdc).toHexString());
-
-    DeployMocks m = new DeployMocks();
-    m.setUp();
-    m.run();
-    vm.setEnv("SWAPPER_ADDRESS", address(m.swapper()).toHexString());
 
     DeployIssuerChecker ic = new DeployIssuerChecker();
+    set("issuer", issuer);
     ic.run();
+    unset("issuer");
     issuerChecker = ic.issuerChecker();
-    vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", address(issuerChecker).toHexString());
+
+    DeployMocks m = new DeployMocks();
+    set("Auditor", address(auditor));
+    set("USDC", address(usdc));
+    m.run();
+    unset("Auditor");
+    unset("USDC");
 
     DeployRefunder r = new DeployRefunder();
-    r.setUp();
+    set("MarketUSDC", address(exaUSDC));
+    set("IssuerChecker", address(issuerChecker));
+    set("keeper", keeper);
     r.run();
+    unset("MarketUSDC");
+    unset("IssuerChecker");
+    unset("keeper");
     refunder = r.refunder();
-    vm.setEnv("BROADCAST_REFUNDER_ADDRESS", address(refunder).toHexString());
 
     exaPlugin = new ExaPlugin(
       address(this),
@@ -1263,17 +1261,6 @@ contract ExaPluginTest is ForkTest {
   function _setUpLifiFork() internal {
     vm.createSelectFork("optimism", 127_050_624);
     account = ExaAccount(payable(0x6120Fb2A9d47f7955298b80363F00C620dB9f6E6));
-
-    vm.setEnv("DEPLOYER_ADDRESS", "");
-    vm.setEnv("KEEPER_ADDRESS", "");
-    vm.setEnv("ISSUER_ADDRESS", "");
-    vm.setEnv("SWAPPER_ADDRESS", "");
-    vm.setEnv("PROTOCOL_AUDITOR_ADDRESS", "");
-    vm.setEnv("PROTOCOL_MARKETUSDC_ADDRESS", "");
-    vm.setEnv("PROTOCOL_USDC_ADDRESS", "");
-    vm.setEnv("BROADCAST_ISSUERCHECKER_ADDRESS", "");
-    vm.setEnv("BROADCAST_REFUNDER_ADDRESS", "");
-
     issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
     vm.prank(acct("deployer"));
     issuerChecker.setIssuer(issuer);

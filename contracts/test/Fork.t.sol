@@ -11,8 +11,17 @@ abstract contract ForkTest is Test {
   using LibString for string;
   using stdJson for string;
 
+  function set(string memory name, address addr) internal {
+    vm.store(address(this), keccak256(abi.encode(name)), bytes32(uint256(uint160(addr))));
+  }
+
+  function unset(string memory name) internal {
+    vm.store(address(this), keccak256(abi.encode(name)), 0);
+  }
+
   function acct(string memory name) internal returns (address addr) {
-    addr = vm.envOr(string.concat(name.upper(), "_ADDRESS"), address(0));
+    addr = address(uint160(uint256(vm.load(msg.sender, keccak256(abi.encode(name))))));
+    if (addr == address(0)) addr = vm.envOr(string.concat(name.upper(), "_ADDRESS"), address(0));
     if (addr == address(0)) {
       string memory deploy = vm.readFile("deploy.json");
       string memory key = string.concat(".accounts.", name, ".", block.chainid.toString());
@@ -24,7 +33,8 @@ abstract contract ForkTest is Test {
   }
 
   function protocol(string memory name) internal returns (address addr) {
-    addr = vm.envOr(string.concat("PROTOCOL_", name.upper(), "_ADDRESS"), address(0));
+    addr = address(uint160(uint256(vm.load(msg.sender, keccak256(abi.encode(name))))));
+    if (addr == address(0)) addr = vm.envOr(string.concat("PROTOCOL_", name.upper(), "_ADDRESS"), address(0));
     if (addr == address(0)) {
       addr = vm.readFile(
         string.concat(
@@ -55,7 +65,8 @@ abstract contract ForkTest is Test {
   }
 
   function _broadcast(string memory name, string memory script, uint256 index) private returns (address addr) {
-    addr = vm.envOr(string.concat("BROADCAST_", name.upper(), "_ADDRESS"), address(0));
+    addr = address(uint160(uint256(vm.load(msg.sender, keccak256(abi.encode(name))))));
+    if (addr == address(0)) addr = vm.envOr(string.concat("BROADCAST_", name.upper(), "_ADDRESS"), address(0));
     if (addr == address(0)) {
       addr = vm.readFile(string.concat(script, ".s.sol/", block.chainid.toString(), "/run-latest.json")).readAddress(
         string.concat(".transactions[", index.toString(), "].contractAddress")
