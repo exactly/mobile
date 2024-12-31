@@ -3,7 +3,7 @@ import { ArrowLeft, BoxSelect, SwitchCamera } from "@tamagui/lucide-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
-import { Linking, StyleSheet } from "react-native";
+import { Linking, Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
 import { useWindowDimensions, XStack, YStack } from "tamagui";
 import { safeParse } from "valibot";
@@ -121,6 +121,9 @@ export default function Qr() {
         facing={cameraFacing}
         style={styles.cameraView}
       />
+      <View position="absolute" fullScreen justifyContent="center" alignItems="center">
+        <BoxSelect size={ms(Math.min(width, height) * 0.5)} color="white" />
+      </View>
       <Button
         position="absolute"
         borderRadius="$r_0"
@@ -128,27 +131,22 @@ export default function Qr() {
         bottom="$s4"
         right="$s4"
         padding="$s3"
+        hitSlop={ms(15)}
         onPress={() => {
           setCameraFacing(cameraFacing === "back" ? "front" : "back");
         }}
       >
         <SwitchCamera size={ms(24)} color="$interactiveOnBaseBrandDefault" />
       </Button>
-      <View
-        position="absolute"
-        borderRadius="$r_0"
-        backgroundColor="transparent"
-        top="$s4"
-        left="$s4"
-        padding="$s3"
-        onPress={() => {
-          router.back();
-        }}
-      >
-        <ArrowLeft size={ms(24)} color="white" />
-      </View>
-      <View position="absolute" fullScreen justifyContent="center" alignItems="center">
-        <BoxSelect size={ms(Math.min(width, height) * 0.5)} color="white" />
+      <View position="absolute" borderRadius="$r_0" backgroundColor="transparent" top="$s4" left="$s4" padding="$s3">
+        <Pressable
+          hitSlop={ms(15)}
+          onPress={() => {
+            router.back();
+          }}
+        >
+          <ArrowLeft size={ms(24)} color="white" />
+        </Pressable>
       </View>
     </View>
   );
