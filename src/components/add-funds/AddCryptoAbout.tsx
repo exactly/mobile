@@ -8,10 +8,6 @@ import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-function close() {
-  router.back();
-}
-
 export default function AddCryptoAbout() {
   return (
     <SafeView fullScreen paddingTop={0} backgroundColor="$backgroundSoft">
@@ -36,7 +32,9 @@ export default function AddCryptoAbout() {
             outlined
             spaced
             iconAfter={<X size={ms(20)} color="$interactiveOnBaseBrandSoft" fontWeight="bold" />}
-            onPress={close}
+            onPress={() => {
+              router.back();
+            }}
           >
             Close
           </Button>
