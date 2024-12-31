@@ -7,7 +7,6 @@ import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.s
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin, IAuditor, IBalancerVault, IDebtManager, IInstallmentsRouter, IMarket } from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
-import { Refunder } from "../src/Refunder.sol";
 
 import { BaseScript } from "./Base.s.sol";
 
@@ -15,58 +14,31 @@ import { BaseScript } from "./Base.s.sol";
 contract DeployScript is BaseScript {
   ExaAccountFactory public factory;
   ExaPlugin public exaPlugin;
-  IssuerChecker public issuerChecker;
-  WebauthnOwnerPlugin public ownerPlugin;
-  IAuditor public auditor;
-  IMarket public exaUSDC;
-  IMarket public exaWETH;
-  IDebtManager public debtManager;
-  IInstallmentsRouter public installmentsRouter;
-  Refunder public refunder;
-  IBalancerVault public balancerVault;
-
-  address public admin;
-  address public keeper;
-  address public deployer;
-  address public collector;
-  address public swapper;
-
-  function setUp() external {
-    ownerPlugin = WebauthnOwnerPlugin(dependency("webauthn-owner-plugin", "WebauthnOwnerPlugin", "Plugin", 0));
-    issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
-    auditor = IAuditor(protocol("Auditor"));
-    exaUSDC = IMarket(protocol("MarketUSDC"));
-    exaWETH = IMarket(protocol("MarketWETH"));
-    debtManager = IDebtManager(protocol("DebtManager"));
-    installmentsRouter = IInstallmentsRouter(protocol("InstallmentsRouter"));
-    refunder = Refunder(broadcast("Refunder"));
-
-    balancerVault = IBalancerVault(protocol("BalancerVault"));
-
-    admin = acct("admin");
-    keeper = acct("keeper");
-    deployer = acct("deployer");
-    collector = acct("collector");
-    swapper = acct("swapper");
-  }
 
   function run() external {
-    vm.startBroadcast(deployer);
+    vm.startBroadcast(acct("deployer"));
 
     exaPlugin = new ExaPlugin(
-      admin,
-      auditor,
-      exaUSDC,
-      exaWETH,
-      balancerVault,
-      debtManager,
-      installmentsRouter,
-      issuerChecker,
-      collector,
-      swapper,
-      keeper
+      acct("admin"),
+      IAuditor(protocol("Auditor")),
+      IMarket(protocol("MarketUSDC")),
+      IMarket(protocol("MarketWETH")),
+      IBalancerVault(protocol("BalancerVault")),
+      IDebtManager(protocol("DebtManager")),
+      IInstallmentsRouter(protocol("InstallmentsRouter")),
+      IssuerChecker(broadcast("IssuerChecker")),
+      acct("collector"),
+      acct("swapper"),
+      acct("keeper")
     );
-    factory = new ExaAccountFactory(admin, ownerPlugin, exaPlugin, ACCOUNT_IMPL, ENTRYPOINT);
+
+    factory = new ExaAccountFactory(
+      acct("admin"),
+      WebauthnOwnerPlugin(dependency("webauthn-owner-plugin", "WebauthnOwnerPlugin", "Plugin", 0)),
+      exaPlugin,
+      ACCOUNT_IMPL,
+      ENTRYPOINT
+    );
 
     factory.donateStake{ value: 0.1 ether }();
 
