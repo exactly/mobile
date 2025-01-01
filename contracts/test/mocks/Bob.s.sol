@@ -14,6 +14,7 @@ import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 
 import { BaseScript } from "../../script/Base.s.sol";
 import { ExaAccountFactory } from "../../src/ExaAccountFactory.sol";
+import { ExaPlugin } from "../../src/ExaPlugin.sol";
 import { IExaAccount, IMarket } from "../../src/IExaAccount.sol";
 import { IssuerChecker } from "../../src/IssuerChecker.sol";
 
@@ -32,7 +33,6 @@ contract BobScript is BaseScript {
   IssuerChecker internal issuerChecker;
   ExaAccountFactory public factory;
 
-  address public keeper;
   address public bob;
   uint256 public bobKey = 0xb0b;
   IExaAccount public bobAccount;
@@ -47,13 +47,18 @@ contract BobScript is BaseScript {
     previewer = Previewer(protocol("Previewer"));
 
     issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
-    factory = ExaAccountFactory(payable(broadcast("ExaAccountFactory", "Deploy", 1)));
-    vm.label(address(factory.EXA_PLUGIN()), "ExaPlugin");
+    ExaPlugin exaPlugin = ExaPlugin(payable(broadcast("Deploy")));
+    factory = ExaAccountFactory(
+      payable(
+        CREATE3_FACTORY.getDeployed(acct("deployer"), keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION())))
+      )
+    );
+    vm.label(address(exaPlugin), "ExaPlugin");
+    vm.label(address(factory), "ExaAccountFactory");
     vm.label(address(factory.ENTRYPOINT()), "EntryPoint");
     vm.label(factory.WEBAUTHN_OWNER_PLUGIN(), "WebauthnOwnerPlugin");
     vm.label(factory.IMPL(), "ModularAccount");
 
-    keeper = acct("keeper");
     bob = vm.addr(bobKey);
     vm.label(bob, "bob");
 
@@ -72,7 +77,7 @@ contract BobScript is BaseScript {
     amounts[2] = 11e6;
     amounts[3] = 10e6;
 
-    vm.startBroadcast(keeper);
+    vm.startBroadcast(acct("keeper"));
     bobAccount = IExaAccount(factory.createAccount(0, owners.toPublicKeys()));
     vm.label(address(bobAccount), "bobAccount");
     _deal(address(bob), 1 ether);

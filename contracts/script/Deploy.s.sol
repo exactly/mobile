@@ -32,12 +32,22 @@ contract DeployScript is BaseScript {
       acct("keeper")
     );
 
-    factory = new ExaAccountFactory(
-      acct("admin"),
-      WebauthnOwnerPlugin(dependency("webauthn-owner-plugin", "WebauthnOwnerPlugin", "Plugin", 0)),
-      exaPlugin,
-      ACCOUNT_IMPL,
-      ENTRYPOINT
+    factory = ExaAccountFactory(
+      payable(
+        CREATE3_FACTORY.deploy(
+          keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION())),
+          abi.encodePacked(
+            vm.getCode("ExaAccountFactory.sol:ExaAccountFactory"),
+            abi.encode(
+              acct("admin"),
+              WebauthnOwnerPlugin(dependency("webauthn-owner-plugin", "WebauthnOwnerPlugin", "Plugin", 0)),
+              exaPlugin,
+              ACCOUNT_IMPL,
+              ENTRYPOINT
+            )
+          )
+        )
+      )
     );
 
     factory.donateStake{ value: 0.1 ether }();

@@ -1,28 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0; // solhint-disable-line one-contract-per-file
 
-import { Test } from "forge-std/Test.sol";
+import { ForkTest } from "./Fork.t.sol";
 
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
-import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
 
 import { ERC20 } from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import { ERC4626 } from "openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol";
 
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
+import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factory.s.sol";
 import { MAX_OWNERS } from "webauthn-owner-plugin/IWebauthnOwnerPlugin.sol";
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
+import { DeployScript } from "../script/Deploy.s.sol";
 import { ExaAccountFactory, ExaAccountInitialized } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin, IBalancerVault, IDebtManager, IInstallmentsRouter } from "../src/ExaPlugin.sol";
-import { IAuditor, IMarket } from "../src/IExaAccount.sol";
-import { IssuerChecker } from "../src/IssuerChecker.sol";
+import { ExaPlugin } from "../src/ExaPlugin.sol";
 
-contract ExaAccountFactoryTest is Test {
+contract ExaAccountFactoryTest is ForkTest {
   using FixedPointMathLib for uint256;
   using OwnersLib for address[];
 
@@ -32,24 +31,30 @@ contract ExaAccountFactoryTest is Test {
 
   function setUp() external {
     ownerPlugin = new WebauthnOwnerPlugin();
-    exaPlugin = new ExaPlugin(
-      address(this),
-      IAuditor(address(0)),
-      IMarket(address(new MockERC4626(new MockERC20()))),
-      IMarket(address(new MockERC4626(new MockERC20()))),
-      IBalancerVault(address(this)),
-      IDebtManager(address(this)),
-      IInstallmentsRouter(address(this)),
-      IssuerChecker(address(this)),
-      address(this),
-      address(this),
-      address(this)
-    );
+    vm.etch(address(ENTRYPOINT), address(new EntryPoint()).code);
+    vm.etch(ACCOUNT_IMPL, address(new UpgradeableModularAccount(ENTRYPOINT)).code);
+    vm.store(address(this), keccak256(abi.encode("deployer")), bytes32(uint256(uint160(address(this)))));
 
-    IEntryPoint entryPoint = IEntryPoint(address(new EntryPoint()));
-    factory = new ExaAccountFactory(
-      address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(entryPoint)), entryPoint
-    );
+    DeployScript d = new DeployScript();
+    set("Auditor", address(this));
+    set("MarketUSDC", address(new MockERC4626(new MockERC20())));
+    set("MarketWETH", address(new MockERC4626(new MockERC20())));
+    set("BalancerVault", address(this));
+    set("DebtManager", address(this));
+    set("InstallmentsRouter", address(this));
+    set("IssuerChecker", address(this));
+    set("WebauthnOwnerPlugin", address(ownerPlugin));
+    d.run();
+    unset("Auditor");
+    unset("MarketUSDC");
+    unset("MarketWETH");
+    unset("BalancerVault");
+    unset("DebtManager");
+    unset("InstallmentsRouter");
+    unset("IssuerChecker");
+    unset("WebauthnOwnerPlugin");
+    exaPlugin = d.exaPlugin();
+    factory = d.factory();
   }
 
   // solhint-disable func-name-mixedcase
@@ -86,6 +91,20 @@ contract ExaAccountFactoryTest is Test {
     for (uint256 i = 0; i < owners.length; ++i) {
       ownerPlugin.isOwnerOf(account, owners[i]);
     }
+  }
+
+  function test_deploy_deploysToSameAddress() external {
+    address[] memory owners = new address[](1);
+    owners[0] = address(this);
+    address account = factory.createAccount(0, owners.toPublicKeys());
+
+    vm.createSelectFork("optimism", 127_050_624);
+
+    DeployScript d = new DeployScript();
+    d.run();
+
+    assertEq(address(d.factory()), address(factory), "different factory address");
+    assertEq(factory.getAddress(0, owners.toPublicKeys()), account, "different account address");
   }
 
   // solhint-enable func-name-mixedcase
