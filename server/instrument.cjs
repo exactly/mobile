@@ -3,7 +3,7 @@ const { nodeProfilingIntegration } = require("@sentry/profiling-node");
 
 init({
   release: require("@exactly/common/generated/release"),
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  dsn: require("@exactly/common/sentryDSN"),
   environment: process.env.NODE_ENV === "production" ? "production" : "development",
   tracesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
   profilesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,

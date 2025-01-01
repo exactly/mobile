@@ -1,4 +1,5 @@
 import release from "@exactly/common/generated/release";
+import sentryDSN from "@exactly/common/sentryDSN";
 import { init, mobileReplayIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
 import { ToastProvider } from "@tamagui/toast";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -29,7 +30,7 @@ export { ErrorBoundary } from "expo-router";
 const routingInstrumentation = reactNavigationIntegration();
 init({
   release,
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  dsn: sentryDSN,
   environment: __DEV__ ? "development" : "production",
   tracesSampleRate: 1,
   attachStacktrace: true,
