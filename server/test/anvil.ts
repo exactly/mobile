@@ -106,7 +106,6 @@ export default async function setup({ provide }: GlobalSetupContext) {
 
   if (initialize) {
     shell.env.SWAPPER_ADDRESS = swapper.contractAddress;
-    shell.env.BROADCAST_ISSUERCHECKER_ADDRESS = issuerChecker.contractAddress;
     await $(shell)`forge script script/Refunder.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
@@ -125,7 +124,6 @@ export default async function setup({ provide }: GlobalSetupContext) {
   ).transactions;
 
   if (initialize) {
-    shell.env.BROADCAST_REFUNDER_ADDRESS = refunder.contractAddress;
     await $(shell)`forge script script/Deploy.s.sol --code-size-limit 69000
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
