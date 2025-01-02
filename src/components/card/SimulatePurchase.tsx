@@ -161,6 +161,26 @@ export default function SimulatePurchase({ installments }: { installments: numbe
               </XStack>
               <XStack alignItems="center" justifyContent="space-between" width="100%">
                 <Text primary subHeadline>
+                  Purchase amount
+                </Text>
+                <Text headline primary textAlign="right">
+                  {installments > 1 && installmentsResult
+                    ? installmentsResult.installments
+                        .reduce((accumulator, current) => accumulator + Number(formatUnits(current, 6)), 0)
+                        .toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                        })
+                    : installments === 1 && borrowPreview
+                      ? Number(formatUnits(borrowPreview.assets, 6)).toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                        })
+                      : "N/A"}
+                </Text>
+              </XStack>
+              <XStack alignItems="center" justifyContent="space-between" width="100%">
+                <Text primary subHeadline>
                   First due date
                 </Text>
                 <Text headline>{format(new Date(Number(nextMaturity) * 1000), "yyyy-MM-dd")}</Text>
