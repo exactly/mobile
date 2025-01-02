@@ -289,25 +289,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function poke(IMarket market) external {
     _checkMarket(market);
-    uint256 balance = IERC20(market.asset()).balanceOf(msg.sender);
-    // slither-disable-next-line incorrect-equality -- unsigned zero check
-    if (balance == 0) revert NoBalance();
-
-    _executeFromSender(market.asset(), 0, abi.encodeCall(IERC20.approve, (address(market), balance)));
-    _executeFromSender(address(market), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender)));
-    _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
+    _poke(market);
   }
 
   function pokeETH() external {
-    uint256 balance = msg.sender.balance;
-    // slither-disable-next-line incorrect-equality -- unsigned zero check
-    if (balance == 0) revert NoBalance();
-
-    address weth = EXA_WETH.asset();
-    _executeFromSender(weth, balance, abi.encodeCall(WETH.deposit, ()));
-    _executeFromSender(weth, 0, abi.encodeCall(IERC20.approve, (address(EXA_WETH), balance)));
-    _executeFromSender(address(EXA_WETH), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender)));
-    _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (EXA_WETH)));
+    _executeFromSender(EXA_WETH.asset(), msg.sender.balance, abi.encodeCall(WETH.deposit, ()));
+    _poke(EXA_WETH);
   }
 
   function receiveFlashLoan(IERC20[] calldata, uint256[] calldata, uint256[] calldata, bytes calldata data) external {
@@ -654,6 +641,16 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function _isMarket(IMarket market) internal view returns (bool) {
     return AUDITOR.markets(market).isListed;
+  }
+
+  function _poke(IMarket market) internal {
+    uint256 balance = IERC20(market.asset()).balanceOf(msg.sender);
+    // slither-disable-next-line incorrect-equality -- unsigned zero check
+    if (balance == 0) revert NoBalance();
+
+    _executeFromSender(market.asset(), 0, abi.encodeCall(IERC20.approve, (address(market), balance)));
+    _executeFromSender(address(market), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender)));
+    _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
   }
 
   function _setCollector(address collector_) internal {
