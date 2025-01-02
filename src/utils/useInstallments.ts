@@ -6,12 +6,10 @@ import useMarketAccount from "./useMarketAccount";
 
 export default function useInstallments({ totalAmount, installments }: { totalAmount: bigint; installments: number }) {
   const { market, isLoading } = useMarketAccount(marketUSDCAddress);
-
   const timestamp = Math.floor(Date.now() / 1000);
   const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
   const firstMaturity =
     nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
-
   let data: ReturnType<typeof splitInstallments> | undefined;
   if (market && totalAmount > 0n && installments > 1) {
     data = splitInstallments(
@@ -33,6 +31,5 @@ export default function useInstallments({ totalAmount, installments }: { totalAm
       market.interestRateModel.parameters,
     );
   }
-
-  return { data, nextMaturity, timestamp, isLoading };
+  return { data, firstMaturity, timestamp, isLoading };
 }
