@@ -312,7 +312,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _checkLiquidity(msg.sender);
   }
 
-  function poke(IMarket market) external {
+  function poke(IMarket market) public {
     _checkMarket(market);
     uint256 balance = IERC20(market.asset()).balanceOf(msg.sender);
     // slither-disable-next-line incorrect-equality -- unsigned zero check
@@ -324,15 +324,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function pokeETH() external {
-    uint256 balance = msg.sender.balance;
-    // slither-disable-next-line incorrect-equality -- unsigned zero check
-    if (balance == 0) revert NoBalance();
-
-    address weth = EXA_WETH.asset();
-    _executeFromSender(weth, balance, abi.encodeCall(WETH.deposit, ()));
-    _executeFromSender(weth, 0, abi.encodeCall(IERC20.approve, (address(EXA_WETH), balance)));
-    _executeFromSender(address(EXA_WETH), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender)));
-    _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (EXA_WETH)));
+    _executeFromSender(EXA_WETH.asset(), msg.sender.balance, abi.encodeCall(WETH.deposit, ()));
+    poke(EXA_WETH);
   }
 
   function receiveFlashLoan(IERC20[] calldata, uint256[] calldata, uint256[] calldata, bytes calldata data) external {
