@@ -4,7 +4,7 @@ import { ChevronDown } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
 import React, { useEffect, useState } from "react";
 import { ms } from "react-native-size-matters";
-import { Accordion, Spinner, Square, XStack, YStack } from "tamagui";
+import { Accordion, Separator, Spinner, Square, XStack, YStack } from "tamagui";
 import { formatUnits, parseUnits, zeroAddress } from "viem";
 
 import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
@@ -19,7 +19,7 @@ export default function SimulatePurchase({ installments }: { installments: numbe
   const [assets, setAssets] = useState(100n);
   const {
     data: installmentsResult,
-    nextMaturity,
+    firstMaturity,
     timestamp,
     isLoading: isInstallmentsLoading,
   } = useInstallments({ totalAmount: assets, installments });
@@ -32,8 +32,8 @@ export default function SimulatePurchase({ installments }: { installments: numbe
   } = useReadPreviewerPreviewBorrowAtMaturity({
     address: previewerAddress,
     account,
-    args: [market?.market ?? zeroAddress, BigInt(nextMaturity), assets],
-    query: { enabled: !!market && !!account && !!nextMaturity && assets > 0n },
+    args: [market?.market ?? zeroAddress, BigInt(firstMaturity), assets],
+    query: { enabled: !!market && !!account && !!firstMaturity && assets > 0n },
   });
   const isLoading = isInstallmentsLoading || isFetchingBorrowPreview || isRefetchingBorrowPreview;
   useEffect(() => {
@@ -136,6 +136,30 @@ export default function SimulatePurchase({ installments }: { installments: numbe
               </XStack>
               <XStack alignItems="center" justifyContent="space-between" width="100%">
                 <Text primary subHeadline>
+                  Total interest
+                </Text>
+                <Text primary headline maxWidth="50%" flexShrink={1}>
+                  {installments > 1 && installmentsResult
+                    ? Number(
+                        formatUnits(
+                          installmentsResult.installments.reduce((accumulator, current) => accumulator + current, 0n) -
+                            assets,
+                          6,
+                        ),
+                      ).toLocaleString(undefined, {
+                        style: "currency",
+                        currency: "USD",
+                      })
+                    : installments === 1 && borrowPreview
+                      ? Number(formatUnits(borrowPreview.assets - assets, 6)).toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                        })
+                      : "N/A"}
+                </Text>
+              </XStack>
+              <XStack alignItems="center" justifyContent="space-between" width="100%">
+                <Text primary subHeadline>
                   Installments
                 </Text>
                 <XStack alignItems="center" gap="$s2">
@@ -161,9 +185,67 @@ export default function SimulatePurchase({ installments }: { installments: numbe
               </XStack>
               <XStack alignItems="center" justifyContent="space-between" width="100%">
                 <Text primary subHeadline>
+                  Total cost
+                </Text>
+                <Text headline primary textAlign="right">
+                  {installments > 1 && installmentsResult
+                    ? installmentsResult.installments
+                        .reduce((accumulator, current) => accumulator + Number(formatUnits(current, 6)), 0)
+                        .toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                        })
+                    : installments === 1 && borrowPreview
+                      ? Number(formatUnits(borrowPreview.assets, 6)).toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                        })
+                      : "N/A"}
+                </Text>
+              </XStack>
+              <XStack alignItems="center" justifyContent="space-between" width="100%">
+                <Text primary subHeadline>
                   First due date
                 </Text>
-                <Text headline>{format(new Date(Number(nextMaturity) * 1000), "yyyy-MM-dd")}</Text>
+                <Text headline>{format(new Date(Number(firstMaturity) * 1000), "yyyy-MM-dd")}</Text>
+              </XStack>
+              <Separator height={1} borderColor="$borderNeutralSoft" />
+              <XStack>
+                <Text primary subHeadline>
+                  You&apos;ll pay{" "}
+                  <Text emphasized>
+                    {installments} {installments === 1 ? "installment" : "installments"} of{" "}
+                    {installments > 1 && installmentsResult
+                      ? Number(formatUnits(installmentsResult.installments[0] ?? 0n, 6)).toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                        })
+                      : installments === 1 && borrowPreview
+                        ? Number(formatUnits(borrowPreview.assets, 6)).toLocaleString(undefined, {
+                            style: "currency",
+                            currency: "USD",
+                          })
+                        : "N/A"}
+                  </Text>
+                  , starting on{" "}
+                  <Text emphasized>{format(new Date(Number(firstMaturity) * 1000), "MMMM dd, yyyy")}</Text> with a{" "}
+                  <Text emphasized>
+                    total cost of{" "}
+                    {installments > 1 && installmentsResult
+                      ? installmentsResult.installments
+                          .reduce((accumulator, current) => accumulator + Number(formatUnits(current, 6)), 0)
+                          .toLocaleString(undefined, {
+                            style: "currency",
+                            currency: "USD",
+                          })
+                      : installments === 1 && borrowPreview
+                        ? Number(formatUnits(borrowPreview.assets, 6)).toLocaleString(undefined, {
+                            style: "currency",
+                            currency: "USD",
+                          })
+                        : "N/A"}
+                  </Text>
+                </Text>
               </XStack>
             </YStack>
           </Accordion.Content>
