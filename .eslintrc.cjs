@@ -80,8 +80,12 @@ module.exports = {
       },
     },
     {
-      files: ["**/*.cjs"],
-      rules: { "@typescript-eslint/no-require-imports": "off" },
+      files: ["**/*.cjs", "**/*.js"],
+      globals: { process: true },
+      rules: {
+        "@typescript-eslint/no-require-imports": "off",
+        "unicorn/prefer-module": "off",
+      },
     },
     {
       files: ["server/test/**"],
