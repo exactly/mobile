@@ -55,7 +55,7 @@ export async function registrationOptions() {
 
 export async function verifyRegistration(attestation: RegistrationResponseJSON) {
   const response = await client.api.auth.registration.$post({ json: attestation });
-  if (!response.ok) throw new APIError(response.status, await response.json());
+  if (!response.ok) throw new APIError(response.status, await response.clone().text());
   const { auth: expires, ...passkey } = await response.json();
   await queryClient.setQueryData(["auth"], parse(Auth, expires));
   return parse(Passkey, passkey);
