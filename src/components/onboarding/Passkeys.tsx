@@ -1,5 +1,6 @@
 import type { Passkey } from "@exactly/common/validation";
 import { Key, X } from "@tamagui/lucide-icons";
+import { useToastController } from "@tamagui/toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
@@ -27,6 +28,7 @@ function learnMore() {
 
 export default function Passkeys() {
   const queryClient = useQueryClient();
+  const toast = useToastController();
 
   const {
     mutate: createAccount,
@@ -43,6 +45,7 @@ export default function Passkeys() {
           error.message === "UserCancelled" ||
           error.message.startsWith("androidx.credentials.exceptions.domerrors.NotAllowedError"))
       ) {
+        toast.show("Operation cancelled");
         return;
       }
       handleError(error);

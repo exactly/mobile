@@ -1,5 +1,6 @@
 import { Passkey } from "@exactly/common/validation";
 import { Key } from "@tamagui/lucide-icons";
+import { useToastController } from "@tamagui/toast";
 import { useMutation } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { type FC, useCallback, useEffect, useRef, useState } from "react";
@@ -30,7 +31,7 @@ import qrCode from "../../assets/images/qr-code.svg";
 import alchemyConnector from "../../utils/alchemyConnector";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
-import { getPasskey } from "../../utils/server";
+import { APIError, getPasskey } from "../../utils/server";
 import ActionButton from "../shared/ActionButton";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -71,6 +72,7 @@ const pages: [Page, ...Page[]] = [
 export default function Carousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const { connect, isPending: isConnecting } = useConnect();
+  const toast = useToastController();
 
   const flatListReference = useRef<Animated.FlatList<Page>>(null);
   const offsetX = useSharedValue(0);
@@ -111,7 +113,21 @@ export default function Carousel() {
 
   const { mutate: recoverAccount, isPending } = useMutation({
     mutationFn: getPasskey,
-    onError: handleError,
+    onError(error: unknown) {
+      if (
+        (error instanceof Error &&
+          (error.message ===
+            "The operation couldn’t be completed. (com.apple.AuthenticationServices.AuthorizationError error 1001.)" ||
+            error.message === "The operation couldn’t be completed. Device must be unlocked to perform request." ||
+            error.message === "UserCancelled" ||
+            error.message.startsWith("androidx.credentials.exceptions.domerrors.NotAllowedError"))) ||
+        (error instanceof APIError && error.text === "unauthorized")
+      ) {
+        toast.show("Authentication cancelled");
+        return;
+      }
+      handleError(error);
+    },
     onSuccess(passkey) {
       queryClient.setQueryData<Passkey>(["passkey"], parse(Passkey, passkey));
       connect({ connector: alchemyConnector });
