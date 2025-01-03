@@ -13,6 +13,7 @@ import PasskeysImage from "../../assets/images/passkeys.svg";
 import alchemyConnector from "../../utils/alchemyConnector";
 import createPasskey from "../../utils/createPasskey";
 import handleError from "../../utils/handleError";
+import { APIError } from "../../utils/server";
 import ActionButton from "../shared/ActionButton";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -46,6 +47,12 @@ export default function Passkeys() {
           error.message.startsWith("androidx.credentials.exceptions.domerrors.NotAllowedError"))
       ) {
         toast.show("Operation cancelled");
+        return;
+      }
+      if (error instanceof APIError && error.code === 400 && error.text === "backup eligibility required") {
+        toast.show("Your password manager does not support passkey backups. Please try a different one", {
+          customData: { type: "error" },
+        });
         return;
       }
       handleError(error);
