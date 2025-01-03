@@ -88,7 +88,10 @@ export default new Hono().post(
     }
     if (!validation.success) {
       captureException(new Error("bad persona"), { contexts: { validation } });
-      return c.text("bad request", 400);
+      return c.json(
+        validation.issues.map((issue) => `${issue.path?.map((p) => p.key).join("/")} ${issue.message}`),
+        400,
+      );
     }
   }),
   async (c) => {
