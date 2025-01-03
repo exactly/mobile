@@ -1,4 +1,4 @@
-import { Info } from "@tamagui/lucide-icons";
+import { Info as InfoIcon } from "@tamagui/lucide-icons";
 import { Toast, useToastState } from "@tamagui/toast";
 import React from "react";
 import { ms } from "react-native-size-matters";
@@ -9,6 +9,7 @@ import View from "./View";
 
 export default function NotificationToast() {
   const toast = useToastState();
+  const type = toast?.customData?.type as "info" | "success" | "error" | undefined;
   if (!toast || toast.isHandledNatively) return null;
   return (
     <Toast
@@ -17,7 +18,9 @@ export default function NotificationToast() {
       enterStyle={{ opacity: 0, scale: 0.5, y: -25 }} // eslint-disable-line react-native/no-inline-styles
       exitStyle={{ opacity: 0, scale: 1, y: -20 }} // eslint-disable-line react-native/no-inline-styles
       backgroundColor="$backgroundSoft"
-      borderColor="$borderSuccessSoft"
+      borderColor={
+        type === "success" ? "$borderSuccessSoft" : type === "error" ? "$borderErrorSoft" : "$borderInformationSoft"
+      }
       borderWidth={1}
       opacity={1}
       scale={1}
@@ -30,15 +33,35 @@ export default function NotificationToast() {
           padding="$s4"
           justifyContent="center"
           alignItems="center"
-          backgroundColor="$interactiveBaseSuccessSoftDefault"
+          backgroundColor={
+            type === "success"
+              ? "$interactiveBaseSuccessSoftDefault"
+              : type === "error"
+                ? "$interactiveBaseErrorSoftDefault"
+                : "$interactiveBaseInformationSoftDefault"
+          }
           borderTopLeftRadius="$s3"
           borderBottomLeftRadius="$s3"
         >
-          <Info size={ms(24)} color="$uiSuccessSecondary" />
+          <InfoIcon
+            size={ms(24)}
+            color={
+              type === "success" ? "$uiSuccessSecondary" : type === "error" ? "$uiErrorSecondary" : "$uiInfoSecondary"
+            }
+          />
         </View>
         <View padding="$s4">
           <Toast.Title>
-            <Text footnote color="$uiSuccessPrimary">
+            <Text
+              footnote
+              color={
+                type === "success"
+                  ? "$uiSuccessPrimary"
+                  : type === "error"
+                    ? "$uiErrorPrimary"
+                    : "$uiInformationPrimary"
+              }
+            >
               {toast.title}
             </Text>
           </Toast.Title>
