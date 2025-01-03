@@ -40,8 +40,7 @@ import {
   NoProposal,
   Proposed,
   Timelocked,
-  Unauthorized,
-  WrongValue
+  Unauthorized
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { Refunder } from "../src/Refunder.sol";
@@ -782,7 +781,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), credit);
   }
 
-  function test_collectCredit_reverts_whenPrposalCausesInsufficientLiquidity() external {
+  function test_collectCredit_reverts_whenProposalCausesInsufficientLiquidity() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
@@ -801,7 +800,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), 0);
   }
 
-  function test_collectCredit_collects_whenHealthFactorHigherThanMinHealthFactor() external {
+  function test_collectCredit_collects_whenHealthFactorHigherThanOne() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
@@ -813,15 +812,17 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), credit);
   }
 
-  function test_collectCredit_reverts_whenHealthFactorLowerThanMinHealthFactor() external {
-    exaPlugin.setMinHealthFactor(2e18);
-
-    vm.startPrank(keeper);
+  function test_collectCredit_reverts_whenHealthFactorLowerThanOne() external {
+    vm.prank(keeper);
     account.poke(exaUSDC);
 
     uint256 exaUSDCBalance = exaUSDC.balanceOf(address(account));
     uint256 credit = exaUSDCBalance / 2;
 
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, credit, address(this))));
+
+    vm.prank(keeper);
     vm.expectRevert(InsufficientLiquidity.selector);
     account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
   }
@@ -1203,27 +1204,6 @@ contract ExaPluginTest is ForkTest {
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit CollectorSet(newCollector, address(this));
     exaPlugin.setCollector(newCollector);
-  }
-
-  function test_setMinHealthFactor_sets_whenAdmin() external {
-    exaPlugin.setMinHealthFactor(2e18);
-    assertEq(exaPlugin.minHealthFactor(), 2e18);
-  }
-
-  function test_setMinHealthFactor_reverts_whenNotAdmin() external {
-    address nonAdmin = address(0x1);
-    vm.startPrank(nonAdmin);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
-      )
-    );
-    exaPlugin.setMinHealthFactor(2e18);
-  }
-
-  function test_setMinHealthFactor_reverts_whenLowerThanWad() external {
-    vm.expectRevert(WrongValue.selector);
-    exaPlugin.setMinHealthFactor(1e18 - 1);
   }
 
   // solhint-enable func-name-mixedcase

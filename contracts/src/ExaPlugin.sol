@@ -33,15 +33,13 @@ import {
   IMarket,
   InsufficientLiquidity,
   MarketData,
-  MinHealthFactorSet,
   NoBalance,
   NoProposal,
   NotMarket,
   Proposal,
   Proposed,
   Timelocked,
-  Unauthorized,
-  WrongValue
+  Unauthorized
 } from "./IExaAccount.sol";
 import { IssuerChecker } from "./IssuerChecker.sol";
 
@@ -74,7 +72,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
   address public collector;
-  uint256 public minHealthFactor;
   mapping(address account => Proposal lastProposal) public proposals;
 
   bytes32 private callHash;
@@ -105,7 +102,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _grantRole(KEEPER_ROLE, firstKeeper);
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _setCollector(collector_);
-    _setMinHealthFactor(1e18);
 
     IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
   }
@@ -355,10 +351,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function setCollector(address collector_) external onlyRole(DEFAULT_ADMIN_ROLE) {
     _setCollector(collector_);
-  }
-
-  function setMinHealthFactor(uint256 minHealthFactor_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-    _setMinHealthFactor(minHealthFactor_);
   }
 
   /// @inheritdoc BasePlugin
@@ -635,9 +627,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       if ((1 << i) > marketMap) break;
     }
 
-    if (sumDebtPlusEffects != 0 && sumCollateral.divWad(sumDebtPlusEffects) < minHealthFactor) {
-      revert InsufficientLiquidity();
-    }
+    if (sumDebtPlusEffects > sumCollateral) revert InsufficientLiquidity();
   }
 
   function _checkMarket(IMarket market) internal view {
@@ -670,12 +660,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (collector_ == address(0)) revert ZeroAddress();
     collector = collector_;
     emit CollectorSet(collector_, msg.sender);
-  }
-
-  function _setMinHealthFactor(uint256 minHealthFactor_) internal {
-    if (minHealthFactor_ < 1e18) revert WrongValue();
-    minHealthFactor = minHealthFactor_;
-    emit MinHealthFactorSet(minHealthFactor_, msg.sender);
   }
 
   function _swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
