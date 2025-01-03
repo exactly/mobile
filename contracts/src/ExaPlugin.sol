@@ -294,30 +294,37 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     assert(msg.sender == address(BALANCER_VAULT) && callHash == keccak256(data));
     delete callHash;
 
+    uint256 maturity;
+    uint256 positionAssets;
+    uint256 maxRepay;
+    address borrower;
     uint256 actualRepay;
+
     if (data[0] == 0x01) {
       RepayCallbackData memory r = abi.decode(data[1:], (RepayCallbackData));
-      actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower);
-
-      if (actualRepay < r.maxRepay) EXA_USDC.deposit(r.maxRepay - actualRepay, r.borrower);
-
-      EXA_USDC.withdraw(r.maxRepay, address(BALANCER_VAULT), r.borrower);
-
-      _checkLiquidity(r.borrower);
-      return;
+      (maturity, positionAssets, maxRepay, borrower) = (r.maturity, r.positionAssets, r.maxRepay, r.borrower);
+    } else {
+      CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
+      (maturity, positionAssets, maxRepay, borrower) = (c.maturity, c.positionAssets, c.maxRepay, c.borrower);
     }
 
-    CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
-    actualRepay = EXA_USDC.repayAtMaturity(c.maturity, c.positionAssets, c.maxRepay, c.borrower);
+    actualRepay = EXA_USDC.repayAtMaturity(maturity, positionAssets, maxRepay, borrower);
 
-    c.marketIn.withdraw(c.maxAmountIn, address(this), c.borrower);
-    (uint256 amountIn, uint256 amountOut) =
-      _swap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.maxAmountIn, c.maxRepay, c.route);
-    IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), c.maxRepay);
+    if (data[0] == 0x01) {
+      if (actualRepay < maxRepay) EXA_USDC.deposit(maxRepay - actualRepay, borrower);
+      EXA_USDC.withdraw(maxRepay, address(BALANCER_VAULT), borrower);
+    } else {
+      CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
+      c.marketIn.withdraw(c.maxAmountIn, address(this), borrower);
+      (uint256 amountIn, uint256 amountOut) =
+        _swap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.maxAmountIn, maxRepay, c.route);
+      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), maxRepay);
 
-    _depositApprovedUnspent(EXA_USDC, amountOut - actualRepay, c.borrower);
-    _depositUnspent(c.marketIn, c.maxAmountIn - amountIn, c.borrower);
-    _checkLiquidity(c.borrower);
+      _depositUnspent(c.marketIn, c.maxAmountIn - amountIn, borrower);
+      _depositApprovedUnspent(EXA_USDC, amountOut - actualRepay, borrower);
+    }
+
+    _checkLiquidity(borrower);
   }
 
   receive() external payable { } // solhint-disable-line no-empty-blocks
