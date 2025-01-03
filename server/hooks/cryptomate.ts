@@ -187,7 +187,7 @@ export default new Hono().post(
             setContext("tx", { call, ...request, transactionHash: hash });
             await database
               .insert(transactions)
-              .values([{ id: payload.operation_id, cardId: payload.data.card_id, hash, payload: jsonBody }]);
+              .values([{ id: payload.operation_id, cardId: payload.data.card_id, hashes: [hash], payload: jsonBody }]);
             startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
               .then((receipt) => {
                 if (receipt.status === "success") return;
@@ -219,8 +219,8 @@ export default new Hono().post(
               const tx = await database.query.transactions.findFirst({
                 where: and(eq(transactions.id, payload.operation_id), eq(transactions.cardId, payload.data.card_id)),
               });
-              if (tx && isHash(tx.hash)) {
-                const receipt = await publicClient.getTransactionReceipt({ hash: tx.hash }).catch(() => undefined);
+              if (tx?.hashes[0] && isHash(tx.hashes[0])) {
+                const receipt = await publicClient.getTransactionReceipt({ hash: tx.hashes[0] }).catch(() => undefined);
                 if (receipt?.status === "success") return c.json({});
               }
             }

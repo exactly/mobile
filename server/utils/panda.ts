@@ -1,4 +1,6 @@
 import { type Address, Hex } from "@exactly/common/validation";
+import { vValidator } from "@hono/valibot-validator";
+import { createHmac } from "node:crypto";
 import removeAccents from "remove-accents";
 import {
   type BaseIssue,
@@ -172,4 +174,16 @@ export async function isPanda(account: Address): Promise<boolean> {
       abi: upgradeableModularAccountAbi,
     })
     .then((plugins) => plugins.map((p) => parse(Hex, p.toLowerCase())).includes(plugin));
+}
+
+export function headerValidator() {
+  return vValidator("header", object({ signature: string() }), async (r, c) => {
+    if (!r.success) return c.text("bad request", 400);
+    return r.output.signature ===
+      createHmac("sha256", key)
+        .update(Buffer.from(await c.req.arrayBuffer()))
+        .digest("hex")
+      ? undefined
+      : c.text("unauthorized", 401);
+  });
 }

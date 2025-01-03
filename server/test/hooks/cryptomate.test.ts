@@ -277,7 +277,7 @@ describe("card operations", () => {
           },
         });
         const card = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        await publicClient.waitForTransactionReceipt({ hash: card?.hash as Hex });
+        await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
 
         await expect(collectorBalance()).resolves.toBe(
           balance + BigInt(Math.round(authorization.json.data.bill_amount * 1e6)),
@@ -301,7 +301,7 @@ describe("card operations", () => {
           },
         });
         const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        await publicClient.waitForTransactionReceipt({ hash: transaction?.hash as Hex });
+        await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
         await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
         expect(response.status).toBe(200);
@@ -325,7 +325,7 @@ describe("card operations", () => {
         const transaction = await database.query.transactions.findFirst({
           where: eq(transactions.id, operation),
         });
-        await publicClient.waitForTransactionReceipt({ hash: transaction?.hash as Hex });
+        await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
         await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
         expect(response.status).toBe(200);
@@ -354,7 +354,7 @@ describe("card operations", () => {
         const operation = "dupe";
         const cardId = "dupe";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "7777", mode: 6 }]);
-        await database.insert(transactions).values([{ id: operation, cardId, hash: zeroHash, payload: {} }]);
+        await database.insert(transactions).values([{ id: operation, cardId, hashes: [zeroHash], payload: {} }]);
         const response = await appClient.index.$post({
           ...authorization,
           json: {

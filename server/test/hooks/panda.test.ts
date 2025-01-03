@@ -1,5 +1,6 @@
 import "../mocks/database";
 import "../mocks/deployments";
+import "../mocks/panda";
 import "../mocks/redis";
 import "../mocks/sentry";
 
@@ -7,27 +8,14 @@ import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/ch
 import * as sentry from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
-import { createHmac } from "node:crypto";
-import {
-  BaseError,
-  ContractFunctionRevertedError,
-  encodeErrorResult,
-  encodeFunctionData,
-  hexToBigInt,
-  padHex,
-  zeroAddress,
-  zeroHash,
-  type Hex,
-} from "viem";
+import { encodeFunctionData, hexToBigInt, padHex, zeroAddress, zeroHash, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import database, { cards, credentials, transactions } from "../../database";
-import { issuerCheckerAbi } from "../../generated/contracts";
 import app from "../../hooks/panda";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
-import key from "../../utils/panda";
 import publicClient from "../../utils/publicClient";
 import traceClient from "../../utils/traceClient";
 
@@ -88,10 +76,6 @@ const callFrame = {
   gasUsed: "0x",
   input: "0x",
 } as const;
-
-function sign(json: string) {
-  return createHmac("sha256", key).update(Buffer.from(json)).digest("hex");
-}
 
 async function collectorBalance() {
   return await publicClient
@@ -165,15 +149,13 @@ describe("card operations", () => {
       afterEach(() => vi.restoreAllMocks());
 
       it("authorizes credit", async () => {
-        const json = {
-          ...authorization.json,
-          body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "card" } },
-        };
-
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "card" } },
+          },
         });
 
         expect(response.status).toBe(200);
@@ -181,15 +163,14 @@ describe("card operations", () => {
 
       it("authorizes debit", async () => {
         await database.insert(cards).values([{ id: "debit", credentialId: "cred", lastFour: "5678", mode: 0 }]);
-        const json = {
-          ...authorization.json,
-          body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "debit" } },
-        };
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "debit" } },
+          },
         });
 
         expect(response.status).toBe(200);
@@ -197,31 +178,30 @@ describe("card operations", () => {
 
       it("authorizes installments", async () => {
         await database.insert(cards).values([{ id: "inst", credentialId: "cred", lastFour: "5678", mode: 6 }]);
-        const json = {
-          ...authorization.json,
-          body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "inst" } },
-        };
+
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "inst" } },
+          },
         });
 
         expect(response.status).toBe(200);
       });
 
       it("authorizes zero", async () => {
-        const json = {
-          ...authorization.json,
-          body: {
-            ...authorization.json.body,
-            spend: { ...authorization.json.body.spend, cardId: "card", amount: 0 },
-          },
-        };
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: {
+              ...authorization.json.body,
+              spend: { ...authorization.json.body.spend, cardId: "card", amount: 0 },
+            },
+          },
         });
 
         expect(response.status).toBe(200);
@@ -235,14 +215,13 @@ describe("card operations", () => {
 
         await database.insert(cards).values([{ id: "failed_trace", credentialId: "cred", lastFour: "2222", mode: 4 }]);
 
-        const json = {
-          ...authorization.json,
-          body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "failed_trace" } },
-        };
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "failed_trace" } },
+          },
         });
 
         expect(trace).toHaveBeenCalledOnce();
@@ -277,26 +256,23 @@ describe("card operations", () => {
         const operation = "debits";
         const cardId = "debits";
         await database.insert(cards).values([{ id: "debits", credentialId: "cred", lastFour: "3456", mode: 0 }]);
-        const json = {
-          ...authorization.json,
-          action: "created",
-          body: {
-            ...authorization.json.body,
-            id: operation,
-            spend: { ...authorization.json.body.spend, cardId },
-          },
-        } as const;
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId },
+            },
+          },
         });
         const card = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        await publicClient.waitForTransactionReceipt({ hash: card?.hash as Hex });
+        await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(
-          balance + BigInt(Math.round(authorization.json.body.spend.amount * 1e4)),
-        );
+        await expect(collectorBalance()).resolves.toBe(balance + BigInt(authorization.json.body.spend.amount * 1e4));
         expect(response.status).toBe(200);
       });
 
@@ -307,26 +283,85 @@ describe("card operations", () => {
         const operation = "credits";
         const cardId = "credits";
         await database.insert(cards).values([{ id: "credits", credentialId: "cred", lastFour: "7890", mode: 1 }]);
-        const json = {
-          ...authorization.json,
-          action: "created",
-          body: {
-            ...authorization.json.body,
-            id: operation,
-            spend: { ...authorization.json.body.spend, cardId, amount },
-          },
-        } as const;
+
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount },
+            },
+          },
         });
 
         const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        await publicClient.waitForTransactionReceipt({ hash: transaction?.hash as Hex });
+        await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e4)));
+        await expect(collectorBalance()).resolves.toBe(balance + BigInt(amount * 1e4));
         expect(response.status).toBe(200);
+      });
+
+      it("clears with transaction update", async () => {
+        const amount = 100;
+        const update = 50;
+
+        const operation = "transactionUpdate";
+        const cardId = "tupdate";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 1 }]);
+        const createResponse = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
+            },
+          },
+        });
+
+        const updateResponse = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "updated",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: {
+                ...authorization.json.body.spend,
+                cardId,
+                authorizationUpdateAmount: update,
+                amount: amount + update,
+                localAmount: amount + update,
+              },
+            },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        await Promise.all(transaction!.hashes.map((h) => publicClient.waitForTransactionReceipt({ hash: h as Hex })));
+
+        expect(createResponse.status).toBe(200);
+        expect(updateResponse.status).toBe(200);
+
+        expect(transaction?.payload).toMatchObject({
+          body: {
+            spend: {
+              amount: amount + update,
+              localAmount: amount + update,
+            },
+          },
+        });
       });
 
       it("clears installments", async () => {
@@ -337,72 +372,26 @@ describe("card operations", () => {
         const cardId = "splits";
         await database.insert(cards).values([{ id: "splits", credentialId: "cred", lastFour: "6754", mode: 6 }]);
 
-        const json = {
-          ...authorization.json,
-          action: "created",
-          body: {
-            ...authorization.json.body,
-            id: operation,
-            spend: { ...authorization.json.body.spend, cardId, amount },
-          },
-        } as const;
-
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount },
+            },
+          },
         });
 
         const transaction = await database.query.transactions.findFirst({
           where: eq(transactions.id, operation),
         });
-        await publicClient.waitForTransactionReceipt({ hash: transaction?.hash as Hex });
+        await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e4)));
-        expect(response.status).toBe(200);
-      });
-
-      it("handles duplicated clearing", async () => {
-        const captureException = vi.spyOn(sentry, "captureException");
-        captureException.mockImplementation(() => "");
-
-        vi.spyOn(publicClient, "simulateContract").mockRejectedValue(
-          new BaseError("Error", {
-            cause: new ContractFunctionRevertedError({
-              abi: issuerCheckerAbi,
-              functionName: "collectInstallments",
-              data: encodeErrorResult({ errorName: "Expired", abi: issuerCheckerAbi }),
-            }),
-          }),
-        );
-
-        const getTransactionReceipt = vi
-          .spyOn(publicClient, "getTransactionReceipt")
-          .mockResolvedValue({ ...receipt, logs: [] });
-
-        const amount = 50;
-
-        const operation = "dupe";
-        const cardId = "dupe";
-        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "7777", mode: 6 }]);
-        await database.insert(transactions).values([{ id: operation, cardId, hash: zeroHash, payload: {} }]);
-        const json = {
-          ...authorization.json,
-          action: "created",
-          body: {
-            ...authorization.json.body,
-            id: operation,
-            spend: { ...authorization.json.body.spend, cardId, amount },
-          },
-        } as const;
-        const response = await appClient.index.$post({
-          ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
-        });
-
-        expect(captureException).not.toHaveBeenCalled();
-        expect(getTransactionReceipt).toHaveBeenCalledOnce();
+        await expect(collectorBalance()).resolves.toBe(balance + BigInt(amount * 1e4));
         expect(response.status).toBe(200);
       });
 
@@ -415,19 +404,19 @@ describe("card operations", () => {
         const operation = "timeout";
         const cardId = "timeout";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "7777", mode: 6 }]);
-        const json = {
-          ...authorization.json,
-          action: "created",
-          body: {
-            ...authorization.json.body,
-            id: operation,
-            spend: { ...authorization.json.body.spend, cardId, amount: 60 },
-          },
-        } as const;
+
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount: 60 },
+            },
+          },
         });
 
         const transaction = await database.query.transactions.findFirst({
@@ -452,19 +441,19 @@ describe("card operations", () => {
         const operation = "revert";
         const cardId = "revert";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 5 }]);
-        const json = {
-          ...authorization.json,
-          action: "created",
-          body: {
-            ...authorization.json.body,
-            id: operation,
-            spend: { ...authorization.json.body.spend, cardId, amount: 70 },
-          },
-        } as const;
+
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount: 70 },
+            },
+          },
         });
 
         const transaction = await database.query.transactions.findFirst({
@@ -485,19 +474,19 @@ describe("card operations", () => {
         const operation = "unexpected";
         const cardId = "unexpected";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 4 }]);
-        const json = {
-          ...authorization.json,
-          action: "created",
-          body: {
-            ...authorization.json.body,
-            id: operation,
-            spend: { ...authorization.json.body.spend, cardId, amount: 90 },
-          },
-        } as const;
+
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: sign(JSON.stringify(json)) },
-          json,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount: 90 },
+            },
+          },
         });
 
         expect(captureException).toHaveBeenCalledWith(new Error("Unexpected Error"), expect.anything());

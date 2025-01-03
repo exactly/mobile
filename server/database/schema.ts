@@ -35,7 +35,7 @@ export const transactions = pgTable("transactions", {
   cardId: text("card_id")
     .references(() => cards.id)
     .notNull(),
-  hash: text("hash").notNull(),
+  hashes: text("hashes").array().notNull(),
   payload: jsonb("payload").notNull(),
 });
 

@@ -61,7 +61,7 @@ export default app.get(
       with: {
         cards: {
           columns: {},
-          with: { transactions: { columns: { hash: true, payload: true } } },
+          with: { transactions: { columns: { hashes: true, payload: true } } },
           limit: ignore("card") ? 0 : undefined,
         },
       },
@@ -176,19 +176,21 @@ export default app.get(
     return c.json(
       [
         ...credential.cards.flatMap(({ transactions }) =>
-          transactions.map(({ hash, payload }) => {
-            const borrow = borrows?.get(hash as Hash);
-            const validation = safeParse(
-              { 0: DebitActivity, 1: CreditActivity }[borrow?.events.length ?? 0] ?? InstallmentsActivity,
-              {
-                ...(payload as object),
-                hash,
-                events: borrow?.events,
-                blockTimestamp: borrow?.blockNumber && timestamps.get(borrow.blockNumber),
-              },
-            );
-            if (validation.success) return validation.output;
-            captureException(new Error("bad transaction"), { level: "error", contexts: { validation } });
+          transactions.flatMap(({ hashes, payload }) => {
+            return hashes.map((hash) => {
+              const borrow = borrows?.get(hash as Hash);
+              const validation = safeParse(
+                { 0: DebitActivity, 1: CreditActivity }[borrow?.events.length ?? 0] ?? InstallmentsActivity,
+                {
+                  ...(payload as object),
+                  hash,
+                  events: borrow?.events,
+                  blockTimestamp: borrow?.blockNumber && timestamps.get(borrow.blockNumber),
+                },
+              );
+              if (validation.success) return validation.output;
+              captureException(new Error("bad transaction"), { level: "error", contexts: { validation } });
+            });
           }),
         ),
         ...[...deposits, ...repays, ...withdraws].map(({ blockNumber, ...event }) => {

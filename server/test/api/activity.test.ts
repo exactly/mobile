@@ -125,7 +125,9 @@ describe("authenticated", () => {
                       merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "CABA" },
                     },
                   };
-            await database.insert(transactions).values({ id: String(index), cardId: "activity", hash, payload });
+            await database
+              .insert(transactions)
+              .values({ id: String(index), cardId: "activity", hashes: [hash], payload });
             return parse({ 0: DebitActivity, 1: CreditActivity }[events.length] ?? InstallmentsActivity, {
               ...payload,
               hash,
@@ -165,7 +167,7 @@ describe("authenticated", () => {
     });
 
     it("reports bad transaction", async () => {
-      await database.insert(transactions).values([{ id: "69", cardId: "activity", hash: "0x1", payload: {} }]);
+      await database.insert(transactions).values([{ id: "69", cardId: "activity", hashes: ["0x1"], payload: {} }]);
       captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "card" } },

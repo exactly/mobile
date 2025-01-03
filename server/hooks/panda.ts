@@ -22,17 +22,13 @@ import createDebug from "debug";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import type { UnofficialStatusCode } from "hono/utils/http-status";
-import { createHmac } from "node:crypto";
 import * as v from "valibot";
 import {
-  BaseError,
-  ContractFunctionRevertedError,
   decodeErrorResult,
   decodeEventLog,
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
-  isHash,
   maxUint256,
   padHex,
 } from "viem";
@@ -41,7 +37,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
 import keeper from "../utils/keeper";
-import key, { collector } from "../utils/panda";
+import { collector, headerValidator } from "../utils/panda";
 import publicClient from "../utils/publicClient";
 import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
@@ -58,44 +54,58 @@ const BaseTransaction = v.object({
     currency: v.literal("usd"),
     cardId: v.string(),
     cardType: v.literal("virtual"),
-    status: v.picklist(["pending", "reversed", "declined", "completed"]),
+    localAmount: v.number(),
+    status: v.picklist(["completed", "declined", "pending", "reversed"]),
   }),
 });
 
 const Payload = v.intersect([
   v.variant("action", [
     v.object({ action: v.literal("created") }),
-    v.object({ action: v.literal("updated") }),
+    v.object({
+      action: v.literal("updated"),
+      body: v.object({
+        ...BaseTransaction.entries,
+        spend: v.object({
+          ...BaseTransaction.entries.spend.entries,
+          authorizationUpdateAmount: v.number(),
+          status: v.picklist(["declined", "pending", "reversed"]),
+        }),
+      }),
+    }),
     v.object({
       action: v.literal("requested"),
       body: v.object({
         ...BaseTransaction.entries,
         id: v.optional(v.string()),
-        spend: { ...BaseTransaction.entries.spend, status: v.picklist(["pending", "declined"]) },
+        spend: v.object({ ...BaseTransaction.entries.spend.entries, status: v.picklist(["declined", "pending"]) }),
       }),
     }),
     v.object({
       action: v.literal("completed"),
       body: v.object({
         ...BaseTransaction.entries,
-        spend: { ...BaseTransaction.entries.spend, status: v.literal("completed") },
+        spend: v.object({ ...BaseTransaction.entries.spend.entries, status: v.literal("completed") }),
       }),
     }),
   ]),
   v.object({ resource: v.literal("transaction"), body: BaseTransaction }),
 ]);
 
+function parseCreatedAt(payload: unknown) {
+  const time = v.safeParse(
+    v.object({
+      createdAt: v.pipe(v.string(), v.isoTimestamp("The timestamp is badly formatted.")),
+    }),
+    payload,
+  );
+  if (!time.success) throw new Error("invalid transaction payload");
+  return time.output.createdAt;
+}
+
 export default new Hono().post(
   "/",
-  vValidator("header", v.object({ signature: v.string() }), async (r, c) => {
-    if (!r.success) return c.text("bad request", 400);
-    return r.output.signature ===
-      createHmac("sha256", key)
-        .update(Buffer.from(await c.req.arrayBuffer()))
-        .digest("hex")
-      ? undefined
-      : c.text("unauthorized", 401);
-  }),
+  headerValidator(),
   vValidator("json", Payload, (validation, c) => {
     if (debug.enabled) {
       c.req
@@ -171,9 +181,10 @@ export default new Hono().post(
           return c.json({}, 500);
         }
       }
+      case "updated":
       case "created": {
         if (payload.body.spend.status !== "pending") return c.json({});
-        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "panda.clearing");
+        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.clearing`);
         const { account, call } = await prepareCollection(payload);
         if (!call) return c.json({});
         return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
@@ -194,14 +205,26 @@ export default new Hono().post(
               keeper.writeContract(request as Parameters<typeof keeper.writeContract>[0]),
             );
             setContext("tx", { call, ...request, transactionHash: hash });
-            await database.insert(transactions).values([
-              {
-                id: payload.body.id,
-                cardId: payload.body.spend.cardId,
-                hash,
-                payload: { ...jsonBody, createdAt: new Date().toISOString(), type: "panda" },
-              },
-            ]);
+
+            const tx = await database.query.transactions.findFirst({
+              where: and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
+            });
+            await (tx
+              ? database
+                  .update(transactions)
+                  .set({
+                    hashes: [...tx.hashes, hash],
+                    payload: { ...jsonBody, createdAt: parseCreatedAt(tx.payload), type: "panda" },
+                  })
+                  .where(and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)))
+              : database.insert(transactions).values([
+                  {
+                    id: payload.body.id,
+                    cardId: payload.body.spend.cardId,
+                    hashes: [hash],
+                    payload: { ...jsonBody, createdAt: new Date().toISOString(), type: "panda" },
+                  },
+                ]));
             startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
               .then((receipt) => {
                 if (receipt.status === "success") return;
@@ -213,21 +236,6 @@ export default new Hono().post(
               .catch((error: unknown) => captureException(error));
             return c.json({});
           } catch (error: unknown) {
-            if (
-              (error instanceof BaseError &&
-                error.cause instanceof ContractFunctionRevertedError &&
-                error.cause.data?.errorName === "Expired") ||
-              (error instanceof Error &&
-                error.message === 'duplicate key value violates unique constraint "transactions_pkey"')
-            ) {
-              const tx = await database.query.transactions.findFirst({
-                where: and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
-              });
-              if (tx && isHash(tx.hash)) {
-                const receipt = await publicClient.getTransactionReceipt({ hash: tx.hash }).catch(() => undefined);
-                if (receipt?.status === "success") return c.json({});
-              }
-            }
             captureException(error, { level: "fatal", contexts: { tx: { call } } });
             return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
           }
@@ -249,19 +257,19 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
   const account = v.parse(Address, card.credential.account);
   setUser({ id: account });
   setTag("exa.mode", card.mode);
-  const amount = BigInt(Math.round(payload.body.spend.amount * 1e4));
+  const spent = payload.action === "updated" ? payload.body.spend.authorizationUpdateAmount : payload.body.spend.amount;
+  const amount = BigInt(Math.round(spent * 1e4));
   if (amount === 0n) return { account, amount, call: null, transaction: null };
   const call = await (async () => {
-    //const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
     const timestamp = Math.floor(Date.now() / 1000);
-    const signature = await signIssuerOp({ account, amount: payload.body.spend.amount, timestamp }); // TODO replace with payload signature
+    const signature = await signIssuerOp({ account, amount: spent, timestamp }); // TODO replace with payload signature
     if (card.mode === 0) {
       return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
     }
     const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
     const firstMaturity =
       nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
-    if (card.mode === 1 || payload.body.spend.amount * 100 < card.mode || payload.action === "requested") {
+    if (card.mode === 1 || spent < card.mode * 100 || payload.action === "requested") {
       return {
         functionName: "collectCredit",
         args: [BigInt(firstMaturity + (card.mode - 1) * MATURITY_INTERVAL), amount, BigInt(timestamp), signature],
