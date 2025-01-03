@@ -224,11 +224,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     (amountIn, amountOut) = _swap(IERC20(collateral.asset()), IERC20(EXA_USDC.asset()), maxAmountIn, amount, route);
     IERC20(EXA_USDC.asset()).safeTransfer(collector, amount);
 
-    uint256 unused = maxAmountIn - amountIn;
-    if (unused != 0) {
-      IERC20(collateral.asset()).approve(address(collateral), unused);
-      collateral.deposit(unused, msg.sender);
-    }
+    _depositUnspent(collateral, maxAmountIn - amountIn, msg.sender);
     uint256 usdcLeft = amountOut - amount;
     if (usdcLeft != 0) EXA_USDC.deposit(usdcLeft, msg.sender);
 
@@ -323,11 +319,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 usdcLeft = amountOut - actualRepay;
     if (usdcLeft != 0) EXA_USDC.deposit(usdcLeft, c.borrower);
 
-    uint256 unused = c.maxAmountIn - amountIn;
-    if (unused != 0) {
-      IERC20(c.marketIn.asset()).approve(address(c.marketIn), unused);
-      c.marketIn.deposit(unused, c.borrower);
-    }
+    _depositUnspent(c.marketIn, c.maxAmountIn - amountIn, c.borrower);
     _checkLiquidity(c.borrower);
   }
 
@@ -640,6 +632,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     amounts[0] = amount;
 
     BALANCER_VAULT.flashLoan(address(this), tokens, amounts, data);
+  }
+
+  function _depositUnspent(IMarket market, uint256 unspent, address receiver) internal {
+    if (unspent != 0) {
+      IERC20(market.asset()).approve(address(market), unspent);
+      market.deposit(unspent, receiver);
+    }
   }
 
   function _hash(bytes memory data) internal returns (bytes memory) {
