@@ -119,8 +119,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 balanceIn = assetIn.balanceOf(msg.sender);
     uint256 balanceOut = assetOut.balanceOf(msg.sender);
 
-    _approveFromSender(address(assetIn), SWAPPER, maxAmountIn);
-    _executeFromSender(SWAPPER, 0, route);
+    _approveAndExecuteFromSender(SWAPPER, address(assetIn), maxAmountIn, route);
 
     amountOut = assetOut.balanceOf(msg.sender) - balanceOut;
     if (amountOut < minAmountOut) revert Disagreement();
@@ -183,10 +182,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 maxBorrowAssets,
     uint256 percentage
   ) external {
-    _approveFromSender(address(EXA_USDC), address(DEBT_MANAGER), maxRepayAssets);
-    _executeFromSender(
+    _approveAndExecuteFromSender(
       address(DEBT_MANAGER),
-      0,
+      address(EXA_USDC),
+      maxRepayAssets,
       abi.encodeCall(
         IDebtManager.rollFixed, (EXA_USDC, repayMaturity, borrowMaturity, maxRepayAssets, maxBorrowAssets, percentage)
       )
@@ -276,10 +275,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     }
     ISSUER_CHECKER.checkIssuer(msg.sender, totalAmount, timestamp, signature);
 
-    _approveFromSender(address(EXA_USDC), address(INSTALLMENTS_ROUTER), maxRepay);
-    _executeFromSender(
+    _approveAndExecuteFromSender(
       address(INSTALLMENTS_ROUTER),
-      0,
+      address(EXA_USDC),
+      maxRepay,
       abi.encodeCall(IInstallmentsRouter.borrow, (EXA_USDC, firstMaturity, amounts, maxRepay, collector))
     );
     _checkLiquidity(msg.sender);
@@ -585,6 +584,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     revert NotImplemented(msg.sig, functionId);
   }
 
+  function _approveAndExecuteFromSender(address target, address assetIn, uint256 maxAmountIn, bytes memory data)
+    internal
+  {
+    _approveFromSender(assetIn, target, maxAmountIn);
+    _executeFromSender(target, 0, data);
+  }
+
   function _approveFromSender(address assetIn, address spender, uint256 maxAmountIn) internal {
     _executeFromSender(assetIn, 0, abi.encodeCall(IERC20.approve, (spender, maxAmountIn)));
   }
@@ -650,8 +656,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (balance == 0) revert NoBalance();
 
-    _approveFromSender(market.asset(), address(market), balance);
-    _executeFromSender(address(market), 0, abi.encodeCall(IERC4626.deposit, (balance, msg.sender)));
+    _approveAndExecuteFromSender(
+      address(market), market.asset(), balance, abi.encodeCall(IERC4626.deposit, (balance, msg.sender))
+    );
     _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
   }
 
