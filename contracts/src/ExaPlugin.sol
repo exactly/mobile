@@ -59,6 +59,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
+  IERC20 public immutable USDC;
   address public immutable SWAPPER;
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
@@ -89,6 +90,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     address swapper,
     address firstKeeper
   ) {
+    USDC = IERC20(exaUSDC.asset());
     AUDITOR = auditor;
     EXA_USDC = exaUSDC;
     EXA_WETH = exaWETH;
@@ -103,7 +105,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
     _setCollector(collector_);
 
-    IERC20(EXA_USDC.asset()).forceApprove(address(EXA_USDC), type(uint256).max);
+    IERC20(USDC).forceApprove(address(EXA_USDC), type(uint256).max);
   }
 
   function propose(IMarket market, uint256 amount, address receiver) external {
@@ -221,8 +223,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     _executeFromSender(
       address(collateral), 0, abi.encodeCall(IERC4626.withdraw, (maxAmountIn, address(this), msg.sender))
     );
-    (amountIn, amountOut) = _swap(IERC20(collateral.asset()), IERC20(EXA_USDC.asset()), maxAmountIn, amount, route);
-    IERC20(EXA_USDC.asset()).safeTransfer(collector, amount);
+    (amountIn, amountOut) = _swap(IERC20(collateral.asset()), IERC20(USDC), maxAmountIn, amount, route);
+    IERC20(USDC).safeTransfer(collector, amount);
 
     _depositUnspent(collateral, maxAmountIn - amountIn, msg.sender);
     _depositApprovedUnspent(EXA_USDC, amountOut - amount, msg.sender);
@@ -317,8 +319,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
       c.marketIn.withdraw(c.maxAmountIn, address(this), borrower);
       (uint256 amountIn, uint256 amountOut) =
-        _swap(IERC20(c.marketIn.asset()), IERC20(EXA_USDC.asset()), c.maxAmountIn, maxRepay, c.route);
-      IERC20(EXA_USDC.asset()).safeTransfer(address(BALANCER_VAULT), maxRepay);
+        _swap(IERC20(c.marketIn.asset()), IERC20(USDC), c.maxAmountIn, maxRepay, c.route);
+      IERC20(USDC).safeTransfer(address(BALANCER_VAULT), maxRepay);
 
       _depositUnspent(c.marketIn, c.maxAmountIn - amountIn, borrower);
       _depositApprovedUnspent(EXA_USDC, amountOut - actualRepay, borrower);
@@ -631,7 +633,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function _flashLoan(uint256 amount, bytes memory data) internal {
     IERC20[] memory tokens = new IERC20[](1);
-    tokens[0] = IERC20(EXA_USDC.asset());
+    tokens[0] = IERC20(USDC);
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
 
