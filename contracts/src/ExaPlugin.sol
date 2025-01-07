@@ -19,7 +19,7 @@ import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor
 import { IStandardExecutor } from "modular-account-libs/interfaces/IStandardExecutor.sol";
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
-import { WETH } from "solady/tokens/WETH.sol";
+import { WETH as IWETH } from "solady/tokens/WETH.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
@@ -60,6 +60,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
   IERC20 public immutable USDC;
+  IWETH public immutable WETH;
   address public immutable SWAPPER;
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
@@ -91,6 +92,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     address firstKeeper
   ) {
     USDC = IERC20(exaUSDC.asset());
+    WETH = IWETH(payable(exaWETH.asset()));
     AUDITOR = auditor;
     EXA_USDC = exaUSDC;
     EXA_WETH = exaWETH;
@@ -205,7 +207,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     }
     uint256 amount = proposal.amount;
     _executeFromSender(market, 0, abi.encodeCall(IERC4626.withdraw, (amount, address(this), msg.sender)));
-    WETH(payable(EXA_WETH.asset())).withdraw(amount);
+    WETH.withdraw(amount);
     proposal.receiver.safeTransferETH(amount);
   }
 
@@ -287,7 +289,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   }
 
   function pokeETH() external {
-    _executeFromSender(EXA_WETH.asset(), msg.sender.balance, abi.encodeCall(WETH.deposit, ()));
+    _executeFromSender(address(WETH), msg.sender.balance, abi.encodeCall(IWETH.deposit, ()));
     _poke(EXA_WETH);
   }
 
