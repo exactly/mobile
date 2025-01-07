@@ -39,6 +39,7 @@ import {
   InsufficientLiquidity,
   NoProposal,
   Proposed,
+  SwapProposed,
   Timelocked,
   Unauthorized
 } from "../src/IExaAccount.sol";
@@ -173,6 +174,21 @@ contract ExaPluginTest is ForkTest {
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit Proposed(address(account), exaEXA, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+  }
+
+  function test_proposeSwap_emitsSwapProposed() external {
+    uint256 amount = 1;
+    bytes memory route = bytes("route");
+
+    vm.startPrank(owner);
+
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit SwapProposed(
+      address(account), exaEXA, IERC20(address(usdc)), amount, 1, route, block.timestamp + exaPlugin.PROPOSAL_DELAY()
+    );
+    account.execute(
+      address(account), 0, abi.encodeCall(IExaAccount.proposeSwap, (exaEXA, IERC20(address(usdc)), amount, 1, route))
+    );
   }
 
   function test_swap_swaps() external {
@@ -504,7 +520,31 @@ contract ExaPluginTest is ForkTest {
     assertEq(exa.balanceOf(receiver), amount);
   }
 
-  function test_withdrawWETH_transfersETH() external {
+  function test_withdraw_swapsProposed() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    account.poke(exaUSDC);
+
+    uint256 amount = 100 ether;
+    uint256 minAmountOut = 490e6;
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountIn, (address(exaEXA.asset()), amount, address(usdc), minAmountOut, address(account))
+    );
+    vm.startPrank(address(account));
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(IExaAccount.proposeSwap, (exaEXA, IERC20(address(usdc)), amount, minAmountOut, route))
+    );
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(usdc.balanceOf(address(account)), 0);
+    account.withdraw();
+    assertGe(usdc.balanceOf(address(account)), minAmountOut);
+  }
+
+  function test_withdraw_transfersETH() external {
     uint256 amount = 100 ether;
     address receiver = address(0x420);
     vm.prank(keeper);
@@ -519,6 +559,30 @@ contract ExaPluginTest is ForkTest {
     vm.prank(keeper);
     account.withdraw();
     assertEq(receiver.balance, amount);
+  }
+
+  function test_withdraw_swapsWETH() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    account.pokeETH();
+
+    uint256 amount = 1 ether;
+    uint256 minAmountOut = 2450e6;
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountIn, (address(exaWETH.asset()), amount, address(usdc), minAmountOut, address(account))
+    );
+    vm.startPrank(address(account));
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(IExaAccount.proposeSwap, (exaWETH, IERC20(address(usdc)), amount, minAmountOut, route))
+    );
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    assertEq(usdc.balanceOf(address(account)), 0);
+    account.withdraw();
+    assertGe(usdc.balanceOf(address(account)), minAmountOut);
   }
 
   function test_withdraw_reverts_whenReceiverIsContractAndMarketNotWETH() external {

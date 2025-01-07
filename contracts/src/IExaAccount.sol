@@ -6,6 +6,8 @@ import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.s
 
 interface IExaAccount {
   function propose(IMarket market, uint256 amount, address receiver) external;
+  function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
+    external;
   function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     external
     returns (uint256 amountIn, uint256 amountOut);
@@ -62,6 +64,16 @@ event Proposed(
   address indexed account, IMarket indexed market, address indexed receiver, uint256 amount, uint256 unlock
 );
 
+event SwapProposed(
+  address indexed account,
+  IMarket indexed market,
+  IERC20 indexed assetOut,
+  uint256 amount,
+  uint256 minAmountOut,
+  bytes route,
+  uint256 unlock
+);
+
 struct FixedPool {
   uint256 borrowed;
   uint256 supplied;
@@ -87,6 +99,7 @@ struct Proposal {
   IMarket market;
   address receiver;
   uint256 timestamp;
+  bytes swapData;
 }
 
 error BorrowLimitExceeded();
