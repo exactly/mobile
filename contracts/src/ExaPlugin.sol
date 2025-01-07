@@ -648,7 +648,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function _depositUnspent(IMarket market, uint256 unspent, address receiver) internal {
     if (unspent != 0) {
-      IERC20(market.asset()).approve(address(market), unspent);
+      IERC20(market.asset()).forceApprove(address(market), unspent);
       market.deposit(unspent, receiver);
     }
   }
@@ -686,13 +686,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     uint256 balanceIn = assetIn.balanceOf(address(this));
     uint256 balanceOut = assetOut.balanceOf(address(this));
 
-    assetIn.approve(SWAPPER, maxAmountIn);
+    assetIn.forceApprove(SWAPPER, maxAmountIn);
     SWAPPER.functionCall(route);
 
     amountOut = assetOut.balanceOf(address(this)) - balanceOut;
     if (minAmountOut > amountOut) revert Disagreement();
 
-    assetIn.approve(SWAPPER, 0);
+    assetIn.forceApprove(SWAPPER, 0);
     amountIn = balanceIn - assetIn.balanceOf(address(this));
   }
 
