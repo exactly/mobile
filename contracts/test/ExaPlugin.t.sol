@@ -181,8 +181,9 @@ contract ExaPluginTest is ForkTest {
 
     uint256 maxAmountIn = 111e18;
     uint256 amountOut = 110e6;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), maxAmountIn, address(usdc), amountOut));
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), maxAmountIn, address(usdc), amountOut, address(account))
+    );
     vm.startPrank(address(account));
     account.swap(IERC20(exaEXA.asset()), IERC20(address(usdc)), maxAmountIn, amountOut, route);
 
@@ -214,8 +215,9 @@ contract ExaPluginTest is ForkTest {
 
     uint256 amountIn = 111e18;
     uint256 amountOut = 110e6;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), amountOut));
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), amountOut, address(account))
+    );
     vm.startPrank(address(account));
     vm.expectRevert(Disagreement.selector);
     account.swap(IERC20(address(exa)), IERC20(address(usdc)), amountIn, amountOut * 2, route);
@@ -310,8 +312,9 @@ contract ExaPluginTest is ForkTest {
     assertGt(position.principal, 0);
 
     uint256 amountIn = 111e18;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(exaPlugin))
+    );
     vm.startPrank(address(account));
     account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
 
@@ -362,8 +365,9 @@ contract ExaPluginTest is ForkTest {
     assertGt(prevPrincipal, 0);
 
     uint256 amountIn = 111e18;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(exaPlugin))
+    );
     account.crossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -383,8 +387,9 @@ contract ExaPluginTest is ForkTest {
     assertGt(prevPrincipal, 0);
 
     uint256 amountIn = 111e18;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6));
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(account))
+    );
     vm.startPrank(vm.addr(0x1));
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -403,8 +408,9 @@ contract ExaPluginTest is ForkTest {
     uint256 maturity = FixedLib.INTERVAL;
     account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
 
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), 60e18, address(usdc), 10e6));
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), 60e18, address(usdc), 10e6, address(account))
+    );
 
     vm.expectRevert(Disagreement.selector);
     account.crossRepay(maturity, 110e6, 110e6, exaEXA, 60e18, route);
@@ -943,7 +949,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), 0);
   }
 
-  function test_debitCollateral_collects() external {
+  function test_collectCollateral_collects() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);
 
@@ -951,8 +957,9 @@ contract ExaPluginTest is ForkTest {
 
     uint256 maxAmountIn = 111e18;
     uint256 minAmountOut = 110e6;
-    bytes memory route =
-      abi.encodeCall(MockSwapper.swapExactAmountOut, (exaEXA.asset(), maxAmountIn, address(usdc), minAmountOut));
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (exaEXA.asset(), maxAmountIn, address(usdc), minAmountOut, address(exaPlugin))
+    );
     uint256 balance = usdc.balanceOf(exaPlugin.collector());
     (uint256 amountIn, uint256 amountOut) = account.collectCollateral(
       minAmountOut, exaEXA, maxAmountIn, block.timestamp, route, _issuerOp(minAmountOut, block.timestamp)
@@ -968,7 +975,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(exaUSDC.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
 
-  function testFork_debitCollateral_collects() external {
+  function testFork_collectCollateral_collects() external {
     _setUpLifiFork();
     uint256 maxAmountIn = 0.0004e8;
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));

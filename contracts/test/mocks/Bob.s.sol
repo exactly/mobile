@@ -30,6 +30,7 @@ contract BobScript is BaseScript {
   IMarket public exaEXA;
   IMarket public exaUSDC;
   Previewer public previewer;
+  ExaPlugin public exaPlugin;
   IssuerChecker internal issuerChecker;
   ExaAccountFactory public factory;
 
@@ -47,7 +48,7 @@ contract BobScript is BaseScript {
     previewer = Previewer(protocol("Previewer"));
 
     issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
-    ExaPlugin exaPlugin = ExaPlugin(payable(broadcast("Deploy")));
+    exaPlugin = ExaPlugin(payable(broadcast("Deploy")));
     factory = ExaAccountFactory(
       payable(
         CREATE3_FACTORY.getDeployed(acct("deployer"), keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION())))
@@ -107,7 +108,9 @@ contract BobScript is BaseScript {
           82e6,
           exaEXA,
           100e18,
-          abi.encodeCall(MockSwapper.swapExactAmountOut, (address(exa), 100e18, address(usdc), 82e6))
+          abi.encodeCall(
+            MockSwapper.swapExactAmountOut, (address(exa), 100e18, address(usdc), 82e6, address(exaPlugin))
+          )
         )
       )
     );

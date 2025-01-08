@@ -33,10 +33,13 @@ contract MockSwapper {
     return _getAmountOut(pool, amountIn, isToken0, swapFee);
   }
 
-  function swapExactAmountOut(address tokenIn, uint256 maxAmountIn, address tokenOut, uint256 amountOut)
-    external
-    returns (uint256 amountIn)
-  {
+  function swapExactAmountOut(
+    address tokenIn,
+    uint256 maxAmountIn,
+    address tokenOut,
+    uint256 amountOut,
+    address receiver
+  ) external returns (uint256 amountIn) {
     address pool = VELODROME_FACTORY.getPool(tokenIn, tokenOut, false);
     uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
     bool isToken0 = tokenOut > tokenIn;
@@ -44,13 +47,16 @@ contract MockSwapper {
     if (amountIn > maxAmountIn) revert InsufficientInputAmount();
 
     IERC20(tokenIn).safeTransferFrom(msg.sender, pool, amountIn);
-    IVelodromePool(pool).swap(isToken0 ? 0 : amountOut, isToken0 ? amountOut : 0, msg.sender, "");
+    IVelodromePool(pool).swap(isToken0 ? 0 : amountOut, isToken0 ? amountOut : 0, receiver, "");
   }
 
-  function swapExactAmountIn(address tokenIn, uint256 amountIn, address tokenOut, uint256 minAmountOut)
-    external
-    returns (uint256 amountOut)
-  {
+  function swapExactAmountIn(
+    address tokenIn,
+    uint256 amountIn,
+    address tokenOut,
+    uint256 minAmountOut,
+    address receiver
+  ) external returns (uint256 amountOut) {
     address pool = VELODROME_FACTORY.getPool(tokenIn, tokenOut, false);
     uint24 swapFee = VELODROME_FACTORY.getFee(pool, false);
     bool isToken0 = tokenOut > tokenIn;
@@ -58,7 +64,7 @@ contract MockSwapper {
     if (amountOut < minAmountOut) revert InsufficientOutputAmount();
 
     IERC20(tokenIn).safeTransferFrom(msg.sender, pool, amountIn);
-    IVelodromePool(pool).swap(isToken0 ? 0 : amountOut, isToken0 ? amountOut : 0, msg.sender, "");
+    IVelodromePool(pool).swap(isToken0 ? 0 : amountOut, isToken0 ? amountOut : 0, receiver, "");
   }
 
   function _getAmountIn(address pool, uint256 amountOut, bool isToken0, uint256 fee) internal view returns (uint256) {
