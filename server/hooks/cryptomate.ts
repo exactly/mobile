@@ -90,7 +90,7 @@ export default new Hono().post(
   vValidator(
     "header",
     v.object({ "x-webhook-key": v.literal(process.env.CRYPTOMATE_WEBHOOK_KEY) }),
-    ({ success }, c) => (success ? undefined : c.text("unauthorized", 401)),
+    ({ success }, c) => (success ? undefined : c.json("unauthorized", 401)),
   ),
   vValidator("json", Payload, (validation, c) => {
     if (debug.enabled) {
@@ -101,7 +101,7 @@ export default new Hono().post(
     }
     if (!validation.success) {
       captureException(new Error("bad cryptomate"), { contexts: { validation } });
-      return c.text("bad request", 400);
+      return c.json("bad request", 400);
     }
   }),
   async (c) => {
@@ -225,7 +225,7 @@ export default new Hono().post(
               }
             }
             captureException(error, { level: "fatal", contexts: { tx: { call } } });
-            return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
+            return c.json(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
           }
         });
       }

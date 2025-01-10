@@ -60,7 +60,7 @@ export default app
         check((input): input is { session_id: Base64URL } => !!input),
         transform((input) => input as { session_id: Base64URL }),
       ),
-      ({ success }, c) => (success ? undefined : c.text("bad session", 400)),
+      ({ success }, c) => (success ? undefined : c.json("bad session", 400)),
     ),
     vValidator(
       "json",
@@ -84,14 +84,14 @@ export default app
       (validation, c) => {
         if (!validation.success) {
           captureException(new Error("bad registration"), { contexts: { validation } });
-          return c.text("bad registration", 400);
+          return c.json("bad registration", 400);
         }
       },
     ),
     async (c) => {
       const { session_id: sessionId } = c.req.valid("cookie");
       const challenge = await redis.get(sessionId);
-      if (!challenge) return c.text("no registration", 400);
+      if (!challenge) return c.json("no registration", 400);
 
       const attestation = c.req.valid("json");
       let verification: Awaited<ReturnType<typeof verifyRegistrationResponse>>;
@@ -105,21 +105,21 @@ export default app
         });
       } catch (error) {
         captureException(error);
-        return c.text(error instanceof Error ? error.message : String(error), 400);
+        return c.json(error instanceof Error ? error.message : String(error), 400);
       } finally {
         await redis.del(sessionId);
       }
       const { verified, registrationInfo } = verification;
-      if (!verified || !registrationInfo) return c.text("bad registration", 400);
+      if (!verified || !registrationInfo) return c.json("bad registration", 400);
 
       const { credential, credentialDeviceType } = registrationInfo;
-      if (credentialDeviceType !== "multiDevice") return c.text("backup eligibility required", 400); // TODO improve ux
+      if (credentialDeviceType !== "multiDevice") return c.json("backup eligibility required", 400); // TODO improve ux
 
       let x: Hex, y: Hex;
       try {
         ({ x, y } = decodePublicKey(credential.publicKey));
       } catch (error) {
-        return c.text(error instanceof Error ? error.message : String(error), 400);
+        return c.json(error instanceof Error ? error.message : String(error), 400);
       }
 
       const expires = new Date(Date.now() + AUTH_EXPIRY);
