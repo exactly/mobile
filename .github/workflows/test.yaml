@@ -7,6 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       EXPO_PUBLIC_ALCHEMY_API_KEY: test
       EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID: test
     steps:
@@ -34,6 +35,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run --recursive --aggregate-output --no-bail build
+      - run: pnpm run --recursive --aggregate-output --no-bail sourcemaps
       - run: pnpm test --recursive --aggregate-output --no-bail
 
       - uses: codecov/codecov-action@v4
