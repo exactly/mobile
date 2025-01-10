@@ -1,4 +1,4 @@
-ExaAccountFactoryTest:testFuzz_createAccount_EOAOwners(uint256,address[63]) (runs: 256, μ: 3068028, ~: 2966485)
+ExaAccountFactoryTest:testFuzz_createAccount_EOAOwners(uint256,address[63]) (runs: 256, μ: 3127837, ~: 3030930)
 ExaPluginTest:test_collectCredit_collects() (gas: 879648)
 ExaPluginTest:test_collectCredit_passes_whenProposalLeavesEnoughLiquidity() (gas: 957318)
 ExaPluginTest:test_collectCredit_reverts_asNotKeeper() (gas: 336359)
