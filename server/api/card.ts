@@ -68,6 +68,7 @@ export default app
         if (!inquiry) return c.json("kyc not found", 404);
         if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
         if (credential.cards.length > 0) return c.json("card already exists", 400);
+        setContext("phone", { inquiry: inquiry.id, phone: inquiry.attributes["phone-number"] });
         const phone = parsePhoneNumberWithError(
           inquiry.attributes["phone-number"].startsWith("+")
             ? inquiry.attributes["phone-number"]
