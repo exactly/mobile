@@ -56,7 +56,7 @@ app.get("/.well-known/assetlinks.json", (c) =>
 
 app.onError((error, c) => {
   captureException(error, { level: "error" });
-  return c.text(error instanceof Error ? error.message : String(error), 500);
+  return c.json(error instanceof Error ? error.message : String(error), 500);
 });
 
 const server = serve(app);

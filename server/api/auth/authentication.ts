@@ -56,7 +56,7 @@ export default app
         check((input): input is { session_id: Base64URL } => !!input),
         transform((input) => input as { session_id: Base64URL }),
       ),
-      ({ success }, c) => (success ? undefined : c.text("bad session", 400)),
+      ({ success }, c) => (success ? undefined : c.json("bad session", 400)),
     ),
     vValidator(
       "json",
@@ -70,7 +70,7 @@ export default app
       (validation, c) => {
         if (!validation.success) {
           captureException(new Error("bad authentication"), { contexts: { validation } });
-          return c.text("bad authentication", 400);
+          return c.json("bad authentication", 400);
         }
       },
     ),
@@ -84,9 +84,9 @@ export default app
         }),
         redis.get(sessionId),
       ]);
-      if (!credential) return c.text("unknown credential", 400);
+      if (!credential) return c.json("unknown credential", 400);
       setUser({ id: parse(Address, credential.account) });
-      if (!challenge) return c.text("no authentication", 400);
+      if (!challenge) return c.json("no authentication", 400);
 
       let verification: Awaited<ReturnType<typeof verifyAuthenticationResponse>>;
       try {
@@ -104,7 +104,7 @@ export default app
         });
       } catch (error) {
         captureException(error);
-        return c.text(error instanceof Error ? error.message : String(error), 400);
+        return c.json(error instanceof Error ? error.message : String(error), 400);
       } finally {
         await redis.del(sessionId);
       }
@@ -112,7 +112,7 @@ export default app
         verified,
         authenticationInfo: { credentialID, newCounter },
       } = verification;
-      if (!verified) return c.text("bad authentication", 400);
+      if (!verified) return c.json("bad authentication", 400);
 
       const expires = new Date(Date.now() + AUTH_EXPIRY);
       await Promise.all([
