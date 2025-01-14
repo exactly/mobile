@@ -47,7 +47,11 @@ export default function ProfileHeader() {
   function copy() {
     if (!address) return;
     setStringAsync(address).catch(handleError);
-    toast.show("Account address copied!", { customData: { type: "success" } });
+    toast.show("Account address copied!", {
+      native: true,
+      duration: 1000,
+      burntOptions: { haptic: "success" },
+    });
     setAlertShown(false);
   }
   return (

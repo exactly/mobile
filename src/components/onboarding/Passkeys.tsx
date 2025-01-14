@@ -46,12 +46,18 @@ export default function Passkeys() {
           error.message === "UserCancelled" ||
           error.message.startsWith("androidx.credentials.exceptions.domerrors.NotAllowedError"))
       ) {
-        toast.show("Operation cancelled");
+        toast.show("Operation cancelled", {
+          native: true,
+          duration: 1000,
+          burntOptions: { haptic: "error", preset: "error" },
+        });
         return;
       }
       if (error instanceof APIError && error.code === 400 && error.text === "backup eligibility required") {
         toast.show("Your password manager does not support passkey backups. Please try a different one", {
-          customData: { type: "error" },
+          native: true,
+          duration: 1000,
+          burntOptions: { haptic: "error", preset: "error" },
         });
         return;
       }
