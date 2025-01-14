@@ -6,6 +6,7 @@ import { ms } from "react-native-size-matters";
 import { styled, useTheme } from "tamagui";
 
 import ActivityItem from "./ActivityItem";
+import Empty from "./Empty";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import { getActivity } from "../../utils/server";
@@ -37,6 +38,7 @@ export default function Activity() {
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View gap="$s5" flex={1} backgroundColor="$backgroundMild">
         <StyledFlatList
+          backgroundColor={data.length > 0 ? "$backgroundMild" : "$backgroundSoft"}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -57,19 +59,7 @@ export default function Activity() {
               </View>
             </View>
           }
-          ListEmptyComponent={
-            <View
-              margin="$s5"
-              borderRadius="$r3"
-              backgroundColor="$uiNeutralTertiary"
-              padding="$s3_5"
-              alignSelf="center"
-            >
-              <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
-                There is no activity yet.
-              </Text>
-            </View>
-          }
+          ListEmptyComponent={<Empty />}
           data={data}
           renderItem={({ item }) => {
             if (item.type === "header") {
