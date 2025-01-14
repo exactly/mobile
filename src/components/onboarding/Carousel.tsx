@@ -123,7 +123,11 @@ export default function Carousel() {
             error.message.startsWith("androidx.credentials.exceptions.domerrors.NotAllowedError"))) ||
         (error instanceof APIError && error.text === "unauthorized")
       ) {
-        toast.show("Authentication cancelled");
+        toast.show("Authentication cancelled", {
+          native: true,
+          duration: 1000,
+          burntOptions: { haptic: "error", preset: "error" },
+        });
         return;
       }
       handleError(error);
