@@ -48,6 +48,7 @@ export default function ActivityDetails() {
                 flexGrow: 1,
                 flexDirection: "column",
                 justifyContent: "space-between",
+                gap: "$s4_5",
               }}
               stickyHeaderHiddenOnScroll
             >
