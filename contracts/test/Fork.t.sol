@@ -69,6 +69,9 @@ abstract contract ForkTest is Test {
 
     address impl =
       address(uint160(uint256(vm.load(addr, bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)))));
+    if (impl == address(0)) {
+      impl = address(uint160(uint256(vm.load(addr, keccak256("org.zeppelinos.proxy.implementation")))));
+    }
     if (impl != address(0)) {
       vm.label(impl, string.concat(name, "_Impl"));
     } else if (bytes10(addr.code) == 0x363d3d373d3d3d363d73) {
