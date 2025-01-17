@@ -28,7 +28,7 @@ import {
 } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
-import { marketAbi } from "../generated/contracts";
+import { auditorAbi, marketAbi } from "../generated/contracts";
 import { headerValidator, jsonValidator, webhooksKey } from "../utils/alchemy";
 import appOrigin from "../utils/appOrigin";
 import ensClient from "../utils/ensClient";
@@ -166,7 +166,7 @@ function scheduleWithdraw(message: string) {
                   account: keeper.account,
                   address: account,
                   functionName: "withdraw",
-                  abi: [...exaPluginAbi, ...upgradeableModularAccountAbi],
+                  abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, marketAbi[6]],
                   ...transactionOptions,
                 }),
               );
