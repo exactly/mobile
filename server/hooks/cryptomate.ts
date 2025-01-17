@@ -39,7 +39,7 @@ import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
-import COLLECTOR from "../utils/COLLECTOR";
+import collectors from "../utils/collectors";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
@@ -146,7 +146,7 @@ export default new Hono().post(
             return c.json({ response_code: "69" });
           }
           if (
-            usdcTransfersToCollector(trace).reduce(
+            usdcTransfersToCollectors(trace).reduce(
               (total, { topics, data }) =>
                 total + decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data }).args.value,
               0n,
@@ -306,16 +306,19 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
   };
 }
 
-const collectorTopic = padHex(COLLECTOR);
+const collectorTopics = new Set(collectors.map((address) => padHex(address.toLowerCase() as Hex)));
 const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
 const usdcLowercase = usdcAddress.toLowerCase() as Hex;
-function usdcTransfersToCollector({ calls, logs }: CallFrame): TransferLog[] {
+function usdcTransfersToCollectors({ calls, logs }: CallFrame): TransferLog[] {
   return [
     ...(logs?.filter(
       (log): log is TransferLog =>
-        log.address === usdcLowercase && log.topics?.[0] === transferTopic && log.topics[2] === collectorTopic,
+        log.address === usdcLowercase &&
+        log.topics?.[0] === transferTopic &&
+        log.topics[2] !== undefined &&
+        collectorTopics.has(log.topics[2]),
     ) ?? []),
-    ...(calls?.flatMap(usdcTransfersToCollector) ?? []),
+    ...(calls?.flatMap(usdcTransfersToCollectors) ?? []),
   ];
 }
 

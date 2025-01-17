@@ -108,7 +108,7 @@ async function collectorBalance() {
           },
         ],
         functionName: "balanceOf",
-        args: [process.env.COLLECTOR_ADDRESS],
+        args: ["0xDb90CDB64CfF03f254e4015C4F705C3F3C834400"],
       }),
     })
     .then(({ data }) => {
