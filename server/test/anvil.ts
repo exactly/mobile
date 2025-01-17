@@ -29,7 +29,6 @@ export default async function setup({ provide }: TestProject) {
     cwd: "node_modules/@exactly/plugin",
     env: {
       OPTIMISM_ETHERSCAN_KEY: "",
-      COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
       ISSUER_ADDRESS: privateKeyToAddress(padHex("0x420")),
       KEEPER_ADDRESS: keeper.address,
       DEPLOYER_ADDRESS: deployer,

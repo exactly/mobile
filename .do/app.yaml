@@ -53,8 +53,6 @@ services:
       - key: AUTH_SECRET
         scope: RUN_TIME
         type: SECRET
-      - key: COLLECTOR_ADDRESS
-        scope: RUN_TIME
       - key: CRYPTOMATE_API_KEY
         scope: RUN_TIME
         type: SECRET

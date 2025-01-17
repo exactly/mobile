@@ -32,7 +32,7 @@ import { withRetry, zeroAddress } from "viem";
 import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
-import COLLECTOR from "../utils/COLLECTOR";
+import collectors from "../utils/collectors";
 import publicClient from "../utils/publicClient";
 
 const app = new Hono();
@@ -40,7 +40,7 @@ app.use(auth);
 
 const ActivityTypes = picklist(["card", "received", "repay", "sent"]);
 
-const collector = COLLECTOR.toLowerCase();
+const collectorSet = new Set(collectors.map((address) => address.toLowerCase()));
 
 export default app.get(
   "/",
@@ -134,7 +134,7 @@ export default app.get(
             })
             .then((logs) =>
               logs
-                .filter(({ args }) => args.receiver.toLowerCase() !== collector)
+                .filter(({ args }) => !collectorSet.has(args.receiver.toLowerCase()))
                 .map((log) =>
                   parse(WithdrawActivity, { ...log, market: market(log.address) } satisfies InferInput<
                     typeof WithdrawActivity
