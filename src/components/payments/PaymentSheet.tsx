@@ -8,6 +8,7 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Sheet, XStack } from "tamagui";
+import { titleCase } from "title-case";
 import { nonEmpty, pipe, safeParse, string } from "valibot";
 
 import handleError from "../../utils/handleError";
@@ -71,9 +72,11 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
                         : "$uiErrorSecondary"
                     }
                   >
-                    {isAfter(new Date(Number(maturity) * 1000), new Date())
-                      ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
-                      : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`}
+                    {titleCase(
+                      isAfter(new Date(Number(maturity) * 1000), new Date())
+                        ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
+                        : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`,
+                    )}
                     <Text secondary textAlign="center" emphasized subHeadline color="$uiNeutralSecondary">
                       &nbsp;-&nbsp;{format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}
                     </Text>
