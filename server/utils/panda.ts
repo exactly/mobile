@@ -65,29 +65,13 @@ export async function createCard({
 }
 
 export async function createUser(user: {
-  firstName: string;
-  lastName: string;
-  birthDate: string;
-  nationalId: string;
-  countryOfIssue: string;
-  email: string;
-  address: {
-    line1: string;
-    line2: string | undefined;
-    city: string;
-    region: string;
-    postalCode: string;
-    countryCode: string;
-    country: string;
-  };
-  phoneCountryCode: string;
-  phoneNumber: string;
-  ipAddress: string;
-  occupation: string;
-  annualSalary: string;
   accountPurpose: string;
+  annualSalary: string;
   expectedMonthlyVolume: string;
   isTermsOfServiceAccepted: true;
+  ipAddress: string;
+  occupation: string;
+  personaShareToken: string;
 }) {
   return await request(object({ id: string() }), "/issuing/applications/user", {}, user, "POST");
 }
