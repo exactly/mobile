@@ -10,6 +10,7 @@ import { Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
+import { titleCase } from "title-case";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
 import { maxUint256, zeroAddress } from "viem";
 import { useSimulateContract, useWriteContract } from "wagmi";
@@ -102,7 +103,7 @@ export default function Pay() {
       10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
     : 0n;
   const positionValue = borrow
-    ? ((borrow.position.principal + borrow.position.fee) * (USDCMarket ? USDCMarket.usdPrice : 0n)) /
+    ? (borrow.position.principal * (USDCMarket ? USDCMarket.usdPrice : 0n)) /
       10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
     : 0n;
   const discount = borrow ? Number(WAD - (previewValue * WAD) / positionValue) / 1e18 : 0;
@@ -154,7 +155,7 @@ export default function Pay() {
   if (!isPending && !isSuccess && !error)
     return (
       <SafeView fullScreen backgroundColor="$backgroundMild" paddingBottom={0}>
-        <View fullScreen gap="$s5">
+        <View fullScreen gap="$s5" paddingTop="$s4_5">
           <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
             <View padded position="absolute" left={0}>
               <Pressable
@@ -175,9 +176,11 @@ export default function Pay() {
                   isAfter(new Date(Number(maturity) * 1000), new Date()) ? "$uiNeutralPrimary" : "$uiErrorSecondary"
                 }
               >
-                {isAfter(new Date(Number(maturity) * 1000), new Date())
-                  ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
-                  : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`}
+                {titleCase(
+                  isAfter(new Date(Number(maturity) * 1000), new Date())
+                    ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
+                    : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`,
+                )}
                 <Text primary textAlign="center" emphasized subHeadline>
                   &nbsp;-&nbsp;{format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}
                 </Text>
@@ -217,34 +220,32 @@ export default function Pay() {
                         })
                         .replaceAll(/\s+/g, "")}
                     </Text>
-                    <Text primary title3 textAlign="right">
-                      {Number(feeValue) / 1e18 > 0.01
-                        ? (Number(feeValue) / 1e18).toLocaleString(undefined, {
-                            style: "currency",
-                            currency: "USD",
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })
-                        : `< ${(0.01).toLocaleString(undefined, {
-                            style: "currency",
-                            currency: "USD",
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}`}
+                    <Text
+                      primary
+                      title3
+                      textAlign="right"
+                      color={discount >= 0 ? "$interactiveOnBaseSuccessSoft" : "$interactiveOnBaseErrorSoft"}
+                    >
+                      {(Number(feeValue) / 1e18).toLocaleString(undefined, {
+                        style: "currency",
+                        currency: "USD",
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </Text>
                   </XStack>
                 )}
                 <XStack justifyContent="space-between" gap="$s3">
                   <Text secondary callout textAlign="left">
                     {discount >= 0
-                      ? `Early repay ${(discount >= 0 ? discount : discount * -1)
+                      ? `Early repay ${discount
                           .toLocaleString(undefined, {
                             style: "percent",
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })
                           .replaceAll(/\s+/g, "")} OFF`
-                      : `Late repay ${(discount >= 0 ? discount : discount * -1)
+                      : `Late repay ${(-discount)
                           .toLocaleString(undefined, {
                             style: "percent",
                             minimumFractionDigits: 2,
@@ -258,9 +259,8 @@ export default function Pay() {
                     textAlign="right"
                     color={discount >= 0 ? "$interactiveOnBaseSuccessSoft" : "$interactiveOnBaseErrorSoft"}
                   >
-                    {discount >= 0 ? "-" : "+"}&nbsp;
                     {Number(previewValue - positionValue) / 1e18 > 0.01
-                      ? ((Number(previewValue - positionValue) / 1e18) * -1).toLocaleString(undefined, {
+                      ? Math.abs(Number(previewValue - positionValue) / 1e18).toLocaleString(undefined, {
                           style: "currency",
                           currency: "USD",
                           currencyDisplay: "narrowSymbol",
@@ -279,7 +279,7 @@ export default function Pay() {
                     Total
                   </Text>
                   <Text emphasized primary title2 textAlign="right">
-                    {(Number(positionValue) / 1e18).toLocaleString(undefined, {
+                    {(Number(previewValue) / 1e18).toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
                       currencyDisplay: "narrowSymbol",

@@ -8,6 +8,7 @@ import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack } from "tamagui";
+import { titleCase } from "title-case";
 
 import handleError from "../../utils/handleError";
 import useIntercom from "../../utils/useIntercom";
@@ -49,9 +50,11 @@ export default function NextPayment() {
                     isAfter(new Date(Number(maturity) * 1000), new Date()) ? "$uiNeutralSecondary" : "$uiErrorSecondary"
                   }
                 >
-                  {isAfter(new Date(Number(maturity) * 1000), new Date())
-                    ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
-                    : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`}
+                  {titleCase(
+                    isAfter(new Date(Number(maturity) * 1000), new Date())
+                      ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
+                      : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`,
+                  )}
                   <Text secondary textAlign="center" emphasized subHeadline color="$uiNeutralSecondary">
                     &nbsp;-&nbsp;{format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}
                   </Text>

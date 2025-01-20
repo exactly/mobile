@@ -38,8 +38,8 @@ export default function UpcomingPayments({ onSelect }: { onSelect: (maturity: bi
           Upcoming payments
         </Text>
       </View>
-      {payments.length > 0 ? (
-        payments.map(([maturity, amount], index) => (
+      {payments.length > 1 ? (
+        payments.slice(1).map(([maturity, amount], index) => (
           <Pressable
             key={index}
             onPress={() => {
@@ -68,7 +68,7 @@ export default function UpcomingPayments({ onSelect }: { onSelect: (maturity: bi
       ) : (
         <View>
           <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
-            There are no fixed payments due.
+            No more fixed payments due.
           </Text>
         </View>
       )}
