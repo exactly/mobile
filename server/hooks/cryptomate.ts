@@ -113,6 +113,8 @@ export default new Hono().post(
 
     switch (payload.event_type) {
       case "AUTHORIZATION": {
+        return c.json({ response_code: "05" });
+        /* eslint-disable no-unreachable */
         const { account, amount, call, transaction } = await prepareCollection(payload);
         const authorize = () => {
           track({
@@ -126,12 +128,15 @@ export default new Hono().post(
         if (!transaction) return authorize();
         try {
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
+            // @ts-expect-error -- temporary hotfix
             traceClient.traceCall(transaction),
           );
           if (trace.output) {
+            // @ts-expect-error -- temporary hotfix
             let error: string = trace.output;
             try {
               error = decodeErrorResult({
+                // @ts-expect-error -- temporary hotfix
                 data: trace.output,
                 abi: [
                   ...exaPluginAbi,
@@ -161,6 +166,7 @@ export default new Hono().post(
           captureException(error, { contexts: { tx: { call } } });
           return c.json({ response_code: "05" });
         }
+        /* eslint-enable no-unreachable */
       }
       case "CLEARING": {
         if (payload.status !== "PENDING") return c.json({});
