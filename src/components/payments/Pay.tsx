@@ -35,13 +35,14 @@ import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
 import { getRoute } from "../../utils/lifi";
 import queryClient from "../../utils/queryClient";
-import useMarketAccount from "../../utils/useMarketAccount";
+import useAsset from "../../utils/useAsset";
 import AssetLogo from "../shared/AssetLogo";
 
 export default function Pay() {
   const insets = useSafeAreaInsets();
   const [assetSelectionOpen, setAssetSelectionOpen] = useState(false);
-  const { account, market: USDCMarket, markets, queryKey: marketAccount } = useMarketAccount(marketUSDCAddress);
+  const { account, market: USDCMarket, markets, queryKey: marketAccount } = useAsset(marketUSDCAddress);
+
   const [selectedMarket, setSelectedMarket] = useState<Address>();
   const [displayValues, setDisplayValues] = useState<{ amount: number; usdAmount: number }>({
     amount: 0,

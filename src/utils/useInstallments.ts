@@ -2,10 +2,10 @@ import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import { marketUSDCAddress } from "@exactly/common/generated/chain";
 import { fixedUtilization, globalUtilization, MATURITY_INTERVAL, splitInstallments } from "@exactly/lib";
 
-import useMarketAccount from "./useMarketAccount";
+import useAsset from "./useAsset";
 
 export default function useInstallments({ totalAmount, installments }: { totalAmount: bigint; installments: number }) {
-  const { market, isLoading } = useMarketAccount(marketUSDCAddress);
+  const { market, isFetching } = useAsset(marketUSDCAddress);
   const timestamp = Math.floor(Date.now() / 1000);
   const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
   const firstMaturity =
@@ -31,5 +31,5 @@ export default function useInstallments({ totalAmount, installments }: { totalAm
       market.interestRateModel.parameters,
     );
   }
-  return { data, firstMaturity, timestamp, isLoading };
+  return { data, firstMaturity, timestamp, isFetching };
 }

@@ -10,7 +10,7 @@ import Empty from "./Empty";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import { getActivity } from "../../utils/server";
-import useMarketAccount from "../../utils/useMarketAccount";
+import useAsset from "../../utils/useAsset";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -18,7 +18,7 @@ import View from "../shared/View";
 export default function Activity() {
   const theme = useTheme();
   const { data: activity, refetch, isPending } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
-  const { queryKey } = useMarketAccount();
+  const { queryKey } = useAsset();
   const groupedActivity = useMemo(() => {
     if (!activity) return [];
     const groups: Record<string, typeof activity> = {};

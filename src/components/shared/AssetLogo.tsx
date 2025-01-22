@@ -9,7 +9,6 @@ import View from "./View";
 
 export default function AssetLogo({ ...properties }: UriProps) {
   const [loading, setLoading] = useState(true);
-
   return (
     <View borderRadius="$r_0" overflow="hidden">
       {loading && (

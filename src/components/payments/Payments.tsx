@@ -15,8 +15,8 @@ import UpcomingPayments from "./UpcomingPayments";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
-import useMarketAccount from "../../utils/useMarketAccount";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -25,7 +25,7 @@ export default function Payments() {
   const theme = useTheme();
   const { presentArticle } = useIntercom();
   const [paySheetOpen, setPaySheetOpen] = useState(false);
-  const { market, account } = useMarketAccount(marketUSDCAddress);
+  const { market, account } = useAsset(marketUSDCAddress);
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   function toggle() {
     queryClient.setQueryData(["settings", "sensitive"], !hidden);

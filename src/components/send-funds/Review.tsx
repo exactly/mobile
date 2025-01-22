@@ -3,13 +3,14 @@ import { ArrowRight } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React from "react";
-import { Pressable } from "react-native";
+import { Pressable, Image } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, XStack, YStack, Image } from "tamagui";
+import { ScrollView, XStack, YStack, Image as TamaguiImage } from "tamagui";
 
 import type { WithdrawDetails } from "./Withdraw";
 import assetLogos from "../../utils/assetLogos";
 import type { Withdraw } from "../../utils/queryClient";
+import useAsset from "../../utils/useAsset";
 import AssetLogo from "../shared/AssetLogo";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
@@ -27,6 +28,7 @@ export default function Review({
   onSend: () => void;
 }) {
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
+  const { market, externalAsset } = useAsset(withdraw?.market);
   const { canGoBack } = router;
   return (
     <>
@@ -42,7 +44,17 @@ export default function Review({
               Sending
             </Text>
             <XStack alignItems="center" gap="$s3">
-              <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
+              {market && (
+                <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
+              )}
+              {externalAsset && (
+                <Image
+                  source={{ uri: externalAsset.logoURI }}
+                  width={ms(40)}
+                  height={ms(40)}
+                  style={{ borderRadius: ms(20) }}
+                />
+              )}
               <YStack flex={1}>
                 <Text title color="$uiNeutralPrimary">
                   {amount} {assetName}
@@ -63,7 +75,7 @@ export default function Review({
               To
             </Text>
             <XStack alignItems="center" gap="$s3">
-              <Image backgroundColor="$backgroundBrand" width={ms(40)} height={ms(40)} borderRadius="$r_0" />
+              <TamaguiImage backgroundColor="$backgroundBrand" width={ms(40)} height={ms(40)} borderRadius="$r_0" />
               <YStack>
                 <Text title color="$uiNeutralPrimary" fontFamily="$mono">
                   {shortenHex(withdraw?.receiver ?? "")}

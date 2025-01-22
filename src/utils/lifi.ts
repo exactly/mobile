@@ -1,13 +1,13 @@
 import chain, { mockSwapperAbi, mockSwapperAddress } from "@exactly/common/generated/chain";
 import { Hex } from "@exactly/common/validation";
-import { config, getContractCallsQuote } from "@lifi/sdk";
+import { getTokenBalancesByChain, getTokens, config, getContractCallsQuote } from "@lifi/sdk";
 import { parse } from "valibot";
 import { encodeFunctionData } from "viem";
+import type { Address } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
 import publicClient from "./publicClient";
 
-// eslint-disable-next-line import/prefer-default-export -- module will have other exports
 export async function getRoute(fromToken: Hex, toToken: Hex, toAmount: bigint, account: Hex, receiver: Hex) {
   if (chain.id === optimismSepolia.id) {
     const fromAmount = await publicClient.readContract({
@@ -43,4 +43,15 @@ export async function getRoute(fromToken: Hex, toToken: Hex, toAmount: bigint, a
     toFallbackAddress: receiver,
   });
   return { fromAmount: BigInt(estimate.fromAmount), data: parse(Hex, transactionRequest?.data) };
+}
+
+export async function getAsset(account: Address) {
+  const response = await getTokens({ chains: [optimism.id] });
+  return response.tokens[optimism.id]?.find((token) => token.address === account);
+}
+
+export async function getTokenBalances(account: Address) {
+  const response = await getTokens({ chains: [optimism.id] });
+  const balances = await getTokenBalancesByChain(account, { [optimism.id]: response.tokens[optimism.id] ?? [] });
+  return balances[optimism.id]?.filter((balance) => balance.amount && balance.amount > 0n) ?? [];
 }

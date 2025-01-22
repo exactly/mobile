@@ -9,8 +9,8 @@ import { formatUnits, parseUnits, zeroAddress } from "viem";
 
 import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
+import useAsset from "../../utils/useAsset";
 import useInstallments from "../../utils/useInstallments";
-import useMarketAccount from "../../utils/useMarketAccount";
 import TamaguiInput from "../shared/TamaguiInput";
 import Text from "../shared/Text";
 
@@ -21,9 +21,9 @@ export default function SimulatePurchase({ installments }: { installments: numbe
     data: installmentsResult,
     firstMaturity,
     timestamp,
-    isLoading: isInstallmentsLoading,
+    isFetching: isInstallmentsFetching,
   } = useInstallments({ totalAmount: assets, installments });
-  const { market, account } = useMarketAccount(marketUSDCAddress);
+  const { market, account } = useAsset(marketUSDCAddress);
   const {
     data: borrowPreview,
     isFetching: isFetchingBorrowPreview,
@@ -35,15 +35,15 @@ export default function SimulatePurchase({ installments }: { installments: numbe
     args: [market?.market ?? zeroAddress, BigInt(firstMaturity), assets],
     query: { enabled: !!market && !!account && !!firstMaturity && assets > 0n },
   });
-  const isLoading = isInstallmentsLoading || isFetchingBorrowPreview || isRefetchingBorrowPreview;
+  const isLoading = isInstallmentsFetching || isFetchingBorrowPreview || isRefetchingBorrowPreview;
   useEffect(() => {
     const value = parseUnits(input.replaceAll(/\D/g, ".").replaceAll(/\.(?=.*\.)/g, ""), 6);
     setAssets(value);
   }, [input]);
   useEffect(() => {
-    if (!isInstallmentsLoading) return;
+    if (!isInstallmentsFetching) return;
     refetchBorrowPreview().catch(handleError);
-  }, [isInstallmentsLoading, refetchBorrowPreview]);
+  }, [isInstallmentsFetching, refetchBorrowPreview]);
   return (
     <Accordion overflow="hidden" type="multiple" backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4">
       <Accordion.Item value="a1" flex={1}>

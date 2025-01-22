@@ -13,7 +13,7 @@ import { useAccount, useReadContract } from "wagmi";
 
 import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
-import useMarketAccount from "../../utils/useMarketAccount";
+import useAsset from "../../utils/useAsset";
 import ActionButton from "../shared/ActionButton";
 import AssetLogo from "../shared/AssetLogo";
 import SafeView from "../shared/SafeView";
@@ -64,7 +64,7 @@ export default function Processing() {
         },
   );
 
-  const { market } = useMarketAccount(proposals?.[1]);
+  const { market } = useAsset(proposals?.[1]);
   const theme = useTheme();
   if (!proposals || !market) return null;
   if (proposals[0] > 0n && !proposalAmount) setProposalAmount(proposals[0]);

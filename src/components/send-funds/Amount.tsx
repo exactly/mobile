@@ -1,21 +1,19 @@
-import { previewerAddress } from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
-import { withdrawLimit, WAD } from "@exactly/lib";
+import { WAD } from "@exactly/lib";
 import { ArrowLeft, ArrowRight, Coins, DollarSign, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
+import { Skeleton } from "moti/skeleton";
 import React from "react";
-import { Pressable } from "react-native";
+import { Appearance, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack } from "tamagui";
 import { bigint, check, pipe } from "valibot";
-import { zeroAddress } from "viem";
 
-import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
-import useMarketAccount from "../../utils/useMarketAccount";
+import useAsset from "../../utils/useAsset";
 import AmountSelector from "../shared/AmountSelector";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -25,12 +23,9 @@ import View from "../shared/View";
 export default function Amount() {
   const { canGoBack } = router;
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
-  const { market, account } = useMarketAccount(withdraw?.market);
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account,
-    args: [account ?? zeroAddress],
-  });
+
+  const { market, externalAsset, available, isFetching } = useAsset(withdraw?.market);
+
   const { Field, Subscribe, handleSubmit } = useForm<{ amount: bigint }>({
     defaultValues: { amount: withdraw?.amount ?? 0n },
     onSubmit: ({ value: { amount } }) => {
@@ -38,7 +33,7 @@ export default function Amount() {
       router.push("/send-funds/withdraw");
     },
   });
-  const available = markets && withdraw?.market ? withdrawLimit(markets, withdraw.market) : 0n;
+
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>
@@ -61,36 +56,35 @@ export default function Amount() {
         <ScrollView flex={1}>
           <View flex={1} gap="$s5">
             <View gap="$s3">
-              {withdraw?.receiver && (
+              <XStack
+                alignItems="center"
+                backgroundColor="$backgroundBrandSoft"
+                borderRadius="$r2"
+                justifyContent="space-between"
+              >
+                <XStack alignItems="center" gap="$s3" padding="$s3">
+                  <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+                    <User size={ms(20)} color="$interactiveOnBaseBrandDefault" />
+                  </Avatar>
+                  <Text emphasized callout color="$uiNeutralSecondary">
+                    To:
+                  </Text>
+                  <Text emphasized callout color="$uiNeutralPrimary" fontFamily="$mono">
+                    {withdraw?.receiver ? shortenHex(withdraw.receiver) : "..."}
+                  </Text>
+                </XStack>
+              </XStack>
+              <>
                 <XStack
                   alignItems="center"
                   backgroundColor="$backgroundBrandSoft"
                   borderRadius="$r2"
                   justifyContent="space-between"
+                  gap="$s3"
                 >
-                  <XStack alignItems="center" gap="$s3" padding="$s3">
-                    <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-                      <User size={ms(20)} color="$interactiveOnBaseBrandDefault" />
-                    </Avatar>
-                    <Text emphasized callout color="$uiNeutralSecondary">
-                      To:
-                    </Text>
-                    <Text emphasized callout color="$uiNeutralPrimary" fontFamily="$mono">
-                      {shortenHex(withdraw.receiver)}
-                    </Text>
-                  </XStack>
-                </XStack>
-              )}
-
-              {market && (
-                <>
-                  <XStack
-                    alignItems="center"
-                    backgroundColor="$backgroundBrandSoft"
-                    borderRadius="$r2"
-                    justifyContent="space-between"
-                    gap="$s3"
-                  >
+                  {isFetching ? (
+                    <Skeleton width="100%" height={ms(45)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                  ) : (
                     <XStack alignItems="center" gap="$s3" padding="$s3">
                       <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
                         <Coins size={ms(20)} color="$interactiveOnBaseBrandDefault" />
@@ -99,22 +93,37 @@ export default function Amount() {
                         Available:
                       </Text>
                       <Text callout color="$uiNeutralPrimary" numberOfLines={1}>
-                        {`${(Number(available) / 10 ** market.decimals).toLocaleString(undefined, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: market.decimals,
-                          useGrouping: false,
-                        })} ${market.symbol.slice(3)}`}
+                        {market ? (
+                          <>
+                            {`${(Number(available) / 10 ** market.decimals).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: market.decimals,
+                              useGrouping: false,
+                            })} ${market.symbol.slice(3)}`}
+                          </>
+                        ) : externalAsset ? (
+                          <>
+                            {`${(Number(available) / 10 ** externalAsset.decimals).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: externalAsset.decimals,
+                              useGrouping: false,
+                            })} ${externalAsset.symbol}`}
+                          </>
+                        ) : null}
                       </Text>
                     </XStack>
-                  </XStack>
-
-                  <XStack
-                    alignItems="center"
-                    backgroundColor="$backgroundBrandSoft"
-                    borderRadius="$r2"
-                    justifyContent="space-between"
-                    gap="$s3"
-                  >
+                  )}
+                </XStack>
+                <XStack
+                  alignItems="center"
+                  backgroundColor="$backgroundBrandSoft"
+                  borderRadius="$r2"
+                  justifyContent="space-between"
+                  gap="$s3"
+                >
+                  {isFetching ? (
+                    <Skeleton width="100%" height={ms(45)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                  ) : (
                     <XStack alignItems="center" gap="$s3" padding="$s3">
                       <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
                         <DollarSign size={ms(20)} color="$interactiveOnBaseBrandDefault" />
@@ -123,21 +132,34 @@ export default function Amount() {
                         Value:
                       </Text>
                       <Text callout color="$uiNeutralPrimary" numberOfLines={1}>
-                        {(
-                          Number((market.floatingDepositAssets * market.usdPrice) / WAD) /
-                          10 ** market.decimals
-                        ).toLocaleString(undefined, {
-                          style: "currency",
-                          currency: "USD",
-                          currencyDisplay: "narrowSymbol",
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })}
+                        {market ? (
+                          <>
+                            {(
+                              Number((market.floatingDepositAssets * market.usdPrice) / WAD) /
+                              10 ** market.decimals
+                            ).toLocaleString(undefined, {
+                              style: "currency",
+                              currency: "USD",
+                              maximumFractionDigits: 2,
+                            })}
+                          </>
+                        ) : externalAsset ? (
+                          <>
+                            {(
+                              (Number(externalAsset.priceUSD) * Number(available)) /
+                              10 ** externalAsset.decimals
+                            ).toLocaleString(undefined, {
+                              style: "currency",
+                              currency: "USD",
+                              maximumFractionDigits: 2,
+                            })}
+                          </>
+                        ) : null}
                       </Text>
                     </XStack>
-                  </XStack>
-                </>
-              )}
+                  )}
+                </XStack>
+              </>
             </View>
 
             <Field

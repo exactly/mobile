@@ -22,8 +22,8 @@ import handleError from "../../utils/handleError";
 import { createInquiry, resumeInquiry } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
 import { APIError, getActivity, getCard, createCard, getKYCStatus } from "../../utils/server";
+import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
-import useMarketAccount from "../../utils/useMarketAccount";
 import InfoBadge from "../shared/InfoBadge";
 import LatestActivity from "../shared/LatestActivity";
 import PluginUpgrade from "../shared/PluginUpgrade";
@@ -49,7 +49,7 @@ export default function Card() {
     queryFn: () => getActivity({ include: "card" }),
   });
 
-  const { queryKey } = useMarketAccount(marketUSDCAddress);
+  const { queryKey } = useAsset(marketUSDCAddress);
   const { address } = useAccount();
   const { data: KYCStatus, refetch: refetchKYCStatus } = useQuery({
     queryKey: ["kyc", "status"],

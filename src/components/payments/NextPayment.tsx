@@ -11,8 +11,8 @@ import { XStack } from "tamagui";
 import { titleCase } from "title-case";
 
 import handleError from "../../utils/handleError";
+import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
-import useMarketAccount from "../../utils/useMarketAccount";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -20,7 +20,7 @@ import View from "../shared/View";
 export default function NextPayment() {
   const { presentArticle } = useIntercom();
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
-  const { market: USDCMarket } = useMarketAccount(marketUSDCAddress);
+  const { market: USDCMarket } = useAsset(marketUSDCAddress);
   const usdDue = new Map<bigint, { previewValue: bigint; position: bigint }>();
   if (USDCMarket) {
     const { fixedBorrowPositions, usdPrice, decimals } = USDCMarket;

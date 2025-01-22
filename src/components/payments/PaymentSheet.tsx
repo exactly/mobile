@@ -12,8 +12,8 @@ import { titleCase } from "title-case";
 import { nonEmpty, pipe, safeParse, string } from "valibot";
 
 import handleError from "../../utils/handleError";
+import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
-import useMarketAccount from "../../utils/useMarketAccount";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -22,7 +22,7 @@ import View from "../shared/View";
 export default function PaymentSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { presentArticle } = useIntercom();
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
-  const { market: USDCMarket } = useMarketAccount(marketUSDCAddress);
+  const { market: USDCMarket } = useAsset(marketUSDCAddress);
   const { maturity: currentMaturity } = useLocalSearchParams();
   const { success, output: maturity } = safeParse(pipe(string(), nonEmpty("no maturity")), currentMaturity);
   if (!success || !USDCMarket) return;

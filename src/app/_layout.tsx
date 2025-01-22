@@ -3,7 +3,7 @@ import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/generated/chain";
 import release from "@exactly/common/generated/release";
 import sentryDSN from "@exactly/common/sentryDSN";
-import { createConfig } from "@lifi/sdk";
+import { createConfig, EVM } from "@lifi/sdk";
 import { init, mobileReplayIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
 import { ToastProvider } from "@tamagui/toast";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -52,6 +52,7 @@ const useServerAssets = typeof window === "undefined" ? useAssets : () => undefi
 const devtools = !!JSON.parse(process.env.EXPO_PUBLIC_DEVTOOLS ?? "false");
 createConfig({
   integrator: "exa_app",
+  providers: [EVM({ getWalletClient: () => Promise.resolve(publicClient) })],
   rpcUrls: {
     [optimism.id]: [`${optimism.rpcUrls.alchemy?.http[0]}/${alchemyAPIKey}`],
     [chain.id]: [publicClient.transport.url],

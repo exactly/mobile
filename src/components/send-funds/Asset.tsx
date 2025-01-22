@@ -1,4 +1,3 @@
-import { previewerAddress } from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
 import { Address } from "@exactly/common/validation";
 import { ArrowLeft, ArrowRight, User, UserMinus, UserPlus } from "@tamagui/lucide-icons";
@@ -9,10 +8,7 @@ import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack } from "tamagui";
 import { parse } from "valibot";
-import { zeroAddress } from "viem";
-import { useAccount } from "wagmi";
 
-import { useReadPreviewerExactly } from "../../generated/contracts";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import AssetSelector from "../shared/AssetSelector";
 import Button from "../shared/Button";
@@ -22,25 +18,11 @@ import View from "../shared/View";
 
 export default function AssetSelection() {
   const { canGoBack } = router;
-  const { address } = useAccount();
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
   const { data: savedContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
     queryKey: ["contacts", "saved"],
   });
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
-
-  const positions = markets
-    ?.map((market) => ({
-      ...market,
-      symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
-      usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
-    }))
-    .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0);
 
   const handleSubmit = () => {
     if (selectedMarket) {
@@ -126,7 +108,7 @@ export default function AssetSelection() {
                 </Button>
               </XStack>
             )}
-            <AssetSelector positions={positions} onSubmit={setSelectedMarket} />
+            <AssetSelector onSubmit={setSelectedMarket} />
             <Button
               contained
               main

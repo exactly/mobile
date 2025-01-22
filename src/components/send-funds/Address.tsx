@@ -22,14 +22,18 @@ import View from "../shared/View";
 
 export default function AddressSelection() {
   const parameters = useLocalSearchParams();
+  const { canGoBack } = router;
+
   const { data: recentContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
     queryKey: ["contacts", "recent"],
   });
+
   const { data: savedContacts } = useQuery<{ address: Address; ens: string }[] | undefined>({
     queryKey: ["contacts", "saved"],
   });
-  const { canGoBack } = router;
+
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
+
   const { Field, Subscribe, handleSubmit, setFieldValue, validateAllFields } = useForm<{ receiver: string }>({
     defaultValues: { receiver: withdraw?.receiver ?? "" },
     onSubmit: ({ value }) => {
@@ -41,13 +45,13 @@ export default function AddressSelection() {
     },
   });
 
-  const result = safeParse(Address, parameters.receiver);
-  if (result.success) {
-    setFieldValue("receiver", result.output);
+  const { success, output } = safeParse(Address, parameters.receiver);
+
+  if (success) {
+    setFieldValue("receiver", output);
     validateAllFields("change").catch(handleError);
-  } else {
-    // TODO show warning toast
   }
+
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>
