@@ -36,7 +36,7 @@ export default function ActivityDetails() {
         opacity={0.8}
         colors={[theme.backgroundStrong.val, theme.backgroundSoft.val]}
       />
-      <SafeView backgroundColor="transparent">
+      <SafeView backgroundColor="transparent" $platform-web={{ height: "-webkit-fill-available" }}>
         <View fullScreen padded>
           <View fullScreen>
             <ScrollView
@@ -71,6 +71,7 @@ export default function ActivityDetails() {
               </View>
               <View flex={2} justifyContent="flex-end">
                 <ActionButton
+                  width="100%"
                   maxHeight={ms(60)}
                   alignSelf="flex-end"
                   marginTop="$s4"

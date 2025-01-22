@@ -20,6 +20,13 @@ export default function CardActivity({ item }: { item: CreditActivity | DebitAct
           </Square>
         </XStack>
         <YStack gap="$s4_5" justifyContent="center" alignItems="center">
+          <Text secondary body>
+            Paid
+            <Text emphasized primary body $platform-web={{ whiteSpace: "normal" }}>
+              &nbsp;
+              {item.merchant.name}
+            </Text>
+          </Text>
           <Text title primary color="$uiNeutralPrimary">
             {Number(usdAmount).toLocaleString(undefined, {
               style: "currency",
