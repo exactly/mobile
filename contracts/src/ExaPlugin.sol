@@ -534,8 +534,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION_AUDITOR_CALL)) return;
     revert NotImplemented(msg.sig, functionId);
   }
-  /// @inheritdoc BasePlugin
 
+  /// @inheritdoc BasePlugin
   function preExecutionHook(uint8 functionId, address, uint256, bytes calldata callData)
     external
     view
