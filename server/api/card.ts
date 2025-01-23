@@ -90,7 +90,7 @@ export default app
             last: inquiry.attributes["name-last"],
           },
           phone: { countryCode: phone.countryCallingCode, number: phone.nationalNumber },
-          limits: { daily: 5000, weekly: 10_000, monthly: 30_000 },
+          limits: { daily: 3000, weekly: 10_000, monthly: 30_000 },
         });
         await database.insert(cards).values([{ id: card.id, credentialId, lastFour: card.last4 }]);
         return c.json({ url: await getPAN(card.id), lastFour: card.last4, status: card.status }, 200); // TODO review if necessary
