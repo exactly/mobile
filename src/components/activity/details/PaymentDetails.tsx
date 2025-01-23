@@ -61,7 +61,7 @@ export default function PaymentDetails({ item }: { item: CreditActivity | DebitA
             Total
           </Text>
           <Text callout color="$uiNeutralPrimary">
-            {`${Number(item.amount).toLocaleString()} USDC`}
+            {`${Number(item.usdAmount).toLocaleString()} USDC`}
           </Text>
         </XStack>
       </YStack>

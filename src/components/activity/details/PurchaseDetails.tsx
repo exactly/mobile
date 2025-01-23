@@ -61,10 +61,7 @@ export default function PurchaseDetails({ item }: { item: CreditActivity | Debit
           </Text>
           <Text callout color="$uiNeutralPrimary">
             1 USD&nbsp;=&nbsp;
-            {Number(item.amount / item.usdAmount).toLocaleString(undefined, {
-              maximumFractionDigits: 8,
-              minimumFractionDigits: 0,
-            })}
+            {Number(item.amount / item.usdAmount).toLocaleString(undefined, { maximumFractionDigits: 2 })}
             &nbsp;{item.currency}
           </Text>
         </XStack>
