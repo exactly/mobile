@@ -92,15 +92,15 @@ export default function Pay() {
   const timestamp = BigInt(Math.floor(Date.now() / 1000));
   const isUSDCSelected = selectedMarket === parse(Address, marketUSDCAddress);
   const borrow = USDCMarket?.fixedBorrowPositions.find((b) => b.maturity === BigInt(success ? maturity : 0));
-  const previewValue = borrow
-    ? (borrow.previewValue * (USDCMarket ? USDCMarket.usdPrice : 0n)) /
-      10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
-    : 0n;
-  const positionValue = borrow
-    ? (borrow.position.principal * (USDCMarket ? USDCMarket.usdPrice : 0n)) /
-      10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
-    : 0n;
-  const discount = borrow ? Number(WAD - (previewValue * WAD) / positionValue) / 1e18 : 0;
+
+  const previewValue =
+    borrow && USDCMarket ? (borrow.previewValue * USDCMarket.usdPrice) / 10n ** BigInt(USDCMarket.decimals) : 0n;
+  const positionValue =
+    borrow && USDCMarket
+      ? ((borrow.position.principal + borrow.position.fee) * USDCMarket.usdPrice) / 10n ** BigInt(USDCMarket.decimals)
+      : 0n;
+  const discount = Number(WAD - (previewValue * WAD) / positionValue) / 1e18;
+
   const feeValue = borrow
     ? (fixedRate(borrow.maturity, borrow.position.principal, borrow.position.fee, timestamp) *
         borrow.position.principal) /
@@ -352,12 +352,7 @@ export default function Pay() {
                         })
                         .replaceAll(/\s+/g, "")}
                     </Text>
-                    <Text
-                      primary
-                      title3
-                      textAlign="right"
-                      color={discount >= 0 ? "$interactiveOnBaseSuccessSoft" : "$interactiveOnBaseErrorSoft"}
-                    >
+                    <Text primary title3 textAlign="right">
                       {(Number(feeValue) / 1e18).toLocaleString(undefined, {
                         style: "currency",
                         currency: "USD",
