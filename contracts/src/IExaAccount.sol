@@ -58,6 +58,8 @@ interface IExaAccount {
   function pokeETH() external;
 }
 
+event AllowedTargetSet(address indexed target, address indexed account, bool allowed);
+
 event CollectorSet(address indexed collector, address indexed account);
 
 event Proposed(

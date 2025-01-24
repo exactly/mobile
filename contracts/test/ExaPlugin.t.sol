@@ -30,6 +30,7 @@ import {
   ExaPlugin, FunctionId, IBalancerVault, IDebtManager, IInstallmentsRouter, ZeroAddress
 } from "../src/ExaPlugin.sol";
 import {
+  AllowedTargetSet,
   CollectorSet,
   Expired,
   FixedPosition,
@@ -139,6 +140,8 @@ contract ExaPluginTest is ForkTest {
       keeper
     );
 
+    exaPlugin.setAllowedTarget(address(exa), true);
+
     ownerPlugin = new WebauthnOwnerPlugin();
     ExaAccountFactory factory = new ExaAccountFactory(
       address(this), ownerPlugin, exaPlugin, address(new UpgradeableModularAccount(ENTRYPOINT)), ENTRYPOINT
@@ -212,6 +215,7 @@ contract ExaPluginTest is ForkTest {
     uint256 amount = 0.0004e8;
     IERC20 wbtc = IERC20(protocol("WBTC"));
     deal(address(wbtc), address(account), amount);
+    exaPlugin.setAllowedTarget(address(wbtc), true);
 
     bytes memory route = bytes.concat(
       hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",
@@ -244,7 +248,7 @@ contract ExaPluginTest is ForkTest {
 
   // keeper or self runtime validation
 
-  function test_repay_repays() external {
+  function test_repay_repaysX() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
     uint256 maturity = FixedLib.INTERVAL;
@@ -1044,6 +1048,7 @@ contract ExaPluginTest is ForkTest {
     uint256 maxAmountIn = 0.0004e8;
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
     deal(exaWBTC.asset(), address(account), maxAmountIn);
+    exaPlugin.setAllowedTarget(exaWBTC.asset(), true);
 
     vm.startPrank(keeper);
     account.poke(exaWBTC);
@@ -1195,6 +1200,35 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(auditor), 0, abi.encodeCall(IAuditor.exitMarket, exaEXA));
   }
 
+  function test_auditorCalls_passes() external {
+    vm.startPrank(owner);
+    account.execute(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+  }
+
+  function test_targetNotAllowed_reverts_withUnauthorized() external {
+    vm.startPrank(owner);
+
+    MockERC20 erc20 = new MockERC20("Mock", "MTK", 18);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.execute(address(erc20), 0, abi.encodeCall(IERC20.transfer, (address(account), 100e18)));
+
+    vm.stopPrank();
+    erc20.mint(address(account), 100e18);
+
+    exaPlugin.setAllowedTarget(address(erc20), true);
+
+    vm.startPrank(owner);
+    account.execute(address(erc20), 0, abi.encodeCall(IERC20.transfer, (address(account), 100e18)));
+  }
+
   function test_borrow_reverts_withUnauthorized_whenReceiverNotCollector() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);
@@ -1275,6 +1309,39 @@ contract ExaPluginTest is ForkTest {
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit CollectorSet(newCollector, address(this));
     exaPlugin.setCollector(newCollector);
+  }
+
+  function test_setAllowedTarget_sets_whenAdmin() external {
+    address target = address(0x1);
+    exaPlugin.setAllowedTarget(target, true);
+    assert(exaPlugin.allowlist(target));
+  }
+
+  function test_setAllowedTarget_reverts_whenNotAdmin() external {
+    address nonAdmin = address(0x1);
+    vm.startPrank(nonAdmin);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    exaPlugin.setAllowedTarget(address(0x1), true);
+  }
+
+  function test_setAllowedTarget_reverts_whenAddressZero() external {
+    vm.expectRevert(ZeroAddress.selector);
+    exaPlugin.setAllowedTarget(address(0), true);
+  }
+
+  function test_setAllowedTarget_emitsAllowedTargetSet() external {
+    address target = address(0x1);
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit AllowedTargetSet(target, address(this), true);
+    exaPlugin.setAllowedTarget(target, true);
+
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit AllowedTargetSet(target, address(this), false);
+    exaPlugin.setAllowedTarget(target, false);
   }
 
   // solhint-enable func-name-mixedcase
