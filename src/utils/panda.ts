@@ -1,6 +1,19 @@
 import pem from "@exactly/common/pandaCertificate";
+import { Platform } from "react-native";
+import type Crypto from "react-native-quick-crypto";
 
 export async function session() {
+  if (Platform.OS !== "web") {
+    const crypto = require("react-native-quick-crypto") as typeof Crypto; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
+    const secret = crypto.randomUUID().replaceAll("-", "");
+    const secretKeyBase64 = Buffer.from(secret, "hex").toString("base64");
+    const secretKeyBase64Buffer = Buffer.from(secretKeyBase64, "utf8");
+    const secretKeyBase64BufferEncrypted = crypto.publicEncrypt(
+      { key: pem, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
+      secretKeyBase64Buffer,
+    );
+    return { id: secretKeyBase64BufferEncrypted.toString("base64"), secret };
+  }
   const secret = window.crypto.randomUUID().replaceAll("-", "");
   const secretBytes = [];
   for (let index = 0; index < secret.length; index += 2) {
@@ -50,6 +63,16 @@ export async function decrypt(base64Secret: string, base64Iv: string, secretKey:
   if (!base64Iv) throw new Error("base64Iv is required");
   if (!secretKey || !/^[0-9A-F]+$/i.test(secretKey)) {
     throw new Error("secretKey must be a hex string");
+  }
+
+  if (Platform.OS !== "web") {
+    const crypto = require("react-native-quick-crypto") as typeof Crypto; // eslint-disable-line @typescript-eslint/no-require-imports, unicorn/prefer-module
+    const secret = Buffer.from(base64Secret, "base64");
+    const iv = Buffer.from(base64Iv, "base64");
+    const decipher = crypto.createDecipheriv("aes-128-gcm", Buffer.from(secretKey, "hex"), iv);
+    decipher.setAutoPadding(false);
+    decipher.setAuthTag(secret.subarray(-16));
+    return Buffer.concat([decipher.update(secret.subarray(0, -16)), decipher.final()]).toString("utf8");
   }
 
   const secret = Uint8Array.from(window.atob(base64Secret), (c) => c.codePointAt(0)!); // eslint-disable-line @typescript-eslint/no-non-null-assertion
