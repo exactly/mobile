@@ -12,14 +12,12 @@ contract IssuerChecker is AccessControl, EIP712 {
   string public constant NAME = "IssuerChecker";
   string public constant VERSION = "1";
 
-  uint256 public immutable OPERATION_EXPIRY = 15 minutes;
-
   address public issuer;
+  uint256 public operationExpiry;
   address public prevIssuer;
   uint256 public prevIssuerTimestamp;
   uint256 public prevIssuerWindow;
   mapping(address account => bytes32 hash) public issuerOperations;
-  uint256 public operationExpiry;
 
   constructor(address owner, address issuer_, uint256 operationExpiry_, uint256 prevIssuerWindow_) {
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
@@ -30,7 +28,7 @@ contract IssuerChecker is AccessControl, EIP712 {
 
   function checkIssuer(address account, uint256 amount, uint256 timestamp, bytes calldata signature) external {
     if (timestamp > block.timestamp + 1 minutes) revert Timelocked();
-    if (timestamp + OPERATION_EXPIRY < block.timestamp) revert Expired();
+    if (timestamp + operationExpiry < block.timestamp) revert Expired();
 
     bytes32 hash = keccak256(abi.encode(amount, timestamp));
     if (issuerOperations[account] == hash) revert Expired();
