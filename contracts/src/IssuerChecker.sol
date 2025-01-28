@@ -11,6 +11,7 @@ contract IssuerChecker is AccessControl, EIP712 {
 
   string public constant NAME = "IssuerChecker";
   string public constant VERSION = "1";
+  uint256 public constant MAX_TIME_DRIFT = 1 minutes;
 
   address public issuer;
   uint256 public operationExpiry;
@@ -27,7 +28,7 @@ contract IssuerChecker is AccessControl, EIP712 {
   }
 
   function checkIssuer(address account, uint256 amount, uint256 timestamp, bytes calldata signature) external {
-    if (timestamp > block.timestamp + 1 minutes) revert Timelocked();
+    if (timestamp > block.timestamp + MAX_TIME_DRIFT) revert Timelocked();
     if (timestamp + operationExpiry < block.timestamp) revert Expired();
 
     bytes32 hash = keccak256(abi.encode(amount, timestamp));
