@@ -370,7 +370,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](15);
+    manifest.executionFunctions = new bytes4[](14);
     manifest.executionFunctions[0] = this.propose.selector;
     manifest.executionFunctions[1] = this.proposeSwap.selector;
     manifest.executionFunctions[2] = this.swap.selector;
@@ -385,7 +385,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.executionFunctions[11] = this.collectInstallments.selector;
     manifest.executionFunctions[12] = this.poke.selector;
     manifest.executionFunctions[13] = this.pokeETH.selector;
-    manifest.executionFunctions[14] = this.receiveFlashLoan.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -402,12 +401,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF),
       dependencyIndex: 0
     });
-    ManifestFunction memory balancerRuntimeValidationFunction = ManifestFunction({
-      functionType: ManifestAssociatedFunctionType.SELF,
-      functionId: uint8(FunctionId.RUNTIME_VALIDATION_BALANCER),
-      dependencyIndex: 0
-    });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](15);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](14);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
@@ -463,10 +457,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[14] = ManifestAssociatedFunction({
-      executionSelector: this.receiveFlashLoan.selector,
-      associatedFunction: balancerRuntimeValidationFunction
     });
 
     ManifestFunction memory preExecutionValidationFunction = ManifestFunction({
@@ -583,10 +573,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF)) {
       if (hasRole(KEEPER_ROLE, sender) || msg.sender == sender) return;
       revert Unauthorized();
-    }
-    if (functionId == uint8(FunctionId.RUNTIME_VALIDATION_BALANCER)) {
-      if (msg.sender != address(BALANCER_VAULT)) revert Unauthorized();
-      return;
     }
     revert NotImplemented(msg.sig, functionId);
   }
@@ -712,7 +698,6 @@ enum FunctionId {
   RUNTIME_VALIDATION_SELF,
   RUNTIME_VALIDATION_KEEPER,
   RUNTIME_VALIDATION_KEEPER_OR_SELF,
-  RUNTIME_VALIDATION_BALANCER,
   PRE_EXEC_VALIDATION
 }
 
