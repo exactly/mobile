@@ -71,9 +71,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   IDebtManager public immutable DEBT_MANAGER;
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
   IssuerChecker public immutable ISSUER_CHECKER;
-
   uint256 public immutable PROPOSAL_DELAY = 1 minutes;
-  uint256 public immutable OPERATION_EXPIRY = 15 minutes;
 
   address public collector;
   mapping(address account => Proposal lastProposal) public proposals;

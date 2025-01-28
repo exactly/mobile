@@ -96,7 +96,7 @@ contract RefunderTest is ForkTest {
     assertEq(exaUSDC.balanceOf(address(bob)), 0);
 
     uint256 timestamp = block.timestamp;
-    skip(issuerChecker.OPERATION_EXPIRY() + 1);
+    skip(issuerChecker.operationExpiry() + 1);
 
     vm.expectRevert(Expired.selector);
     refunder.refund(bob, amount, timestamp, _issuerOp(bob, amount, timestamp));
