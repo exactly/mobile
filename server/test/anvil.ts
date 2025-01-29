@@ -40,6 +40,7 @@ export default async function setup({ provide }: TestProject) {
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script node_modules/webauthn-owner-plugin/script/Plugin.s.sol
       --sender ${deployer} --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+    // cspell:disable-next-line
     shell.env.BROADCAST_WEBAUTHNOWNERPLUGIN_ADDRESS = parse(
       object({
         transactions: tuple([object({ contractName: literal("WebauthnOwnerPlugin"), contractAddress: Address })]),
@@ -70,15 +71,15 @@ export default async function setup({ provide }: TestProject) {
   if (initialize) {
     shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor.contractAddress;
     shell.env.PROTOCOL_EXA_ADDRESS = exa.contractAddress;
-    shell.env.PROTOCOL_MARKETEXA_ADDRESS = marketEXA.contractAddress;
+    shell.env.PROTOCOL_MARKETEXA_ADDRESS = marketEXA.contractAddress; // cspell:disable-line
     shell.env.PROTOCOL_USDC_ADDRESS = usdc.contractAddress;
-    shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC.contractAddress;
+    shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC.contractAddress; // cspell:disable-line
     shell.env.PROTOCOL_WETH_ADDRESS = weth.contractAddress;
-    shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH.contractAddress;
-    shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress;
-    shell.env.PROTOCOL_DEBTMANAGER_ADDRESS = debtManager.contractAddress;
+    shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH.contractAddress; // cspell:disable-line
+    shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer.contractAddress; // cspell:disable-line
+    shell.env.PROTOCOL_DEBTMANAGER_ADDRESS = debtManager.contractAddress; // cspell:disable-line
     shell.env.PROTOCOL_PREVIEWER_ADDRESS = previewer.contractAddress;
-    shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter.contractAddress;
+    shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter.contractAddress; // cspell:disable-line
     await $(shell)`forge script test/mocks/Mocks.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/InstallmentsPreviewer.s.sol

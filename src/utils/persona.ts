@@ -7,7 +7,7 @@ import handleError from "./handleError";
 import queryClient from "./queryClient";
 import { getKYCLink } from "./server";
 
-export const templateId = "itmpl_8uim4FvD5P3kFpKHX37CW817";
+export const templateId = "itmpl_8uim4FvD5P3kFpKHX37CW817"; // cspell:disable-line
 export const environment = __DEV__ ? Environment.SANDBOX : Environment.PRODUCTION;
 
 export async function createInquiry(passkey: Passkey) {

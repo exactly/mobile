@@ -104,7 +104,7 @@ describe("authenticated", () => {
                 bill_amount: Number(total) / 1e6,
                 transaction_amount: (1200 * Number(total)) / 1e6,
                 transaction_currency_code: "ARS",
-                merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "CABA" },
+                merchant_data: { name: "Merchant", country: "ARG", city: "Buenos Aires", state: "BA" },
               },
             };
             await database.insert(transactions).values({ id: String(index), cardId: "activity", hash, payload });
