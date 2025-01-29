@@ -10,7 +10,6 @@ import { IssuerChecker } from "../src/IssuerChecker.sol";
 
 import { BaseScript } from "./Base.s.sol";
 
-// solhint-disable-next-line max-states-count
 contract DeployScript is BaseScript {
   ExaAccountFactory public factory;
   ExaPlugin public exaPlugin;
