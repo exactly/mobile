@@ -1,5 +1,5 @@
 ExaAccountFactoryTest:testFuzz_createAccount_EOAOwners(uint256,address[63]) (runs: 256, μ: 4029307, ~: 3933401)
-ExaAccountFactoryTest:test_deploy_deploysToSameAddress() (gas: 29854153)
+ExaAccountFactoryTest:test_deploy_deploysToSameAddress() (gas: 29869464)
 ExaPluginTest:testFork_claimAndVestEscrowedEXA_claimsAndVests() (gas: 35840237)
 ExaPluginTest:testFork_collectCollateral_collects() (gas: 30114470)
 ExaPluginTest:testFork_crossRepay_repays() (gas: 31838588)
