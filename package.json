@@ -15,6 +15,7 @@
     "prepare:release": "mkdir -p common/generated && echo \"module.exports = /** @type {const} */ ('$(git describe --match '@exactly/mobile@*' | sed 's/@exactly\\/mobile@/v/')')\" > common/generated/release.js",
     "eas-build-on-success": "expo-updates fingerprint:generate --debug --platform android",
     "test": "pnpm run --aggregate-output /test:/",
+    "test:spell": "cspell --gitignore '**'",
     "test:deps": "pnpm audit",
     "test:expo": "expo-doctor",
     "test:build": "expo export --platform web",
