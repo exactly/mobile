@@ -13,10 +13,10 @@ abstract contract ForkTest is Test {
   using LibString for bytes;
   using stdJson for string;
 
-  ICREATE3Factory internal immutable CREATE3_FACTORY;
+  ICreate3Factory internal immutable CREATE3_FACTORY;
 
   constructor() {
-    CREATE3_FACTORY = ICREATE3Factory(
+    CREATE3_FACTORY = ICreate3Factory(
       block.chainid == 11_155_420 // TODO remove after https://github.com/lifinance/create3-factory/issues/14
         ? 0xcc3f41204a1324DD91F1Dbfc46208535293A371e
         : 0x93FEC2C00BfE902F733B57c5a6CeeD7CD1384AE1
@@ -115,7 +115,7 @@ abstract contract ForkTest is Test {
   }
 }
 
-interface ICREATE3Factory {
+interface ICreate3Factory {
   /// @notice Deploys a contract using CREATE3
   /// @dev The provided salt is hashed together with msg.sender to generate the final salt
   /// @param salt The deployer-specific salt for determining the deployed contract's address
