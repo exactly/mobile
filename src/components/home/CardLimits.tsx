@@ -12,6 +12,7 @@ import { useAccount } from "wagmi";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import { getCard } from "../../utils/server";
+import useDynamicHealthFactor from "../../utils/useDynamicHealthFactor";
 import useIntercom from "../../utils/useIntercom";
 import Text from "../shared/Text";
 
@@ -27,6 +28,9 @@ export default function CardLimits() {
     account: address,
     args: [address ?? zeroAddress],
   });
+
+  const { calculateDynamicHealthFactor } = useDynamicHealthFactor();
+  const targetHealthFactor = calculateDynamicHealthFactor();
 
   return (
     <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s4">
@@ -70,11 +74,14 @@ export default function CardLimits() {
             overflow="hidden"
             maxFontSizeMultiplier={1}
           >
-            {(markets ? Number(withdrawLimit(markets, marketUSDCAddress)) / 1e6 : 0).toLocaleString(undefined, {
-              style: "currency",
-              currency: "USD",
-              currencyDisplay: "narrowSymbol",
-            })}
+            {(markets ? Number(withdrawLimit(markets, marketUSDCAddress, targetHealthFactor)) / 1e6 : 0).toLocaleString(
+              undefined,
+              {
+                style: "currency",
+                currency: "USD",
+                currencyDisplay: "narrowSymbol",
+              },
+            )}
           </Text>
         )}
       </View>

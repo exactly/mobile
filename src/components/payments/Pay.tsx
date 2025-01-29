@@ -27,6 +27,7 @@ import { auditorAbi, marketAbi } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import useDynamicHealthFactor from "../../utils/useDynamicHealthFactor";
 import useMarketAccount from "../../utils/useMarketAccount";
 import AssetLogo from "../shared/AssetLogo";
 
@@ -67,6 +68,9 @@ export default function Pay() {
       enabled: !!maturity && !!account && !!selectedMarket && selectedMarket !== parse(Address, marketUSDCAddress),
     },
   });
+
+  const { calculateDynamicHealthFactor } = useDynamicHealthFactor();
+  const targetHealthFactor = calculateDynamicHealthFactor();
 
   const {
     data: repayHash,
@@ -149,7 +153,8 @@ export default function Pay() {
   }
 
   const repayMarket = positions?.find((p) => p.market === selectedMarket);
-  const repayMarketAvailable = markets && selectedMarket ? withdrawLimit(markets, selectedMarket) : 0n;
+  const repayMarketAvailable =
+    markets && selectedMarket ? withdrawLimit(markets, selectedMarket, targetHealthFactor) : 0n;
 
   if (!success || !repayMarket) return;
   if (!isPending && !isSuccess && !error)

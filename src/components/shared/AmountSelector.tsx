@@ -16,6 +16,7 @@ import Text from "./Text";
 import View from "./View";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import type { Withdraw } from "../../utils/queryClient";
+import useDynamicHealthFactor from "../../utils/useDynamicHealthFactor";
 import useMarketAccount from "../../utils/useMarketAccount";
 
 const AmountInput = styled(Input, {
@@ -43,7 +44,9 @@ export default function AmountSelector({ onChange }: { onChange: (value: bigint)
     account,
     args: [account ?? zeroAddress],
   });
-  const available = markets && withdraw?.market ? withdrawLimit(markets, withdraw.market) : 0n;
+  const { calculateDynamicHealthFactor } = useDynamicHealthFactor();
+  const targetHealthFactor = calculateDynamicHealthFactor();
+  const available = markets && withdraw?.market ? withdrawLimit(markets, withdraw.market, targetHealthFactor) : 0n;
 
   const handleAssetChange = useCallback(
     (text: string) => {

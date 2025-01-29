@@ -15,6 +15,7 @@ import { zeroAddress } from "viem";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
+import useDynamicHealthFactor from "../../utils/useDynamicHealthFactor";
 import useMarketAccount from "../../utils/useMarketAccount";
 import AmountSelector from "../shared/AmountSelector";
 import Button from "../shared/Button";
@@ -31,6 +32,8 @@ export default function Amount() {
     account,
     args: [account ?? zeroAddress],
   });
+  const { calculateDynamicHealthFactor } = useDynamicHealthFactor();
+  const targetHealthFactor = calculateDynamicHealthFactor();
   const { Field, Subscribe, handleSubmit } = useForm<{ amount: bigint }>({
     defaultValues: { amount: withdraw?.amount ?? 0n },
     onSubmit: ({ value: { amount } }) => {
@@ -38,7 +41,7 @@ export default function Amount() {
       router.push("/send-funds/withdraw");
     },
   });
-  const available = markets && withdraw?.market ? withdrawLimit(markets, withdraw.market) : 0n;
+  const available = markets && withdraw?.market ? withdrawLimit(markets, withdraw.market, targetHealthFactor) : 0n;
   return (
     <SafeView fullScreen>
       <View gap={ms(20)} fullScreen padded>

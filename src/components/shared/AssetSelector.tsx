@@ -11,6 +11,7 @@ import { useAccount } from "wagmi";
 import AssetLogo from "./AssetLogo";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
+import useDynamicHealthFactor from "../../utils/useDynamicHealthFactor";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
@@ -36,6 +37,8 @@ export default function AssetSelector({
     account: address,
     args: [address ?? zeroAddress],
   });
+  const { calculateDynamicHealthFactor } = useDynamicHealthFactor();
+  const targetHealthFactor = calculateDynamicHealthFactor();
 
   if (!positions || positions.length === 0) {
     return (
@@ -61,7 +64,7 @@ export default function AssetSelector({
         value={selectedMarket}
       >
         {positions.map(({ symbol, assetName, decimals, usdValue, market }, index) => {
-          const available = markets ? withdrawLimit(markets, market) : 0n;
+          const available = markets ? withdrawLimit(markets, market, targetHealthFactor) : 0n;
           return (
             <ToggleGroup.Item unstyled key={index} value={market} borderWidth={0}>
               <View

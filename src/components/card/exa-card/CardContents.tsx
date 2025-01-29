@@ -11,6 +11,7 @@ import { useAccount } from "wagmi";
 
 import Card from "../../../assets/images/card.svg";
 import { useReadPreviewerExactly } from "../../../generated/contracts";
+import useDynamicHealthFactor from "../../../utils/useDynamicHealthFactor";
 import AnimatedView from "../../shared/AnimatedView";
 import Text from "../../shared/Text";
 import View from "../../shared/View";
@@ -41,6 +42,9 @@ export default function CardContents({
     const rotationValue = `${(rotation.value % 360).toString()}deg`;
     return { transform: [{ rotate: rotationValue }] };
   });
+  const { calculateDynamicHealthFactor } = useDynamicHealthFactor();
+  const targetHealthFactor = calculateDynamicHealthFactor();
+
   return (
     <XStack
       height={160}
@@ -95,7 +99,10 @@ export default function CardContents({
               transform={[{ translateX: 0 }]}
             >
               <Text sensitive color="white" title maxFontSizeMultiplier={1}>
-                {(markets ? Number(withdrawLimit(markets, marketUSDCAddress)) / 1e6 : 0).toLocaleString(undefined, {
+                {(markets
+                  ? Number(withdrawLimit(markets, marketUSDCAddress, targetHealthFactor)) / 1e6
+                  : 0
+                ).toLocaleString(undefined, {
                   style: "currency",
                   currency: "USD",
                   currencyDisplay: "narrowSymbol",
