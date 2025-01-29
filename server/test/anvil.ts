@@ -3,7 +3,7 @@ import { Address } from "@exactly/common/validation";
 import { $ } from "execa";
 import { anvil } from "prool/instances";
 import { literal, null_, object, parse, tuple } from "valibot";
-import { createWalletClient, encodeAbiParameters, http, keccak256, padHex, zeroAddress, zeroHash } from "viem";
+import { createWalletClient, http, padHex, zeroAddress, zeroHash } from "viem";
 import { privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
 import type { TestProject } from "vitest/node";
@@ -128,44 +128,16 @@ export default async function setup({ provide }: TestProject) {
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
-  const [exaPlugin] = parse(
+  const [exaPlugin, , exaAccountFactory] = parse(
     object({
-      transactions: tuple([object({ contractName: literal("ExaPlugin"), contractAddress: Address })]),
+      transactions: tuple([
+        object({ contractName: literal("ExaPlugin"), contractAddress: Address }),
+        object({ transactionType: literal("CALL"), function: literal("deploy(bytes32,bytes)") }),
+        object({ contractName: literal("ExaAccountFactory"), contractAddress: Address }),
+      ]),
     }),
     await import(`@exactly/plugin/broadcast/Deploy.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
-  const exaAccountFactory = parse(
-    Address,
-    await anvilClient.readContract({
-      address: "0x93FEC2C00BfE902F733B57c5a6CeeD7CD1384AE1",
-      abi: [
-        {
-          type: "function",
-          name: "getDeployed",
-          inputs: [{ type: "address" }, { type: "bytes32" }],
-          outputs: [{ type: "address" }],
-          stateMutability: "view",
-        },
-      ],
-      functionName: "getDeployed",
-      args: [
-        deployer,
-        keccak256(
-          encodeAbiParameters(
-            [{ type: "string" }, { type: "string" }],
-            [
-              "Exa Plugin",
-              await anvilClient.readContract({
-                address: exaPlugin.contractAddress,
-                abi: exaPluginAbi,
-                functionName: "VERSION",
-              }),
-            ],
-          ),
-        ),
-      ],
-    }),
-  );
 
   if (initialize) {
     const bob = privateKeyToAddress(padHex("0xb0b"));
@@ -180,7 +152,7 @@ export default async function setup({ provide }: TestProject) {
       anvilClient.stopImpersonatingAccount({ address: keeper.address }),
     ]);
     await anvilClient.increaseTime({ seconds: 10 * 60 });
-    const bobAccount = deriveAddress(exaAccountFactory, { x: padHex(bob), y: zeroHash });
+    const bobAccount = deriveAddress(exaAccountFactory.contractAddress, { x: padHex(bob), y: zeroHash });
     const keeperClient = createWalletClient({ chain: foundry, account: keeper, transport: http() });
     await keeperClient.writeContract({ address: bobAccount, functionName: "withdraw", abi: exaPluginAbi });
   }
@@ -188,7 +160,7 @@ export default async function setup({ provide }: TestProject) {
   provide("Auditor", auditor.contractAddress);
   provide("InstallmentsPreviewer", installmentsPreviewer.contractAddress);
   provide("EXA", exa.contractAddress);
-  provide("ExaAccountFactory", exaAccountFactory);
+  provide("ExaAccountFactory", exaAccountFactory.contractAddress);
   provide("ExaPlugin", exaPlugin.contractAddress);
   provide("InstallmentsRouter", installmentsRouter.contractAddress);
   provide("IssuerChecker", issuerChecker.contractAddress);
