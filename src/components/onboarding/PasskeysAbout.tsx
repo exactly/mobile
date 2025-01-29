@@ -41,7 +41,7 @@ export default function PasskeysAbout() {
                     How passkeys work
                   </Text>
                   <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
-                    Passkeys replace passwords with cryptographic keys. Your private key stays on your devide, while the
+                    Passkeys replace passwords with cryptographic keys. Your private key stays on your device, while the
                     public key is shared with the service. This ensures secure and seamless authentication.
                   </Text>
                 </View>
