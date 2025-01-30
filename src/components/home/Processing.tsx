@@ -1,4 +1,4 @@
-import { exaPluginAddress } from "@exactly/common/generated/chain";
+import { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
 import { WAD } from "@exactly/lib";
 import { Check, Hourglass, ArrowUpRight } from "@tamagui/lucide-icons";
@@ -9,9 +9,9 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Square, styled, useTheme, XStack, YStack } from "tamagui";
 import { formatUnits, zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 
-import { useReadExaPluginProposals } from "../../generated/contracts";
+import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
 import useMarketAccount from "../../utils/useMarketAccount";
 import ActionButton from "../shared/ActionButton";
@@ -20,27 +20,58 @@ import SafeView from "../shared/SafeView";
 import Spinner from "../shared/Spinner";
 import Text from "../shared/Text";
 import View from "../shared/View";
+
 export default function Processing() {
-  const { address } = useAccount();
+  const { address: account } = useAccount();
   const [proposalAmount, setProposalAmount] = useState<bigint>();
 
-  const { data: proposal } = useReadExaPluginProposals({
-    address: exaPluginAddress,
-    args: [address ?? zeroAddress],
-    query: { refetchInterval: 5000, gcTime: 0 },
+  const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
+    address: account ?? zeroAddress,
   });
+  const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 
-  const { market } = useMarketAccount(proposal?.[1]);
+  const { data: proposals } = useReadContract(
+    isLatestPlugin
+      ? {
+          account,
+          functionName: "proposals",
+          abi: [...upgradeableModularAccountAbi, ...exaPluginAbi],
+          address: exaPluginAddress,
+          args: [account ?? zeroAddress],
+          query: { enabled: !!account, refetchInterval: 5000, gcTime: 0 },
+        }
+      : {
+          account,
+          functionName: "proposals",
+          abi: [
+            ...upgradeableModularAccountAbi,
+            {
+              type: "function",
+              inputs: [{ name: "account", internalType: "address", type: "address" }],
+              name: "proposals",
+              outputs: [
+                { name: "amount", internalType: "uint256", type: "uint256" },
+                { name: "market", internalType: "contract IMarket", type: "address" },
+                { name: "receiver", internalType: "address", type: "address" },
+                { name: "timestamp", internalType: "uint256", type: "uint256" },
+              ],
+              stateMutability: "view",
+            },
+          ],
+          address: installedPlugins?.[0],
+          args: [account ?? zeroAddress],
+          query: { enabled: !!account && !!installedPlugins?.[0], refetchInterval: 5000, gcTime: 0 },
+        },
+  );
 
+  const { market } = useMarketAccount(proposals?.[1]);
   const theme = useTheme();
-
-  if (!proposal || !market) return null;
-
-  if (proposal[0] > 0n && !proposalAmount) setProposalAmount(proposal[0]);
+  if (!proposals || !market) return null;
+  if (proposals[0] > 0n && !proposalAmount) setProposalAmount(proposals[0]);
 
   const assetName = market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3);
-  const amount = proposalAmount ?? proposal[0];
-  const pending = proposal[0] > 0n;
+  const amount = proposalAmount ?? proposals[0];
+  const pending = proposals[0] > 0n;
 
   return (
     <View fullScreen backgroundColor="$backgroundSoft">
@@ -58,7 +89,6 @@ export default function Processing() {
             : [theme.interactiveBaseSuccessSoftDefault.val, theme.backgroundSoft.val]
         }
       />
-
       <SafeView backgroundColor="transparent">
         <View fullScreen padded>
           <View fullScreen justifyContent="space-between">
@@ -76,7 +106,7 @@ export default function Processing() {
                 <Text secondary body>
                   {pending ? "Sending to" : "Sent to"}
                   <Text emphasized primary body>
-                    &nbsp; {shortenHex(proposal[2], 8, 8)}
+                    &nbsp; {shortenHex(proposals[2], 8, 8)}
                   </Text>
                 </Text>
                 <Text title primary color="$uiNeutralPrimary">
@@ -108,7 +138,6 @@ export default function Processing() {
                 </Text>
               )}
             </YStack>
-
             <ActionButton
               marginVertical="$s4"
               onPress={() => {
