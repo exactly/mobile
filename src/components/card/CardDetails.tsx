@@ -71,59 +71,73 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
           <ScrollView>
             <View fullScreen flex={1}>
               <View gap="$s5" flex={1} padded>
-                {card && card.provider === "cryptomate" && <CardBack uri={card.url} />}
-
-                {card && card.provider === "panda" && (
-                  <YStack
-                    borderRadius="$s3"
-                    borderWidth={1}
-                    borderColor="$borderNeutralSoft"
-                    backgroundColor="$uiNeutralPrimary"
-                    padding="$s5"
-                    paddingVertical="$s6"
-                    justifyContent="space-between"
-                    gap="$s6"
-                  >
-                    <XStack gap="$s4" alignItems="center">
-                      <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
-                        {details.pan.match(/.{1,4}/g)?.join(" ") ?? ""}
-                      </Text>
-                      <Copy
-                        hitSlop={20}
-                        size={16}
-                        color="$uiNeutralInversePrimary"
-                        strokeWidth={2.5}
-                        onPress={() => {
-                          setStringAsync(details.pan).catch(handleError);
-                          toast.show("Copied to clipboard!");
-                        }}
-                      />
-                    </XStack>
-                    <XStack gap="$s5" alignItems="center">
-                      <XStack alignItems="center" gap="$s3">
-                        <Text caption color="$uiNeutralInverseSecondary">
-                          Expires
-                        </Text>
+                {card ? (
+                  card.provider === "panda" ? (
+                    <YStack
+                      borderRadius="$s3"
+                      borderWidth={1}
+                      borderColor="$borderNeutralSoft"
+                      backgroundColor="$uiNeutralPrimary"
+                      padding="$s5"
+                      paddingVertical="$s6"
+                      justifyContent="space-between"
+                      gap="$s6"
+                    >
+                      <XStack gap="$s4" alignItems="center">
                         <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
-                          {`${card.expirationMonth}/${card.expirationYear}`}
+                          {details.pan.match(/.{1,4}/g)?.join(" ") ?? ""}
                         </Text>
+                        <Copy
+                          hitSlop={20}
+                          size={16}
+                          color="$uiNeutralInversePrimary"
+                          strokeWidth={2.5}
+                          onPress={() => {
+                            setStringAsync(details.pan).catch(handleError);
+                            toast.show("Copied to clipboard!");
+                          }}
+                        />
                       </XStack>
-                      <XStack alignItems="center" gap="$s3">
-                        <Text caption color="$uiNeutralInverseSecondary">
-                          CVV&nbsp;
-                        </Text>
-                        <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
-                          {details.cvc}
-                        </Text>
+                      <XStack gap="$s5" alignItems="center">
+                        <XStack alignItems="center" gap="$s3">
+                          <Text caption color="$uiNeutralInverseSecondary">
+                            Expires
+                          </Text>
+                          <Text
+                            emphasized
+                            headline
+                            letterSpacing={2}
+                            fontFamily="$mono"
+                            color="$uiNeutralInversePrimary"
+                          >
+                            {`${card.expirationMonth}/${card.expirationYear}`}
+                          </Text>
+                        </XStack>
+                        <XStack alignItems="center" gap="$s3">
+                          <Text caption color="$uiNeutralInverseSecondary">
+                            CVV&nbsp;
+                          </Text>
+                          <Text
+                            emphasized
+                            headline
+                            letterSpacing={2}
+                            fontFamily="$mono"
+                            color="$uiNeutralInversePrimary"
+                          >
+                            {details.cvc}
+                          </Text>
+                        </XStack>
                       </XStack>
-                    </XStack>
-                    <YStack>
-                      <Text emphasized headline letterSpacing={2} color="$uiNeutralInversePrimary">
-                        {card.displayName}
-                      </Text>
+                      <YStack>
+                        <Text emphasized headline letterSpacing={2} color="$uiNeutralInversePrimary">
+                          {card.displayName}
+                        </Text>
+                      </YStack>
                     </YStack>
-                  </YStack>
-                )}
+                  ) : (
+                    <CardBack uri={card.url} />
+                  )
+                ) : null}
                 <XStack
                   width="100%"
                   paddingHorizontal="$s4"
