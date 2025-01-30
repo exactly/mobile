@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React from "react";
 import { PixelRatio } from "react-native";
 import { ms } from "react-native-size-matters";
+import { Spinner } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -17,13 +18,13 @@ export default function HomeActions() {
   const fontScale = PixelRatio.getFontScale();
   const { address } = useAccount();
 
-  const { refetch: refetchProposal, isFetching: fetchingProposal } = useReadExaPluginProposals({
+  const { refetch: refetchProposal, isFetching: isFetchingProposal } = useReadExaPluginProposals({
     address: exaPluginAddress,
     args: [address ?? zeroAddress],
   });
 
   const handleSend = async () => {
-    if (fetchingProposal) return;
+    if (isFetchingProposal) return;
     const { data: proposal } = await refetchProposal();
     if (proposal && proposal[0] > 0n) {
       router.push(`/send-funds/processing`);
@@ -60,7 +61,14 @@ export default function HomeActions() {
         onPress={() => {
           handleSend().catch(handleError);
         }}
-        iconAfter={<ArrowUpRight size={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />}
+        disabled={isFetchingProposal}
+        iconAfter={
+          isFetchingProposal ? (
+            <Spinner height={ms(18) * fontScale} width={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
+          ) : (
+            <ArrowUpRight size={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
+          )
+        }
         backgroundColor="$interactiveBaseBrandSoftDefault"
         color="$interactiveOnBaseBrandSoft"
         {...outlined}
