@@ -16,12 +16,13 @@ import {
   PluginMetadata
 } from "modular-account-libs/interfaces/IPlugin.sol";
 import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
-import { IStandardExecutor } from "modular-account-libs/interfaces/IStandardExecutor.sol";
+import { Call, IStandardExecutor } from "modular-account-libs/interfaces/IStandardExecutor.sol";
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
 import { WETH as IWETH } from "solady/tokens/WETH.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+import { LibBytes } from "solady/utils/LibBytes.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 
@@ -53,6 +54,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
   using SafeCastLib for int256;
   using SafeERC20 for IERC20;
   using Address for address;
+  using LibBytes for bytes;
   using ECDSA for bytes32;
 
   string public constant NAME = "Exa Plugin";
@@ -519,73 +521,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
     returns (bytes memory)
   {
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
-      address target = address(bytes20(callData[16:36]));
-      bytes4 selector = bytes4(callData[132:136]);
-      address receiver;
-
-      if (target == address(AUDITOR)) {
-        if (selector != IAuditor.exitMarket.selector) return "";
-        revert Unauthorized();
-      }
-      if (target == address(DEBT_MANAGER)) {
-        if (selector == IDebtManager.rollFixed.selector) return "";
-        revert Unauthorized();
-      }
-      if (target == address(INSTALLMENTS_ROUTER)) {
-        if (selector == IInstallmentsRouter.borrow.selector) {
-          (,,,, receiver) = abi.decode(callData[136:], (IMarket, uint256, uint256[], uint256, address));
-          if (receiver == collector) return "";
+      uint256 assets = 0;
+      bool isExecuteBatch = bytes4(callData[0:4]) == IStandardExecutor.executeBatch.selector;
+      if (isExecuteBatch) {
+        Call[] memory calls = abi.decode(callData[4:], (Call[]));
+        for (uint256 i = 0; i < calls.length; i++) {
+          Call memory call = calls[i];
+          assets +=
+            _preExecutionChecker(call.target, bytes4(call.data.slice(0, 4)), call.data.slice(4, callData.length));
         }
-        revert Unauthorized();
-      }
-      if (target == address(SWAPPER) || target == msg.sender || allowlist[target]) return "";
-
-      IMarket marketTarget = IMarket(target);
-      if (!_isMarket(marketTarget)) revert Unauthorized();
-
-      uint256 assets;
-      address owner;
-
-      if (selector == IERC20.approve.selector) {
-        (receiver,) = abi.decode(callData[136:], (address, uint256));
-        if (receiver == address(this) || receiver == address(DEBT_MANAGER) || receiver == address(INSTALLMENTS_ROUTER))
-        {
-          return "";
-        }
-        revert Unauthorized();
-      } else if (selector == IERC20.transfer.selector) {
-        (receiver,) = abi.decode(callData[136:], (address, uint256));
-      } else if (selector == IERC20.transferFrom.selector) {
-        (, receiver,) = abi.decode(callData[136:], (address, address, uint256));
-      } else if (selector == IMarket.borrowAtMaturity.selector) {
-        (,,, receiver,) = abi.decode(callData[136:], (uint256, uint256, uint256, address, address));
-        if (receiver != collector) revert Unauthorized();
-        return "";
-      } else if (selector == IERC4626.withdraw.selector) {
-        (assets, receiver, owner) = abi.decode(callData[136:], (uint256, address, address));
-      } else if (selector == IERC4626.redeem.selector) {
-        uint256 shares;
-        (shares, receiver, owner) = abi.decode(callData[136:], (uint256, address, address));
-        assets = marketTarget.convertToAssets(shares);
-      } else if (selector == IMarket.borrow.selector) {
-        (, receiver,) = abi.decode(callData[136:], (uint256, address, address));
-        if (receiver != collector) revert Unauthorized();
-        return "";
       } else {
-        return "";
+        address target = address(bytes20(callData[16:36]));
+        bytes4 selector = bytes4(callData[132:136]);
+        assets = _preExecutionChecker(target, selector, callData[136:]);
       }
-
-      if (receiver == address(this) || receiver == collector) return "";
-
-      Proposal memory proposal = proposals[owner];
-
-      // slither-disable-next-line incorrect-equality -- unsigned zero check
-      if (proposal.amount == 0) revert NoProposal();
-      if (proposal.amount < assets) revert NoProposal();
-      if (proposal.market != marketTarget) revert NoProposal();
-      if (proposal.receiver != receiver) revert NoProposal();
-      if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
-      return abi.encode(assets);
+      return assets != 0 ? abi.encode(assets) : bytes("");
     }
     revert NotImplemented(msg.sig, functionId);
   }
@@ -694,6 +644,75 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       address(market), market.asset(), balance, abi.encodeCall(IERC4626.deposit, (balance, msg.sender))
     );
     _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
+  }
+
+  function _preExecutionChecker(address target, bytes4 selector, bytes memory callData) internal view returns (uint256) {
+    address receiver;
+
+    if (target == address(AUDITOR)) {
+      if (selector != IAuditor.exitMarket.selector) {
+        return 0;
+      }
+      revert Unauthorized();
+    }
+    if (target == address(DEBT_MANAGER)) {
+      if (selector == IDebtManager.rollFixed.selector) return 0;
+      revert Unauthorized();
+    }
+    if (target == address(INSTALLMENTS_ROUTER)) {
+      if (selector == IInstallmentsRouter.borrow.selector) {
+        (,,,, receiver) = abi.decode(callData, (IMarket, uint256, uint256[], uint256, address));
+        if (receiver == collector) return 0;
+      }
+      revert Unauthorized();
+    }
+    if (target == address(SWAPPER) || target == msg.sender || allowlist[target]) return 0;
+
+    IMarket marketTarget = IMarket(target);
+    if (!_isMarket(marketTarget)) revert Unauthorized();
+
+    uint256 assets = 0;
+    address owner = address(0);
+
+    if (selector == IERC20.approve.selector) {
+      (receiver,) = abi.decode(callData, (address, uint256));
+      if (receiver == address(this) || receiver == address(DEBT_MANAGER) || receiver == address(INSTALLMENTS_ROUTER)) {
+        return 0;
+      }
+      revert Unauthorized();
+    } else if (selector == IERC20.transfer.selector) {
+      (receiver,) = abi.decode(callData, (address, uint256));
+    } else if (selector == IERC20.transferFrom.selector) {
+      (, receiver,) = abi.decode(callData, (address, address, uint256));
+    } else if (selector == IMarket.borrowAtMaturity.selector) {
+      (,,, receiver,) = abi.decode(callData, (uint256, uint256, uint256, address, address));
+      if (receiver != collector) revert Unauthorized();
+      return 0;
+    } else if (selector == IERC4626.withdraw.selector) {
+      (assets, receiver, owner) = abi.decode(callData, (uint256, address, address));
+    } else if (selector == IERC4626.redeem.selector) {
+      uint256 shares;
+      (shares, receiver, owner) = abi.decode(callData, (uint256, address, address));
+      assets = marketTarget.convertToAssets(shares);
+    } else if (selector == IMarket.borrow.selector) {
+      (, receiver,) = abi.decode(callData, (uint256, address, address));
+      if (receiver != collector) revert Unauthorized();
+      return 0;
+    } else {
+      return 0;
+    }
+
+    if (receiver == address(this) || receiver == collector) return 0;
+
+    Proposal memory proposal = proposals[owner];
+
+    // slither-disable-next-line incorrect-equality -- unsigned zero check
+    if (proposal.amount == 0) revert NoProposal();
+    if (proposal.amount < assets) revert NoProposal();
+    if (proposal.market != marketTarget) revert NoProposal();
+    if (proposal.receiver != receiver) revert NoProposal();
+    if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+    return assets;
   }
 
   function _setCollector(address collector_) internal {
