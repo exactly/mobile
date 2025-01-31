@@ -118,15 +118,15 @@ describe("authenticated", () => {
   });
 
   it("creates a panda card", async () => {
-    const id = "create-card-user";
+    const foo = privateKeyToAddress(padHex("0xf00"));
     await database
       .insert(credentials)
-      .values([{ id, publicKey: new Uint8Array(), account, factory: zeroAddress, pandaId: "anyPanda" }]);
+      .values([{ id: foo, publicKey: new Uint8Array(), account: foo, factory: zeroAddress, pandaId: "anyPanda" }]);
     vi.spyOn(panda, "createCard").mockResolvedValueOnce({ ...cardTemplate, id: "createCard" });
 
     vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
 
-    const response = await appClient.index.$post({ header: { "test-credential-id": id } });
+    const response = await appClient.index.$post({ header: { "test-credential-id": foo } });
     const json = await response.json();
 
     expect(response.status).toBe(200);
