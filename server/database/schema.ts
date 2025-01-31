@@ -17,7 +17,7 @@ export const credentials = pgTable(
     kycId: text("kyc_id"),
     pandaId: text("panda_id"),
   },
-  (table) => [{ build: () => uniqueIndex("account_index").on(table.account) }],
+  (table) => [uniqueIndex("account_index").on(table.account)],
 );
 
 export const cards = pgTable("cards", {
