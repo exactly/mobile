@@ -17,6 +17,7 @@ import {
   pipe,
   string,
 } from "valibot";
+import { BaseError, ContractFunctionZeroDataError } from "viem";
 
 import { upgradeableModularAccountAbi } from "../generated/contracts";
 import publicClient from "../utils/publicClient";
@@ -153,10 +154,18 @@ const CardResponse = object({
   expirationYear: pipe(string(), length(4)),
 });
 
-export async function isPanda(account: Address): Promise<boolean> {
-  return await publicClient
-    .readContract({ address: account, functionName: "getInstalledPlugins", abi: upgradeableModularAccountAbi })
-    .then((ps) => ps.map((p) => parse(Hex, p.toLowerCase())).some((addr) => plugins.has(addr)));
+export async function isPanda(account: Address) {
+  try {
+    const installedPlugins = await publicClient.readContract({
+      address: account,
+      functionName: "getInstalledPlugins",
+      abi: upgradeableModularAccountAbi,
+    });
+    return installedPlugins.some((addr) => plugins.has(addr.toLowerCase() as Hex));
+  } catch (error) {
+    if (error instanceof BaseError && error.cause instanceof ContractFunctionZeroDataError) return true;
+    throw error;
+  }
 }
 
 export function headerValidator() {
