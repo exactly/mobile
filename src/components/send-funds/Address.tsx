@@ -108,7 +108,6 @@ export default function AddressSelection() {
                 </YStack>
               )}
             </Field>
-
             {(recentContacts ?? savedContacts) && (
               <ScrollView maxHeight={350} gap="$s4">
                 {recentContacts && recentContacts.length > 0 && (
@@ -119,7 +118,11 @@ export default function AddressSelection() {
                     }}
                   />
                 )}
-                {recentContacts && savedContacts && <Separator borderColor="$borderNeutralSoft" />}
+                {recentContacts && savedContacts && (
+                  <XStack paddingVertical="$s4">
+                    <Separator borderColor="$borderNeutralSoft" />
+                  </XStack>
+                )}
                 {savedContacts && savedContacts.length > 0 && (
                   <Contacts
                     onContactPress={(address) => {
@@ -130,7 +133,6 @@ export default function AddressSelection() {
                 )}
               </ScrollView>
             )}
-
             <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)} textAlign="justify">
               Make sure that the receiving address is compatible with {chain.name} network. Sending assets on other
               networks may result in irreversible loss of funds.
@@ -141,7 +143,6 @@ export default function AddressSelection() {
             <Text color="$uiNeutralPlaceholder" caption2 textAlign="justify">
               Arrival time ≈ 5 min.
             </Text>
-
             <Subscribe selector={({ canSubmit }) => canSubmit}>
               {(canSubmit) => {
                 return (
