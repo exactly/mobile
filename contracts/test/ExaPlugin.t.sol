@@ -6,7 +6,7 @@ import { ForkTest, stdError } from "./Fork.t.sol";
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { FixedLib, Market } from "@exactly/protocol/Market.sol";
 
-import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
+import { Call, UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
 
 import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
@@ -1261,6 +1261,88 @@ contract ExaPluginTest is ForkTest {
     account.execute(
       address(exaUSDC), 0, abi.encodeCall(IMarket.borrowAtMaturity, (FixedLib.INTERVAL, 100e6, 100e6, owner, owner))
     );
+  }
+
+  function test_executeBatch_checksEveryCall() external {
+    Call[] memory calls = new Call[](4);
+    calls[0] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[1] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[2] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[3] = Call(address(auditor), 0, abi.encodeCall(IAuditor.exitMarket, exaEXA));
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.executeBatch(calls);
+
+    calls = new Call[](3);
+    calls[0] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[1] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[2] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+
+    account.executeBatch(calls);
+  }
+
+  function test_executeBatch_supportsMultipleWithdrawsBetweenOps() external {
+    vm.prank(keeper);
+    account.poke(exaEXA);
+    uint256 amount = 30e18;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+    assertEq(exa.balanceOf(receiver), 0);
+
+    Call[] memory calls = new Call[](6);
+    calls[0] = Call(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount / 3, receiver, address(account))));
+    calls[1] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[2] = Call(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount / 3, receiver, address(account))));
+    calls[3] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[4] = Call(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount / 3, receiver, address(account))));
+    calls[5] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+
+    account.executeBatch(calls);
+    assertEq(exa.balanceOf(receiver), amount, "receiver balance doesn't match");
+  }
+
+  function test_executeBatch_reverts_whenWithdrawingWrongAmount() external {
+    vm.prank(keeper);
+    account.poke(exaEXA);
+    uint256 amount = 30e18;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+    assertEq(exa.balanceOf(receiver), 0);
+
+    Call[] memory calls = new Call[](6);
+    calls[0] = Call(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount / 3, receiver, address(account))));
+    calls[1] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[2] = Call(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount / 3, receiver, address(account))));
+    calls[3] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[4] = Call(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (amount / 3 + 1, receiver, address(account))));
+    calls[5] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PostExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(stdError.arithmeticError)
+      )
+    );
+    account.executeBatch(calls);
+    assertEq(exa.balanceOf(receiver), 0, "receiver balance doesn't match");
   }
 
   // base plugin
