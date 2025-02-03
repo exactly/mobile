@@ -1,6 +1,6 @@
 # check=skip=SecretsUsedInArgOrEnv
 
-FROM node:22.13.0-slim AS base
+FROM node:22.13.1-slim AS base
 
 ARG APP_DOMAIN="sandbox.exactly.app"
 ARG CHAIN_ID="11155420"

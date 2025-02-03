@@ -2,7 +2,7 @@ import { exaPluginAbi } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { $ } from "execa";
 import { anvil } from "prool/instances";
-import { literal, null_, object, parse, tuple } from "valibot";
+import { literal, object, parse, tuple } from "valibot";
 import { createWalletClient, http, padHex, zeroAddress, zeroHash } from "viem";
 import { privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
@@ -183,7 +183,7 @@ const Protocol = object({
     object({ transactionType: literal("CREATE"), contractName: literal("Auditor") }),
     object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: null_(), contractAddress: Address }),
+    object({ transactionType: literal("CREATE"), contractName: literal("MockERC20"), contractAddress: Address }),
     object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
     object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
     object({ transactionType: literal("CALL") }),
@@ -191,7 +191,7 @@ const Protocol = object({
     object({ transactionType: literal("CALL") }),
     object({ transactionType: literal("CREATE"), contractName: literal("MockPriceFeed") }),
     object({ transactionType: literal("CALL") }),
-    object({ transactionType: literal("CREATE"), contractName: null_(), contractAddress: Address }),
+    object({ transactionType: literal("CREATE"), contractName: literal("MockERC20"), contractAddress: Address }),
     object({ transactionType: literal("CREATE"), contractName: literal("Market") }),
     object({ transactionType: literal("CREATE"), contractName: literal("ERC1967Proxy"), contractAddress: Address }),
     object({ transactionType: literal("CALL") }),
