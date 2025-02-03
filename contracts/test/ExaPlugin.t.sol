@@ -739,6 +739,23 @@ contract ExaPluginTest is ForkTest {
     account.withdraw();
   }
 
+  function test_withdraw_reverts_whenTimelockedETH() external {
+    address receiver = address(0x420);
+    vm.prank(keeper);
+    account.pokeETH();
+
+    vm.prank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaWETH, 100 ether, receiver)));
+
+    skip(exaPlugin.PROPOSAL_DELAY() - 1);
+
+    assertEq(receiver.balance, 0);
+    vm.startPrank(keeper);
+    vm.expectRevert(Timelocked.selector);
+    account.withdraw();
+    assertEq(receiver.balance, 0);
+  }
+
   // keeper runtime validation
   function test_collectCredit_collects() external {
     vm.startPrank(keeper);
