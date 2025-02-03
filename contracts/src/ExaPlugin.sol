@@ -236,6 +236,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
       SwapData memory data = abi.decode(proposal.swapData, (SwapData));
       swap(IERC20(market.asset()), data.assetOut, amount, data.minAmountOut, data.route);
     } else if (market == EXA_WETH) {
+      if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
       WETH.withdraw(amount);
       receiver.safeTransferETH(amount);
     }
