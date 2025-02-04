@@ -39,7 +39,7 @@ export default function AssetSelector({
     queryFn: async () => {
       if (chain.id !== optimism.id || !account) return [];
       const balances = await getTokenBalances(account);
-      return balances;
+      return balances.filter(({ symbol }) => !(symbol.startsWith("exa") && symbol.length >= 4));
     },
     enabled: !!account,
   });
