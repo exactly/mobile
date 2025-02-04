@@ -101,7 +101,7 @@ export default function Pay() {
     borrow && USDCMarket
       ? ((borrow.position.principal + borrow.position.fee) * USDCMarket.usdPrice) / 10n ** BigInt(USDCMarket.decimals)
       : 0n;
-  const discount = Number(WAD - (previewValue * WAD) / positionValue) / 1e18;
+  const discount = positionValue === 0n ? 0 : Number(WAD - (previewValue * WAD) / positionValue) / 1e18;
 
   const feeValue = borrow
     ? (fixedRate(borrow.maturity, borrow.position.principal, borrow.position.fee, timestamp) *
