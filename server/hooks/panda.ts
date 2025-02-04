@@ -257,7 +257,7 @@ export default new Hono().post(
                 userId: account,
                 headings: { en: "Exa Card Purchase" },
                 contents: {
-                  en: `${payload.body.spend.localAmount.toLocaleString(undefined, {
+                  en: `${(payload.body.spend.localAmount / 100).toLocaleString(undefined, {
                     style: "currency",
                     currency: payload.body.spend.localCurrency,
                   })} at ${payload.body.spend.merchantName}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
