@@ -6,6 +6,7 @@ import {
   upgradeableModularAccountAbi,
   usdcAddress,
 } from "@exactly/common/generated/chain";
+import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import { Address, Hex } from "@exactly/common/validation";
 import { WAD, withdrawLimit } from "@exactly/lib";
 import { ArrowLeft, ChevronRight, Coins } from "@tamagui/lucide-icons";
@@ -52,7 +53,7 @@ export default function Pay() {
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
   });
-  const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
+  const isLatestPlugin = installedPlugins?.[0] === latestExaPlugin;
 
   const { success, output: maturity } = safeParse(
     pipe(string(), nonEmpty("no maturity")),
