@@ -74,14 +74,24 @@ describe("authenticated", () => {
 
     beforeAll(async () => {
       await database.insert(cards).values([{ id: "activity", credentialId: account, lastFour: "1234" }]);
-      const logs = await anvilClient.getLogs({
-        event: marketAbi[22],
-        address: [inject("MarketEXA"), inject("MarketUSDC"), inject("MarketWETH")],
-        args: { borrower: account },
-        toBlock: "latest",
-        fromBlock: 0n,
-        strict: true,
-      });
+      const logs = [
+        ...(await anvilClient.getLogs({
+          event: marketAbi[22],
+          address: [inject("MarketEXA"), inject("MarketUSDC"), inject("MarketWETH")],
+          args: { borrower: account },
+          toBlock: "latest",
+          fromBlock: 0n,
+          strict: true,
+        })),
+        ...(await anvilClient.getLogs({
+          event: marketAbi[49],
+          address: [inject("MarketEXA"), inject("MarketUSDC"), inject("MarketWETH")],
+          args: { owner: account },
+          toBlock: "latest",
+          fromBlock: 0n,
+          strict: true,
+        })),
+      ];
       const timestamps = await Promise.all(
         [...new Set(logs.map(({ blockNumber }) => blockNumber))].map((blockNumber) =>
           anvilClient.getBlock({ blockNumber }),
@@ -89,14 +99,14 @@ describe("authenticated", () => {
       ).then((blocks) => new Map(blocks.map(({ number, timestamp }) => [number, timestamp])));
       activity = await Promise.all(
         logs
-          .reduce((map, { args, transactionHash, blockNumber }) => {
+          .reduce((map, { args, transactionHash, blockNumber, eventName }) => {
             const data = map.get(transactionHash);
-            if (!data) return map.set(transactionHash, { blockNumber, events: [args] });
+            if (!data) return map.set(transactionHash, { blockNumber, eventName, events: [args] });
             data.events.push(args);
             return map;
-          }, new Map<Hash, { blockNumber: bigint; events: (typeof logs)[number]["args"][] }>())
+          }, new Map<Hash, { blockNumber: bigint; eventName: string; events: (typeof logs)[number]["args"][] }>())
           .entries()
-          .map(async ([hash, { blockNumber, events }], index) => {
+          .map(async ([hash, { blockNumber, eventName, events }], index) => {
             const blockTimestamp = timestamps.get(blockNumber)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
             const total = events.reduce((sum, { assets }) => sum + assets, 0n);
             const payload =
@@ -158,19 +168,16 @@ describe("authenticated", () => {
             const panda = safeParse(PandaActivity, {
               ...(payload as object),
               hashes: [hash],
-              borrows: [{ blockNumber, events }],
+              borrows: eventName === "Withdraw" ? [null] : [{ blockNumber, events }],
             });
             if (panda.success) return panda.output;
-
-            const cryptomate = safeParse(
-              { 0: DebitActivity, 1: CreditActivity }[events.length] ?? InstallmentsActivity,
-              {
-                ...(payload as object),
-                hash,
-                events,
-                blockTimestamp,
-              },
-            );
+            const eventCount = eventName === "Withdraw" ? 0 : events.length;
+            const cryptomate = safeParse({ 0: DebitActivity, 1: CreditActivity }[eventCount] ?? InstallmentsActivity, {
+              ...(payload as object),
+              hash,
+              events: eventCount > 0 ? events : undefined,
+              blockTimestamp: eventCount > 0 ? blockTimestamp : undefined,
+            });
             if (cryptomate.success) return cryptomate.output;
             throw new Error("bad test setup");
           }),

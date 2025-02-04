@@ -17,6 +17,7 @@ import {
   literal,
   looseObject,
   minLength,
+  nullable,
   nullish,
   number,
   object,
@@ -183,9 +184,10 @@ export default app.get(
               hashes,
               borrows: hashes.map((h) => {
                 const b = borrows?.get(h as Hash);
+                if (!b) return null;
                 return {
-                  events: b?.events,
-                  timestamps: b?.blockNumber && timestamps.get(b.blockNumber),
+                  events: b.events,
+                  timestamps: b.blockNumber && timestamps.get(b.blockNumber),
                 };
               }),
             });
@@ -228,7 +230,7 @@ const Borrow = object({ maturity: bigint(), assets: bigint(), fee: bigint() });
 export const PandaActivity = pipe(
   object({
     bodies: array(looseObject({})),
-    borrows: array(object({ timestamp: optional(bigint()), events: array(Borrow) })),
+    borrows: array(nullable(object({ timestamp: optional(bigint()), events: array(Borrow) }))),
     hashes: array(Hash),
     merchant: object({
       name: string(),
