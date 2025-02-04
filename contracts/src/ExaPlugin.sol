@@ -23,6 +23,7 @@ import { WETH as IWETH } from "solady/tokens/WETH.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { LibBytes } from "solady/utils/LibBytes.sol";
+import { ReentrancyGuard } from "solady/utils/ReentrancyGuard.sol";
 import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 
@@ -48,7 +49,7 @@ import { IssuerChecker } from "./IssuerChecker.sol";
 
 /// @title Exa Plugin
 /// @author Exactly
-contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
+contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   using FixedPointMathLib for uint256;
   using SafeTransferLib for address;
   using SafeCastLib for int256;
@@ -731,6 +732,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount {
 
   function _swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     internal
+    nonReentrant
     returns (uint256 amountIn, uint256 amountOut)
   {
     uint256 balanceIn = assetIn.balanceOf(address(this));
