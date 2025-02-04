@@ -228,7 +228,7 @@ const Borrow = object({ maturity: bigint(), assets: bigint(), fee: bigint() });
 export const PandaActivity = pipe(
   object({
     bodies: array(looseObject({})),
-    borrows: array(object({ timestamp: optional(bigint()), events: array(Borrow) })),
+    borrows: array(object({ timestamp: optional(bigint()), events: optional(array(Borrow)) })),
     hashes: array(Hash),
     merchant: object({
       name: string(),
@@ -242,7 +242,7 @@ export const PandaActivity = pipe(
     const operations = hashes.map((hash, index) => {
       const borrow = borrows[index];
       const validation = safeParse(
-        { 0: DebitActivity, 1: CreditActivity }[borrow?.events.length ?? 0] ?? InstallmentsActivity,
+        { 0: DebitActivity, 1: CreditActivity }[borrow?.events?.length ?? 0] ?? InstallmentsActivity,
         {
           ...bodies[index],
           type,
