@@ -252,18 +252,17 @@ export default new Hono().post(
               })
               .catch((error: unknown) => captureException(error));
 
-            if (!tx) {
-              sendPushNotification({
-                userId: account,
-                headings: { en: "Exa Card Purchase" },
-                contents: {
-                  en: `${(payload.body.spend.localAmount / 100).toLocaleString(undefined, {
-                    style: "currency",
-                    currency: payload.body.spend.localCurrency,
-                  })} at ${payload.body.spend.merchantName}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
-                },
-              }).catch((error: unknown) => captureException(error, { level: "error" }));
-            }
+            sendPushNotification({
+              userId: account,
+              headings: { en: "Exa Card Purchase" },
+              contents: {
+                en: `${(payload.body.spend.localAmount / 100).toLocaleString(undefined, {
+                  style: "currency",
+                  currency: payload.body.spend.localCurrency,
+                })} at ${payload.body.spend.merchantName.trim()}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
+              },
+            }).catch((error: unknown) => captureException(error, { level: "error" }));
+
             return c.json({});
           } catch (error: unknown) {
             captureException(error, { level: "fatal", contexts: { tx: { call } } });
