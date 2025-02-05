@@ -117,6 +117,35 @@ describe("authenticated", () => {
     });
   });
 
+  it("returns 400 panda id not found when no panda customer", async () => {
+    const foo = deriveAddress(inject("ExaAccountFactory"), {
+      x: padHex(privateKeyToAddress(padHex("0xf00"))),
+      y: zeroHash,
+    });
+
+    await database.insert(credentials).values([
+      {
+        id: foo,
+        publicKey: new Uint8Array(),
+        account: foo,
+        factory: zeroAddress,
+      },
+    ]);
+    await database.insert(cards).values([{ id: `card-${foo}`, credentialId: foo, lastFour: "4567" }]);
+
+    vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
+    vi.spyOn(panda, "getSecrets").mockResolvedValueOnce(panTemplate);
+    vi.spyOn(panda, "getCard").mockResolvedValueOnce(cardTemplate);
+    vi.spyOn(panda, "isPanda").mockResolvedValueOnce(true);
+
+    const response = await appClient.index.$get(
+      { query: { credentialId: "card" } },
+      { headers: { "test-credential-id": foo, SessionID: "fakeSession" } },
+    );
+
+    expect(response.status).toBe(400);
+  });
+
   it("creates a panda card", async () => {
     const foo = privateKeyToAddress(padHex("0xf00"));
     await database

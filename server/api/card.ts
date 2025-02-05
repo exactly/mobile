@@ -30,7 +30,7 @@ export default app
     const credentialId = c.get("credentialId");
     const credential = await database.query.credentials.findFirst({
       where: eq(credentials.id, credentialId),
-      columns: { account: true },
+      columns: { account: true, pandaId: true },
       with: {
         cards: {
           columns: { id: true, lastFour: true, status: true, mode: true },
@@ -47,6 +47,7 @@ export default app
     if (credential.cards.length > 0 && credential.cards[0]) {
       const { id, lastFour, status, mode } = credential.cards[0];
       if (await isPanda(account)) {
+        if (!credential.pandaId) return c.json("panda id not found", 400);
         const session = c.req.header("SessionId");
         if (!session) return c.json("SessionId header required", 400);
         const [pan, { expirationMonth, expirationYear }] = await Promise.all([getSecrets(id, session), getCard(id)]);
@@ -93,7 +94,7 @@ export default app
         if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
         if (credential.cards.length > 0) return c.json("card already exists", 400);
         if (pandaIssuing) {
-          if (!credential.pandaId) return c.json("pandaId not found", 400);
+          if (!credential.pandaId) return c.json("panda id not found", 400);
           const card = await createPandaCard({
             userId: credential.pandaId,
             name: {
