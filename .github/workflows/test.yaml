@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
-          version: ">=9.15.5"
+          version: "9.15.5"
           run_install: false
       - uses: actions/setup-node@v4
         with:
@@ -34,9 +34,9 @@ jobs:
       - run: pip install -r contracts/requirements.txt
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run --recursive --aggregate-output --no-bail build
-      - run: pnpm run --recursive --aggregate-output --no-bail sourcemaps
-      - run: pnpm test --recursive --aggregate-output --no-bail
+      - run: pnpm --recursive --aggregate-output --no-bail run build
+      - run: pnpm --recursive --aggregate-output --no-bail run sourcemaps
+      - run: pnpm --recursive --aggregate-output --no-bail test
 
       - uses: codecov/codecov-action@v4
         if: ${{ !cancelled() }}
