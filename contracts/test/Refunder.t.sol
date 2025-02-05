@@ -127,9 +127,7 @@ contract RefunderTest is ForkTest {
           "\x19\x01",
           domainSeparator,
           keccak256(
-            abi.encode(
-              keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
-            )
+            abi.encode(keccak256("Refund(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp)
           )
         )
       )
