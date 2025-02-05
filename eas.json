@@ -4,7 +4,7 @@
     "base": {
       "resourceClass": "large",
       "node": "22.13.1",
-      "pnpm": "9.15.5",
+      "pnpm": "10.2.0",
       "android": { "image": "latest" },
       "ios": { "image": "latest" }
     },
