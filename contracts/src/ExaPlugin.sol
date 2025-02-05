@@ -277,6 +277,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
     _depositUnspent(collateral, maxAmountIn - amountIn, msg.sender);
     _depositApprovedUnspent(amountOut - amount, msg.sender);
+    _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (EXA_USDC)));
 
     _checkLiquidity(msg.sender);
   }
