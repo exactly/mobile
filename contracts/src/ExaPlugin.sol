@@ -230,6 +230,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
         IDebtManager.rollFixed, (EXA_USDC, repayMaturity, borrowMaturity, maxRepayAssets, maxBorrowAssets, percentage)
       )
     );
+    _approveFromSender(address(EXA_USDC), address(DEBT_MANAGER), 0);
   }
 
   function withdraw() external {
@@ -327,6 +328,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       abi.encodeCall(IInstallmentsRouter.borrow, (EXA_USDC, firstMaturity, amounts, maxRepay, collector))
     );
     _checkLiquidity(msg.sender);
+    _approveFromSender(address(EXA_USDC), address(INSTALLMENTS_ROUTER), 0);
   }
 
   function poke(IMarket market) external {
