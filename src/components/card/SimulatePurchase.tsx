@@ -31,7 +31,6 @@ export default function SimulatePurchase({ installments }: { installments: numbe
     refetch: refetchBorrowPreview,
   } = useReadPreviewerPreviewBorrowAtMaturity({
     address: previewerAddress,
-    account,
     args: [market?.market ?? zeroAddress, BigInt(firstMaturity), assets],
     query: { enabled: !!market && !!account && !!firstMaturity && assets > 0n },
   });

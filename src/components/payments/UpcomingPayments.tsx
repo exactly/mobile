@@ -13,11 +13,7 @@ import View from "../shared/View";
 
 export default function UpcomingPayments({ onSelect }: { onSelect: (maturity: bigint, amount: bigint) => void }) {
   const { address } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
+  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
   const duePayments = new Map<bigint, bigint>();
   if (markets) {
     for (const { fixedBorrowPositions, usdPrice, decimals } of markets) {

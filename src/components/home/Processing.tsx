@@ -34,7 +34,6 @@ export default function Processing() {
   const { data: proposals } = useReadContract(
     isLatestPlugin
       ? {
-          account,
           functionName: "proposals",
           abi: [...upgradeableModularAccountAbi, ...exaPluginAbi],
           address: exaPluginAddress,
@@ -42,7 +41,6 @@ export default function Processing() {
           query: { enabled: !!account, refetchInterval: 5000, gcTime: 0 },
         }
       : {
-          account,
           functionName: "proposals",
           abi: [
             ...upgradeableModularAccountAbi,

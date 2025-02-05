@@ -36,11 +36,7 @@ export default function Home() {
     data: markets,
     refetch: refetchMarkets,
     isPending: isPendingPreviewer,
-  } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
+  } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
   const { data: KYCStatus, refetch: refetchKYCStatus } = useQuery({
     queryKey: ["kyc", "status"],
     queryFn: getKYCStatus,

@@ -29,11 +29,7 @@ export default function CardContents({
   lastFour?: string;
 }) {
   const { address } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
+  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
 
   const rotation = useSharedValue(0);
   const rStyle = useAnimatedStyle(() => {

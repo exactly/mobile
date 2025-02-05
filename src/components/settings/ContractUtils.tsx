@@ -37,11 +37,7 @@ export default function ContractUtils() {
   const [borrowAmount, setBorrowAmount] = useState<number>(0);
   const { address, chainId } = useAccount();
 
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
+  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
   const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,

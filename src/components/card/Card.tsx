@@ -61,7 +61,6 @@ export default function Card() {
 
   const { data: markets, refetch: refetchMarkets } = useReadPreviewerExactly({
     address: previewerAddress,
-    account: address,
     args: [address ?? zeroAddress],
   });
 

@@ -16,11 +16,7 @@ import Text from "../shared/Text";
 
 export default function Balance({ usdBalance }: { usdBalance: bigint }) {
   const { address } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
+  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
   const symbols = markets
     ?.map(({ symbol, floatingDepositAssets }) => ({
       floatingDepositAssets,

@@ -26,7 +26,6 @@ export default function HomeActions() {
   const { refetch: refetchProposals, isFetching: isFetchingProposals } = useReadContract(
     isLatestPlugin
       ? {
-          account,
           functionName: "proposals",
           abi: [...upgradeableModularAccountAbi, ...exaPluginAbi],
           address: exaPluginAddress,
@@ -34,7 +33,6 @@ export default function HomeActions() {
           query: { enabled: !!account },
         }
       : {
-          account,
           functionName: "proposals",
           abi: [
             ...upgradeableModularAccountAbi,

@@ -25,10 +25,7 @@ export default function useAsset(address?: Address) {
     data: markets,
     queryKey,
     isFetching: isMarketsFetching,
-  } = useReadPreviewerExactly({
-    address: previewerAddress,
-    args: [account ?? zeroAddress],
-  });
+  } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
 
   const market = useMemo(() => markets?.find(({ market: m }) => m === address), [address, markets]);
 

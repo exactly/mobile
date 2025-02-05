@@ -30,10 +30,7 @@ export default function Payments() {
   function toggle() {
     queryClient.setQueryData(["settings", "sensitive"], !hidden);
   }
-  const { refetch, isPending } = useReadPreviewerExactly({
-    address: previewerAddress,
-    args: [account ?? zeroAddress],
-  });
+  const { refetch, isPending } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
   let usdDue = 0n;
   if (market) {
     for (const { position } of market.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {

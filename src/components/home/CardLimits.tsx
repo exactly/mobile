@@ -22,11 +22,7 @@ export default function CardLimits() {
   const { address } = useAccount();
   const { presentArticle } = useIntercom();
 
-  const { data: markets } = useReadPreviewerExactly({
-    address: previewerAddress,
-    account: address,
-    args: [address ?? zeroAddress],
-  });
+  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
 
   return (
     <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s4">

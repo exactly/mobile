@@ -44,11 +44,7 @@ export default function AssetSelector({
     enabled: !!account,
   });
 
-  const { data: markets } = useReadPreviewerExactly({
-    account,
-    address: previewerAddress,
-    args: [account ?? zeroAddress],
-  });
+  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
 
   const positions = markets
     ?.map((market) => ({
