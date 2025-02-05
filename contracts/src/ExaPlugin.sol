@@ -587,15 +587,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     revert NotImplemented(msg.sig, functionId);
   }
 
-  function _approveAndExecuteFromSender(address target, address assetIn, uint256 maxAmountIn, bytes memory data)
-    internal
-  {
-    _approveFromSender(assetIn, target, maxAmountIn);
+  function _approveAndExecuteFromSender(address target, address asset, uint256 amount, bytes memory data) internal {
+    _approveFromSender(asset, target, amount);
     _executeFromSender(target, 0, data);
   }
 
-  function _approveFromSender(address assetIn, address spender, uint256 maxAmountIn) internal {
-    _executeFromSender(assetIn, 0, abi.encodeCall(IERC20.approve, (spender, maxAmountIn)));
+  function _approveFromSender(address asset, address spender, uint256 amount) internal {
+    _executeFromSender(asset, 0, abi.encodeCall(IERC20.approve, (spender, amount)));
   }
 
   function _checkIssuer(address issuer, uint256 amount, uint256 timestamp, bytes calldata signature) internal {
