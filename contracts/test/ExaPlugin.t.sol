@@ -6,7 +6,11 @@ import { ForkTest, stdError } from "./Fork.t.sol";
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { FixedLib, Market } from "@exactly/protocol/Market.sol";
 
-import { Call, UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
+import {
+  Call,
+  PluginManagerInternals,
+  UpgradeableModularAccount
+} from "modular-account/src/account/UpgradeableModularAccount.sol";
 
 import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
@@ -42,7 +46,10 @@ import {
   Proposed,
   SwapProposed,
   Timelocked,
-  Unauthorized
+  Unauthorized,
+  UninstallProposed,
+  UninstallRevoked,
+  Uninstalling
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { Refunder } from "../src/Refunder.sol";
@@ -192,6 +199,50 @@ contract ExaPluginTest is ForkTest {
     account.execute(
       address(account), 0, abi.encodeCall(IExaAccount.proposeSwap, (exaEXA, IERC20(address(usdc)), amount, 1, route))
     );
+  }
+
+  function test_proposeUninstall_emitsUninstallProposed() external {
+    vm.startPrank(owner);
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit UninstallProposed(address(account), block.timestamp + exaPlugin.PROPOSAL_DELAY());
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
+  }
+
+  function test_proposeUninstall_deactivatesLiquidity() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
+
+    vm.startPrank(keeper);
+    vm.expectRevert(Uninstalling.selector);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+  }
+
+  function test_revokeUninstall_emits_UninstallRevoked() external {
+    vm.startPrank(owner);
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit UninstallRevoked(address(account));
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.revokeUninstall, ()));
+  }
+
+  function test_revokeUninstall_reactivatesLiquidity() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
+
+    vm.startPrank(keeper);
+    vm.expectRevert(Uninstalling.selector);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.revokeUninstall, ()));
+
+    vm.startPrank(keeper);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
   }
 
   function test_swap_swaps() external {
@@ -1367,10 +1418,30 @@ contract ExaPluginTest is ForkTest {
   // base plugin
   function test_onUninstall_uninstalls() external {
     vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
     account.uninstallPlugin(address(exaPlugin), "", "");
     address[] memory plugins = account.getInstalledPlugins();
     assertEq(plugins.length, 1);
     assertEq(plugins[0], address(ownerPlugin));
+  }
+
+  function test_onUninstall_reverts_whenTimelocked() external {
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        PluginManagerInternals.PluginUninstallCallbackFailed.selector,
+        exaPlugin,
+        abi.encodeWithSelector(Timelocked.selector)
+      )
+    );
+    account.uninstallPlugin(address(exaPlugin), "", "");
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+    account.uninstallPlugin(address(exaPlugin), "", "");
   }
 
   // refunder
