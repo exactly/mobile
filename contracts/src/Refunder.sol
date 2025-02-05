@@ -36,7 +36,7 @@ contract Refunder is AccessControl {
   }
 
   modifier onlyIssuer(address account, uint256 amount, uint256 timestamp, bytes calldata signature) {
-    ISSUER_CHECKER.checkIssuer(account, amount, timestamp, signature);
+    ISSUER_CHECKER.check(account, amount, timestamp, true, signature);
     _;
   }
 }

@@ -140,7 +140,7 @@ contract BobScript is BaseScript {
           domainSeparator,
           keccak256(
             abi.encode(
-              keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), bobAccount, amount, timestamp
+              keccak256("Collection(address account,uint256 amount,uint40 timestamp)"), bobAccount, amount, timestamp
             )
           )
         )

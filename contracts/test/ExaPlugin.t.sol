@@ -1077,7 +1077,9 @@ contract ExaPluginTest is ForkTest {
     );
 
     uint256 balance = usdc.balanceOf(exaPlugin.collector());
-    account.collectCollateral(21e6, exaWBTC, maxAmountIn, block.timestamp, route, _issuerOp(21e6, block.timestamp));
+    account.collectCollateral(
+      21e6, exaWBTC, maxAmountIn, block.timestamp, route, _issuerOp(21e6, block.timestamp, false, true)
+    );
     assertEq(usdc.balanceOf(exaPlugin.collector()) - balance, 21e6);
   }
 
@@ -1377,7 +1379,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 balance = exaUSDC.balanceOf(address(account));
     deal(address(usdc), address(refunder), 100e6);
-    refunder.refund(address(account), 100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1));
+    refunder.refund(address(account), 100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1, true, false));
     assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
   }
 
@@ -1446,6 +1448,46 @@ contract ExaPluginTest is ForkTest {
   // solhint-enable func-name-mixedcase
 
   function _issuerOp(uint256 amount, uint256 timestamp) internal view returns (bytes memory signature) {
+    return _issuerOp(amount, timestamp, false, false);
+  }
+
+  function _issuerOp(uint256 amount, uint256 timestamp, bool refund, bool legacyFork)
+    internal
+    view
+    returns (bytes memory signature)
+  {
+    if (legacyFork) {
+      return _sign(
+        issuerKey,
+        keccak256(
+          abi.encodePacked(
+            "\x19\x01",
+            domainSeparator,
+            keccak256(
+              abi.encode(
+                keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
+              )
+            )
+          )
+        )
+      );
+    }
+    if (refund) {
+      return _sign(
+        issuerKey,
+        keccak256(
+          abi.encodePacked(
+            "\x19\x01",
+            domainSeparator,
+            keccak256(
+              abi.encode(
+                keccak256("Refund(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
+              )
+            )
+          )
+        )
+      );
+    }
     return _sign(
       issuerKey,
       keccak256(
@@ -1454,7 +1496,7 @@ contract ExaPluginTest is ForkTest {
           domainSeparator,
           keccak256(
             abi.encode(
-              keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
+              keccak256("Collection(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
             )
           )
         )
