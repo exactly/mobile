@@ -304,7 +304,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     for (uint256 i = 0; i < amounts.length; ++i) {
       totalAmount += amounts[i];
     }
-    ISSUER_CHECKER.checkIssuer(msg.sender, totalAmount, timestamp, signature);
+    _checkIssuer(msg.sender, totalAmount, timestamp, signature);
 
     _approveAndExecuteFromSender(
       address(INSTALLMENTS_ROUTER),
