@@ -1,5 +1,4 @@
 import { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain";
-import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, zeroAddress } from "viem";
@@ -61,7 +60,7 @@ export default function PluginUpgrade() {
       await refetchInstalledPlugins();
     },
   });
-  if (!installedPlugins || installedPlugins[0] === latestExaPlugin) return null;
+  if (!installedPlugins || installedPlugins[0] === exaPluginAddress) return null;
   return (
     <InfoBadge
       title="An account upgrade is required to access the latest features."
