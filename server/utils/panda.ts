@@ -52,8 +52,6 @@ export async function createCard({
   userId: string;
   name: { first: string; middle: string | null; last: string };
 }) {
-  let cardholder = [name.first, name.middle, name.last].filter(Boolean).join(" ");
-  if (cardholder.length > 30 && name.middle) cardholder = `${name.first} ${name.last}`;
   return await request(
     CardResponse,
     `/issuing/users/${userId}/cards`,
