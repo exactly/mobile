@@ -7,7 +7,7 @@ import { View, Text } from "tamagui";
 import handleError from "../../utils/handleError";
 import useIntercom from "../../utils/useIntercom";
 
-export default function AlertBadge() {
+export default function LiquidationAlert() {
   const { presentArticle } = useIntercom();
   return (
     <View

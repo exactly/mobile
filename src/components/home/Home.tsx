@@ -16,8 +16,8 @@ import HomeActions from "./HomeActions";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import { getActivity, getKYCStatus } from "../../utils/server";
-import AlertBadge from "../shared/AlertBadge";
 import LatestActivity from "../shared/LatestActivity";
+import LiquidationAlert from "../shared/LiquidationAlert";
 import ProfileHeader from "../shared/ProfileHeader";
 import SafeView from "../shared/SafeView";
 import View from "../shared/View";
@@ -76,7 +76,7 @@ export default function Home() {
           <ProfileHeader />
           <View flex={1}>
             <View backgroundColor="$backgroundSoft" padded gap="$s4">
-              {markets && healthFactor(markets) < HEALTH_FACTOR_THRESHOLD && <AlertBadge />}
+              {markets && healthFactor(markets) < HEALTH_FACTOR_THRESHOLD && <LiquidationAlert />}
               <CardLimits />
               <HomeActions />
               <Balance usdBalance={usdBalance} />

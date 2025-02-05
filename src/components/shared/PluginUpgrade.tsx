@@ -4,7 +4,7 @@ import React from "react";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import InfoBadge from "./InfoBadge";
+import InfoAlert from "./InfoAlert";
 import {
   upgradeableModularAccountAbi,
   useReadExaPluginPluginManifest,
@@ -62,7 +62,7 @@ export default function PluginUpgrade() {
   });
   if (!installedPlugins || installedPlugins[0] === exaPluginAddress) return null;
   return (
-    <InfoBadge
+    <InfoAlert
       title="An account upgrade is required to access the latest features."
       actionText="Upgrade account now"
       loading={isUpdating}

@@ -24,7 +24,7 @@ import queryClient from "../../utils/queryClient";
 import { APIError, getActivity, getCard, createCard, getKYCStatus } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
-import InfoBadge from "../shared/InfoBadge";
+import InfoAlert from "../shared/InfoAlert";
 import LatestActivity from "../shared/LatestActivity";
 import PluginUpgrade from "../shared/PluginUpgrade";
 import SafeView from "../shared/SafeView";
@@ -174,7 +174,7 @@ export default function Card() {
                   </View>
                 </XStack>
                 {(usdBalance === 0n || KYCStatus !== "ok") && (
-                  <InfoBadge
+                  <InfoAlert
                     title="Your card is awaiting activation. Follow the steps to enable it."
                     actionText="Get started"
                     onPress={() => {

@@ -4,7 +4,7 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View, Text, Spinner, XStack } from "tamagui";
 
-export default function InfoBadge({
+export default function InfoAlert({
   title,
   actionText,
   loading,
