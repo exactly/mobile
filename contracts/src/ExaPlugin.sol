@@ -276,7 +276,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     IERC20(USDC).safeTransfer(collector, amount);
 
     _depositUnspent(collateral, maxAmountIn - amountIn, msg.sender);
-    _depositApprovedUnspent(EXA_USDC, amountOut - amount, msg.sender);
+    _depositApprovedUnspent(amountOut - amount, msg.sender);
 
     _checkLiquidity(msg.sender);
   }
@@ -373,7 +373,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       IERC20(USDC).safeTransfer(address(BALANCER_VAULT), maxRepay);
 
       _depositUnspent(c.marketIn, c.maxAmountIn - amountIn, borrower);
-      _depositApprovedUnspent(EXA_USDC, amountOut - actualRepay, borrower);
+      _depositApprovedUnspent(amountOut - actualRepay, borrower);
     }
 
     _checkLiquidity(borrower);
@@ -647,8 +647,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     BALANCER_VAULT.flashLoan(address(this), tokens, amounts, data);
   }
 
-  function _depositApprovedUnspent(IMarket market, uint256 unspent, address receiver) internal {
-    if (unspent != 0) market.deposit(unspent, receiver);
+  function _depositApprovedUnspent(uint256 unspent, address receiver) internal {
+    if (unspent != 0) EXA_USDC.deposit(unspent, receiver);
   }
 
   function _depositUnspent(IMarket market, uint256 unspent, address receiver) internal {
