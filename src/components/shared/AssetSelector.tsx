@@ -33,18 +33,19 @@ export default function AssetSelector({
 }) {
   const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
   const { address: account } = useAccount();
+  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
 
   const { data: externalAssets, isPending: isExternalAssetsPending } = useQuery({
     queryKey: ["externalAssets", account],
     queryFn: async () => {
       if (chain.id !== optimism.id || !account) return [];
       const balances = await getTokenBalances(account);
-      return balances;
+      return balances.filter(
+        ({ address }) => markets && !markets.some(({ market }) => address.toLowerCase() === market.toLowerCase()),
+      );
     },
     enabled: !!account,
   });
-
-  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
 
   const positions = markets
     ?.map((market) => ({
