@@ -8,6 +8,8 @@ interface IExaAccount {
   function propose(IMarket market, uint256 amount, address receiver) external;
   function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
     external;
+  function proposeUninstall() external;
+  function revokeUninstall() external;
   function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     external
     returns (uint256 amountIn, uint256 amountOut);
@@ -66,6 +68,10 @@ event Proposed(
   address indexed account, IMarket indexed market, address indexed receiver, uint256 amount, uint256 unlock
 );
 
+event UninstallProposed(address indexed account, uint256 unlock);
+
+event UninstallRevoked(address indexed account);
+
 event SwapProposed(
   address indexed account,
   IMarket indexed market,
@@ -113,6 +119,7 @@ error NoProposal();
 error NotMarket();
 error Timelocked();
 error Unauthorized();
+error Uninstalling();
 
 interface IAuditor {
   function accountMarkets(address account) external view returns (uint256);
