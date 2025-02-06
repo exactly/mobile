@@ -59,7 +59,7 @@ export async function createCard({
     parse(CreateCardRequest, {
       type: "virtual",
       status: "active",
-      limit: { amount: 10_000, frequency: "per7DayPeriod" },
+      limit: { amount: 1_000_000, frequency: "per7DayPeriod" },
       configuration: { displayName: displayName(name) },
     }),
     "POST",
