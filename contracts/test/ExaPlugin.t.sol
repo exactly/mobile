@@ -495,7 +495,9 @@ contract ExaPluginTest is ForkTest {
     account.collectCredit(FixedLib.INTERVAL, assets, block.timestamp, _issuerOp(assets, block.timestamp));
 
     vm.startPrank(address(account));
-    account.rollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 100e18);
+    account.proposeRollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 1e18);
+    skip(exaPlugin.PROPOSAL_DELAY());
+    account.rollDebt();
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
     assertEq(position.principal, 0);
@@ -514,7 +516,13 @@ contract ExaPluginTest is ForkTest {
     uint256 maxAssets = 110e6;
     account.collectCredit(FixedLib.INTERVAL, assets, maxAssets, block.timestamp, _issuerOp(assets, block.timestamp));
 
-    account.rollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 100e18);
+    vm.startPrank(address(account));
+    account.proposeRollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 1e18);
+    
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    vm.startPrank(keeper);
+    account.rollDebt();
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
     assertEq(position.principal, 0);
