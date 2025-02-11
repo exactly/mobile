@@ -6,6 +6,13 @@ import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.s
 
 interface IExaAccount {
   function propose(IMarket market, uint256 amount, address receiver) external;
+  function proposeRollDebt(
+    uint256 repayMaturity,
+    uint256 borrowMaturity,
+    uint256 maxRepayAssets,
+    uint256 maxBorrowAssets,
+    uint256 percentage
+  ) external;
   function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
     external;
   function proposeUninstall() external;
@@ -23,13 +30,7 @@ interface IExaAccount {
     bytes calldata route
   ) external;
   function repay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external;
-  function rollDebt(
-    uint256 repayMaturity,
-    uint256 borrowMaturity,
-    uint256 maxRepayAssets,
-    uint256 maxBorrowAssets,
-    uint256 percentage
-  ) external;
+  function rollDebt() external;
   function withdraw() external;
 
   function collectCollateral(
@@ -107,7 +108,15 @@ struct Proposal {
   IMarket market;
   address receiver;
   uint256 timestamp;
-  bytes swapData;
+  ProposalType proposalType;
+  bytes data;
+}
+
+enum ProposalType {
+  WITHDRAW,
+  SWAP,
+  ROLL_DEBT,
+  CROSS_REPAY
 }
 
 error BorrowLimitExceeded();
@@ -120,6 +129,7 @@ error NotMarket();
 error Timelocked();
 error Unauthorized();
 error Uninstalling();
+error WrongValue();
 
 interface IAuditor {
   function accountMarkets(address account) external view returns (uint256);
