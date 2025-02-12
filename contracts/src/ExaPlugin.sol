@@ -181,13 +181,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     amountIn = balanceIn - assetIn.balanceOf(msg.sender);
   }
 
-  struct RollDebtData {
-    uint256 repayMaturity;
-    uint256 borrowMaturity;
-    uint256 maxRepayAssets;
-    uint256 percentage;
-  }
-
   function proposeRollDebt(
     uint256 repayMaturity,
     uint256 borrowMaturity,
@@ -214,7 +207,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     // TODO emit event
   }
 
-  function crossRepay(
+  function proposeCrossRepay(
     uint256 maturity,
     uint256 positionAssets,
     uint256 maxRepay,
@@ -223,24 +216,46 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     bytes calldata route
   ) external {
     _checkMarket(collateral);
+    // TODO validate collateral != EXA_USDC?
+    // TODO check maturity ranges
+    proposals[msg.sender] = Proposal({
+      amount: maxAmountIn,
+      market: collateral,
+      timestamp: block.timestamp,
+      receiver: msg.sender,
+      proposalType: ProposalType.CROSS_REPAY,
+      data: abi.encode(
+        CrossRepayData({ maturity: maturity, positionAssets: positionAssets, maxRepay: maxRepay, route: route })
+      )
+    });
+    // TODO emit event
+  }
+
+  function crossRepay() external {
+    Proposal storage proposal = proposals[msg.sender];
+    if (proposal.proposalType != ProposalType.CROSS_REPAY) revert NoProposal();
+    if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+
+    CrossRepayData memory crossData = abi.decode(proposal.data, (CrossRepayData));
     bytes memory data = _hash(
       abi.encodePacked(
         bytes1(0x02),
         abi.encode(
           CrossRepayCallbackData({
-            maturity: maturity,
+            maturity: crossData.maturity,
             borrower: msg.sender,
-            positionAssets: positionAssets,
-            maxRepay: maxRepay,
-            marketIn: collateral,
-            maxAmountIn: maxAmountIn,
-            route: route
+            positionAssets: crossData.positionAssets,
+            maxRepay: crossData.maxRepay,
+            marketIn: proposal.market,
+            maxAmountIn: proposal.amount,
+            route: crossData.route
           })
         )
       )
     );
-    _approveFromSender(address(collateral), address(this), maxAmountIn);
-    _flashLoan(maxRepay, data);
+
+    _approveFromSender(address(proposal.market), address(this), proposal.amount);
+    _flashLoan(crossData.maxRepay, data);
   }
 
   function repay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external {
@@ -459,24 +474,25 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](17);
+    manifest.executionFunctions = new bytes4[](18);
     manifest.executionFunctions[0] = this.propose.selector;
-    manifest.executionFunctions[1] = this.proposeRollDebt.selector;
-    manifest.executionFunctions[2] = this.proposeSwap.selector;
-    manifest.executionFunctions[3] = this.proposeUninstall.selector;
-    manifest.executionFunctions[4] = this.revokeUninstall.selector;
-    manifest.executionFunctions[5] = this.swap.selector;
-    manifest.executionFunctions[6] = this.crossRepay.selector;
-    manifest.executionFunctions[7] = this.repay.selector;
-    manifest.executionFunctions[8] = this.rollDebt.selector;
-    manifest.executionFunctions[9] = this.withdraw.selector;
-    manifest.executionFunctions[10] = this.collectCollateral.selector;
-    manifest.executionFunctions[11] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
-    manifest.executionFunctions[12] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
-    manifest.executionFunctions[13] = this.collectDebit.selector;
-    manifest.executionFunctions[14] = this.collectInstallments.selector;
-    manifest.executionFunctions[15] = this.poke.selector;
-    manifest.executionFunctions[16] = this.pokeETH.selector;
+    manifest.executionFunctions[1] = this.proposeCrossRepay.selector;
+    manifest.executionFunctions[2] = this.proposeRollDebt.selector;
+    manifest.executionFunctions[3] = this.proposeSwap.selector;
+    manifest.executionFunctions[4] = this.proposeUninstall.selector;
+    manifest.executionFunctions[5] = this.revokeUninstall.selector;
+    manifest.executionFunctions[6] = this.swap.selector;
+    manifest.executionFunctions[7] = this.crossRepay.selector;
+    manifest.executionFunctions[8] = this.repay.selector;
+    manifest.executionFunctions[9] = this.rollDebt.selector;
+    manifest.executionFunctions[10] = this.withdraw.selector;
+    manifest.executionFunctions[11] = this.collectCollateral.selector;
+    manifest.executionFunctions[12] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[13] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[14] = this.collectDebit.selector;
+    manifest.executionFunctions[15] = this.collectInstallments.selector;
+    manifest.executionFunctions[16] = this.poke.selector;
+    manifest.executionFunctions[17] = this.pokeETH.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -493,73 +509,77 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](17);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](18);
 
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeRollDebt.selector,
+      executionSelector: IExaAccount.proposeCrossRepay.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeSwap.selector,
+      executionSelector: IExaAccount.proposeRollDebt.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeUninstall.selector,
+      executionSelector: IExaAccount.proposeSwap.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.revokeUninstall.selector,
+      executionSelector: IExaAccount.proposeUninstall.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.swap.selector,
+      executionSelector: IExaAccount.revokeUninstall.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.swap.selector,
+      associatedFunction: selfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.crossRepay.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.repay.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.rollDebt.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.withdraw.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[11] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectCollateral.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[11] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
       executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
       executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[14] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[14] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[15] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectInstallments.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[15] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[16] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[16] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[17] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
@@ -675,6 +695,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     uint256 marketMap = AUDITOR.accountMarkets(account);
     uint256 sumCollateral = 0;
     uint256 sumDebtPlusEffects = 0;
+    ProposalType proposalType = proposals[msg.sender].proposalType;
+    uint256 amount = proposals[account].amount;
+
     for (uint256 i = 0; i < AUDITOR.allMarkets().length; ++i) {
       IMarket market = AUDITOR.marketList(i);
       if ((marketMap & (1 << i)) != 0) {
@@ -683,21 +706,22 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
         (uint256 balance, uint256 borrowBalance) = market.accountSnapshot(account);
 
         if (market == proposalMarket) {
-          uint256 amount = proposals[account].amount;
-
-          ProposalType proposalType = proposals[msg.sender].proposalType;
-
-          if (proposalType == ProposalType.WITHDRAW || proposalType == ProposalType.SWAP) {
+          if (
+            proposalType == ProposalType.WITHDRAW || proposalType == ProposalType.SWAP
+              || proposalType == ProposalType.CROSS_REPAY
+          ) {
             if (balance < amount) revert InsufficientLiquidity();
             balance -= amount;
           } else if (proposalType == ProposalType.ROLL_DEBT) {
             RollDebtData memory rollData = abi.decode(proposals[account].data, (RollDebtData));
-            uint256 repaidDebt = _repaidDebt(account, market, rollData.repayMaturity, rollData.percentage);
+            uint256 repaidDebt = _repaidDebt(account, rollData.repayMaturity, rollData.percentage);
             borrowBalance += amount - repaidDebt;
-          } else {
-            // cross repay proposal
           }
+        } else if (market == EXA_USDC && proposalType == ProposalType.CROSS_REPAY) {
+          CrossRepayData memory crossData = abi.decode(proposals[account].data, (CrossRepayData));
+          borrowBalance -= crossData.positionAssets; // TODO improve precision
         }
+
         sumCollateral += balance.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
         sumDebtPlusEffects += borrowBalance.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
       }
@@ -707,48 +731,29 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     if (sumDebtPlusEffects > sumCollateral) revert InsufficientLiquidity();
   }
 
-  function _repaidDebt(address account, IMarket market, uint256 maturity, uint256 percentage)
-    internal
-    view
-    returns (uint256)
-  {
-    FixedPosition memory position = market.fixedBorrowPositions(maturity, account);
+  function _repaidDebt(address account, uint256 maturity, uint256 percentage) internal view returns (uint256) {
+    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, account);
     uint256 positionAssets = position.principal + position.fee;
 
     return block.timestamp < maturity
-      ? positionAssets.mulWad(percentage) - _fixedDepositYield(market, maturity, position.principal.mulWad(percentage))
-      : (positionAssets + positionAssets.mulWad((block.timestamp - maturity) * market.penaltyRate())).mulWad(percentage);
+      ? positionAssets.mulWad(percentage) - _fixedDepositYield(EXA_USDC, maturity, position.principal.mulWad(percentage))
+      : (positionAssets + positionAssets.mulWad((block.timestamp - maturity) * EXA_USDC.penaltyRate())).mulWad(percentage);
   }
 
-  function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256 yield) {
+  function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256) {
     FixedPool memory pool = market.fixedPools(maturity);
     if (maturity > pool.lastAccrual) {
       pool.unassignedEarnings -=
         pool.unassignedEarnings.mulDiv(block.timestamp - pool.lastAccrual, maturity - pool.lastAccrual);
     }
-    return _calculateDepositYield(pool, assets, market.backupFeeRate());
-  }
-
-  function _calculateDepositYield(FixedPool memory pool, uint256 amount, uint256 backupFeeRate)
-    internal
-    pure
-    returns (uint256)
-  {
-    uint256 memBackupSupplied = _backupSupplied(pool);
-    uint256 backupFee = 0;
+    uint256 backupSupplied = pool.borrowed - Math.min(pool.borrowed, pool.supplied);
     uint256 yield = 0;
-    if (memBackupSupplied != 0) {
-      yield = pool.unassignedEarnings.mulDiv(Math.min(amount, memBackupSupplied), memBackupSupplied);
-      backupFee = yield.mulWad(backupFeeRate);
+    if (backupSupplied != 0) {
+      yield = pool.unassignedEarnings.mulDiv(Math.min(assets, backupSupplied), backupSupplied);
+      uint256 backupFee = yield.mulWad(market.backupFeeRate());
       yield -= backupFee;
     }
     return yield;
-  }
-
-  function _backupSupplied(FixedPool memory pool) internal pure returns (uint256) {
-    uint256 borrowed = pool.borrowed;
-    uint256 supplied = pool.supplied;
-    return borrowed - Math.min(borrowed, supplied);
   }
 
   function _checkMarket(IMarket market) internal view {
@@ -970,28 +975,22 @@ struct RepayCallbackData {
   uint256 maxRepay;
 }
 
-// data starts with 0x01
 struct SwapData {
   IERC20 assetOut;
   uint256 minAmountOut;
   bytes route;
 }
 
-// // data starts with 0x02
-// struct RollDebtData {
-//   uint256 repayMaturity;
-//   uint256 borrowMaturity;
-//   uint256 maxRepayAssets;
-//   uint256 maxBorrowAssets;
-//   uint256 percentage;
-// }
+struct RollDebtData {
+  uint256 repayMaturity;
+  uint256 borrowMaturity;
+  uint256 maxRepayAssets;
+  uint256 percentage;
+}
 
-// // data starts with 0x03
-// struct CrossRepayData {
-//   uint256 maturity;
-//   uint256 positionAssets;
-//   uint256 maxRepay;
-//   IMarket marketIn; // borrow market
-//   uint256 maxAmountIn;
-//   bytes route;
-// }
+struct CrossRepayData {
+  uint256 maturity;
+  uint256 positionAssets;
+  uint256 maxRepay;
+  bytes route;
+}
