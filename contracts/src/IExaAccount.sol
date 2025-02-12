@@ -6,6 +6,14 @@ import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.s
 
 interface IExaAccount {
   function propose(IMarket market, uint256 amount, address receiver) external;
+  function proposeCrossRepay(
+    uint256 maturity,
+    uint256 positionAssets,
+    uint256 maxRepay,
+    IMarket collateral,
+    uint256 amountIn,
+    bytes calldata route
+  ) external;
   function proposeRollDebt(
     uint256 repayMaturity,
     uint256 borrowMaturity,
@@ -21,14 +29,7 @@ interface IExaAccount {
     external
     returns (uint256 amountIn, uint256 amountOut);
 
-  function crossRepay(
-    uint256 maturity,
-    uint256 positionAssets,
-    uint256 maxRepay,
-    IMarket collateral,
-    uint256 amountIn,
-    bytes calldata route
-  ) external;
+  function crossRepay() external;
   function repay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external;
   function rollDebt() external;
   function withdraw() external;

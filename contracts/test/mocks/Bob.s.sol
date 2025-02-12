@@ -101,7 +101,7 @@ contract BobScript is BaseScript {
       address(bobAccount),
       0,
       abi.encodeCall(
-        IExaAccount.crossRepay,
+        IExaAccount.proposeCrossRepay,
         (
           maturity + FixedLib.INTERVAL,
           type(uint256).max,
