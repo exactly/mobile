@@ -17,7 +17,7 @@ import block from "./hooks/block";
 import cryptomate from "./hooks/cryptomate";
 import panda from "./hooks/panda";
 import persona from "./hooks/persona";
-import androidFingerprint from "./utils/android/fingerprint";
+import androidFingerprints from "./utils/android/fingerprints";
 import appOrigin from "./utils/appOrigin";
 import { closeAndFlush } from "./utils/segment";
 
@@ -52,7 +52,7 @@ app.get("/.well-known/assetlinks.json", (c) =>
       target: {
         namespace: "android_app",
         package_name: "app.exactly",
-        sha256_cert_fingerprints: [androidFingerprint],
+        sha256_cert_fingerprints: androidFingerprints,
       },
     },
   ]),

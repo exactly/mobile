@@ -15,7 +15,7 @@ import { setCookie, setSignedCookie } from "hono/cookie";
 import { any, check, literal, object, optional, parse, pipe, transform } from "valibot";
 
 import database, { credentials } from "../../database";
-import androidOrigin from "../../utils/android/origin";
+import androidOrigins from "../../utils/android/origins";
 import appOrigin from "../../utils/appOrigin";
 import authSecret from "../../utils/authSecret";
 import redis from "../../utils/redis";
@@ -93,7 +93,7 @@ export default app
         verification = await verifyAuthenticationResponse({
           response: c.req.valid("json"),
           expectedRPID: domain,
-          expectedOrigin: [appOrigin, androidOrigin],
+          expectedOrigin: [appOrigin, ...androidOrigins],
           expectedChallenge: challenge,
           credential: {
             id: credentialId,

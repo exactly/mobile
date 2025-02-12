@@ -17,7 +17,7 @@ import type { Hex } from "viem";
 
 import database, { credentials } from "../../database";
 import { webhooksKey } from "../../utils/alchemy";
-import androidOrigin from "../../utils/android/origin";
+import androidOrigins from "../../utils/android/origins";
 import appOrigin from "../../utils/appOrigin";
 import authSecret from "../../utils/authSecret";
 import decodePublicKey from "../../utils/decodePublicKey";
@@ -99,7 +99,7 @@ export default app
         verification = await verifyRegistrationResponse({
           response: attestation,
           expectedRPID: domain,
-          expectedOrigin: [appOrigin, androidOrigin],
+          expectedOrigin: [appOrigin, ...androidOrigins],
           expectedChallenge: challenge,
           supportedAlgorithmIDs: [cose.COSEALG.ES256],
         });
