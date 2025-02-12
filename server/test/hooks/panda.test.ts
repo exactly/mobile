@@ -425,7 +425,7 @@ describe("card operations", () => {
         });
 
         expect(captureException).toHaveBeenCalledWith(new Error("Transaction Timeout"));
-        expect(transaction).toBeTruthy();
+        expect(transaction).toBeDefined();
         expect(response.status).toBe(200);
       });
 
@@ -462,7 +462,7 @@ describe("card operations", () => {
         });
 
         expect(captureException).toHaveBeenCalledWith(new Error("tx reverted"), expect.anything());
-        expect(transaction).toBeTruthy();
+        expect(transaction).toBeDefined();
         expect(response.status).toBe(200);
       });
 

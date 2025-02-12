@@ -210,7 +210,7 @@ describe("address activity", () => {
     const market = exactly.find((m) => m.asset === wethAddress);
 
     expect(market?.floatingDepositAssets).toBe(deposit);
-    expect(market?.isCollateral).toBeTruthy();
+    expect(market?.isCollateral).toBe(true);
     expect(response.status).toBe(200);
   });
 
@@ -241,7 +241,7 @@ describe("address activity", () => {
     const market = exactly.find((m) => m.asset === wethAddress);
 
     expect(market?.floatingDepositAssets).toBe(deposit);
-    expect(market?.isCollateral).toBeTruthy();
+    expect(market?.isCollateral).toBe(true);
     expect(response.status).toBe(200);
   });
 
@@ -287,7 +287,7 @@ describe("address activity", () => {
     const market = exactly.find((m) => m.asset === wethAddress);
 
     expect(market?.floatingDepositAssets).toBe(eth + weth);
-    expect(market?.isCollateral).toBeTruthy();
+    expect(market?.isCollateral).toBe(true);
     expect(response.status).toBe(200);
   });
 });
