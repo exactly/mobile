@@ -33,8 +33,6 @@ import {
   AllowedTargetSet,
   CollectorSet,
   Disagreement,
-  FixedPool,
-  FixedPosition,
   IAuditor,
   IExaAccount,
   IMarket,
@@ -429,8 +427,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       _depositUnspent(c.marketIn, c.maxAmountIn - amountIn, borrower);
       _depositApprovedUnspent(amountOut - actualRepay, borrower);
     }
-
-    _checkLiquidity(borrower);
   }
 
   receive() external payable { } // solhint-disable-line no-empty-blocks
@@ -677,20 +673,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
         (uint256 balance, uint256 borrowBalance) = market.accountSnapshot(account);
 
         if (market == proposalMarket) {
-          if (
-            proposalType == ProposalType.WITHDRAW || proposalType == ProposalType.SWAP
-              || proposalType == ProposalType.CROSS_REPAY
-          ) {
+          if (proposalType == ProposalType.ROLL_DEBT) {
+            borrowBalance += amount;
+          } else {
             if (balance < amount) revert InsufficientLiquidity();
             balance -= amount;
-          } else if (proposalType == ProposalType.ROLL_DEBT) {
-            RollDebtData memory rollData = abi.decode(proposals[account].data, (RollDebtData));
-            uint256 repaidDebt = _repaidDebt(account, rollData.repayMaturity, rollData.percentage);
-            borrowBalance += amount - repaidDebt;
           }
-        } else if (market == EXA_USDC && proposalType == ProposalType.CROSS_REPAY) {
-          CrossRepayData memory crossData = abi.decode(proposals[account].data, (CrossRepayData));
-          borrowBalance -= crossData.positionAssets; // TODO improve precision
         }
 
         sumCollateral += balance.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
@@ -700,31 +688,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     }
 
     if (sumDebtPlusEffects > sumCollateral) revert InsufficientLiquidity();
-  }
-
-  function _repaidDebt(address account, uint256 maturity, uint256 percentage) internal view returns (uint256) {
-    FixedPosition memory position = EXA_USDC.fixedBorrowPositions(maturity, account);
-    uint256 positionAssets = position.principal + position.fee;
-
-    return block.timestamp < maturity
-      ? positionAssets.mulWad(percentage) - _fixedDepositYield(EXA_USDC, maturity, position.principal.mulWad(percentage))
-      : (positionAssets + positionAssets.mulWad((block.timestamp - maturity) * EXA_USDC.penaltyRate())).mulWad(percentage);
-  }
-
-  function _fixedDepositYield(IMarket market, uint256 maturity, uint256 assets) internal view returns (uint256) {
-    FixedPool memory pool = market.fixedPools(maturity);
-    if (maturity > pool.lastAccrual) {
-      pool.unassignedEarnings -=
-        pool.unassignedEarnings.mulDiv(block.timestamp - pool.lastAccrual, maturity - pool.lastAccrual);
-    }
-    uint256 backupSupplied = pool.borrowed - Math.min(pool.borrowed, pool.supplied);
-    uint256 yield = 0;
-    if (backupSupplied != 0) {
-      yield = pool.unassignedEarnings.mulDiv(Math.min(assets, backupSupplied), backupSupplied);
-      uint256 backupFee = yield.mulWad(market.backupFeeRate());
-      yield -= backupFee;
-    }
-    return yield;
   }
 
   function _checkMarket(IMarket market) internal view {
