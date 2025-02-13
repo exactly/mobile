@@ -14,6 +14,7 @@ interface IExaAccount {
     uint256 amountIn,
     bytes calldata route
   ) external;
+  function proposeRepay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external;
   function proposeRollDebt(
     uint256 repayMaturity,
     uint256 borrowMaturity,
@@ -29,7 +30,6 @@ interface IExaAccount {
     external
     returns (uint256 amountIn, uint256 amountOut);
 
-  function repay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external;
   function executeProposal() external;
 
   function collectCollateral(
@@ -112,10 +112,11 @@ struct Proposal {
 }
 
 enum ProposalType {
-  WITHDRAW,
-  SWAP,
+  CROSS_REPAY,
+  REPAY,
   ROLL_DEBT,
-  CROSS_REPAY
+  SWAP,
+  WITHDRAW
 }
 
 error BorrowLimitExceeded();
