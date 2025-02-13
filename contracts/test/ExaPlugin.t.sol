@@ -390,7 +390,7 @@ contract ExaPluginTest is ForkTest {
     account.proposeCrossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
 
     skip(exaPlugin.PROPOSAL_DELAY());
-    account.crossRepay();
+    account.executeProposal();
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
@@ -451,7 +451,7 @@ contract ExaPluginTest is ForkTest {
 
     skip(exaPlugin.PROPOSAL_DELAY());
     vm.startPrank(keeper);
-    account.crossRepay();
+    account.executeProposal();
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
@@ -486,7 +486,7 @@ contract ExaPluginTest is ForkTest {
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
-    account.crossRepay();
+    account.executeProposal();
   }
 
   function test_crossRepay_reverts_whenDisagreement() external {
@@ -504,7 +504,7 @@ contract ExaPluginTest is ForkTest {
 
     skip(exaPlugin.PROPOSAL_DELAY());
     vm.expectRevert(Disagreement.selector);
-    account.crossRepay();
+    account.executeProposal();
   }
 
   function test_rollDebt_rolls() external {
@@ -517,7 +517,7 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(address(account));
     account.proposeRollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 1e18);
     skip(exaPlugin.PROPOSAL_DELAY());
-    account.rollDebt();
+    account.executeProposal();
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
     assertEq(position.principal, 0);
@@ -542,7 +542,7 @@ contract ExaPluginTest is ForkTest {
     skip(exaPlugin.PROPOSAL_DELAY());
 
     vm.startPrank(keeper);
-    account.rollDebt();
+    account.executeProposal();
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
     assertEq(position.principal, 0);
@@ -583,7 +583,7 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(exa.balanceOf(receiver), 0);
     vm.prank(keeper);
-    account.withdraw();
+    account.executeProposal();
     assertEq(exa.balanceOf(receiver), amount);
   }
 
@@ -599,7 +599,7 @@ contract ExaPluginTest is ForkTest {
     skip(exaPlugin.PROPOSAL_DELAY());
 
     assertEq(exa.balanceOf(receiver), 0);
-    account.withdraw();
+    account.executeProposal();
     assertEq(exa.balanceOf(receiver), amount);
   }
 
@@ -623,8 +623,8 @@ contract ExaPluginTest is ForkTest {
     skip(exaPlugin.PROPOSAL_DELAY());
 
     assertEq(usdc.balanceOf(address(account)), 0);
-    account.withdraw();
-    assertGe(usdc.balanceOf(address(account)), minAmountOut);
+    account.executeProposal();
+    assertGe(usdc.balanceOf(address(account)), minAmountOut, "usdc balance != min amount out");
   }
 
   function test_withdraw_transfersETH() external {
@@ -640,7 +640,7 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(receiver.balance, 0);
     vm.prank(keeper);
-    account.withdraw();
+    account.executeProposal();
     assertEq(receiver.balance, amount);
   }
 
@@ -664,7 +664,7 @@ contract ExaPluginTest is ForkTest {
     skip(exaPlugin.PROPOSAL_DELAY());
 
     assertEq(usdc.balanceOf(address(account)), 0);
-    account.withdraw();
+    account.executeProposal();
     assertGe(usdc.balanceOf(address(account)), minAmountOut);
   }
 
@@ -714,7 +714,7 @@ contract ExaPluginTest is ForkTest {
     account.poke(exaEXA);
 
     vm.expectRevert(NoProposal.selector);
-    account.withdraw();
+    account.executeProposal();
   }
 
   function test_withdraw_reverts_whenTimelocked() external {
@@ -739,15 +739,8 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, address(account))));
 
     vm.prank(keeper);
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        UpgradeableModularAccount.PreExecHookReverted.selector,
-        exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
-        abi.encodePacked(Timelocked.selector)
-      )
-    );
-    account.withdraw();
+    vm.expectRevert(Timelocked.selector);
+    account.executeProposal();
   }
 
   function test_withdraw_reverts_whenWrongAmount() external {
@@ -815,7 +808,7 @@ contract ExaPluginTest is ForkTest {
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
-    account.withdraw();
+    account.executeProposal();
   }
 
   function test_withdraw_reverts_whenTimelockedETH() external {
@@ -831,7 +824,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(receiver.balance, 0);
     vm.startPrank(keeper);
     vm.expectRevert(Timelocked.selector);
-    account.withdraw();
+    account.executeProposal();
     assertEq(receiver.balance, 0);
   }
 
