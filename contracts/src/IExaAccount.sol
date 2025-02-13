@@ -29,10 +29,8 @@ interface IExaAccount {
     external
     returns (uint256 amountIn, uint256 amountOut);
 
-  function crossRepay() external;
   function repay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external;
-  function rollDebt() external;
-  function withdraw() external;
+  function executeProposal() external;
 
   function collectCollateral(
     uint256 amount,
