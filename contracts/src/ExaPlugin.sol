@@ -139,6 +139,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     public
     returns (uint256 amountIn, uint256 amountOut)
   {
+    if (_isMarket(IMarket(address(assetIn)))) revert Unauthorized();
+
     uint256 balanceIn = assetIn.balanceOf(msg.sender);
     uint256 balanceOut = assetOut.balanceOf(msg.sender);
 
