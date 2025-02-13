@@ -272,6 +272,21 @@ contract ExaPluginTest is ForkTest {
     assertEq(exa.balanceOf(address(account)), prevEXA);
   }
 
+  function test_swap_reverts_whenAssetInIsMarket() external {
+    vm.startPrank(keeper);
+
+    account.poke(exaEXA);
+
+    uint256 maxAmountIn = 111e18;
+    uint256 amountOut = 110e6;
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (address(exaEXA), maxAmountIn, address(usdc), amountOut, address(account))
+    );
+    vm.startPrank(address(account));
+    vm.expectRevert(Unauthorized.selector);
+    account.swap(IERC20(address(exaEXA)), IERC20(address(usdc)), maxAmountIn, amountOut, route);
+  }
+
   // keeper or self runtime validation
   function test_propose_emitsProposed() external {
     uint256 amount = 1;
