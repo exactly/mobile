@@ -41,6 +41,7 @@ import {
   NoProposal,
   NotMarket,
   Proposal,
+  ProposalRevoked,
   ProposalType,
   Proposed,
   SwapProposed,
@@ -319,6 +320,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     emit SwapProposed(msg.sender, market, assetOut, amount, minAmountOut, route, block.timestamp + PROPOSAL_DELAY);
   }
 
+  function revokeProposal() external {
+    delete proposals[msg.sender];
+    emit ProposalRevoked(msg.sender);
+  }
+
   function collectCollateral(
     uint256 amount,
     IMarket collateral,
@@ -461,7 +467,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](16);
+    manifest.executionFunctions = new bytes4[](17);
     manifest.executionFunctions[0] = this.proposeUninstall.selector;
     manifest.executionFunctions[1] = this.revokeUninstall.selector;
     manifest.executionFunctions[2] = this.swap.selector;
@@ -471,13 +477,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     manifest.executionFunctions[6] = this.proposeRepay.selector;
     manifest.executionFunctions[7] = this.proposeRollDebt.selector;
     manifest.executionFunctions[8] = this.proposeSwap.selector;
-    manifest.executionFunctions[9] = this.collectCollateral.selector;
-    manifest.executionFunctions[10] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
-    manifest.executionFunctions[11] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
-    manifest.executionFunctions[12] = this.collectDebit.selector;
-    manifest.executionFunctions[13] = this.collectInstallments.selector;
-    manifest.executionFunctions[14] = this.poke.selector;
-    manifest.executionFunctions[15] = this.pokeETH.selector;
+    manifest.executionFunctions[9] = this.revokeProposal.selector;
+    manifest.executionFunctions[10] = this.collectCollateral.selector;
+    manifest.executionFunctions[11] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[12] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[13] = this.collectDebit.selector;
+    manifest.executionFunctions[14] = this.collectInstallments.selector;
+    manifest.executionFunctions[15] = this.poke.selector;
+    manifest.executionFunctions[16] = this.pokeETH.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -494,7 +501,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](16);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](17);
 
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.proposeUninstall.selector,
@@ -533,30 +540,34 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.revokeProposal.selector,
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectCollateral.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[11] = ManifestAssociatedFunction({
       executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[11] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
       executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[14] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectInstallments.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[14] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[15] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[15] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[16] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });

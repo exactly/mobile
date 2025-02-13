@@ -30,6 +30,7 @@ interface IExaAccount {
   ) external;
   function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
     external;
+  function revokeProposal() external;
   function collectCollateral(
     uint256 amount,
     IMarket collateral,
@@ -61,6 +62,8 @@ interface IExaAccount {
 event AllowedTargetSet(address indexed target, address indexed account, bool allowed);
 
 event CollectorSet(address indexed collector, address indexed account);
+
+event ProposalRevoked(address indexed account);
 
 event Proposed(
   address indexed account, IMarket indexed market, address indexed receiver, uint256 amount, uint256 unlock

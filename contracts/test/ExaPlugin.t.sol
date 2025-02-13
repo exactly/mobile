@@ -43,6 +43,7 @@ import {
   IMarket,
   InsufficientLiquidity,
   NoProposal,
+  ProposalRevoked,
   Proposed,
   SwapProposed,
   Timelocked,
@@ -836,6 +837,34 @@ contract ExaPluginTest is ForkTest {
     vm.expectRevert(Timelocked.selector);
     account.executeProposal();
     assertEq(receiver.balance, 0);
+  }
+
+  function test_revokeProposal_revokes() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    account.propose(exaEXA, 100e6, address(0x420));
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    account.revokeProposal();
+
+    vm.expectRevert(NoProposal.selector);
+    account.executeProposal();
+
+    account.propose(exaEXA, 100e6, address(0x420));
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    account.executeProposal();
+  }
+
+  function test_revokeProposal_emitsEvent() external {
+    vm.startPrank(keeper);
+
+    account.propose(exaEXA, 100e6, address(0x420));
+
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit ProposalRevoked(address(account));
+    account.revokeProposal();
   }
 
   // keeper runtime validation
