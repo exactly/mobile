@@ -79,6 +79,7 @@ export default app.post(
       event: v.object({
         data: v.object({
           block: v.object({
+            number: v.optional(v.number()), // TODO remove optional after migration
             timestamp: v.number(),
             logs: v.array(v.object({ topics: v.tupleWithRest([Hash], Hash), data: Hex })),
           }),
@@ -258,23 +259,29 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
     );
     if (!queryResponse.ok) throw new Error(`${queryResponse.status} ${await queryResponse.text()}`);
     const { data: query } = (await queryResponse.json()) as { data: { graphql_query: string } };
+    let shouldUpdate = false;
     let currentPlugins: string[] = [];
     visit(parse(query.graphql_query), {
       Field(node) {
-        if (node.name.value === "logs") {
+        if (node.name.value === "block") {
+          shouldUpdate ||= !node.selectionSet?.selections.find(
+            (selection) => selection.kind === Kind.FIELD && selection.name.value === "number",
+          );
+        } else if (node.name.value === "logs") {
           const filterArguments = node.arguments?.find(({ name }) => name.value === "filter");
           if (filterArguments?.value.kind === Kind.OBJECT) {
             const addressesField = filterArguments.value.fields.find(({ name }) => name.value === "addresses");
-            if (addressesField && addressesField.value.kind === Kind.LIST) {
+            if (addressesField?.value.kind === Kind.LIST) {
               currentPlugins = addressesField.value.values
                 .filter((value): value is StringValueNode => value.kind === Kind.STRING)
                 .map(({ value }) => v.parse(Address, value));
+              shouldUpdate ||= !currentPlugins.includes(exaPluginAddress);
             }
           }
         }
       },
     });
-    if (currentPlugins.includes(exaPluginAddress)) return;
+    if (!shouldUpdate) return; // eslint-disable-line @typescript-eslint/no-unnecessary-condition
 
     const createResponse = await fetch("https://dashboard.alchemy.com/api/create-webhook", {
       ...alchemyInit,
@@ -286,6 +293,7 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
         graphql_query: `#graphql
           {
             block {
+              number
               timestamp
               logs(
                 filter: {
