@@ -7,7 +7,6 @@ import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.s
 
 import { SafeERC20 } from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "openzeppelin-contracts/contracts/utils/Address.sol";
-import { Math } from "openzeppelin-contracts/contracts/utils/math/Math.sol";
 
 import {
   ManifestAssociatedFunction,
@@ -125,34 +124,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _setAllowedTarget(address(WETH), true);
   }
 
-  function propose(IMarket market, uint256 amount, address receiver) external {
-    _checkMarket(market);
-    proposals[msg.sender] = Proposal({
-      amount: amount,
-      market: market,
-      timestamp: block.timestamp,
-      receiver: receiver,
-      proposalType: ProposalType.WITHDRAW,
-      data: ""
-    });
-    emit Proposed(msg.sender, market, receiver, amount, block.timestamp + PROPOSAL_DELAY);
-  }
-
-  function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
-    external
-  {
-    _checkMarket(market);
-    proposals[msg.sender] = Proposal({
-      amount: amount,
-      market: market,
-      timestamp: block.timestamp,
-      receiver: msg.sender,
-      proposalType: ProposalType.SWAP,
-      data: abi.encode(SwapData({ assetOut: assetOut, minAmountOut: minAmountOut, route: route }))
-    });
-    emit SwapProposed(msg.sender, market, assetOut, amount, minAmountOut, route, block.timestamp + PROPOSAL_DELAY);
-  }
-
   function proposeUninstall() external {
     uninstallProposals[msg.sender] = block.timestamp;
     emit UninstallProposed(msg.sender, block.timestamp + PROPOSAL_DELAY);
@@ -177,66 +148,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
     _approveFromSender(address(assetIn), SWAPPER, 0);
     amountIn = balanceIn - assetIn.balanceOf(msg.sender);
-  }
-
-  function proposeRollDebt(
-    uint256 repayMaturity,
-    uint256 borrowMaturity,
-    uint256 maxRepayAssets,
-    uint256 maxBorrowAssets,
-    uint256 percentage
-  ) external {
-    if (percentage > 1e18) revert WrongValue();
-    proposals[msg.sender] = Proposal({
-      amount: maxBorrowAssets,
-      market: EXA_USDC,
-      timestamp: block.timestamp,
-      receiver: msg.sender,
-      proposalType: ProposalType.ROLL_DEBT,
-      data: abi.encode(
-        RollDebtData({
-          repayMaturity: repayMaturity,
-          borrowMaturity: borrowMaturity,
-          maxRepayAssets: maxRepayAssets,
-          percentage: percentage
-        })
-      )
-    });
-    // TODO emit event
-  }
-
-  function proposeCrossRepay(
-    uint256 maturity,
-    uint256 positionAssets,
-    uint256 maxRepay,
-    IMarket collateral,
-    uint256 maxAmountIn,
-    bytes calldata route
-  ) external {
-    _checkMarket(collateral);
-    proposals[msg.sender] = Proposal({
-      amount: maxAmountIn,
-      market: collateral,
-      timestamp: block.timestamp,
-      receiver: msg.sender,
-      proposalType: ProposalType.CROSS_REPAY,
-      data: abi.encode(
-        CrossRepayData({ maturity: maturity, positionAssets: positionAssets, maxRepay: maxRepay, route: route })
-      )
-    });
-    // TODO emit event
-  }
-
-  function proposeRepay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external {
-    proposals[msg.sender] = Proposal({
-      amount: positionAssets,
-      market: EXA_USDC,
-      timestamp: block.timestamp,
-      receiver: msg.sender,
-      proposalType: ProposalType.REPAY,
-      data: abi.encode(RepayData({ maturity: maturity, maxRepay: maxRepay }))
-    });
-    // TODO emit event
   }
 
   function executeProposal() external {
@@ -318,6 +229,94 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       _approveFromSender(address(EXA_USDC), address(this), EXA_USDC.previewWithdraw(repayData.maxRepay));
       _flashLoan(repayData.maxRepay, data);
     }
+  }
+
+  function propose(IMarket market, uint256 amount, address receiver) external {
+    _checkMarket(market);
+    proposals[msg.sender] = Proposal({
+      amount: amount,
+      market: market,
+      timestamp: block.timestamp,
+      receiver: receiver,
+      proposalType: ProposalType.WITHDRAW,
+      data: ""
+    });
+    emit Proposed(msg.sender, market, receiver, amount, block.timestamp + PROPOSAL_DELAY);
+  }
+
+  function proposeCrossRepay(
+    uint256 maturity,
+    uint256 positionAssets,
+    uint256 maxRepay,
+    IMarket collateral,
+    uint256 maxAmountIn,
+    bytes calldata route
+  ) external {
+    _checkMarket(collateral);
+    proposals[msg.sender] = Proposal({
+      amount: maxAmountIn,
+      market: collateral,
+      timestamp: block.timestamp,
+      receiver: msg.sender,
+      proposalType: ProposalType.CROSS_REPAY,
+      data: abi.encode(
+        CrossRepayData({ maturity: maturity, positionAssets: positionAssets, maxRepay: maxRepay, route: route })
+      )
+    });
+    // TODO emit event
+  }
+
+  function proposeRepay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external {
+    proposals[msg.sender] = Proposal({
+      amount: positionAssets,
+      market: EXA_USDC,
+      timestamp: block.timestamp,
+      receiver: msg.sender,
+      proposalType: ProposalType.REPAY,
+      data: abi.encode(RepayData({ maturity: maturity, maxRepay: maxRepay }))
+    });
+    // TODO emit event
+  }
+
+  function proposeRollDebt(
+    uint256 repayMaturity,
+    uint256 borrowMaturity,
+    uint256 maxRepayAssets,
+    uint256 maxBorrowAssets,
+    uint256 percentage
+  ) external {
+    if (percentage > 1e18) revert WrongValue();
+    proposals[msg.sender] = Proposal({
+      amount: maxBorrowAssets,
+      market: EXA_USDC,
+      timestamp: block.timestamp,
+      receiver: msg.sender,
+      proposalType: ProposalType.ROLL_DEBT,
+      data: abi.encode(
+        RollDebtData({
+          repayMaturity: repayMaturity,
+          borrowMaturity: borrowMaturity,
+          maxRepayAssets: maxRepayAssets,
+          percentage: percentage
+        })
+      )
+    });
+    // TODO emit event
+  }
+
+  function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
+    external
+  {
+    _checkMarket(market);
+    proposals[msg.sender] = Proposal({
+      amount: amount,
+      market: market,
+      timestamp: block.timestamp,
+      receiver: msg.sender,
+      proposalType: ProposalType.SWAP,
+      data: abi.encode(SwapData({ assetOut: assetOut, minAmountOut: minAmountOut, route: route }))
+    });
+    emit SwapProposed(msg.sender, market, assetOut, amount, minAmountOut, route, block.timestamp + PROPOSAL_DELAY);
   }
 
   function collectCollateral(
@@ -463,15 +462,15 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
     manifest.executionFunctions = new bytes4[](16);
-    manifest.executionFunctions[0] = this.propose.selector;
-    manifest.executionFunctions[1] = this.proposeCrossRepay.selector;
-    manifest.executionFunctions[2] = this.proposeRepay.selector;
-    manifest.executionFunctions[3] = this.proposeRollDebt.selector;
-    manifest.executionFunctions[4] = this.proposeSwap.selector;
-    manifest.executionFunctions[5] = this.proposeUninstall.selector;
-    manifest.executionFunctions[6] = this.revokeUninstall.selector;
-    manifest.executionFunctions[7] = this.swap.selector;
-    manifest.executionFunctions[8] = this.executeProposal.selector;
+    manifest.executionFunctions[0] = this.proposeUninstall.selector;
+    manifest.executionFunctions[1] = this.revokeUninstall.selector;
+    manifest.executionFunctions[2] = this.swap.selector;
+    manifest.executionFunctions[3] = this.executeProposal.selector;
+    manifest.executionFunctions[4] = this.propose.selector;
+    manifest.executionFunctions[5] = this.proposeCrossRepay.selector;
+    manifest.executionFunctions[6] = this.proposeRepay.selector;
+    manifest.executionFunctions[7] = this.proposeRollDebt.selector;
+    manifest.executionFunctions[8] = this.proposeSwap.selector;
     manifest.executionFunctions[9] = this.collectCollateral.selector;
     manifest.executionFunctions[10] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
     manifest.executionFunctions[11] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
@@ -498,39 +497,39 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](16);
 
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.propose.selector,
-      associatedFunction: selfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeCrossRepay.selector,
-      associatedFunction: selfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeRepay.selector,
-      associatedFunction: selfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeRollDebt.selector,
-      associatedFunction: selfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeSwap.selector,
-      associatedFunction: selfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.proposeUninstall.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.revokeUninstall.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.swap.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.executeProposal.selector,
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.propose.selector,
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.proposeCrossRepay.selector,
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.proposeRepay.selector,
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.proposeRollDebt.selector,
+      associatedFunction: keeperOrSelfRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.proposeSwap.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
