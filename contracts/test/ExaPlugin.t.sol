@@ -175,32 +175,6 @@ contract ExaPluginTest is ForkTest {
   // solhint-disable func-name-mixedcase
 
   // self runtime validation
-  function test_propose_emitsProposed() external {
-    uint256 amount = 1;
-    address receiver = address(0x420);
-
-    vm.startPrank(owner);
-
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit Proposed(address(account), exaEXA, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
-  }
-
-  function test_proposeSwap_emitsSwapProposed() external {
-    uint256 amount = 1;
-    bytes memory route = bytes("route");
-
-    vm.startPrank(owner);
-
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit SwapProposed(
-      address(account), exaEXA, IERC20(address(usdc)), amount, 1, route, block.timestamp + exaPlugin.PROPOSAL_DELAY()
-    );
-    account.execute(
-      address(account), 0, abi.encodeCall(IExaAccount.proposeSwap, (exaEXA, IERC20(address(usdc)), amount, 1, route))
-    );
-  }
-
   function test_proposeUninstall_emitsUninstallProposed() external {
     vm.startPrank(owner);
     vm.expectEmit(true, true, true, true, address(exaPlugin));
@@ -298,6 +272,31 @@ contract ExaPluginTest is ForkTest {
   }
 
   // keeper or self runtime validation
+  function test_propose_emitsProposed() external {
+    uint256 amount = 1;
+    address receiver = address(0x420);
+
+    vm.startPrank(owner);
+
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit Proposed(address(account), exaEXA, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+  }
+
+  function test_proposeSwap_emitsSwapProposed() external {
+    uint256 amount = 1;
+    bytes memory route = bytes("route");
+
+    vm.startPrank(owner);
+
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit SwapProposed(
+      address(account), exaEXA, IERC20(address(usdc)), amount, 1, route, block.timestamp + exaPlugin.PROPOSAL_DELAY()
+    );
+    account.execute(
+      address(account), 0, abi.encodeCall(IExaAccount.proposeSwap, (exaEXA, IERC20(address(usdc)), amount, 1, route))
+    );
+  }
 
   function test_repay_repaysX() external {
     vm.startPrank(keeper);
@@ -369,26 +368,25 @@ contract ExaPluginTest is ForkTest {
     assertEq(position.fee, 0);
   }
 
-  // TODO
-  // function test_repay_partiallyRepays_whenKeeper() external {
-  //   vm.startPrank(keeper);
-  //   account.poke(exaUSDC);
-  //   uint256 maturity = FixedLib.INTERVAL;
-  //   account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+  function test_repay_partiallyRepays_whenKeeper() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
 
-  //   FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-  //   assertEq(position.principal, 100e6);
-  //   uint256 positionAssets = position.principal + position.fee;
+    FixedPosition memory position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 100e6);
+    uint256 positionAssets = position.principal + position.fee;
 
-  //   account.proposeRepay(maturity, positionAssets / 2, positionAssets / 2);
-  //   skip(exaPlugin.PROPOSAL_DELAY());
-  //   account.executeProposal();
+    account.proposeRepay(maturity, positionAssets / 2, positionAssets / 2);
+    skip(exaPlugin.PROPOSAL_DELAY());
+    account.executeProposal();
 
-  //   assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
-  //   position = exaUSDC.fixedBorrowPositions(maturity, address(account));
-  //   assertEq(position.principal, 50e6);
-  //   assertEq(position.principal + position.fee, positionAssets / 2);
-  // }
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    position = exaUSDC.fixedBorrowPositions(maturity, address(account));
+    assertEq(position.principal, 50e6);
+    assertEq(position.principal + position.fee, positionAssets / 2);
+  }
 
   function test_crossRepay_repays() external {
     vm.startPrank(keeper);
@@ -463,7 +461,6 @@ contract ExaPluginTest is ForkTest {
     bytes memory route = abi.encodeCall(
       MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(exaPlugin))
     );
-    vm.startPrank(address(account));
     account.proposeCrossRepay(maturity, 110e6, 110e6, exaEXA, amountIn, route);
 
     skip(exaPlugin.PROPOSAL_DELAY());
@@ -553,12 +550,10 @@ contract ExaPluginTest is ForkTest {
     uint256 maxAssets = 110e6;
     account.collectCredit(FixedLib.INTERVAL, assets, maxAssets, block.timestamp, _issuerOp(assets, block.timestamp));
 
-    vm.startPrank(address(account));
     account.proposeRollDebt(FixedLib.INTERVAL, FixedLib.INTERVAL * 2, maxAssets, maxAssets, 1e18);
 
     skip(exaPlugin.PROPOSAL_DELAY());
 
-    vm.startPrank(keeper);
     account.executeProposal();
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
@@ -590,16 +585,14 @@ contract ExaPluginTest is ForkTest {
   function test_withdraw_transfersAsset_asKeeper() external {
     uint256 amount = 100 ether;
     address receiver = address(0x420);
-    vm.prank(keeper);
+    vm.startPrank(keeper);
     account.poke(exaEXA);
 
-    vm.prank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
+    account.propose(exaEXA, amount, receiver);
 
     skip(exaPlugin.PROPOSAL_DELAY());
 
     assertEq(exa.balanceOf(receiver), 0);
-    vm.prank(keeper);
     account.executeProposal();
     assertEq(exa.balanceOf(receiver), amount);
   }
