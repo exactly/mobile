@@ -17,6 +17,7 @@ const blockPayload = {
     event: {
       data: {
         block: {
+          number: 666,
           timestamp: Math.floor(Date.now() / 1000),
           logs: [],
         },
