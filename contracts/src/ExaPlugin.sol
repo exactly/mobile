@@ -49,8 +49,7 @@ import {
   Unauthorized,
   UninstallProposed,
   UninstallRevoked,
-  Uninstalling,
-  WrongValue
+  Uninstalling
 } from "./IExaAccount.sol";
 import { IssuerChecker } from "./IssuerChecker.sol";
 
@@ -285,7 +284,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     uint256 maxBorrowAssets,
     uint256 percentage
   ) external {
-    if (percentage > 1e18) revert WrongValue();
     proposals[msg.sender] = Proposal({
       amount: maxBorrowAssets,
       market: EXA_USDC,
