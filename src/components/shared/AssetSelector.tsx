@@ -20,6 +20,7 @@ import View from "../shared/View";
 
 export default function AssetSelector({
   onSubmit,
+  useExternalAssets = false,
 }: {
   positions?: {
     symbol: string;
@@ -30,6 +31,7 @@ export default function AssetSelector({
     market: string;
   }[];
   onSubmit: (market: Address) => void;
+  useExternalAssets?: boolean;
 }) {
   const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
   const { address: account } = useAccount();
@@ -44,7 +46,7 @@ export default function AssetSelector({
         ({ address }) => markets && !markets.some(({ market }) => address.toLowerCase() === market.toLowerCase()),
       );
     },
-    enabled: !!account,
+    enabled: !!account && useExternalAssets,
   });
 
   const positions = markets
@@ -128,61 +130,62 @@ export default function AssetSelector({
             </ToggleGroup.Item>
           );
         })}
-        {isExternalAssetsPending && (
+        {isExternalAssetsPending && useExternalAssets && (
           <XStack alignItems="center" justifyContent="center" padding="$s4">
             <Spinner width={ms(24)} height={ms(24)} color="$interactiveBaseBrandDefault" />
           </XStack>
         )}
-        {externalAssets?.map(({ name, symbol, logoURI, address, amount, priceUSD, decimals }) => {
-          const usdValue = (Number(priceUSD) * Number(amount ?? 0n)) / 10 ** decimals;
-          return (
-            <ToggleGroup.Item unstyled key={address} value={address} borderWidth={0}>
-              <View
-                flexDirection="row"
-                alignItems="center"
-                justifyContent="space-between"
-                paddingVertical={vs(10)}
-                backgroundColor={selectedMarket === address ? "$interactiveBaseBrandSoftDefault" : "transparent"}
-                width="100%"
-                paddingHorizontal="$s4"
-                borderRadius="$r3"
-              >
-                <View flexDirection="row" gap={ms(10)} alignItems="center" maxWidth="50%">
-                  <Image source={{ uri: logoURI }} width={ms(32)} height={ms(32)} style={{ borderRadius: ms(16) }} />
-                  <View gap="$s2" alignItems="flex-start" flexShrink={1}>
-                    <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
-                      {symbol}
-                    </Text>
-                    <Text fontSize={ms(12)} color="$uiNeutralSecondary" numberOfLines={1}>
-                      {name}
+        {useExternalAssets &&
+          externalAssets?.map(({ name, symbol, logoURI, address, amount, priceUSD, decimals }) => {
+            const usdValue = (Number(priceUSD) * Number(amount ?? 0n)) / 10 ** decimals;
+            return (
+              <ToggleGroup.Item unstyled key={address} value={address} borderWidth={0}>
+                <View
+                  flexDirection="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  paddingVertical={vs(10)}
+                  backgroundColor={selectedMarket === address ? "$interactiveBaseBrandSoftDefault" : "transparent"}
+                  width="100%"
+                  paddingHorizontal="$s4"
+                  borderRadius="$r3"
+                >
+                  <View flexDirection="row" gap={ms(10)} alignItems="center" maxWidth="50%">
+                    <Image source={{ uri: logoURI }} width={ms(32)} height={ms(32)} style={{ borderRadius: ms(16) }} />
+                    <View gap="$s2" alignItems="flex-start" flexShrink={1}>
+                      <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
+                        {symbol}
+                      </Text>
+                      <Text fontSize={ms(12)} color="$uiNeutralSecondary" numberOfLines={1}>
+                        {name}
+                      </Text>
+                    </View>
+                  </View>
+                  <View gap="$s2" flex={1}>
+                    <View flexDirection="row" alignItems="center" justifyContent="flex-end">
+                      <Text fontSize={ms(15)} fontWeight="bold" textAlign="right" color="$uiNeutralPrimary">
+                        {usdValue.toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                          currencyDisplay: "narrowSymbol",
+                        })}
+                      </Text>
+                    </View>
+                    <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                      {`${(Number(amount ?? 0n) / 10 ** decimals).toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: Math.min(
+                          8,
+                          Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(priceUSD) / 1e18)))),
+                        ),
+                        useGrouping: false,
+                      })} ${symbol}`}
                     </Text>
                   </View>
                 </View>
-                <View gap="$s2" flex={1}>
-                  <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                    <Text fontSize={ms(15)} fontWeight="bold" textAlign="right" color="$uiNeutralPrimary">
-                      {usdValue.toLocaleString(undefined, {
-                        style: "currency",
-                        currency: "USD",
-                        currencyDisplay: "narrowSymbol",
-                      })}
-                    </Text>
-                  </View>
-                  <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
-                    {`${(Number(amount ?? 0n) / 10 ** decimals).toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: Math.min(
-                        8,
-                        Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(priceUSD) / 1e18)))),
-                      ),
-                      useGrouping: false,
-                    })} ${symbol}`}
-                  </Text>
-                </View>
-              </View>
-            </ToggleGroup.Item>
-          );
-        })}
+              </ToggleGroup.Item>
+            );
+          })}
       </ToggleGroup>
     </YStack>
   );

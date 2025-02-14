@@ -108,7 +108,7 @@ export default function AssetSelection() {
                 </Button>
               </XStack>
             )}
-            <AssetSelector onSubmit={setSelectedMarket} />
+            <AssetSelector onSubmit={setSelectedMarket} useExternalAssets />
             <Button
               contained
               main
