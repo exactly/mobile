@@ -31,6 +31,7 @@ import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 import {
   AllowedTargetSet,
   CollectorSet,
+  CrossRepayData,
   Disagreement,
   IAuditor,
   IExaAccount,
@@ -44,7 +45,9 @@ import {
   ProposalRevoked,
   ProposalType,
   Proposed,
-  SwapProposed,
+  RepayData,
+  RollDebtData,
+  SwapData,
   Timelocked,
   Unauthorized,
   UninstallProposed,
@@ -233,90 +236,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     }
   }
 
-  function propose(IMarket market, uint256 amount, address receiver) external {
+  function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
     _checkMarket(market);
-    bytes memory data = abi.encode(receiver);
-    proposals[msg.sender] = Proposal({
-      amount: amount,
-      market: market,
-      timestamp: block.timestamp,
-      proposalType: ProposalType.WITHDRAW,
-      data: data
-    });
-    emit Proposed(msg.sender, market, amount, block.timestamp + PROPOSAL_DELAY, ProposalType.WITHDRAW, data);
-  }
-
-  function proposeCrossRepay(
-    uint256 maturity,
-    uint256 positionAssets,
-    uint256 maxRepay,
-    IMarket collateral,
-    uint256 maxAmountIn,
-    bytes calldata route
-  ) external {
-    _checkMarket(collateral);
-    bytes memory data = abi.encode(
-      CrossRepayData({ maturity: maturity, positionAssets: positionAssets, maxRepay: maxRepay, route: route })
-    );
-    proposals[msg.sender] = Proposal({
-      amount: maxAmountIn,
-      market: collateral,
-      timestamp: block.timestamp,
-      proposalType: ProposalType.CROSS_REPAY,
-      data: data
-    });
-    emit Proposed(msg.sender, collateral, maxAmountIn, block.timestamp + PROPOSAL_DELAY, ProposalType.CROSS_REPAY, data);
-  }
-
-  function proposeRepay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external {
-    bytes memory data = abi.encode(RepayData({ maturity: maturity, maxRepay: maxRepay }));
-    proposals[msg.sender] = Proposal({
-      amount: positionAssets,
-      market: EXA_USDC,
-      timestamp: block.timestamp,
-      proposalType: ProposalType.REPAY,
-      data: data
-    });
-    emit Proposed(msg.sender, EXA_USDC, positionAssets, block.timestamp + PROPOSAL_DELAY, ProposalType.REPAY, data);
-  }
-
-  function proposeRollDebt(
-    uint256 repayMaturity,
-    uint256 borrowMaturity,
-    uint256 maxRepayAssets,
-    uint256 maxBorrowAssets,
-    uint256 percentage
-  ) external {
-    bytes memory data = abi.encode(
-      RollDebtData({
-        repayMaturity: repayMaturity,
-        borrowMaturity: borrowMaturity,
-        maxRepayAssets: maxRepayAssets,
-        percentage: percentage
-      })
-    );
-    proposals[msg.sender] = Proposal({
-      amount: maxBorrowAssets,
-      market: EXA_USDC,
-      timestamp: block.timestamp,
-      proposalType: ProposalType.ROLL_DEBT,
-      data: data
-    });
-    emit Proposed(msg.sender, EXA_USDC, maxBorrowAssets, block.timestamp + PROPOSAL_DELAY, ProposalType.ROLL_DEBT, data);
-  }
-
-  function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
-    external
-  {
-    _checkMarket(market);
-    proposals[msg.sender] = Proposal({
-      amount: amount,
-      market: market,
-      timestamp: block.timestamp,
-      proposalType: ProposalType.SWAP,
-      data: abi.encode(SwapData({ assetOut: assetOut, minAmountOut: minAmountOut, route: route }))
-    });
-    emit SwapProposed(msg.sender, market, assetOut, amount, minAmountOut, route, block.timestamp + PROPOSAL_DELAY);
+    proposals[msg.sender] =
+      Proposal({ amount: amount, market: market, timestamp: block.timestamp, proposalType: proposalType, data: data });
+    emit Proposed(msg.sender, market, amount, block.timestamp + PROPOSAL_DELAY, proposalType, data);
   }
 
   function revokeProposal() external {
@@ -466,24 +390,20 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](17);
+    manifest.executionFunctions = new bytes4[](13);
     manifest.executionFunctions[0] = this.proposeUninstall.selector;
     manifest.executionFunctions[1] = this.revokeUninstall.selector;
     manifest.executionFunctions[2] = this.swap.selector;
     manifest.executionFunctions[3] = this.executeProposal.selector;
     manifest.executionFunctions[4] = this.propose.selector;
-    manifest.executionFunctions[5] = this.proposeCrossRepay.selector;
-    manifest.executionFunctions[6] = this.proposeRepay.selector;
-    manifest.executionFunctions[7] = this.proposeRollDebt.selector;
-    manifest.executionFunctions[8] = this.proposeSwap.selector;
-    manifest.executionFunctions[9] = this.revokeProposal.selector;
-    manifest.executionFunctions[10] = this.collectCollateral.selector;
-    manifest.executionFunctions[11] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
-    manifest.executionFunctions[12] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
-    manifest.executionFunctions[13] = this.collectDebit.selector;
-    manifest.executionFunctions[14] = this.collectInstallments.selector;
-    manifest.executionFunctions[15] = this.poke.selector;
-    manifest.executionFunctions[16] = this.pokeETH.selector;
+    manifest.executionFunctions[5] = this.revokeProposal.selector;
+    manifest.executionFunctions[6] = this.collectCollateral.selector;
+    manifest.executionFunctions[7] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[8] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[9] = this.collectDebit.selector;
+    manifest.executionFunctions[10] = this.collectInstallments.selector;
+    manifest.executionFunctions[11] = this.poke.selector;
+    manifest.executionFunctions[12] = this.pokeETH.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -500,7 +420,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](17);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](13);
 
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.proposeUninstall.selector,
@@ -523,50 +443,34 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeCrossRepay.selector,
-      associatedFunction: keeperOrSelfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeRepay.selector,
-      associatedFunction: keeperOrSelfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeRollDebt.selector,
-      associatedFunction: keeperOrSelfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeSwap.selector,
-      associatedFunction: keeperOrSelfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.revokeProposal.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectCollateral.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[11] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
       executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
       executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[14] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectInstallments.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[15] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[11] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[16] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
@@ -928,30 +832,5 @@ struct RepayCallbackData {
   uint256 maturity;
   address borrower;
   uint256 positionAssets;
-  uint256 maxRepay;
-}
-
-struct SwapData {
-  IERC20 assetOut;
-  uint256 minAmountOut;
-  bytes route;
-}
-
-struct RollDebtData {
-  uint256 repayMaturity;
-  uint256 borrowMaturity;
-  uint256 maxRepayAssets;
-  uint256 percentage;
-}
-
-struct CrossRepayData {
-  uint256 maturity;
-  uint256 positionAssets;
-  uint256 maxRepay;
-  bytes route;
-}
-
-struct RepayData {
-  uint256 maturity;
   uint256 maxRepay;
 }

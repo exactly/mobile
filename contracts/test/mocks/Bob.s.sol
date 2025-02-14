@@ -15,7 +15,7 @@ import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { BaseScript } from "../../script/Base.s.sol";
 import { ExaAccountFactory } from "../../src/ExaAccountFactory.sol";
 import { ExaPlugin } from "../../src/ExaPlugin.sol";
-import { IExaAccount, IMarket } from "../../src/IExaAccount.sol";
+import { CrossRepayData, IExaAccount, IMarket, ProposalType, RepayData } from "../../src/IExaAccount.sol";
 import { IssuerChecker } from "../../src/IssuerChecker.sol";
 
 import { MockSwapper } from "./MockSwapper.sol";
@@ -96,25 +96,41 @@ contract BobScript is BaseScript {
     );
     vm.stopBroadcast();
     Call[] memory calls = new Call[](3);
-    calls[0] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.proposeRepay, (maturity, 420e6, 420e6)));
+    calls[0] = Call(
+      address(bobAccount),
+      0,
+      abi.encodeCall(
+        IExaAccount.propose,
+        (exaUSDC, 420e6, ProposalType.REPAY, abi.encode(RepayData({ maturity: maturity, maxRepay: 420e6 })))
+      )
+    );
     calls[1] = Call(
       address(bobAccount),
       0,
       abi.encodeCall(
-        IExaAccount.proposeCrossRepay,
+        IExaAccount.propose,
         (
-          maturity + FixedLib.INTERVAL,
-          type(uint256).max,
-          82e6,
           exaEXA,
           100e18,
-          abi.encodeCall(
-            MockSwapper.swapExactAmountOut, (address(exa), 100e18, address(usdc), 82e6, address(exaPlugin))
+          ProposalType.SWAP,
+          abi.encode(
+            CrossRepayData({
+              maturity: maturity,
+              positionAssets: type(uint256).max,
+              maxRepay: 82e6,
+              route: abi.encodeCall(
+                MockSwapper.swapExactAmountOut, (address(exa), 100e18, address(usdc), 82e6, address(exaPlugin))
+              )
+            })
           )
         )
       )
     );
-    calls[2] = Call(address(bobAccount), 0, abi.encodeCall(IExaAccount.propose, (exaUSDC, 69e6, address(0x69))));
+    calls[2] = Call(
+      address(bobAccount),
+      0,
+      abi.encodeCall(IExaAccount.propose, (exaUSDC, 69e6, ProposalType.WITHDRAW, abi.encode(address(0x69))))
+    );
     vm.broadcast(bob);
     IStandardExecutor(address(bobAccount)).executeBatch(calls);
   }
