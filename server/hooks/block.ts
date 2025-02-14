@@ -277,6 +277,14 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
                 .map(({ value }) => v.parse(Address, value));
               shouldUpdate ||= !currentPlugins.includes(exaPluginAddress);
             }
+            const topicsField = filterArguments.value.fields.find(({ name }) => name.value === "topics");
+            if (topicsField?.value.kind === Kind.LIST) {
+              shouldUpdate ||= !topicsField.value.values.some(
+                (value) =>
+                  value.kind === Kind.STRING &&
+                  value.value === "0x32d6790d50f8334621a74f0f62e534ef3f4f98133225305074e99e7ce4d8917f", // PluginInstalled
+              );
+            }
           }
         }
       },
@@ -291,21 +299,24 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
         webhook_type: "GRAPHQL",
         webhook_url: url,
         graphql_query: `#graphql
-          {
-            block {
-              number
-              timestamp
-              logs(
-                filter: {
-                  addresses: ${JSON.stringify([...currentPlugins, exaPluginAddress])}
-                  topics: ["0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0"] # Proposed
-                }
-              ) {
-                topics
-                data
-              }
-            }
-          }`,
+{
+  block {
+    number
+    timestamp
+    logs(
+      filter: {
+        addresses: ${JSON.stringify([...currentPlugins, exaPluginAddress])}
+        topics: [
+          "0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0" # Proposed
+          "0x32d6790d50f8334621a74f0f62e534ef3f4f98133225305074e99e7ce4d8917f" # PluginInstalled
+        ]
+      }
+    ) {
+      topics
+      data
+    }
+  }
+}`,
       }),
     });
     if (!createResponse.ok) throw new Error(`${createResponse.status} ${await createResponse.text()}`);
