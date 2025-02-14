@@ -106,7 +106,6 @@ struct MarketData {
 struct Proposal {
   uint256 amount;
   IMarket market;
-  address receiver;
   uint256 timestamp;
   ProposalType proposalType;
   bytes data;

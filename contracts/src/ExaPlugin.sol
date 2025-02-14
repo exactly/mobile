@@ -162,7 +162,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     IMarket market = proposal.market;
     uint256 amount = proposal.amount;
     if (proposalType == ProposalType.WITHDRAW) {
-      address receiver = proposal.receiver;
+      address receiver = abi.decode(proposal.data, (address));
       bool isWETH = market == EXA_WETH;
       _executeFromSender(
         address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, isWETH ? address(this) : receiver, msg.sender))
@@ -240,9 +240,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       amount: amount,
       market: market,
       timestamp: block.timestamp,
-      receiver: receiver,
       proposalType: ProposalType.WITHDRAW,
-      data: ""
+      data: abi.encode(receiver)
     });
     emit Proposed(msg.sender, market, receiver, amount, block.timestamp + PROPOSAL_DELAY);
   }
@@ -260,7 +259,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       amount: maxAmountIn,
       market: collateral,
       timestamp: block.timestamp,
-      receiver: msg.sender,
       proposalType: ProposalType.CROSS_REPAY,
       data: abi.encode(
         CrossRepayData({ maturity: maturity, positionAssets: positionAssets, maxRepay: maxRepay, route: route })
@@ -274,7 +272,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       amount: positionAssets,
       market: EXA_USDC,
       timestamp: block.timestamp,
-      receiver: msg.sender,
       proposalType: ProposalType.REPAY,
       data: abi.encode(RepayData({ maturity: maturity, maxRepay: maxRepay }))
     });
@@ -293,7 +290,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       amount: maxBorrowAssets,
       market: EXA_USDC,
       timestamp: block.timestamp,
-      receiver: msg.sender,
       proposalType: ProposalType.ROLL_DEBT,
       data: abi.encode(
         RollDebtData({
@@ -315,7 +311,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       amount: amount,
       market: market,
       timestamp: block.timestamp,
-      receiver: msg.sender,
       proposalType: ProposalType.SWAP,
       data: abi.encode(SwapData({ assetOut: assetOut, minAmountOut: minAmountOut, route: route }))
     });
@@ -844,8 +839,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     if (proposal.amount == 0) revert NoProposal();
     if (proposal.amount < assets) revert NoProposal();
     if (proposal.market != marketTarget) revert NoProposal();
-    if (proposal.receiver != receiver) revert NoProposal();
     if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+    if (proposal.proposalType == ProposalType.WITHDRAW) {
+      if (abi.decode(proposal.data, (address)) != receiver) revert NoProposal();
+    }
     return assets;
   }
 
