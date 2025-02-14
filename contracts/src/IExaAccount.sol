@@ -129,7 +129,6 @@ error NotMarket();
 error Timelocked();
 error Unauthorized();
 error Uninstalling();
-error WrongValue();
 
 interface IAuditor {
   function accountMarkets(address account) external view returns (uint256);
