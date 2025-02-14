@@ -5,7 +5,15 @@ import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factor
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin, IAuditor, IBalancerVault, IDebtManager, IInstallmentsRouter, IMarket } from "../src/ExaPlugin.sol";
+import {
+  ExaPlugin,
+  IAuditor,
+  IBalancerVault,
+  IDebtManager,
+  IInstallmentsRouter,
+  IMarket,
+  IProposalManager
+} from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 
 import { BaseScript } from "./Base.s.sol";
@@ -26,6 +34,7 @@ contract DeployScript is BaseScript {
       IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
+      IProposalManager(address(this)), // FIXME
       acct("collector"),
       acct("swapper"),
       acct("keeper")

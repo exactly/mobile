@@ -41,9 +41,42 @@ interface IExaAccount {
   function pokeETH() external;
 }
 
+interface IProposalManager {
+  function checkLiquidity(address account) external view;
+  function decreaseAmount(address account, uint256 amount) external;
+  function preExecutionChecker(address sender, address target, bytes4 selector, bytes memory callData)
+    external
+    view
+    returns (uint256);
+  function proposals(address account) external view returns (uint256, IMarket, uint256, ProposalType, bytes memory);
+  function propose(address account, IMarket market, uint256 amount, ProposalType proposalType, bytes memory data)
+    external;
+  function revoke(address account) external;
+  function setAllowedTarget(address target, bool allowed) external;
+}
+
+interface IDebtManager {
+  function rollFixed(
+    IMarket market,
+    uint256 repayMaturity,
+    uint256 borrowMaturity,
+    uint256 maxRepayAssets,
+    uint256 maxBorrowAssets,
+    uint256 percentage
+  ) external;
+}
+
+interface IInstallmentsRouter {
+  function borrow(IMarket market, uint256 firstMaturity, uint256[] calldata amounts, uint256 maxRepay, address receiver)
+    external
+    returns (uint256[] memory assetsOwed);
+}
+
 event AllowedTargetSet(address indexed target, address indexed account, bool allowed);
 
 event CollectorSet(address indexed collector, address indexed account);
+
+event ProposalManagerSet(IProposalManager indexed proposalManager, address indexed account);
 
 event ProposalRevoked(address indexed account);
 
@@ -131,6 +164,7 @@ error NotMarket();
 error Timelocked();
 error Unauthorized();
 error Uninstalling();
+error ZeroAddress();
 
 interface IAuditor {
   function accountMarkets(address account) external view returns (uint256);

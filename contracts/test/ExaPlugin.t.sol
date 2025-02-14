@@ -42,6 +42,7 @@ import {
   IAuditor,
   IExaAccount,
   IMarket,
+  IProposalManager,
   InsufficientLiquidity,
   NoProposal,
   ProposalRevoked,
@@ -57,6 +58,8 @@ import {
   Uninstalling
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
+
+import { ProposalManager } from "../src/ProposalManager.sol";
 import { Refunder } from "../src/Refunder.sol";
 
 import { DeployIssuerChecker } from "../script/IssuerChecker.s.sol";
@@ -96,6 +99,8 @@ contract ExaPluginTest is ForkTest {
   IMarket internal exaWETH;
   MockERC20 internal exa;
   MockERC20 internal usdc;
+
+  ProposalManager internal proposalManager;
 
   function setUp() external {
     collector = payable(makeAddr("collector"));
@@ -138,6 +143,18 @@ contract ExaPluginTest is ForkTest {
     unset("keeper");
     refunder = r.refunder();
 
+    proposalManager = new ProposalManager(
+      address(this),
+      IAuditor(address(auditor)),
+      IDebtManager(address(p.debtManager())),
+      IInstallmentsRouter(address(p.installmentsRouter())),
+      address(m.swapper()),
+      collector,
+      IERC20(address(usdc)),
+      IERC20(exaWETH.asset())
+    );
+    proposalManager.setAllowedTarget(address(exa), true);
+
     exaPlugin = new ExaPlugin(
       address(this),
       IAuditor(address(auditor)),
@@ -147,12 +164,12 @@ contract ExaPluginTest is ForkTest {
       IDebtManager(address(p.debtManager())),
       IInstallmentsRouter(address(p.installmentsRouter())),
       issuerChecker,
+      IProposalManager(address(proposalManager)),
       collector,
       address(m.swapper()),
       keeper
     );
-
-    exaPlugin.setAllowedTarget(address(exa), true);
+    proposalManager.grantRole(proposalManager.PROPOSER_ROLE(), address(exaPlugin));
 
     ownerPlugin = new WebauthnOwnerPlugin();
     ExaAccountFactory factory = new ExaAccountFactory(
@@ -245,7 +262,7 @@ contract ExaPluginTest is ForkTest {
     uint256 amount = 0.0004e8;
     IERC20 wbtc = IERC20(protocol("WBTC"));
     deal(address(wbtc), address(account), amount);
-    exaPlugin.setAllowedTarget(address(wbtc), true);
+    proposalManager.setAllowedTarget(address(wbtc), true);
 
     bytes memory route = bytes.concat(
       hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",
@@ -601,7 +618,7 @@ contract ExaPluginTest is ForkTest {
     account.executeProposal();
   }
 
-  function test_rollDebt_rolls() external {
+  function test_rollDebt_rollsX() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
     uint256 assets = 100e6;
@@ -1354,7 +1371,7 @@ contract ExaPluginTest is ForkTest {
     uint256 maxAmountIn = 0.0004e8;
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
     deal(exaWBTC.asset(), address(account), maxAmountIn);
-    exaPlugin.setAllowedTarget(exaWBTC.asset(), true);
+    proposalManager.setAllowedTarget(exaWBTC.asset(), true);
 
     vm.startPrank(keeper);
     account.poke(exaWBTC);
@@ -1531,7 +1548,7 @@ contract ExaPluginTest is ForkTest {
     vm.stopPrank();
     erc20.mint(address(account), 100e18);
 
-    exaPlugin.setAllowedTarget(address(erc20), true);
+    proposalManager.setAllowedTarget(address(erc20), true);
 
     vm.startPrank(owner);
     account.execute(address(erc20), 0, abi.encodeCall(IERC20.transfer, (address(account), 100e18)));
@@ -1731,8 +1748,8 @@ contract ExaPluginTest is ForkTest {
 
   function test_setAllowedTarget_sets_whenAdmin() external {
     address target = address(0x1);
-    exaPlugin.setAllowedTarget(target, true);
-    assert(exaPlugin.allowlist(target));
+    proposalManager.setAllowedTarget(target, true);
+    assert(proposalManager.allowlist(target));
   }
 
   function test_setAllowedTarget_reverts_whenNotAdmin() external {
@@ -1743,23 +1760,23 @@ contract ExaPluginTest is ForkTest {
         IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
       )
     );
-    exaPlugin.setAllowedTarget(address(0x1), true);
+    proposalManager.setAllowedTarget(address(0x1), true);
   }
 
   function test_setAllowedTarget_reverts_whenAddressZero() external {
     vm.expectRevert(ZeroAddress.selector);
-    exaPlugin.setAllowedTarget(address(0), true);
+    proposalManager.setAllowedTarget(address(0), true);
   }
 
   function test_setAllowedTarget_emitsAllowedTargetSet() external {
     address target = address(0x1);
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    vm.expectEmit(true, true, true, true, address(proposalManager));
     emit AllowedTargetSet(target, address(this), true);
-    exaPlugin.setAllowedTarget(target, true);
+    proposalManager.setAllowedTarget(target, true);
 
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    vm.expectEmit(true, true, true, true, address(proposalManager));
     emit AllowedTargetSet(target, address(this), false);
-    exaPlugin.setAllowedTarget(target, false);
+    proposalManager.setAllowedTarget(target, false);
   }
 
   // solhint-enable func-name-mixedcase
@@ -1842,6 +1859,18 @@ contract ExaPluginTest is ForkTest {
     issuerChecker.setIssuer(issuer);
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
+    proposalManager = new ProposalManager(
+      address(this),
+      IAuditor(protocol("Auditor")),
+      IDebtManager(protocol("DebtManager")),
+      IInstallmentsRouter(protocol("InstallmentsRouter")),
+      0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
+      acct("collector"),
+      IERC20(IMarket(protocol("MarketUSDC")).asset()),
+      IERC20(IMarket(protocol("MarketWETH")).asset())
+    );
+    proposalManager.setAllowedTarget(address(exa), true);
+
     exaPlugin = new ExaPlugin(
       address(this),
       IAuditor(protocol("Auditor")),
@@ -1851,10 +1880,13 @@ contract ExaPluginTest is ForkTest {
       IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       IssuerChecker(broadcast("IssuerChecker")),
+      proposalManager,
       acct("collector"),
       0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
       keeper
     );
+
+    proposalManager.grantRole(proposalManager.PROPOSER_ROLE(), address(exaPlugin));
 
     usdc = MockERC20(protocol("USDC"));
     exaUSDC = IMarket(protocol("MarketUSDC"));
