@@ -44,6 +44,7 @@ import {
   InsufficientLiquidity,
   NoProposal,
   ProposalRevoked,
+  ProposalType,
   Proposed,
   SwapProposed,
   Timelocked,
@@ -295,7 +296,14 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(owner);
 
     vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit Proposed(address(account), exaEXA, receiver, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY());
+    emit Proposed(
+      address(account),
+      exaEXA,
+      amount,
+      block.timestamp + exaPlugin.PROPOSAL_DELAY(),
+      ProposalType.WITHDRAW,
+      abi.encode(receiver)
+    );
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, receiver)));
   }
 

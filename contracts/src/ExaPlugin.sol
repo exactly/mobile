@@ -235,14 +235,15 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function propose(IMarket market, uint256 amount, address receiver) external {
     _checkMarket(market);
+    bytes memory data = abi.encode(receiver);
     proposals[msg.sender] = Proposal({
       amount: amount,
       market: market,
       timestamp: block.timestamp,
       proposalType: ProposalType.WITHDRAW,
-      data: abi.encode(receiver)
+      data: data
     });
-    emit Proposed(msg.sender, market, receiver, amount, block.timestamp + PROPOSAL_DELAY);
+    emit Proposed(msg.sender, market, amount, block.timestamp + PROPOSAL_DELAY, ProposalType.WITHDRAW, data);
   }
 
   function proposeCrossRepay(
@@ -254,27 +255,29 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     bytes calldata route
   ) external {
     _checkMarket(collateral);
+    bytes memory data = abi.encode(
+      CrossRepayData({ maturity: maturity, positionAssets: positionAssets, maxRepay: maxRepay, route: route })
+    );
     proposals[msg.sender] = Proposal({
       amount: maxAmountIn,
       market: collateral,
       timestamp: block.timestamp,
       proposalType: ProposalType.CROSS_REPAY,
-      data: abi.encode(
-        CrossRepayData({ maturity: maturity, positionAssets: positionAssets, maxRepay: maxRepay, route: route })
-      )
+      data: data
     });
-    // TODO emit event
+    emit Proposed(msg.sender, collateral, maxAmountIn, block.timestamp + PROPOSAL_DELAY, ProposalType.CROSS_REPAY, data);
   }
 
   function proposeRepay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external {
+    bytes memory data = abi.encode(RepayData({ maturity: maturity, maxRepay: maxRepay }));
     proposals[msg.sender] = Proposal({
       amount: positionAssets,
       market: EXA_USDC,
       timestamp: block.timestamp,
       proposalType: ProposalType.REPAY,
-      data: abi.encode(RepayData({ maturity: maturity, maxRepay: maxRepay }))
+      data: data
     });
-    // TODO emit event
+    emit Proposed(msg.sender, EXA_USDC, positionAssets, block.timestamp + PROPOSAL_DELAY, ProposalType.REPAY, data);
   }
 
   function proposeRollDebt(
@@ -284,21 +287,22 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     uint256 maxBorrowAssets,
     uint256 percentage
   ) external {
+    bytes memory data = abi.encode(
+      RollDebtData({
+        repayMaturity: repayMaturity,
+        borrowMaturity: borrowMaturity,
+        maxRepayAssets: maxRepayAssets,
+        percentage: percentage
+      })
+    );
     proposals[msg.sender] = Proposal({
       amount: maxBorrowAssets,
       market: EXA_USDC,
       timestamp: block.timestamp,
       proposalType: ProposalType.ROLL_DEBT,
-      data: abi.encode(
-        RollDebtData({
-          repayMaturity: repayMaturity,
-          borrowMaturity: borrowMaturity,
-          maxRepayAssets: maxRepayAssets,
-          percentage: percentage
-        })
-      )
+      data: data
     });
-    // TODO emit event
+    emit Proposed(msg.sender, EXA_USDC, maxBorrowAssets, block.timestamp + PROPOSAL_DELAY, ProposalType.ROLL_DEBT, data);
   }
 
   function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
