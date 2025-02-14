@@ -302,7 +302,7 @@ contract ExaPluginTest is ForkTest {
 
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit Proposed(
-      address(account), exaEXA, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY(), ProposalType.WITHDRAW, data
+      address(account), exaEXA, ProposalType.WITHDRAW, amount, data, block.timestamp + exaPlugin.PROPOSAL_DELAY()
     );
     account.execute(
       address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, data))
@@ -317,7 +317,7 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(owner);
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit Proposed(
-      address(account), exaEXA, amount, block.timestamp + exaPlugin.PROPOSAL_DELAY(), ProposalType.SWAP, data
+      address(account), exaEXA, ProposalType.SWAP, amount, data, block.timestamp + exaPlugin.PROPOSAL_DELAY()
     );
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.SWAP, data)));
   }

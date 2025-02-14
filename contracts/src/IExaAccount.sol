@@ -48,7 +48,12 @@ event CollectorSet(address indexed collector, address indexed account);
 event ProposalRevoked(address indexed account);
 
 event Proposed(
-  address indexed account, IMarket indexed market, uint256 amount, uint256 unlock, ProposalType proposalType, bytes data
+  address indexed account,
+  IMarket indexed market,
+  ProposalType indexed proposalType,
+  uint256 amount,
+  bytes data,
+  uint256 unlock
 );
 
 event UninstallProposed(address indexed account, uint256 unlock);

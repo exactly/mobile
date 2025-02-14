@@ -240,7 +240,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _checkMarket(market);
     proposals[msg.sender] =
       Proposal({ amount: amount, market: market, timestamp: block.timestamp, proposalType: proposalType, data: data });
-    emit Proposed(msg.sender, market, amount, block.timestamp + PROPOSAL_DELAY, proposalType, data);
+    emit Proposed(msg.sender, market, proposalType, amount, data, block.timestamp + PROPOSAL_DELAY);
   }
 
   function revokeProposal() external {
