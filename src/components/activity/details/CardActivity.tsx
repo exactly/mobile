@@ -43,24 +43,21 @@ export default function CardActivity({
           </Text>
         </YStack>
       </YStack>
-      <YStack flex={1} gap="$s7">
-        {item.type !== "panda" && (
-          <>
-            <PurchaseDetails item={item} />
-            <PaymentDetails item={item} />
-            <TransactionDetails />
-          </>
-        )}
-
-        {item.type === "panda" &&
-          item.operations.map((operation, index) => (
-            <>
-              <PurchaseDetails item={operation} />
-              <PaymentDetails item={operation} />
-              <TransactionDetails source={operation} />
-            </>
-          ))}
-      </YStack>
+      {item.type === "panda" ? (
+        item.operations.map((operation) => (
+          <YStack key={operation.id} gap="$s7" flex={1}>
+            <PurchaseDetails item={operation} />
+            <PaymentDetails item={operation} />
+            <TransactionDetails source={operation} />
+          </YStack>
+        ))
+      ) : (
+        <YStack gap="$s7" flex={1}>
+          <PurchaseDetails item={item} />
+          <PaymentDetails item={item} />
+          <TransactionDetails />
+        </YStack>
+      )}
     </>
   );
 }
