@@ -11,25 +11,7 @@ interface IExaAccount {
     external
     returns (uint256 amountIn, uint256 amountOut);
   function executeProposal() external;
-  function propose(IMarket market, uint256 amount, address receiver) external;
-  function proposeCrossRepay(
-    uint256 maturity,
-    uint256 positionAssets,
-    uint256 maxRepay,
-    IMarket collateral,
-    uint256 amountIn,
-    bytes calldata route
-  ) external;
-  function proposeRepay(uint256 maturity, uint256 positionAssets, uint256 maxRepay) external;
-  function proposeRollDebt(
-    uint256 repayMaturity,
-    uint256 borrowMaturity,
-    uint256 maxRepayAssets,
-    uint256 maxBorrowAssets,
-    uint256 percentage
-  ) external;
-  function proposeSwap(IMarket market, IERC20 assetOut, uint256 amount, uint256 minAmountOut, bytes memory route)
-    external;
+  function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external;
   function revokeProposal() external;
   function collectCollateral(
     uint256 amount,
@@ -73,16 +55,6 @@ event UninstallProposed(address indexed account, uint256 unlock);
 
 event UninstallRevoked(address indexed account);
 
-event SwapProposed(
-  address indexed account,
-  IMarket indexed market,
-  IERC20 indexed assetOut,
-  uint256 amount,
-  uint256 minAmountOut,
-  bytes route,
-  uint256 unlock
-);
-
 struct FixedPool {
   uint256 borrowed;
   uint256 supplied;
@@ -109,6 +81,31 @@ struct Proposal {
   uint256 timestamp;
   ProposalType proposalType;
   bytes data;
+}
+
+struct SwapData {
+  IERC20 assetOut;
+  uint256 minAmountOut;
+  bytes route;
+}
+
+struct RollDebtData {
+  uint256 repayMaturity;
+  uint256 borrowMaturity;
+  uint256 maxRepayAssets;
+  uint256 percentage;
+}
+
+struct CrossRepayData {
+  uint256 maturity;
+  uint256 positionAssets;
+  uint256 maxRepay;
+  bytes route;
+}
+
+struct RepayData {
+  uint256 maturity;
+  uint256 maxRepay;
 }
 
 enum ProposalType {
