@@ -60,7 +60,7 @@ export default function PluginUpgrade() {
       await refetchInstalledPlugins();
     },
   });
-  if (!installedPlugins || installedPlugins[0] === exaPluginAddress) return null;
+  if (!installedPlugins) return null;
   return (
     <InfoAlert
       title="An account upgrade is required to access the latest features."
