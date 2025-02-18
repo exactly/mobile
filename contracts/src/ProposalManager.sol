@@ -113,7 +113,7 @@ contract ProposalManager is IProposalManager, AccessControl {
       }
       revert Unauthorized();
     }
-    if (target == address(SWAPPER) || target == sender || allowlist[target]) return 0;
+    if (target == address(SWAPPER) || allowlist[target]) return 0;
 
     IMarket marketTarget = IMarket(target);
     if (!_isMarket(marketTarget)) revert Unauthorized();
