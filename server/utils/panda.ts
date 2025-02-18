@@ -1,3 +1,4 @@
+import domain from "@exactly/common/domain";
 import chain, { exaPluginAddress } from "@exactly/common/generated/chain";
 import { type Address, Hash } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
@@ -54,7 +55,11 @@ export async function createCard({
       type: "virtual",
       status: "active",
       limit: { amount: 1_000_000, frequency: "per7DayPeriod" },
-      configuration: { displayName: displayName(name) },
+      configuration: {
+        displayName: displayName(name),
+        virtualCardArt:
+          { "web.exactly.app": "81e42f27affd4e328f19651d4f2b438e" }[domain] ?? "0c515d7eb0a140fa8f938f8242b0780a",
+      },
     }),
     "POST",
   );
@@ -122,7 +127,7 @@ const CreateCardRequest = object({
       "perAuthorization",
     ]),
   }),
-  configuration: object({ displayName: pipe(string(), maxLength(30)) }),
+  configuration: object({ displayName: pipe(string(), maxLength(30)), virtualCardArt: string() }),
 });
 
 const CardResponse = object({
