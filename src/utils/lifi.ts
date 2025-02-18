@@ -18,6 +18,7 @@ export async function getRoute(fromToken: Hex, toToken: Hex, toAmount: bigint, a
     });
     return {
       fromAmount,
+      toAmount,
       data: parse(
         Hex,
         encodeFunctionData<typeof mockSwapperAbi>({
@@ -42,7 +43,11 @@ export async function getRoute(fromToken: Hex, toToken: Hex, toAmount: bigint, a
     contractCalls: [],
     toFallbackAddress: receiver,
   });
-  return { fromAmount: BigInt(estimate.fromAmount), data: parse(Hex, transactionRequest?.data) };
+  return {
+    fromAmount: BigInt(estimate.fromAmount),
+    toAmount: BigInt(estimate.toAmount),
+    data: parse(Hex, transactionRequest?.data),
+  };
 }
 
 export async function getAsset(account: Address) {

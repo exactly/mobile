@@ -10,7 +10,7 @@ import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import { Address, Hex } from "@exactly/common/validation";
 import { WAD, withdrawLimit } from "@exactly/lib";
 import { ArrowLeft, ChevronRight, Coins } from "@tamagui/lucide-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { format, formatDistance, isAfter } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -20,7 +20,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { titleCase } from "title-case";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
-import { zeroAddress } from "viem";
+import { encodeFunctionData, erc20Abi, zeroAddress } from "viem";
 import { useSimulateContract, useWriteContract } from "wagmi";
 
 import AssetSelectionSheet from "./AssetSelectionSheet";
@@ -32,6 +32,7 @@ import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
 import { auditorAbi, marketAbi, useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
+import { accountClient } from "../../utils/alchemyConnector";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
 import { getRoute } from "../../utils/lifi";
@@ -44,7 +45,11 @@ export default function Pay() {
   const [assetSelectionOpen, setAssetSelectionOpen] = useState(false);
   const { account, market: USDCMarket, markets, queryKey: marketAccount } = useAsset(marketUSDCAddress);
 
-  const [selectedMarket, setSelectedMarket] = useState<Address>();
+  const [selectedMarket, setSelectedMarket] = useState<{ address: Address; isExternalAsset: boolean }>({
+    address: parse(Address, zeroAddress),
+    isExternalAsset: true,
+  });
+
   const [displayValues, setDisplayValues] = useState<{ amount: number; usdAmount: number }>({
     amount: 0,
     usdAmount: 0,
@@ -60,8 +65,8 @@ export default function Pay() {
     useLocalSearchParams().maturity,
   );
 
-  const handleAssetSelect = (market: Address) => {
-    setSelectedMarket(market);
+  const handleAssetSelect = (address: Address, isExternalAsset: boolean) => {
+    setSelectedMarket({ address, isExternalAsset });
   };
 
   const {
@@ -92,7 +97,7 @@ export default function Pay() {
   });
 
   const timestamp = BigInt(Math.floor(Date.now() / 1000));
-  const isUSDCSelected = selectedMarket === parse(Address, marketUSDCAddress);
+  const isUSDCSelected = selectedMarket.address === parse(Address, marketUSDCAddress);
   const borrow = USDCMarket?.fixedBorrowPositions.find((b) => b.maturity === BigInt(success ? maturity : 0));
 
   const previewValue =
@@ -109,10 +114,10 @@ export default function Pay() {
       10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
     : 0n;
 
-  const isPending = isUSDCSelected ? isRepaying : selectedMarket ? isCrossRepaying : false;
+  const isPending = isUSDCSelected ? isRepaying : isCrossRepaying;
   const isSuccess = isUSDCSelected ? isRepaySuccess : isCrossRepaySuccess;
   const error = isUSDCSelected ? repayError : crossRepayError;
-  const hash = isUSDCSelected ? repayHash : selectedMarket ? crossRepayHash : undefined;
+  const hash = isUSDCSelected ? repayHash : crossRepayHash;
 
   const positions = markets
     ?.map((market) => ({
@@ -122,13 +127,14 @@ export default function Pay() {
     }))
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0n);
 
-  if (!selectedMarket && positions?.[0]) {
+  if (selectedMarket.address === parse(Address, zeroAddress) && positions?.[0]) {
     const { market } = positions[0];
-    setSelectedMarket(parse(Address, market));
+    setSelectedMarket({ address: parse(Address, market), isExternalAsset: false });
   }
 
-  const repayMarket = positions?.find((p) => p.market === selectedMarket);
-  const repayMarketAvailable = markets && selectedMarket ? withdrawLimit(markets, selectedMarket) : 0n;
+  const repayMarket = positions?.find((p) => p.market === selectedMarket.address);
+  const repayMarketAvailable =
+    markets && !selectedMarket.isExternalAsset ? withdrawLimit(markets, selectedMarket.address) : 0n;
 
   const slippage = (WAD * 102n) / 100n;
   const maxRepay = borrow ? (borrow.previewValue * slippage) / WAD : 0n;
@@ -164,7 +170,7 @@ export default function Pay() {
               !!USDCMarket &&
               !!success &&
               !!maturity &&
-              selectedMarket === parse(Address, marketUSDCAddress),
+              selectedMarket.address === parse(Address, marketUSDCAddress),
           },
         }
       : {
@@ -190,7 +196,7 @@ export default function Pay() {
               !!USDCMarket &&
               !!success &&
               !!maturity &&
-              selectedMarket === parse(Address, marketUSDCAddress),
+              selectedMarket.address === parse(Address, marketUSDCAddress),
           },
         },
   );
@@ -208,7 +214,7 @@ export default function Pay() {
             success ? BigInt(maturity) : 0n,
             positionAssets,
             maxRepay,
-            selectedMarket ?? zeroAddress,
+            selectedMarket.address,
             maxAmountIn,
             route.data,
           ],
@@ -216,17 +222,13 @@ export default function Pay() {
           query: {
             retry: 2,
             enabled:
-              !!success &&
-              !!maturity &&
-              !!account &&
-              !!selectedMarket &&
-              selectedMarket !== parse(Address, marketUSDCAddress),
+              !!success && !!maturity && !!account && selectedMarket.address !== parse(Address, marketUSDCAddress),
           },
         }
       : {
           address: account,
           functionName: "crossRepay",
-          args: [success ? BigInt(maturity) : 0n, selectedMarket ?? zeroAddress],
+          args: [success ? BigInt(maturity) : 0n, selectedMarket.address],
           abi: [
             ...auditorAbi,
             ...marketAbi,
@@ -245,11 +247,7 @@ export default function Pay() {
           query: {
             retry: 2,
             enabled:
-              !!success &&
-              !!maturity &&
-              !!account &&
-              !!selectedMarket &&
-              selectedMarket !== parse(Address, marketUSDCAddress),
+              !!success && !!maturity && !!account && selectedMarket.address !== parse(Address, marketUSDCAddress),
           },
         },
   );
@@ -281,13 +279,58 @@ export default function Pay() {
     route.fromAmount,
   ]);
 
-  const simulation = isUSDCSelected ? repaySimulation : selectedMarket ? crossRepaySimulation : undefined;
-  const isSimulating = isUSDCSelected ? isSimulatingRepay : selectedMarket ? isSimulatingCrossRepay : false;
+  const simulation = isUSDCSelected ? repaySimulation : crossRepaySimulation;
+  const isSimulating = isUSDCSelected ? isSimulatingRepay : isSimulatingCrossRepay;
 
-  if (!selectedMarket && positions?.[0]) {
+  if (selectedMarket.address === parse(Address, zeroAddress) && positions?.[0]) {
     const { market } = positions[0];
-    setSelectedMarket(parse(Address, market));
+    setSelectedMarket({ address: parse(Address, market), isExternalAsset: false });
   }
+
+  const {
+    mutateAsync: repayWithExternalAsset,
+    isPending: isRepayingWithExternalAsset,
+    error: repayWithExternalAssetError,
+  } = useMutation({
+    mutationFn: async () => {
+      if (!account) throw new Error("no account");
+      if (!accountClient) throw new Error("no account client");
+      if (!selectedMarket.isExternalAsset) throw new Error("not external asset");
+      const lifiGatewayAddress = "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE"; // TODO get from codegen?
+      const lifiRoute = await getRoute(selectedMarket.address, usdcAddress, maxRepay, account, account);
+      const uoHash = await accountClient.sendUserOperation({
+        uo: [
+          // 1. approve external asset for the repay amount
+          {
+            value: 0n,
+            target: selectedMarket.address,
+            data: encodeFunctionData({
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [selectedMarket.address, lifiRoute.fromAmount],
+            }),
+          },
+          // 2. call lifi gateway with returned route
+          {
+            value: 0n,
+            target: lifiGatewayAddress,
+            data: lifiRoute.data,
+          },
+          // 3. repay USDC market with the returned assets
+          {
+            value: 0n,
+            target: marketUSDCAddress,
+            data: encodeFunctionData({
+              functionName: "repay",
+              abi: marketAbi,
+              args: [lifiRoute.toAmount, account],
+            }),
+          },
+        ],
+      });
+      return await accountClient.waitForUserOperationTransaction(uoHash);
+    },
+  });
 
   if (!success || !repayMarket) return;
   if (!isPending && !isSuccess && !error)

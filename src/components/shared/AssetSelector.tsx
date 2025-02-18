@@ -30,7 +30,7 @@ export default function AssetSelector({
     usdValue: bigint;
     market: string;
   }[];
-  onSubmit: (market: Address) => void;
+  onSubmit: (market: Address, isExternalAsset: boolean) => void;
   useExternalAssets?: boolean;
 }) {
   const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
@@ -76,11 +76,12 @@ export default function AssetSelector({
           const market = safeParse(Address, value);
           if (!market.success) return;
           setSelectedMarket(market.output);
-          onSubmit(market.output);
+          const isExternalAsset = useExternalAssets && externalAssets?.some(({ address }) => address === market.output);
+          onSubmit(market.output, isExternalAsset ?? false);
         }}
         value={selectedMarket}
       >
-        {positions.map(({ symbol, assetName, decimals, usdValue, market }, index) => {
+        {positions.map(({ symbol, assetName, decimals, usdValue, market }) => {
           const available = markets ? withdrawLimit(markets, market) : 0n;
           return (
             <ToggleGroup.Item unstyled key={market} value={market} borderWidth={0}>
