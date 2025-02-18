@@ -60,7 +60,7 @@ export async function createCard({
       type: "virtual",
       status: "active",
       limit: { amount: 1_000_000, frequency: "per7DayPeriod" },
-      configuration: { displayName: displayName(name) },
+      configuration: { displayName: displayName(name), virtualCardArt: "81e42f27affd4e328f19651d4f2b438e" },
     }),
     "POST",
   );
@@ -128,7 +128,7 @@ const CreateCardRequest = object({
       "perAuthorization",
     ]),
   }),
-  configuration: object({ displayName: pipe(string(), maxLength(30)) }),
+  configuration: object({ displayName: pipe(string(), maxLength(30)), virtualCardArt: string() }),
 });
 
 const CardResponse = object({
