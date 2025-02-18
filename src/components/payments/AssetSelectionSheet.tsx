@@ -18,7 +18,7 @@ export default function AssetSelectionSheet({
 }: {
   open: boolean;
   onClose: () => void;
-  onAssetSelected: (market: Address) => void;
+  onAssetSelected: (market: Address, isExternalAsset: boolean) => void;
   symbol?: string;
   positions?: {
     symbol: string;
@@ -55,7 +55,7 @@ export default function AssetSelectionSheet({
           <View padded paddingTop="$s6" fullScreen flex={1}>
             <>
               <View gap="$s5">
-                <AssetSelector positions={positions} onSubmit={onAssetSelected} />
+                <AssetSelector positions={positions} onSubmit={onAssetSelected} useExternalAssets />
                 <View>
                   <Button
                     onPress={onClose}

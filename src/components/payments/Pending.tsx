@@ -1,10 +1,13 @@
+import type { Address } from "@exactly/common/validation";
 import { format, isAfter } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
+import { Image } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Square, styled, useTheme, XStack, YStack } from "tamagui";
 
 import assetLogos from "../../utils/assetLogos";
+import useAsset from "../../utils/useAsset";
 import AssetLogo from "../shared/AssetLogo";
 import SafeView from "../shared/SafeView";
 import ExaSpinner from "../shared/Spinner";
@@ -16,12 +19,15 @@ export default function Pending({
   amount,
   currency,
   maturity,
+  selectedAsset,
 }: {
   usdAmount: number;
   amount: number;
-  currency: string;
+  currency?: string;
   maturity: string;
+  selectedAsset: Address;
 }) {
+  const { externalAsset } = useAsset(selectedAsset);
   const theme = useTheme();
   return (
     <View fullScreen backgroundColor="$backgroundSoft">
@@ -83,7 +89,20 @@ export default function Pending({
                       <Text emphasized secondary subHeadline>
                         &nbsp;{currency}&nbsp;
                       </Text>
-                      <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={ms(16)} height={ms(16)} />
+                      {externalAsset ? (
+                        <Image
+                          source={{ uri: externalAsset.logoURI }}
+                          width={ms(16)}
+                          height={ms(16)}
+                          style={{ borderRadius: ms(20) }}
+                        />
+                      ) : (
+                        <AssetLogo
+                          uri={assetLogos[currency as keyof typeof assetLogos]}
+                          width={ms(16)}
+                          height={ms(16)}
+                        />
+                      )}
                     </XStack>
                   </YStack>
                 </YStack>

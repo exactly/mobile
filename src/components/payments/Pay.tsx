@@ -10,17 +10,18 @@ import {
 import { Address, Hex } from "@exactly/common/validation";
 import { WAD, withdrawLimit } from "@exactly/lib";
 import { ArrowLeft, ChevronRight, Coins } from "@tamagui/lucide-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { format, formatDistance, isAfter } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
+import { Skeleton } from "moti/skeleton";
 import React, { useCallback, useState } from "react";
-import { Pressable } from "react-native";
+import { Pressable, Image, Appearance } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { titleCase } from "title-case";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
-import { encodeAbiParameters, zeroAddress } from "viem";
+import { encodeFunctionData, erc20Abi, parseUnits, zeroAddress, encodeAbiParameters } from "viem";
 import { useSimulateContract, useWriteContract } from "wagmi";
 
 import AssetSelectionSheet from "./AssetSelectionSheet";
@@ -32,6 +33,7 @@ import SafeView from "../../components/shared/SafeView";
 import Text from "../../components/shared/Text";
 import View from "../../components/shared/View";
 import { auditorAbi, marketAbi, useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
+import { accountClient } from "../../utils/alchemyConnector";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
 import { getRoute } from "../../utils/lifi";
@@ -43,8 +45,15 @@ export default function Pay() {
   const insets = useSafeAreaInsets();
   const [assetSelectionOpen, setAssetSelectionOpen] = useState(false);
   const { account, market: exaUSDC, markets, queryKey: marketAccount } = useAsset(marketUSDCAddress);
-
-  const [selectedMarket, setSelectedMarket] = useState<Address>();
+  const [selectedAsset, setSelectedAsset] = useState<{ address: Address; isExternalAsset: boolean }>({
+    address: parse(Address, zeroAddress),
+    isExternalAsset: true,
+  });
+  const {
+    externalAsset,
+    available: externalAssetAvailable,
+    isFetching: isFetchingAsset,
+  } = useAsset(selectedAsset.address);
   const [displayValues, setDisplayValues] = useState<{ amount: number; usdAmount: number }>({
     amount: 0,
     usdAmount: 0,
@@ -60,8 +69,8 @@ export default function Pay() {
     useLocalSearchParams().maturity,
   );
 
-  const handleAssetSelect = (market: Address) => {
-    setSelectedMarket(market);
+  const handleAssetSelect = (address: Address, isExternalAsset: boolean) => {
+    setSelectedAsset({ address, isExternalAsset });
   };
 
   const {
@@ -92,9 +101,8 @@ export default function Pay() {
   });
 
   const timestamp = BigInt(Math.floor(Date.now() / 1000));
-  const isUSDCSelected = selectedMarket === parse(Address, marketUSDCAddress);
+  const isUSDCSelected = selectedAsset.address === parse(Address, marketUSDCAddress);
   const borrow = exaUSDC?.fixedBorrowPositions.find((b) => b.maturity === BigInt(success ? maturity : 0));
-
   const previewValue =
     borrow && exaUSDC ? (borrow.previewValue * exaUSDC.usdPrice) / 10n ** BigInt(exaUSDC.decimals) : 0n;
   const positionValue =
@@ -102,17 +110,11 @@ export default function Pay() {
       ? ((borrow.position.principal + borrow.position.fee) * exaUSDC.usdPrice) / 10n ** BigInt(exaUSDC.decimals)
       : 0n;
   const discount = positionValue === 0n ? 0 : Number(WAD - (previewValue * WAD) / positionValue) / 1e18;
-
   const feeValue = borrow
     ? (fixedRate(borrow.maturity, borrow.position.principal, borrow.position.fee, timestamp) *
         borrow.position.principal) /
       10n ** BigInt(exaUSDC ? exaUSDC.decimals : 0)
     : 0n;
-
-  const isPending = isUSDCSelected ? isRepaying : selectedMarket ? isCrossRepaying : false;
-  const isSuccess = isUSDCSelected ? isRepaySuccess : isCrossRepaySuccess;
-  const error = isUSDCSelected ? repayError : crossRepayError;
-  const hash = isUSDCSelected ? repayHash : selectedMarket ? crossRepayHash : undefined;
 
   const positions = markets
     ?.map((market) => ({
@@ -122,22 +124,26 @@ export default function Pay() {
     }))
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0n);
 
-  if (!selectedMarket && positions?.[0]) {
+  if (selectedAsset.address === parse(Address, zeroAddress) && positions?.[0]) {
     const { market } = positions[0];
-    setSelectedMarket(parse(Address, market));
+    setSelectedAsset({ address: parse(Address, market), isExternalAsset: false });
   }
 
-  const repayMarket = positions?.find((p) => p.market === selectedMarket);
-  const repayMarketAvailable = markets && selectedMarket ? withdrawLimit(markets, selectedMarket) : 0n;
+  const repayMarket = positions?.find((p) => p.market === selectedAsset.address);
+  const repayMarketAvailable =
+    markets && !selectedAsset.isExternalAsset ? withdrawLimit(markets, selectedAsset.address) : 0n;
 
   const slippage = (WAD * 102n) / 100n;
   const maxRepay = borrow ? (borrow.previewValue * slippage) / WAD : 0n;
 
   const { data: route } = useQuery({
     initialData: { fromAmount: 0n, data: parse(Hex, "0x") },
-    queryKey: ["lifi", "route", selectedMarket], // eslint-disable-line @tanstack/query/exhaustive-deps
+    queryKey: ["lifi", "route", selectedAsset], // eslint-disable-line @tanstack/query/exhaustive-deps
     queryFn: async () => {
-      if (!repayMarket || !borrow || !account) return { fromAmount: 0n, data: parse(Hex, "0x") };
+      if (!account || !borrow) return { fromAmount: 0n, data: parse(Hex, "0x") };
+      if (!repayMarket) {
+        return await getRoute(selectedAsset.address, usdcAddress, maxRepay, account, account);
+      }
       return await getRoute(repayMarket.asset, usdcAddress, maxRepay, account, exaPluginAddress);
     },
     refetchInterval: 5000,
@@ -176,7 +182,11 @@ export default function Pay() {
           query: {
             retry: 2,
             enabled:
-              !!account && !!exaUSDC && success && !!maturity && selectedMarket === parse(Address, marketUSDCAddress),
+              !!account &&
+              !!exaUSDC &&
+              success &&
+              !!maturity &&
+              selectedAsset.address === parse(Address, marketUSDCAddress),
           },
         }
       : {
@@ -198,7 +208,11 @@ export default function Pay() {
           query: {
             retry: 2,
             enabled:
-              !!account && !!exaUSDC && success && !!maturity && selectedMarket === parse(Address, marketUSDCAddress),
+              !!account &&
+              !!exaUSDC &&
+              success &&
+              !!maturity &&
+              selectedAsset.address === parse(Address, marketUSDCAddress),
           },
         },
   );
@@ -213,7 +227,7 @@ export default function Pay() {
           address: account,
           functionName: "propose",
           args: [
-            selectedMarket ?? zeroAddress,
+            selectedAsset.address,
             maxAmountIn,
             ProposalType.CrossRepayAtMaturity,
             encodeAbiParameters(
@@ -233,19 +247,14 @@ export default function Pay() {
           ],
           abi: [...auditorAbi, ...marketAbi, ...upgradeableModularAccountAbi, ...exaPluginAbi],
           query: {
-            retry: 2,
             enabled:
-              !!success &&
-              !!maturity &&
-              !!account &&
-              !!selectedMarket &&
-              selectedMarket !== parse(Address, marketUSDCAddress),
+              !!success && !!maturity && !!account && selectedAsset.address !== parse(Address, marketUSDCAddress),
           },
         }
       : {
           address: account,
           functionName: "crossRepay",
-          args: [success ? BigInt(maturity) : 0n, selectedMarket ?? zeroAddress],
+          args: [success ? BigInt(maturity) : 0n, selectedAsset.address],
           abi: [
             ...auditorAbi,
             ...marketAbi,
@@ -262,13 +271,8 @@ export default function Pay() {
             },
           ],
           query: {
-            retry: 2,
             enabled:
-              !!success &&
-              !!maturity &&
-              !!account &&
-              !!selectedMarket &&
-              selectedMarket !== parse(Address, marketUSDCAddress),
+              !!success && !!maturity && !!account && selectedAsset.address !== parse(Address, marketUSDCAddress),
           },
         },
   );
@@ -300,15 +304,83 @@ export default function Pay() {
     route.fromAmount,
   ]);
 
-  const simulation = isUSDCSelected ? repaySimulation : selectedMarket ? crossRepaySimulation : undefined;
-  const isSimulating = isUSDCSelected ? isSimulatingRepay : selectedMarket ? isSimulatingCrossRepay : false;
+  const simulation = isUSDCSelected ? repaySimulation : crossRepaySimulation;
+  const isSimulating = isUSDCSelected ? isSimulatingRepay : isSimulatingCrossRepay;
 
-  if (!selectedMarket && positions?.[0]) {
+  if (selectedAsset.address === parse(Address, zeroAddress) && positions?.[0]) {
     const { market } = positions[0];
-    setSelectedMarket(parse(Address, market));
+    setSelectedAsset({ address: parse(Address, market), isExternalAsset: false });
   }
 
-  if (!success || !repayMarket) return;
+  const {
+    data: repayWithExternalAssetHash,
+    mutateAsync: repayWithExternalAsset,
+    isPending: isRepayingWithExternalAsset,
+    isSuccess: isRepayWithExternalAssetSuccess,
+    error: isRepayWithExternalAssetError,
+  } = useMutation({
+    mutationFn: async () => {
+      if (!account) throw new Error("no account");
+      if (!success) throw new Error("no maturity");
+      if (!accountClient) throw new Error("no account client");
+      if (!externalAsset) throw new Error("no external asset");
+      if (!selectedAsset.isExternalAsset) throw new Error("not external asset");
+      const lifiGatewayAddress = "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE"; // TODO get from codegen
+      setDisplayValues({
+        amount: Number(route.fromAmount) / 10 ** externalAsset.decimals,
+        usdAmount: (Number(externalAsset.priceUSD) * Number(route.fromAmount)) / 10 ** externalAsset.decimals,
+      });
+      const uo = await accountClient.sendUserOperation({
+        uo: [
+          {
+            target: selectedAsset.address,
+            data: encodeFunctionData({
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [lifiGatewayAddress, route.fromAmount],
+            }),
+          },
+          { target: lifiGatewayAddress, data: route.data },
+          {
+            target: usdcAddress,
+            data: encodeFunctionData({
+              abi: erc20Abi,
+              functionName: "approve",
+              args: [marketUSDCAddress, maxRepay],
+            }),
+          },
+          {
+            target: marketUSDCAddress,
+            data: encodeFunctionData({
+              functionName: "repayAtMaturity",
+              abi: marketAbi,
+              args: [BigInt(maturity), positionAssets, maxRepay, account],
+            }),
+          },
+        ],
+      });
+      return await accountClient.waitForUserOperationTransaction(uo);
+    },
+  });
+
+  const isPending = isUSDCSelected
+    ? isRepaying
+    : selectedAsset.isExternalAsset
+      ? isRepayingWithExternalAsset
+      : isCrossRepaying;
+  const isSuccess = isUSDCSelected
+    ? isRepaySuccess
+    : selectedAsset.isExternalAsset
+      ? isRepayWithExternalAssetSuccess
+      : isCrossRepaySuccess;
+  const error = isUSDCSelected
+    ? repayError
+    : selectedAsset.isExternalAsset
+      ? isRepayWithExternalAssetError
+      : crossRepayError;
+  const hash = isUSDCSelected ? repayHash : selectedAsset.isExternalAsset ? repayWithExternalAssetHash : crossRepayHash;
+
+  if (!success) return;
   if (!isPending && !isSuccess && !error)
     return (
       <SafeView fullScreen backgroundColor="$backgroundMild" paddingBottom={0}>
@@ -463,82 +535,176 @@ export default function Pay() {
                       setAssetSelectionOpen(true);
                     }}
                   >
-                    <AssetLogo
-                      uri={assetLogos[repayMarket.assetSymbol as keyof typeof assetLogos]}
-                      width={ms(16)}
-                      height={ms(16)}
-                    />
+                    {repayMarket && (
+                      <AssetLogo
+                        uri={assetLogos[repayMarket.assetSymbol as keyof typeof assetLogos]}
+                        width={ms(16)}
+                        height={ms(16)}
+                      />
+                    )}
+                    {selectedAsset.isExternalAsset && externalAsset && (
+                      <Image source={{ uri: externalAsset.logoURI }} width={ms(16)} height={ms(16)} borderRadius={50} />
+                    )}
                     <Text primary emphasized headline textAlign="right">
-                      {repayMarket.assetSymbol}
+                      {repayMarket?.assetSymbol ?? externalAsset?.symbol}
                     </Text>
                     <ChevronRight size={ms(24)} color="$interactiveBaseBrandDefault" />
                   </XStack>
-                  <Text secondary footnote textAlign="right">
-                    {`${(
-                      Number(isUSDCSelected ? positionAssets : route.fromAmount) /
-                      10 ** repayMarket.decimals
-                    ).toLocaleString(undefined, {
-                      maximumFractionDigits: 8,
-                      useGrouping: false,
-                    })} ${repayMarket.assetSymbol}`}
-                  </Text>
+                  {repayMarket && (
+                    <Text secondary footnote textAlign="right">
+                      {`${(
+                        Number(isUSDCSelected ? positionAssets : route.fromAmount) /
+                        10 ** repayMarket.decimals
+                      ).toLocaleString(undefined, {
+                        maximumFractionDigits: 8,
+                        useGrouping: false,
+                      })} ${repayMarket.assetSymbol}`}
+                    </Text>
+                  )}
+                  {selectedAsset.isExternalAsset && externalAsset && (
+                    <Text secondary footnote textAlign="right">
+                      {`${(Number(route.fromAmount) / 10 ** externalAsset.decimals).toLocaleString(undefined, {
+                        maximumFractionDigits: 8,
+                        useGrouping: false,
+                      })} ${externalAsset.symbol}`}
+                    </Text>
+                  )}
                 </YStack>
               </XStack>
-
               <XStack justifyContent="space-between" gap="$s3">
                 <Text secondary callout textAlign="left">
                   Available
                 </Text>
                 <YStack gap="$s2">
-                  <Text emphasized headline primary textAlign="right">
-                    {(Number(repayMarket.usdValue) / 1e18).toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD",
-                      currencyDisplay: "narrowSymbol",
-                    })}
-                  </Text>
-                  <Text secondary footnote textAlign="right">
-                    {`${(Number(repayMarketAvailable) / 10 ** repayMarket.decimals).toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: Math.min(
-                        8,
-                        Math.max(
-                          0,
-                          repayMarket.decimals -
-                            Math.ceil(Math.log10(Math.max(1, Number(repayMarket.usdValue) / 1e18))),
-                        ),
-                      ),
-                      useGrouping: false,
-                    })} ${repayMarket.assetSymbol}`}
-                  </Text>
+                  {isFetchingAsset ? (
+                    <>
+                      <Skeleton height={ms(20)} width={ms(100)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                      <Skeleton height={ms(20)} width={ms(100)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                    </>
+                  ) : (
+                    <>
+                      {repayMarket && (
+                        <>
+                          <Text emphasized headline primary textAlign="right">
+                            {(Number(repayMarket.usdValue) / 1e18).toLocaleString(undefined, {
+                              style: "currency",
+                              currency: "USD",
+                              currencyDisplay: "narrowSymbol",
+                            })}
+                          </Text>
+                          <Text secondary footnote textAlign="right">
+                            {`${(Number(repayMarketAvailable) / 10 ** repayMarket.decimals).toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: Math.min(
+                                8,
+                                Math.max(
+                                  0,
+                                  repayMarket.decimals -
+                                    Math.ceil(Math.log10(Math.max(1, Number(repayMarket.usdValue) / 1e18))),
+                                ),
+                              ),
+                              useGrouping: false,
+                            })} ${repayMarket.assetSymbol}`}
+                          </Text>
+                        </>
+                      )}
+                      {selectedAsset.isExternalAsset && externalAsset && (
+                        <>
+                          <Text emphasized headline primary textAlign="right">
+                            {Number(
+                              (Number(externalAsset.priceUSD) * Number(externalAssetAvailable)) /
+                                10 ** externalAsset.decimals,
+                            ).toLocaleString(undefined, {
+                              style: "currency",
+                              currency: "USD",
+                              currencyDisplay: "narrowSymbol",
+                            })}
+                          </Text>
+                          <Text secondary footnote textAlign="right">
+                            {`${(Number(externalAssetAvailable) / 10 ** externalAsset.decimals).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: Math.min(
+                                  8,
+                                  Math.max(
+                                    0,
+                                    externalAsset.decimals -
+                                      Math.ceil(
+                                        Math.log10(Math.max(1, Number(parseUnits(externalAsset.priceUSD, 18)) / 1e18)),
+                                      ),
+                                  ),
+                                ),
+                                useGrouping: false,
+                              },
+                            )} ${externalAsset.symbol}`}
+                          </Text>
+                        </>
+                      )}
+                    </>
+                  )}
                 </YStack>
               </XStack>
-              <Button
-                flexBasis={ms(60)}
-                onPress={handlePayment}
-                contained
-                disabled={!simulation || isSimulating}
-                main
-                spaced
-                fullwidth
-                iconAfter={
-                  isSimulating ? (
-                    <Spinner color="$interactiveOnDisabled" />
-                  ) : (
-                    <Coins
-                      strokeWidth={2.5}
-                      color={simulation ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"}
-                    />
-                  )
-                }
-              >
-                {isSimulating ? "Please wait..." : simulationError ? "Cannot proceed" : "Confirm payment"}
-              </Button>
+              {selectedAsset.isExternalAsset ? (
+                <Button
+                  flexBasis={ms(60)}
+                  onPress={() => {
+                    repayWithExternalAsset().catch(handleError);
+                  }}
+                  contained
+                  disabled={isRepayingWithExternalAsset || route.fromAmount > externalAssetAvailable}
+                  main
+                  spaced
+                  fullwidth
+                  iconAfter={
+                    isRepayingWithExternalAsset ? (
+                      <Spinner color="$interactiveOnDisabled" />
+                    ) : (
+                      <Coins
+                        strokeWidth={2.5}
+                        color={
+                          route.fromAmount > externalAssetAvailable
+                            ? "$interactiveOnDisabled"
+                            : "$interactiveOnBaseBrandDefault"
+                        }
+                      />
+                    )
+                  }
+                >
+                  {isRepayingWithExternalAsset
+                    ? "Please wait..."
+                    : route.fromAmount > externalAssetAvailable
+                      ? "Insufficient balance"
+                      : "Confirm payment"}
+                </Button>
+              ) : (
+                <Button
+                  flexBasis={ms(60)}
+                  onPress={handlePayment}
+                  contained
+                  disabled={!simulation || isSimulating}
+                  main
+                  spaced
+                  fullwidth
+                  iconAfter={
+                    isSimulating ? (
+                      <Spinner color="$interactiveOnDisabled" />
+                    ) : (
+                      <Coins
+                        strokeWidth={2.5}
+                        color={simulation ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"}
+                      />
+                    )
+                  }
+                >
+                  {isSimulating ? "Please wait..." : simulationError ? "Cannot proceed" : "Confirm payment"}
+                </Button>
+              )}
             </YStack>
           </View>
           <AssetSelectionSheet
             positions={positions}
-            symbol={repayMarket.assetSymbol}
+            symbol={repayMarket?.assetSymbol ?? externalAsset?.symbol}
             onAssetSelected={handleAssetSelect}
             open={assetSelectionOpen}
             onClose={() => {
@@ -554,7 +720,8 @@ export default function Pay() {
         maturity={maturity}
         amount={displayValues.amount}
         usdAmount={displayValues.usdAmount}
-        currency={repayMarket.assetSymbol}
+        currency={repayMarket?.assetSymbol ?? externalAsset?.symbol}
+        selectedAsset={selectedAsset.address}
       />
     );
   if (isSuccess)
@@ -563,8 +730,9 @@ export default function Pay() {
         maturity={maturity}
         amount={displayValues.amount}
         usdAmount={displayValues.usdAmount}
-        currency={repayMarket.assetSymbol}
+        currency={repayMarket?.assetSymbol ?? externalAsset?.symbol}
         hash={hash}
+        selectedAsset={selectedAsset.address}
       />
     );
   if (error)
@@ -573,8 +741,9 @@ export default function Pay() {
         maturity={maturity}
         amount={displayValues.amount}
         usdAmount={displayValues.usdAmount}
-        currency={repayMarket.assetSymbol}
+        currency={repayMarket?.assetSymbol ?? externalAsset?.symbol}
         hash={hash}
+        selectedAsset={selectedAsset.address}
       />
     );
 }
