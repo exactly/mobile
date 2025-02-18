@@ -2,10 +2,11 @@ import chain, { previewerAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { withdrawLimit } from "@exactly/lib";
 import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "moti/skeleton";
 import React, { useState } from "react";
-import { Image } from "react-native";
+import { Appearance, Image } from "react-native";
 import { ms, vs } from "react-native-size-matters";
-import { Spinner, ToggleGroup, XStack, YStack } from "tamagui";
+import { ToggleGroup, YStack } from "tamagui";
 import { safeParse } from "valibot";
 import { zeroAddress } from "viem";
 import { optimism } from "viem/chains";
@@ -30,7 +31,7 @@ export default function AssetSelector({
     usdValue: bigint;
     market: string;
   }[];
-  onSubmit: (market: Address) => void;
+  onSubmit: (market: Address, isExternalAsset: boolean) => void;
   useExternalAssets?: boolean;
 }) {
   const [selectedMarket, setSelectedMarket] = useState<Address | undefined>();
@@ -76,11 +77,12 @@ export default function AssetSelector({
           const market = safeParse(Address, value);
           if (!market.success) return;
           setSelectedMarket(market.output);
-          onSubmit(market.output);
+          const isExternalAsset = useExternalAssets && externalAssets?.some(({ address }) => address === market.output);
+          onSubmit(market.output, isExternalAsset ?? false);
         }}
         value={selectedMarket}
       >
-        {positions.map(({ symbol, assetName, decimals, usdValue, market }, index) => {
+        {positions.map(({ symbol, assetName, decimals, usdValue, market }) => {
           const available = markets ? withdrawLimit(markets, market) : 0n;
           return (
             <ToggleGroup.Item unstyled key={market} value={market} borderWidth={0}>
@@ -130,11 +132,6 @@ export default function AssetSelector({
             </ToggleGroup.Item>
           );
         })}
-        {isExternalAssetsPending && useExternalAssets && (
-          <XStack alignItems="center" justifyContent="center" padding="$s4">
-            <Spinner width={ms(24)} height={ms(24)} color="$interactiveBaseBrandDefault" />
-          </XStack>
-        )}
         {useExternalAssets &&
           externalAssets?.map(({ name, symbol, logoURI, address, amount, priceUSD, decimals }) => {
             const usdValue = (Number(priceUSD) * Number(amount ?? 0n)) / 10 ** decimals;
@@ -186,6 +183,11 @@ export default function AssetSelector({
               </ToggleGroup.Item>
             );
           })}
+        {useExternalAssets && isExternalAssetsPending && (
+          <View flexDirection="row" alignItems="center" width="100%">
+            <Skeleton height={ms(50)} width="100%" colorMode={Appearance.getColorScheme() ?? "light"} />
+          </View>
+        )}
       </ToggleGroup>
     </YStack>
   );

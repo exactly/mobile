@@ -18,7 +18,7 @@ export default function useAsset(address?: Address) {
       const asset = await getAsset(address ?? zeroAddress);
       return asset ?? null;
     },
-    enabled: !!address,
+    enabled: !!address && !!account,
   });
 
   const {
