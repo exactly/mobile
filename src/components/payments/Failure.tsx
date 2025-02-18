@@ -1,16 +1,18 @@
 import chain from "@exactly/common/generated/chain";
+import type { Address } from "@exactly/common/validation";
 import { ExternalLink, X } from "@tamagui/lucide-icons";
 import { format, isAfter } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
-import { Pressable } from "react-native";
+import { Pressable, Image } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Square, styled, useTheme, XStack, YStack } from "tamagui";
 
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
+import useAsset from "../../utils/useAsset";
 import AssetLogo from "../shared/AssetLogo";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -23,13 +25,16 @@ export default function Failure({
   currency,
   maturity,
   hash,
+  selectedAsset,
 }: {
   usdAmount: number;
   amount: number;
-  currency: string;
+  currency?: string;
   maturity: string;
   hash?: string;
+  selectedAsset: Address;
 }) {
+  const { externalAsset } = useAsset(selectedAsset);
   const theme = useTheme();
   return (
     <View fullScreen backgroundColor="$backgroundSoft">
@@ -95,7 +100,20 @@ export default function Failure({
                       <Text emphasized secondary subHeadline>
                         &nbsp;{currency}&nbsp;
                       </Text>
-                      <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={ms(16)} height={ms(16)} />
+                      {externalAsset ? (
+                        <Image
+                          source={{ uri: externalAsset.logoURI }}
+                          width={ms(16)}
+                          height={ms(16)}
+                          style={{ borderRadius: ms(20) }}
+                        />
+                      ) : (
+                        <AssetLogo
+                          uri={assetLogos[currency as keyof typeof assetLogos]}
+                          width={ms(16)}
+                          height={ms(16)}
+                        />
+                      )}
                     </XStack>
                   </YStack>
                 </YStack>
