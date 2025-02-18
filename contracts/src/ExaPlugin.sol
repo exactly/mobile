@@ -532,18 +532,22 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
         Call[] memory calls = abi.decode(callData[4:], (Call[]));
         for (uint256 i = 0; i < calls.length; i++) {
           Call memory call = calls[i];
-          assets += proposalManager.preExecutionChecker(
-            msg.sender, call.target, bytes4(call.data.slice(0, 4)), call.data.slice(4, callData.length)
-          );
+          assets +=
+            _preExecutionChecker(call.target, bytes4(call.data.slice(0, 4)), call.data.slice(4, callData.length));
         }
       } else {
         address target = address(bytes20(callData[16:36]));
         bytes4 selector = bytes4(callData[132:136]);
-        assets = proposalManager.preExecutionChecker(msg.sender, target, selector, callData[136:]);
+        assets = _preExecutionChecker(target, selector, callData[136:]);
       }
       return assets != 0 ? abi.encode(assets) : bytes("");
     }
     revert NotImplemented(msg.sig, functionId);
+  }
+
+  function _preExecutionChecker(address target, bytes4 selector, bytes memory callData) internal view returns (uint256) {
+    if (target == msg.sender) return 0;
+    return proposalManager.preExecutionChecker(msg.sender, target, selector, callData);
   }
 
   /// @inheritdoc BasePlugin

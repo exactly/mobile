@@ -1779,6 +1779,19 @@ contract ExaPluginTest is ForkTest {
     proposalManager.setAllowedTarget(target, false);
   }
 
+  function test_uninstall_uninstalls_whenWrongProposalManager() external {
+    exaPlugin.setProposalManager(IProposalManager(address(0x1)));
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+    account.uninstallPlugin(address(exaPlugin), "", "");
+    address[] memory plugins = account.getInstalledPlugins();
+    assertEq(plugins.length, 1);
+    assertEq(plugins[0], address(ownerPlugin));
+  }
+
   // solhint-enable func-name-mixedcase
 
   function _issuerOp(uint256 amount, uint256 timestamp) internal view returns (bytes memory signature) {
