@@ -3,11 +3,16 @@ import { useToastController } from "@tamagui/toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
 import React, { useEffect, useState } from "react";
+import { Appearance } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Sheet, Spinner, Square, Switch, XStack, YStack } from "tamagui";
 
 import CardBack from "./CardBack";
 import DismissableAlert from "./DismissableAlert";
+import ExaLogoDark from "../../assets/images/exa-logo-dark.svg";
+import ExaLogoLight from "../../assets/images/exa-logo-light.svg";
+import VisaLogoDark from "../../assets/images/visa-logo-dark.svg";
+import VisaLogoLight from "../../assets/images/visa-logo-light.svg";
 import handleError from "../../utils/handleError";
 import { decrypt } from "../../utils/panda";
 import queryClient from "../../utils/queryClient";
@@ -78,11 +83,26 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                       borderWidth={1}
                       borderColor="$borderNeutralSoft"
                       backgroundColor="$uiNeutralPrimary"
-                      padding="$s5"
-                      paddingVertical="$s6"
+                      paddingHorizontal="$s5"
+                      paddingTop="$s9"
+                      paddingBottom="$s9"
                       justifyContent="space-between"
-                      gap="$s6"
+                      gap="$s4"
                     >
+                      <View position="absolute" top="$s4" left="$s5">
+                        {Appearance.getColorScheme() === "light" ? (
+                          <ExaLogoLight height={ms(20)} width={ms(63)} />
+                        ) : (
+                          <ExaLogoDark height={ms(20)} width={ms(63)} />
+                        )}
+                      </View>
+                      <View position="absolute" bottom="$s4" right="$s5">
+                        {Appearance.getColorScheme() === "light" ? (
+                          <VisaLogoLight height={ms(40)} width={ms(72)} />
+                        ) : (
+                          <VisaLogoDark height={ms(40)} width={ms(72)} />
+                        )}
+                      </View>
                       <XStack gap="$s4" alignItems="center">
                         <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
                           {details.pan.match(/.{1,4}/g)?.join(" ") ?? ""}
