@@ -12,7 +12,7 @@ interface IExaAccount {
     returns (uint256 amountIn, uint256 amountOut);
   function executeProposal() external;
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external;
-  function revokeProposal() external;
+  function setProposalNonce(uint256 nonce) external;
   function collectCollateral(
     uint256 amount,
     IMarket collateral,
@@ -43,16 +43,22 @@ interface IExaAccount {
 
 interface IProposalManager {
   function checkLiquidity(address account) external view;
-  function decreaseAmount(address account, uint256 amount) external;
-  function preExecutionChecker(address sender, address target, bytes4 selector, bytes memory callData)
+  function nextProposal(address account) external view returns (Proposal memory proposal);
+  function nonces(address account) external view returns (uint256);
+  function preExecutionChecker(address sender, uint256 nonce, address target, bytes4 selector, bytes memory callData)
     external
     view
     returns (uint256);
-  function proposals(address account) external view returns (uint256, IMarket, uint256, ProposalType, bytes memory);
+  function proposals(address account, uint256 nonce)
+    external
+    view
+    returns (uint256, IMarket, uint256, ProposalType, bytes memory);
   function propose(address account, IMarket market, uint256 amount, ProposalType proposalType, bytes memory data)
-    external;
-  function revoke(address account) external;
+    external
+    returns (uint256 nonce);
+  function queueNonces(address account) external view returns (uint256);
   function setAllowedTarget(address target, bool allowed) external;
+  function setNonce(address account, uint256 nonce) external;
 }
 
 interface IDebtManager {
@@ -78,12 +84,13 @@ event CollectorSet(address indexed collector, address indexed account);
 
 event ProposalManagerSet(IProposalManager indexed proposalManager, address indexed account);
 
-event ProposalRevoked(address indexed account);
+event ProposalNonceSet(address indexed account, uint256 nonce);
 
 event Proposed(
   address indexed account,
+  uint256 indexed nonce,
   IMarket indexed market,
-  ProposalType indexed proposalType,
+  ProposalType proposalType,
   uint256 amount,
   bytes data,
   uint256 unlock
@@ -159,6 +166,7 @@ error Disagreement();
 error Expired();
 error InsufficientLiquidity();
 error NoBalance();
+error NonceTooLow();
 error NoProposal();
 error NotMarket();
 error Timelocked();

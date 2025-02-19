@@ -41,8 +41,9 @@ import {
   NoBalance,
   NoProposal,
   NotMarket,
+  Proposal,
   ProposalManagerSet,
-  ProposalRevoked,
+  ProposalNonceSet,
   ProposalType,
   Proposed,
   RepayData,
@@ -155,29 +156,32 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function executeProposal() external {
-    (uint256 amount, IMarket market, uint256 timestamp, ProposalType proposalType, bytes memory proposalData) =
-      proposalManager.proposals(msg.sender);
+    Proposal memory proposal = proposalManager.nextProposal(msg.sender);
 
-    if (amount == 0) revert NoProposal();
+    if (proposal.amount == 0) revert NoProposal();
 
-    if (timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+    if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
 
-    if (proposalType == ProposalType.WITHDRAW) {
-      address receiver = abi.decode(proposalData, (address));
-      bool isWETH = market == EXA_WETH;
+    if (proposal.proposalType == ProposalType.WITHDRAW) {
+      address receiver = abi.decode(proposal.data, (address));
+      bool isWETH = proposal.market == EXA_WETH;
       _executeFromSender(
-        address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, isWETH ? address(this) : receiver, msg.sender))
+        address(proposal.market),
+        0,
+        abi.encodeCall(IERC4626.withdraw, (proposal.amount, isWETH ? address(this) : receiver, msg.sender))
       );
       if (isWETH) {
-        WETH.withdraw(amount);
-        receiver.safeTransferETH(amount);
+        WETH.withdraw(proposal.amount);
+        receiver.safeTransferETH(proposal.amount);
       }
-    } else if (proposalType == ProposalType.SWAP) {
-      _executeFromSender(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, msg.sender, msg.sender)));
-      SwapData memory data = abi.decode(proposalData, (SwapData));
-      swap(IERC20(market.asset()), data.assetOut, amount, data.minAmountOut, data.route);
-    } else if (proposalType == ProposalType.CROSS_REPAY) {
-      CrossRepayData memory crossData = abi.decode(proposalData, (CrossRepayData));
+    } else if (proposal.proposalType == ProposalType.SWAP) {
+      _executeFromSender(
+        address(proposal.market), 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, msg.sender, msg.sender))
+      );
+      SwapData memory data = abi.decode(proposal.data, (SwapData));
+      swap(IERC20(proposal.market.asset()), data.assetOut, proposal.amount, data.minAmountOut, data.route);
+    } else if (proposal.proposalType == ProposalType.CROSS_REPAY) {
+      CrossRepayData memory crossData = abi.decode(proposal.data, (CrossRepayData));
       bytes memory data = _hash(
         abi.encodePacked(
           bytes1(0x02),
@@ -187,17 +191,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
               borrower: msg.sender,
               positionAssets: crossData.positionAssets,
               maxRepay: crossData.maxRepay,
-              marketIn: market,
-              maxAmountIn: amount,
+              marketIn: proposal.market,
+              maxAmountIn: proposal.amount,
               route: crossData.route
             })
           )
         )
       );
-      _approveFromSender(address(market), address(this), amount);
+      _approveFromSender(address(proposal.market), address(this), proposal.amount);
       _flashLoan(crossData.maxRepay, data);
-    } else if (proposalType == ProposalType.ROLL_DEBT) {
-      RollDebtData memory rollData = abi.decode(proposalData, (RollDebtData));
+    } else if (proposal.proposalType == ProposalType.ROLL_DEBT) {
+      RollDebtData memory rollData = abi.decode(proposal.data, (RollDebtData));
       _approveAndExecuteFromSender(
         address(DEBT_MANAGER),
         address(EXA_USDC),
@@ -209,14 +213,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
             rollData.repayMaturity,
             rollData.borrowMaturity,
             rollData.maxRepayAssets,
-            amount,
+            proposal.amount,
             rollData.percentage
           )
         )
       );
       _approveFromSender(address(EXA_USDC), address(DEBT_MANAGER), 0);
-    } else if (proposalType == ProposalType.REPAY) {
-      RepayData memory repayData = abi.decode(proposalData, (RepayData));
+    } else if (proposal.proposalType == ProposalType.REPAY) {
+      RepayData memory repayData = abi.decode(proposal.data, (RepayData));
       bytes memory data = _hash(
         abi.encodePacked(
           bytes1(0x01),
@@ -224,7 +228,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
             RepayCallbackData({
               maturity: repayData.maturity,
               borrower: msg.sender,
-              positionAssets: amount,
+              positionAssets: proposal.amount,
               maxRepay: repayData.maxRepay
             })
           )
@@ -236,13 +240,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
-    emit Proposed(msg.sender, market, proposalType, amount, data, block.timestamp + PROPOSAL_DELAY);
-    proposalManager.propose(msg.sender, market, amount, proposalType, data);
+    uint256 nonce = proposalManager.propose(msg.sender, market, amount, proposalType, data);
+    emit Proposed(msg.sender, nonce, market, proposalType, amount, data, block.timestamp + PROPOSAL_DELAY);
   }
 
-  function revokeProposal() external {
-    emit ProposalRevoked(msg.sender);
-    proposalManager.revoke(msg.sender);
+  function setProposalNonce(uint256 nonce) external {
+    emit ProposalNonceSet(msg.sender, nonce);
+    proposalManager.setNonce(msg.sender, nonce);
   }
 
   function collectCollateral(
@@ -392,7 +396,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     manifest.executionFunctions[2] = this.swap.selector;
     manifest.executionFunctions[3] = this.executeProposal.selector;
     manifest.executionFunctions[4] = this.propose.selector;
-    manifest.executionFunctions[5] = this.revokeProposal.selector;
+    manifest.executionFunctions[5] = this.setProposalNonce.selector;
     manifest.executionFunctions[6] = this.collectCollateral.selector;
     manifest.executionFunctions[7] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
     manifest.executionFunctions[8] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
@@ -439,7 +443,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.revokeProposal.selector,
+      executionSelector: IExaAccount.setProposalNonce.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
@@ -523,9 +527,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   function postExecutionHook(uint8 functionId, bytes calldata preExecHookData) external override {
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
       if (preExecHookData.length == 0) return;
-      uint256 amount = abi.decode(preExecHookData, (uint256));
-      if (amount == type(uint256).max) proposalManager.revoke(msg.sender);
-      else proposalManager.decreaseAmount(msg.sender, amount);
+      uint256 nonce = abi.decode(preExecHookData, (uint256));
+      proposalManager.setNonce(msg.sender, nonce);
+      emit ProposalNonceSet(msg.sender, nonce);
       return;
     }
     revert NotImplemented(msg.sig, functionId);
@@ -539,28 +543,37 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     returns (bytes memory)
   {
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
-      uint256 assets = 0;
       bool isExecuteBatch = bytes4(callData[0:4]) == IStandardExecutor.executeBatch.selector;
+      uint256 nonce;
+      uint256 newNonce;
       if (isExecuteBatch) {
+        nonce = proposalManager.nonces(msg.sender);
+        newNonce = nonce;
         Call[] memory calls = abi.decode(callData[4:], (Call[]));
         for (uint256 i = 0; i < calls.length; i++) {
           Call memory call = calls[i];
-          assets +=
-            _preExecutionChecker(call.target, bytes4(call.data.slice(0, 4)), call.data.slice(4, callData.length));
+          if (call.target == msg.sender) continue;
+          newNonce = _preExecutionChecker(
+            call.target, newNonce, bytes4(call.data.slice(0, 4)), call.data.slice(4, callData.length)
+          );
         }
       } else {
         address target = address(bytes20(callData[16:36]));
-        bytes4 selector = bytes4(callData[132:136]);
-        assets = _preExecutionChecker(target, selector, callData[136:]);
+        if (target == msg.sender) return "";
+        nonce = proposalManager.nonces(msg.sender);
+        newNonce = _preExecutionChecker(target, nonce, bytes4(callData[132:136]), callData[136:]);
       }
-      return assets != 0 ? abi.encode(assets) : bytes("");
+      return nonce != newNonce ? abi.encode(newNonce) : bytes("");
     }
     revert NotImplemented(msg.sig, functionId);
   }
 
-  function _preExecutionChecker(address target, bytes4 selector, bytes memory callData) internal view returns (uint256) {
-    if (target == msg.sender) return 0;
-    return proposalManager.preExecutionChecker(msg.sender, target, selector, callData);
+  function _preExecutionChecker(address target, uint256 nonce, bytes4 selector, bytes memory callData)
+    internal
+    view
+    returns (uint256)
+  {
+    return proposalManager.preExecutionChecker(msg.sender, nonce, target, selector, callData);
   }
 
   /// @inheritdoc BasePlugin
