@@ -493,6 +493,19 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       postExecHook: preExecutionValidationFunction
     });
 
+    ManifestFunction memory alwaysDeny = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
+      functionId: 0,
+      dependencyIndex: 0
+    });
+    manifest.preUserOpValidationHooks = new ManifestAssociatedFunction[](manifest.executionFunctions.length);
+    for (uint256 i = 0; i < manifest.executionFunctions.length; ++i) {
+      manifest.preUserOpValidationHooks[i] = ManifestAssociatedFunction({
+        executionSelector: manifest.executionFunctions[i],
+        associatedFunction: alwaysDeny
+      });
+    }
+
     manifest.permitAnyExternalAddress = true;
     manifest.canSpendNativeToken = true;
 

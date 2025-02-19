@@ -11,9 +11,17 @@ import {
   PluginManagerInternals,
   UpgradeableModularAccount
 } from "modular-account/src/account/UpgradeableModularAccount.sol";
+import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
 
+import {
+  ManifestAssociatedFunction,
+  ManifestAssociatedFunctionType,
+  ManifestFunction,
+  PluginManifest
+} from "modular-account-libs/interfaces/IPlugin.sol";
 import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
+import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
 import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
 import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
@@ -25,8 +33,9 @@ import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
+import { ENTRYPOINT } from "webauthn-owner-plugin/../script/Factory.s.sol";
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
-import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
+import { PublicKey, WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
@@ -1792,6 +1801,43 @@ contract ExaPluginTest is ForkTest {
     assertEq(plugins[0], address(ownerPlugin));
   }
 
+  function test_userOpValidationFunction_reverts_withBadPlugin() external {
+    vm.startPrank(owner);
+    account.installPlugin(
+      address(new BadPlugin()), keccak256(abi.encode(new BadPlugin().pluginManifest())), "", new FunctionReference[](0)
+    );
+    vm.stopPrank();
+    UserOperation[] memory userOps = new UserOperation[](1);
+
+    userOps[0] = _op(abi.encodeCall(IExaAccount.poke, (exaEXA)), ownerKey);
+    vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA23 reverted (or OOG)"));
+    ENTRYPOINT.handleOps(userOps, payable(address(0x420)));
+
+    userOps[0] = _op(abi.encodeCall(IExaAccount.proposeUninstall, ()), ownerKey);
+    vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA23 reverted (or OOG)"));
+    ENTRYPOINT.handleOps(userOps, payable(address(0x420)));
+
+    userOps[0] = _op(
+      abi.encodeCall(
+        UpgradeableModularAccount.execute, (address(account), 0, abi.encodeCall(IExaAccount.poke, (exaEXA)))
+      ),
+      ownerKey
+    );
+    vm.expectEmit(true, true, true, true, address(ENTRYPOINT));
+    emit UserOperationRevertReason(
+      ENTRYPOINT.getUserOpHash(userOps[0]),
+      address(account),
+      0,
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_KEEPER,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    ENTRYPOINT.handleOps(userOps, payable(address(0x420)));
+  }
+
   // solhint-enable func-name-mixedcase
 
   function _issuerOp(uint256 amount, uint256 timestamp) internal view returns (bytes memory signature) {
@@ -1861,7 +1907,10 @@ contract ExaPluginTest is ForkTest {
     returns (UserOperation memory op)
   {
     op = _unsignedOp(callData, index);
-    op.signature = _sign(privateKey, ENTRYPOINT.getUserOpHash(op).toEthSignedMessageHash());
+    op.signature = abi.encodePacked(
+      ownerPlugin.ownerIndexOf(address(account), PublicKey(uint256(uint160(vm.addr(privateKey))), 0)),
+      _sign(privateKey, ENTRYPOINT.getUserOpHash(op).toEthSignedMessageHash())
+    );
   }
 
   function _setUpLifiFork() internal {
@@ -1946,5 +1995,27 @@ contract ExaPluginTest is ForkTest {
 }
 
 abstract contract ExaAccount is UpgradeableModularAccount, IExaAccount { } // solhint-disable-line no-empty-blocks
+
+contract BadPlugin is BasePlugin {
+  function userOpValidationFunction(uint8, UserOperation calldata, bytes32) external pure override returns (uint256) {
+    return 0;
+  }
+
+  function onInstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
+
+  function pluginManifest() external pure override returns (PluginManifest memory manifest) {
+    manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](1);
+    manifest.userOpValidationFunctions[0] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.poke.selector,
+      associatedFunction: ManifestFunction({
+        functionType: ManifestAssociatedFunctionType.SELF,
+        functionId: 0,
+        dependencyIndex: 0
+      })
+    });
+  }
+}
+
+event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
 error Disagreement();
