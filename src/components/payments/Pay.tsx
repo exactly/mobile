@@ -158,6 +158,7 @@ export default function Pay() {
           args: [success ? BigInt(maturity) : 0n, positionAssets, maxRepay],
           abi: [...auditorAbi, ...marketAbi, ...upgradeableModularAccountAbi, ...exaPluginAbi],
           query: {
+            retry: 2,
             enabled:
               !!account &&
               !!USDCMarket &&
@@ -183,6 +184,7 @@ export default function Pay() {
             },
           ],
           query: {
+            retry: 2,
             enabled:
               !!account &&
               !!USDCMarket &&
@@ -212,6 +214,7 @@ export default function Pay() {
           ],
           abi: [...auditorAbi, ...marketAbi, ...upgradeableModularAccountAbi, ...exaPluginAbi],
           query: {
+            retry: 2,
             enabled:
               !!success &&
               !!maturity &&
@@ -240,6 +243,7 @@ export default function Pay() {
             },
           ],
           query: {
+            retry: 2,
             enabled:
               !!success &&
               !!maturity &&
