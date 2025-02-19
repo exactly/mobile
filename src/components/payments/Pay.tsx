@@ -455,6 +455,7 @@ export default function Pay() {
                   <XStack
                     gap="$s3"
                     alignItems="center"
+                    justifyContent="flex-end"
                     onPress={() => {
                       setAssetSelectionOpen(true);
                     }}
