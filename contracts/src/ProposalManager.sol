@@ -16,6 +16,7 @@ import {
   InsufficientLiquidity,
   MarketData,
   NoProposal,
+  NonceTooLow,
   NotMarket,
   Proposal,
   ProposalType,
@@ -40,8 +41,10 @@ contract ProposalManager is IProposalManager, AccessControl {
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
   uint256 public immutable PROPOSAL_DELAY = 1 minutes;
 
-  mapping(address account => Proposal lastProposal) public proposals;
   mapping(address target => bool allowed) public allowlist;
+  mapping(address account => uint256 nonce) public nonces;
+  mapping(address account => uint256 nonce) public queueNonces;
+  mapping(address account => mapping(uint256 nonce => Proposal lastProposal)) public proposals;
 
   constructor(
     address owner,
@@ -65,22 +68,21 @@ contract ProposalManager is IProposalManager, AccessControl {
     _setAllowedTarget(address(weth), true);
   }
 
-  function decreaseAmount(address account, uint256 amount) external onlyRole(PROPOSER_ROLE) {
-    uint256 currentAmount = proposals[account].amount;
-    proposals[account].amount = currentAmount - amount;
+  function nextProposal(address account) external view returns (Proposal memory proposal) {
+    uint256 nonce = nonces[account];
+    if (nonce == queueNonces[account]) revert NoProposal();
+    proposal = proposals[account][nonce];
   }
 
-  function preExecutionChecker(address sender, address target, bytes4 selector, bytes memory callData)
+  function preExecutionChecker(address sender, uint256 nonce, address target, bytes4 selector, bytes memory callData)
     external
     view
-    returns (uint256)
+    returns (uint256 nextNonce)
   {
     address receiver;
 
     if (target == address(AUDITOR)) {
-      if (selector != IAuditor.exitMarket.selector) {
-        return 0;
-      }
+      if (selector != IAuditor.exitMarket.selector) return nonce;
       revert Unauthorized();
     }
     if (target == address(DEBT_MANAGER)) {
@@ -93,7 +95,7 @@ contract ProposalManager is IProposalManager, AccessControl {
           uint256 maxBorrow,
           uint256 percentage
         ) = abi.decode(callData, (IMarket, uint256, uint256, uint256, uint256, uint256));
-        Proposal memory rollProposal = proposals[sender];
+        Proposal memory rollProposal = proposals[sender][nonce];
         if (rollProposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
 
         RollDebtData memory rollData = abi.decode(rollProposal.data, (RollDebtData));
@@ -102,18 +104,18 @@ contract ProposalManager is IProposalManager, AccessControl {
             || rollData.percentage < percentage || rollData.repayMaturity != repayMaturity
             || rollData.borrowMaturity != borrowMaturity
         ) revert NoProposal();
-        return type(uint256).max;
+        return nonce + 1;
       }
       revert Unauthorized();
     }
     if (target == address(INSTALLMENTS_ROUTER)) {
       if (selector == IInstallmentsRouter.borrow.selector) {
         (,,,, receiver) = abi.decode(callData, (IMarket, uint256, uint256[], uint256, address));
-        if (hasRole(COLLECTOR_ROLE, receiver)) return 0;
+        if (hasRole(COLLECTOR_ROLE, receiver)) return nonce;
       }
       revert Unauthorized();
     }
-    if (target == address(SWAPPER) || allowlist[target]) return 0;
+    if (target == address(SWAPPER) || allowlist[target]) return nonce;
 
     IMarket marketTarget = IMarket(target);
     if (!_isMarket(marketTarget)) revert Unauthorized();
@@ -127,7 +129,7 @@ contract ProposalManager is IProposalManager, AccessControl {
         receiver == address(DEBT_MANAGER) || receiver == address(INSTALLMENTS_ROUTER)
           || hasRole(PROPOSER_ROLE, receiver)
       ) {
-        return 0;
+        return nonce;
       }
       revert Unauthorized();
     } else if (selector == IERC20.transfer.selector) {
@@ -137,7 +139,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     } else if (selector == IMarket.borrowAtMaturity.selector) {
       (,,, receiver,) = abi.decode(callData, (uint256, uint256, uint256, address, address));
       if (!hasRole(COLLECTOR_ROLE, receiver)) revert Unauthorized();
-      return 0;
+      return nonce;
     } else if (selector == IERC4626.withdraw.selector) {
       (assets, receiver, owner) = abi.decode(callData, (uint256, address, address));
     } else if (selector == IERC4626.redeem.selector) {
@@ -147,14 +149,14 @@ contract ProposalManager is IProposalManager, AccessControl {
     } else if (selector == IMarket.borrow.selector) {
       (, receiver,) = abi.decode(callData, (uint256, address, address));
       if (!hasRole(COLLECTOR_ROLE, receiver)) revert Unauthorized();
-      return 0;
+      return nonce;
     } else {
-      return 0;
+      return nonce;
     }
 
-    if (hasRole(COLLECTOR_ROLE, receiver) || hasRole(PROPOSER_ROLE, receiver)) return 0;
+    if (hasRole(COLLECTOR_ROLE, receiver) || hasRole(PROPOSER_ROLE, receiver)) return nonce;
 
-    Proposal memory proposal = proposals[owner];
+    Proposal memory proposal = proposals[owner][nonce];
 
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (proposal.amount == 0) revert NoProposal();
@@ -164,20 +166,25 @@ contract ProposalManager is IProposalManager, AccessControl {
     if (proposal.proposalType == ProposalType.WITHDRAW) {
       if (abi.decode(proposal.data, (address)) != receiver) revert NoProposal();
     }
-    return assets;
+    return nonce + 1;
   }
 
   function propose(address account, IMarket market, uint256 amount, ProposalType proposalType, bytes memory data)
     external
     onlyRole(PROPOSER_ROLE)
+    returns (uint256 nonce)
   {
     _checkMarket(market);
-    proposals[account] =
+    nonce = queueNonces[account];
+    proposals[account][nonce] =
       Proposal({ amount: amount, market: market, timestamp: block.timestamp, proposalType: proposalType, data: data });
+    queueNonces[account] = nonce + 1;
   }
 
-  function revoke(address account) external onlyRole(PROPOSER_ROLE) {
-    delete proposals[account];
+  function setNonce(address account, uint256 nonce) external onlyRole(PROPOSER_ROLE) {
+    if (nonce <= nonces[account]) revert NonceTooLow();
+    if (nonce > queueNonces[account]) revert NoProposal();
+    nonces[account] = nonce;
   }
 
   function setAllowedTarget(address target, bool allowed) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -185,12 +192,9 @@ contract ProposalManager is IProposalManager, AccessControl {
   }
 
   function checkLiquidity(address account) external view {
-    IMarket proposalMarket = proposals[account].market;
     uint256 marketMap = AUDITOR.accountMarkets(account);
     uint256 sumCollateral = 0;
     uint256 sumDebtPlusEffects = 0;
-    ProposalType proposalType = proposals[account].proposalType;
-    uint256 amount = proposals[account].amount;
 
     for (uint256 i = 0; i < AUDITOR.allMarkets().length; ++i) {
       IMarket market = AUDITOR.marketList(i);
@@ -199,19 +203,25 @@ contract ProposalManager is IProposalManager, AccessControl {
         uint256 price = uint256(md.priceFeed.latestAnswer());
         (uint256 balance, uint256 borrowBalance) = market.accountSnapshot(account);
 
-        if (market == proposalMarket) {
-          if (proposalType == ProposalType.ROLL_DEBT) {
-            borrowBalance += amount;
-          } else {
-            if (balance < amount) revert InsufficientLiquidity();
-            balance -= amount;
-          }
-        }
-
         sumCollateral += balance.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
         sumDebtPlusEffects += borrowBalance.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
       }
       if ((1 << i) > marketMap) break;
+    }
+
+    uint256 queueNonce = queueNonces[account];
+    for (uint256 i = nonces[account]; i < queueNonce; ++i) {
+      Proposal memory proposal = proposals[account][i];
+      if (proposal.amount == 0) continue;
+      MarketData memory md = AUDITOR.markets(proposal.market);
+      uint256 price = uint256(md.priceFeed.latestAnswer());
+      if (proposal.proposalType == ProposalType.ROLL_DEBT) {
+        sumDebtPlusEffects += proposal.amount.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
+      } else {
+        uint256 collateral = proposal.amount.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
+        if (sumCollateral < collateral) revert InsufficientLiquidity();
+        sumCollateral -= collateral;
+      }
     }
 
     if (sumDebtPlusEffects > sumCollateral) revert InsufficientLiquidity();
