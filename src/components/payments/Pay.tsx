@@ -175,6 +175,7 @@ export default function Pay() {
           ],
           abi: [...auditorAbi, ...marketAbi, ...upgradeableModularAccountAbi, ...exaPluginAbi],
           query: {
+            retry: 2,
             enabled:
               !!account && !!exaUSDC && success && !!maturity && selectedMarket === parse(Address, marketUSDCAddress),
           },
@@ -196,6 +197,7 @@ export default function Pay() {
             },
           ],
           query: {
+            retry: 2,
             enabled:
               !!account && !!exaUSDC && success && !!maturity && selectedMarket === parse(Address, marketUSDCAddress),
           },
@@ -232,6 +234,7 @@ export default function Pay() {
           ],
           abi: [...auditorAbi, ...marketAbi, ...upgradeableModularAccountAbi, ...exaPluginAbi],
           query: {
+            retry: 2,
             enabled:
               !!success &&
               !!maturity &&
@@ -260,6 +263,7 @@ export default function Pay() {
             },
           ],
           query: {
+            retry: 2,
             enabled:
               !!success &&
               !!maturity &&
