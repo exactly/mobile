@@ -348,7 +348,7 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
   };
 }
 
-const collectorTopics = new Set(collectors.map((address) => padHex(address.toLowerCase() as Hex)));
+const collectorTopics = new Set(collectors.panda.map((address) => padHex(address.toLowerCase() as Hex)));
 const [transferTopic] = encodeEventTopics({ abi: erc20Abi, eventName: "Transfer" });
 const usdcLowercase = usdcAddress.toLowerCase() as Hex;
 function usdcTransfersToCollectors({ calls, logs }: CallFrame): TransferLog[] {

@@ -45,7 +45,7 @@ app.use(auth);
 
 const ActivityTypes = picklist(["card", "received", "repay", "sent"]);
 
-const collectorSet = new Set(collectors.map((address) => address.toLowerCase()));
+const collectorSet = new Set([...collectors.cryptomate, ...collectors.panda].map((address) => address.toLowerCase()));
 
 export default app.get(
   "/",
