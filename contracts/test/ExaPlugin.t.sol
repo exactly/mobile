@@ -1731,6 +1731,113 @@ contract ExaPluginTest is ForkTest {
     assertEq(exa.balanceOf(receiver), 0, "receiver balance doesn't match");
   }
 
+  function test_skippingProposal_reverts_withNoProposal() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    account.poke(exaUSDC);
+
+    vm.startPrank(owner);
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(IExaAccount.propose, (exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(0x420))))
+    );
+
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(IExaAccount.propose, (exaUSDC, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420))))
+    );
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaUSDC), 0, abi.encodeCall(IERC4626.withdraw, (100e6, address(0x420), address(account))));
+
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
+    account.execute(address(exaUSDC), 0, abi.encodeCall(IERC4626.withdraw, (100e6, address(0x420), address(account))));
+  }
+
+  function test_borrowAtMaturity_incrementsNonce() external {
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(
+        IExaAccount.propose,
+        (
+          exaUSDC,
+          100e6,
+          ProposalType.BORROW_AT_MATURITY,
+          abi.encode(
+            BorrowAtMaturityData({ maturity: FixedLib.INTERVAL, maxAssets: 110e6, receiver: address(account) })
+          )
+        )
+      )
+    );
+
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    uint256 nonce = proposalManager.nonces(address(account));
+    account.execute(
+      address(exaUSDC),
+      0,
+      abi.encodeCall(IMarket.borrowAtMaturity, (FixedLib.INTERVAL, 100e6, 110e6, address(account), address(account)))
+    );
+
+    assertEq(proposalManager.nonces(address(account)), nonce + 1);
+  }
+
+  function test_withdrawProposed_incrementsNonce() external {
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(IExaAccount.propose, (exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(0x420))))
+    );
+    skip(exaPlugin.PROPOSAL_DELAY());
+
+    uint256 nonce = proposalManager.nonces(address(account));
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
+
+    assertEq(proposalManager.nonces(address(account)), nonce + 1);
+  }
+
+  function test_collect_reverts_whenProposalsLeaveNoLiquidity() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    uint256 usdcBalance = exaUSDC.maxWithdraw(address(account));
+
+    for (uint256 i = 0; i < 4; ++i) {
+      account.propose(exaUSDC, usdcBalance / 4, ProposalType.WITHDRAW, abi.encode(address(0x420)));
+    }
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
+
+    // drop first proposal
+    account.setProposalNonce(1);
+
+    account.collectDebit(usdcBalance / 4, block.timestamp, _issuerOp(usdcBalance / 4, block.timestamp));
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
+  }
+
   // base plugin
   function test_onUninstall_uninstalls() external {
     vm.startPrank(owner);
