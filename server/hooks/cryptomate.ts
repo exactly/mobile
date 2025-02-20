@@ -38,8 +38,7 @@ import {
 
 import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, marketAbi } from "../generated/contracts";
-import collectors from "../utils/collectors";
-import { signIssuerOp } from "../utils/cryptomate";
+import { collectors, signIssuerOp } from "../utils/cryptomate";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";

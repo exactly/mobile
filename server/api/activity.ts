@@ -37,7 +37,8 @@ import { withRetry, zeroAddress } from "viem";
 import database, { credentials } from "../database";
 import { previewerAbi, marketAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
-import collectors from "../utils/collectors";
+import { collectors as cryptomateCollectors } from "../utils/cryptomate";
+import { collectors as pandaCollectors } from "../utils/panda";
 import publicClient from "../utils/publicClient";
 
 const app = new Hono();
@@ -45,7 +46,7 @@ app.use(auth);
 
 const ActivityTypes = picklist(["card", "received", "repay", "sent"]);
 
-const collectorSet = new Set(collectors.map((address) => address.toLowerCase()));
+const collectorSet = new Set([...cryptomateCollectors, ...pandaCollectors].map((address) => address.toLowerCase()));
 
 export default app.get(
   "/",

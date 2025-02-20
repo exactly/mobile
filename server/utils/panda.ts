@@ -1,6 +1,6 @@
 import domain from "@exactly/common/domain";
 import chain, { exaPluginAddress } from "@exactly/common/generated/chain";
-import { type Address, Hash } from "@exactly/common/validation";
+import { Address, Hash } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { createHmac } from "node:crypto";
 import removeAccents from "remove-accents";
@@ -19,6 +19,7 @@ import {
 } from "valibot";
 import { BaseError, ContractFunctionZeroDataError } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { optimism } from "viem/chains";
 
 import { issuerCheckerAddress, upgradeableModularAccountAbi } from "../generated/contracts";
 import publicClient from "../utils/publicClient";
@@ -176,6 +177,12 @@ export function headerValidator() {
       : c.text("unauthorized", 401);
   });
 }
+
+export const collectors: Address[] = (
+  {
+    [optimism.id]: ["0x3a73880ff21ABf9cA9F80B293570a3cBD846eFc5"],
+  }[chain.id] ?? ["0xDb90CDB64CfF03f254e4015C4F705C3F3C834400"]
+).map((address) => parse(Address, address));
 
 // TODO remove code below
 const issuer = privateKeyToAccount(parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
