@@ -53,19 +53,20 @@ contract ProposalManager is IProposalManager, AccessControl {
     IInstallmentsRouter installmentsRouter,
     address swapper_,
     address collector_,
-    IERC20 usdc,
-    IERC20 weth
+    address[] memory targets
   ) {
     AUDITOR = auditor;
     DEBT_MANAGER = debtManager;
     INSTALLMENTS_ROUTER = installmentsRouter;
+    if (swapper_ == address(0)) revert ZeroAddress();
     SWAPPER = swapper_;
 
     _grantRole(COLLECTOR_ROLE, collector_);
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
 
-    _setAllowedTarget(address(usdc), true);
-    _setAllowedTarget(address(weth), true);
+    for (uint256 i = 0; i < targets.length; ++i) {
+      _setAllowedTarget(targets[i], true);
+    }
   }
 
   function nextProposal(address account) external view returns (Proposal memory proposal) {
