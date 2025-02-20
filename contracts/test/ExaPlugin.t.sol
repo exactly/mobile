@@ -50,6 +50,7 @@ import {
 } from "../src/ExaPlugin.sol";
 import {
   AllowedTargetSet,
+  BorrowAtMaturityData,
   CollectorSet,
   CrossRepayData,
   Expired,
@@ -476,6 +477,27 @@ contract ExaPluginTest is ForkTest {
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 50e6);
     assertEq(position.principal + position.fee, positionAssets / 2);
+  }
+
+  function test_borrowAtMaturity_borrows() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    uint256 maturity = FixedLib.INTERVAL;
+    account.propose(
+      exaUSDC,
+      100e6,
+      ProposalType.BORROW_AT_MATURITY,
+      abi.encode(BorrowAtMaturityData({ maturity: maturity, maxAssets: 110e6, receiver: address(account) }))
+    );
+
+    uint256 usdcBalance = usdc.balanceOf(address(account));
+    skip(exaPlugin.PROPOSAL_DELAY());
+    account.executeProposal();
+
+    assertEq(usdc.balanceOf(address(account)), usdcBalance + 100e6, "borrowed amount not received");
+    assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 100e6);
+    assertLe(exaUSDC.fixedBorrowPositions(maturity, address(account)).fee, 10e6);
   }
 
   function test_crossRepay_repays() external {

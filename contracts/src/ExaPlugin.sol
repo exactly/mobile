@@ -29,6 +29,7 @@ import { SafeCastLib } from "solady/utils/SafeCastLib.sol";
 import { SafeTransferLib } from "solady/utils/SafeTransferLib.sol";
 
 import {
+  BorrowAtMaturityData,
   CollectorSet,
   CrossRepayData,
   Disagreement,
@@ -167,6 +168,16 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       );
       SwapData memory data = abi.decode(proposal.data, (SwapData));
       swap(IERC20(proposal.market.asset()), data.assetOut, proposal.amount, data.minAmountOut, data.route);
+    } else if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
+      BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
+      _executeFromSender(
+        address(EXA_USDC),
+        0,
+        abi.encodeCall(
+          IMarket.borrowAtMaturity,
+          (borrowData.maturity, proposal.amount, borrowData.maxAssets, borrowData.receiver, msg.sender)
+        )
+      );
     } else if (proposal.proposalType == ProposalType.CROSS_REPAY) {
       CrossRepayData memory crossData = abi.decode(proposal.data, (CrossRepayData));
       bytes memory data = _hash(

@@ -8,6 +8,7 @@ import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
 import {
   AllowedTargetSet,
+  BorrowAtMaturityData,
   IAuditor,
   IDebtManager,
   IInstallmentsRouter,
@@ -124,6 +125,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     uint256 assets = 0;
     address owner = address(0);
 
+    Proposal memory proposal;
     if (selector == IERC20.approve.selector) {
       (receiver,) = abi.decode(callData, (address, uint256));
       if (
@@ -138,9 +140,24 @@ contract ProposalManager is IProposalManager, AccessControl {
     } else if (selector == IERC20.transferFrom.selector) {
       (, receiver,) = abi.decode(callData, (address, address, uint256));
     } else if (selector == IMarket.borrowAtMaturity.selector) {
-      (,,, receiver,) = abi.decode(callData, (uint256, uint256, uint256, address, address));
-      if (!hasRole(COLLECTOR_ROLE, receiver)) revert Unauthorized();
-      return nonce;
+      uint256 maturity;
+      uint256 maxAssets;
+      (maturity, assets, maxAssets, receiver,) = abi.decode(callData, (uint256, uint256, uint256, address, address));
+      if (hasRole(COLLECTOR_ROLE, receiver)) return nonce;
+      proposal = proposals[sender][nonce];
+
+      if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY && proposal.amount != 0) {
+        if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+        BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
+        if (
+          borrowData.maturity != maturity || borrowData.maxAssets < maxAssets || borrowData.receiver != receiver
+            || proposal.amount < assets
+        ) {
+          revert NoProposal();
+        }
+        return nonce + 1;
+      }
+      revert Unauthorized();
     } else if (selector == IERC4626.withdraw.selector) {
       (assets, receiver, owner) = abi.decode(callData, (uint256, address, address));
     } else if (selector == IERC4626.redeem.selector) {
@@ -157,7 +174,7 @@ contract ProposalManager is IProposalManager, AccessControl {
 
     if (hasRole(COLLECTOR_ROLE, receiver) || hasRole(PROPOSER_ROLE, receiver)) return nonce;
 
-    Proposal memory proposal = proposals[owner][nonce];
+    proposal = proposals[owner][nonce];
 
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (proposal.amount == 0) revert NoProposal();
@@ -218,6 +235,9 @@ contract ProposalManager is IProposalManager, AccessControl {
       uint256 price = uint256(md.priceFeed.latestAnswer());
       if (proposal.proposalType == ProposalType.ROLL_DEBT) {
         sumDebtPlusEffects += proposal.amount.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
+      } else if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
+        BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
+        sumDebtPlusEffects += borrowData.maxAssets.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
       } else {
         uint256 collateral = proposal.amount.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
         if (sumCollateral < collateral) revert InsufficientLiquidity();

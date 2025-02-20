@@ -141,6 +141,12 @@ struct RollDebtData {
   uint256 percentage;
 }
 
+struct BorrowAtMaturityData {
+  uint256 maturity;
+  uint256 maxAssets;
+  address receiver;
+}
+
 struct CrossRepayData {
   uint256 maturity;
   uint256 positionAssets;
@@ -154,6 +160,7 @@ struct RepayData {
 }
 
 enum ProposalType {
+  BORROW_AT_MATURITY,
   CROSS_REPAY,
   REPAY,
   ROLL_DEBT,
