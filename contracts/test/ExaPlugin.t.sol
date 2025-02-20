@@ -1838,6 +1838,41 @@ contract ExaPluginTest is ForkTest {
     account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
   }
 
+  function test_collect_reverts_whenTooMuchProposedDebt() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+
+    (uint256 adjustFactor,,,,) = auditor.markets(Market(address(exaUSDC)));
+
+    uint256 adjustedCollateral = exaUSDC.maxWithdraw(address(account)).mulWad(adjustFactor);
+    uint256 maxDebt = adjustedCollateral.mulWad(adjustFactor);
+
+    // propose borrow at maturity 3 times with maxAssets = maxDebt / 3
+    for (uint256 i = 0; i < 3; ++i) {
+      account.propose(
+        exaUSDC,
+        maxDebt / 3,
+        ProposalType.BORROW_AT_MATURITY,
+        abi.encode(
+          BorrowAtMaturityData({ maturity: FixedLib.INTERVAL, maxAssets: maxDebt / 3, receiver: address(account) })
+        )
+      );
+    }
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    account.collectDebit(10, block.timestamp, _issuerOp(10, block.timestamp));
+
+    account.setProposalNonce(1);
+
+    account.collectCredit(
+      FixedLib.INTERVAL,
+      maxDebt / 3 - 100e6,
+      maxDebt / 3,
+      block.timestamp,
+      _issuerOp(maxDebt / 3 - 100e6, block.timestamp)
+    );
+  }
+
   // base plugin
   function test_onUninstall_uninstalls() external {
     vm.startPrank(owner);
