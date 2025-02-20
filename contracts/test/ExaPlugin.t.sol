@@ -40,7 +40,13 @@ import { PublicKey, WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOw
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 
 import {
-  ExaPlugin, FunctionId, IBalancerVault, IDebtManager, IInstallmentsRouter, ZeroAddress
+  ExaPlugin,
+  FunctionId,
+  IBalancerVault,
+  IDebtManager,
+  IInstallmentsRouter,
+  Parameters,
+  ZeroAddress
 } from "../src/ExaPlugin.sol";
 import {
   AllowedTargetSet,
@@ -165,18 +171,20 @@ contract ExaPluginTest is ForkTest {
     proposalManager.setAllowedTarget(address(exa), true);
 
     exaPlugin = new ExaPlugin(
-      address(this),
-      IAuditor(address(auditor)),
-      exaUSDC,
-      exaWETH,
-      p.balancer(),
-      IDebtManager(address(p.debtManager())),
-      IInstallmentsRouter(address(p.installmentsRouter())),
-      issuerChecker,
-      IProposalManager(address(proposalManager)),
-      collector,
-      address(m.swapper()),
-      keeper
+      Parameters({
+        owner: address(this),
+        auditor: IAuditor(address(auditor)),
+        exaUSDC: exaUSDC,
+        exaWETH: exaWETH,
+        balancerVault: p.balancer(),
+        debtManager: IDebtManager(address(p.debtManager())),
+        installmentsRouter: IInstallmentsRouter(address(p.installmentsRouter())),
+        issuerChecker: issuerChecker,
+        proposalManager: IProposalManager(address(proposalManager)),
+        collector: collector,
+        swapper: address(m.swapper()),
+        firstKeeper: keeper
+      })
     );
     proposalManager.grantRole(proposalManager.PROPOSER_ROLE(), address(exaPlugin));
 
@@ -1941,18 +1949,20 @@ contract ExaPluginTest is ForkTest {
     proposalManager.setAllowedTarget(address(exa), true);
 
     exaPlugin = new ExaPlugin(
-      address(this),
-      IAuditor(protocol("Auditor")),
-      IMarket(protocol("MarketUSDC")),
-      IMarket(protocol("MarketWETH")),
-      IBalancerVault(protocol("BalancerVault")),
-      IDebtManager(protocol("DebtManager")),
-      IInstallmentsRouter(protocol("InstallmentsRouter")),
-      IssuerChecker(broadcast("IssuerChecker")),
-      proposalManager,
-      acct("collector"),
-      0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
-      keeper
+      Parameters({
+        owner: address(this),
+        auditor: IAuditor(protocol("Auditor")),
+        exaUSDC: IMarket(protocol("MarketUSDC")),
+        exaWETH: IMarket(protocol("MarketWETH")),
+        balancerVault: IBalancerVault(protocol("BalancerVault")),
+        debtManager: IDebtManager(protocol("DebtManager")),
+        installmentsRouter: IInstallmentsRouter(protocol("InstallmentsRouter")),
+        issuerChecker: IssuerChecker(broadcast("IssuerChecker")),
+        proposalManager: proposalManager,
+        collector: acct("collector"),
+        swapper: 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
+        firstKeeper: keeper
+      })
     );
 
     proposalManager.grantRole(proposalManager.PROPOSER_ROLE(), address(exaPlugin));
