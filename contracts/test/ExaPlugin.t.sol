@@ -158,6 +158,9 @@ contract ExaPluginTest is ForkTest {
     unset("keeper");
     refunder = r.refunder();
 
+    address[] memory targets = new address[](2);
+    targets[0] = address(usdc);
+    targets[1] = exaWETH.asset();
     proposalManager = new ProposalManager(
       address(this),
       IAuditor(address(auditor)),
@@ -165,8 +168,7 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(address(p.installmentsRouter())),
       address(m.swapper()),
       collector,
-      IERC20(address(usdc)),
-      IERC20(exaWETH.asset())
+      targets
     );
     proposalManager.setAllowedTarget(address(exa), true);
 
@@ -1941,6 +1943,9 @@ contract ExaPluginTest is ForkTest {
     issuerChecker.setIssuer(issuer);
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
+    address[] memory targets = new address[](2);
+    targets[0] = IMarket(protocol("MarketUSDC")).asset();
+    targets[1] = IMarket(protocol("MarketWETH")).asset();
     proposalManager = new ProposalManager(
       address(this),
       IAuditor(protocol("Auditor")),
@@ -1948,8 +1953,7 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
       acct("collector"),
-      IERC20(IMarket(protocol("MarketUSDC")).asset()),
-      IERC20(IMarket(protocol("MarketWETH")).asset())
+      targets
     );
     proposalManager.setAllowedTarget(address(exa), true);
 
