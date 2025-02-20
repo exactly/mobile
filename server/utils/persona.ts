@@ -1,3 +1,4 @@
+import chain from "@exactly/common/generated/chain";
 import { vValidator } from "@hono/valibot-validator";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
@@ -12,6 +13,7 @@ import {
   string,
   variant,
 } from "valibot";
+import { optimism } from "viem/chains";
 
 import appOrigin from "./appOrigin";
 
@@ -20,20 +22,29 @@ if (!process.env.PERSONA_TEMPLATE_ID) throw new Error("missing persona template 
 if (!process.env.PERSONA_URL) throw new Error("missing persona url");
 if (!process.env.PERSONA_WEBHOOK_SECRET) throw new Error("missing persona webhook secret");
 
+export const templates = {
+  [optimism.id]: {
+    cryptomate: "itmpl_8uim4FvD5P3kFpKHX37CW817", // cspell:disable-line
+    panda: "itmpl_1igCJVqgf3xuzqKYD87HrSaDavU2", // cspell:disable-line
+  },
+}[chain.id] ?? {
+  cryptomate: "itmpl_8uim4FvD5P3kFpKHX37CW817", // cspell:disable-line
+  panda: "itmpl_1igCJVqgf3xuzqKYD87HrSaDavU2", // cspell:disable-line
+};
+
 const authorization = `Bearer ${process.env.PERSONA_API_KEY}`;
-const templateId = process.env.PERSONA_TEMPLATE_ID;
 const baseURL = process.env.PERSONA_URL;
 const webhookSecret = process.env.PERSONA_WEBHOOK_SECRET;
 
-export async function getInquiry(referenceId: string) {
+export async function getInquiry(referenceId: string, templateId: string) {
   const { data: approvedInquiries } = await request(
     GetInquiriesResponse,
-    `/inquiries?page[size]=1&filter[reference-id]=${referenceId}&filter[status]=approved`,
+    `/inquiries?page[size]=1&filter[reference-id]=${referenceId}&filter[inquiry-template-id]=${templateId}&filter[status]=approved`,
   );
   if (approvedInquiries[0]) return approvedInquiries[0];
   const { data: inquiries } = await request(
     GetInquiriesResponse,
-    `/inquiries?page[size]=1&filter[reference-id]=${referenceId}`,
+    `/inquiries?page[size]=1&filter[reference-id]=${referenceId}&filter[inquiry-template-id]=${templateId}`,
   );
   return inquiries[0];
 }
@@ -44,7 +55,12 @@ export function resumeInquiry(inquiryId: string) {
 
 export function createInquiry(referenceId: string) {
   return request(CreateInquiryResponse, "/inquiries", {
-    data: { attributes: { "inquiry-template-id": templateId, "redirect-uri": `${appOrigin}/card` } },
+    data: {
+      attributes: {
+        "inquiry-template-id": templates.panda,
+        "redirect-uri": `${appOrigin}/card`,
+      },
+    },
     meta: { "auto-create-account": true, "auto-create-account-reference-id": referenceId },
   });
 }
@@ -144,10 +160,9 @@ const GenerateOTLResponse = object({
 export function headerValidator() {
   return vValidator("header", object({ "persona-signature": string() }), async (r, c) => {
     if (!r.success) return c.text("bad request", 400);
+    const body = await c.req.text();
     const t = r.output["persona-signature"].split(",")[0]?.split("=")[1];
-    const hmac = createHmac("sha256", webhookSecret)
-      .update(`${t}.${await c.req.text()}`)
-      .digest("hex");
+    const hmac = createHmac("sha256", webhookSecret).update(`${t}.${body}`).digest("hex");
     const isVerified = r.output["persona-signature"]
       .split(" ")
       .map((pair) => pair.split("v1=")[1])

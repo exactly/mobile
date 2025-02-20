@@ -1,18 +1,25 @@
 import { Address } from "@exactly/common/validation";
-import { setUser } from "@sentry/node";
+import { vValidator } from "@hono/valibot-validator";
+import { captureException, setUser } from "@sentry/node";
+import createDebug from "debug";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { parse } from "valibot";
+import { object, optional, parse, string } from "valibot";
 
 import database, { credentials } from "../database/index";
 import auth from "../middleware/auth";
-import { createInquiry, generateOTL, getInquiry, resumeInquiry } from "../utils/persona";
+import { createInquiry, generateOTL, getInquiry, resumeInquiry, templates } from "../utils/persona";
+
+const debug = createDebug("exa:kyc");
+Object.assign(debug, { inspectOpts: { depth: undefined } });
 
 const app = new Hono();
 app.use(auth);
 
 export default app
   .get("/", async (c) => {
+    const templateId = c.req.query("templateId") ?? templates.cryptomate;
+    if (!Object.values(templates).includes(templateId)) return c.json("invalid persona template", 400);
     const credentialId = c.get("credentialId");
     const credential = await database.query.credentials.findFirst({
       columns: { id: true, account: true },
@@ -20,7 +27,7 @@ export default app
     });
     if (!credential) return c.json("credential not found", 404);
     setUser({ id: parse(Address, credential.account) });
-    const inquiry = await getInquiry(credentialId);
+    const inquiry = await getInquiry(credentialId, templateId);
     if (!inquiry) return c.json("kyc not found", 404);
     if (inquiry.attributes.status === "created") return c.json("kyc not started", 400);
     if (inquiry.attributes.status === "pending" || inquiry.attributes.status === "expired") {
@@ -31,24 +38,41 @@ export default app
     if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 400);
     return c.json("ok", 200);
   })
-  .post("/", async (c) => {
-    const credentialId = c.get("credentialId");
-    const credential = await database.query.credentials.findFirst({
-      columns: { id: true, account: true },
-      where: eq(credentials.id, credentialId),
-    });
-    if (!credential) return c.json("credential not found", 404);
-    setUser({ id: parse(Address, credential.account) });
-    const inquiry = await getInquiry(credentialId);
-    if (inquiry) {
-      if (inquiry.attributes.status === "approved") return c.json("kyc already approved", 400);
-      if (inquiry.attributes.status === "created" || inquiry.attributes.status === "expired") {
-        const { meta } = await generateOTL(inquiry.id);
-        return c.json(meta["one-time-link"]);
+  .post(
+    "/",
+    vValidator("json", object({ templateId: optional(string()) }), (validation, c) => {
+      if (debug.enabled) {
+        c.req
+          .text()
+          .then(debug)
+          .catch((error: unknown) => captureException(error));
       }
-      return c.json("kyc failed", 400);
-    }
-    const { data } = await createInquiry(credentialId);
-    const { meta } = await generateOTL(data.id);
-    return c.json(meta["one-time-link"]);
-  });
+      if (!validation.success) {
+        captureException(new Error("bad kyc"), { contexts: { validation } });
+        return c.json("bad request", 400);
+      }
+    }),
+    async (c) => {
+      const payload = c.req.valid("json");
+      const credentialId = c.get("credentialId");
+      const templateId = payload.templateId ?? templates.cryptomate;
+      const credential = await database.query.credentials.findFirst({
+        columns: { id: true, account: true },
+        where: eq(credentials.id, credentialId),
+      });
+      if (!credential) return c.json("credential not found", 404);
+      setUser({ id: parse(Address, credential.account) });
+      const inquiry = await getInquiry(credentialId, templateId);
+      if (inquiry) {
+        if (inquiry.attributes.status === "approved") return c.json("kyc already approved", 400);
+        if (inquiry.attributes.status === "created" || inquiry.attributes.status === "expired") {
+          const { meta } = await generateOTL(inquiry.id);
+          return c.json(meta["one-time-link"]);
+        }
+        return c.json("kyc failed", 400);
+      }
+      const { data } = await createInquiry(credentialId);
+      const { meta } = await generateOTL(data.id);
+      return c.json(meta["one-time-link"]);
+    },
+  );
