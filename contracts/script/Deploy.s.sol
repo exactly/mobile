@@ -12,7 +12,8 @@ import {
   IDebtManager,
   IInstallmentsRouter,
   IMarket,
-  IProposalManager
+  IProposalManager,
+  Parameters
 } from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 
@@ -26,18 +27,20 @@ contract DeployScript is BaseScript {
     vm.startBroadcast(acct("deployer"));
 
     exaPlugin = new ExaPlugin(
-      acct("admin"),
-      IAuditor(protocol("Auditor")),
-      IMarket(protocol("MarketUSDC")),
-      IMarket(protocol("MarketWETH")),
-      IBalancerVault(protocol("BalancerVault")),
-      IDebtManager(protocol("DebtManager")),
-      IInstallmentsRouter(protocol("InstallmentsRouter")),
-      IssuerChecker(broadcast("IssuerChecker")),
-      IProposalManager(address(this)), // FIXME
-      acct("collector"),
-      acct("swapper"),
-      acct("keeper")
+      Parameters({
+        owner: acct("admin"),
+        auditor: IAuditor(protocol("Auditor")),
+        exaUSDC: IMarket(protocol("MarketUSDC")),
+        exaWETH: IMarket(protocol("MarketWETH")),
+        balancerVault: IBalancerVault(protocol("BalancerVault")),
+        debtManager: IDebtManager(protocol("DebtManager")),
+        installmentsRouter: IInstallmentsRouter(protocol("InstallmentsRouter")),
+        issuerChecker: IssuerChecker(broadcast("IssuerChecker")),
+        proposalManager: IProposalManager(address(this)), // FIXME
+        collector: acct("collector"),
+        swapper: acct("swapper"),
+        firstKeeper: acct("keeper")
+      })
     );
 
     factory = ExaAccountFactory(

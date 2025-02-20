@@ -93,36 +93,23 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   bytes32 private callHash;
 
-  constructor(
-    address owner,
-    IAuditor auditor,
-    IMarket exaUSDC,
-    IMarket exaWETH,
-    IBalancerVault balancerVault,
-    IDebtManager debtManager,
-    IInstallmentsRouter installmentsRouter,
-    IssuerChecker issuerChecker,
-    IProposalManager proposalManager_,
-    address collector_,
-    address swapper,
-    address firstKeeper
-  ) {
-    USDC = IERC20(exaUSDC.asset());
-    WETH = IWETH(payable(exaWETH.asset()));
-    AUDITOR = auditor;
-    EXA_USDC = exaUSDC;
-    EXA_WETH = exaWETH;
-    BALANCER_VAULT = balancerVault;
-    DEBT_MANAGER = debtManager;
-    INSTALLMENTS_ROUTER = installmentsRouter;
-    ISSUER_CHECKER = issuerChecker;
-    if (swapper == address(0)) revert ZeroAddress();
-    SWAPPER = swapper;
+  constructor(Parameters memory p) {
+    USDC = IERC20(p.exaUSDC.asset());
+    WETH = IWETH(payable(p.exaWETH.asset()));
+    AUDITOR = p.auditor;
+    EXA_USDC = p.exaUSDC;
+    EXA_WETH = p.exaWETH;
+    BALANCER_VAULT = p.balancerVault;
+    DEBT_MANAGER = p.debtManager;
+    INSTALLMENTS_ROUTER = p.installmentsRouter;
+    ISSUER_CHECKER = p.issuerChecker;
+    if (p.swapper == address(0)) revert ZeroAddress();
+    SWAPPER = p.swapper;
 
-    _grantRole(KEEPER_ROLE, firstKeeper);
-    _grantRole(DEFAULT_ADMIN_ROLE, owner);
-    _setCollector(collector_);
-    _setProposalManager(proposalManager_);
+    _grantRole(KEEPER_ROLE, p.firstKeeper);
+    _grantRole(DEFAULT_ADMIN_ROLE, p.owner);
+    _setCollector(p.collector);
+    _setProposalManager(p.proposalManager);
 
     IERC20(USDC).forceApprove(address(EXA_USDC), type(uint256).max);
   }
@@ -720,4 +707,19 @@ struct RepayCallbackData {
   address borrower;
   uint256 positionAssets;
   uint256 maxRepay;
+}
+
+struct Parameters {
+  address owner;
+  IAuditor auditor;
+  IMarket exaUSDC;
+  IMarket exaWETH;
+  IBalancerVault balancerVault;
+  IDebtManager debtManager;
+  IInstallmentsRouter installmentsRouter;
+  IssuerChecker issuerChecker;
+  IProposalManager proposalManager;
+  address collector;
+  address swapper;
+  address firstKeeper;
 }
