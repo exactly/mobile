@@ -4,6 +4,7 @@ import "../mocks/deployments";
 import "../mocks/sentry";
 
 import * as sentry from "@sentry/node";
+import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
 import { zeroHash, padHex, zeroAddress } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
@@ -11,6 +12,7 @@ import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import app from "../../api/card";
 import database, { cards, credentials } from "../../database";
+import * as cryptomate from "../../utils/cryptomate";
 import deriveAddress from "../../utils/deriveAddress";
 import * as panda from "../../utils/panda";
 import * as persona from "../../utils/persona";
@@ -45,12 +47,23 @@ const cardTemplate = {
   expirationYear: "2029",
 } as const;
 
+const cryptomateTemplate = {
+  id: "cm",
+  card_holder_name: "First Last",
+  type: "Virtual",
+  last4: "1234",
+  status: "ACTIVE",
+  daily_limit: 5000,
+  weekly_limit: 5000,
+  monthly_limit: 5000,
+} as const;
+
 const appClient = testClient(app);
 
 describe("authenticated", () => {
   const bob = privateKeyToAddress(padHex("0xb0b"));
   const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
-  const captureException = vi.spyOn(sentry, "captureException");
+  vi.spyOn(sentry, "captureException");
 
   beforeAll(async () => {
     await database.insert(credentials).values([
@@ -64,8 +77,9 @@ describe("authenticated", () => {
     ]);
   });
 
-  afterEach(() => {
-    captureException.mockClear();
+  afterEach(async () => {
+    await database.delete(cards).where(eq(cards.credentialId, account));
+    vi.restoreAllMocks();
   });
 
   it("returns 403 kyc not done", async () => {
@@ -147,21 +161,51 @@ describe("authenticated", () => {
   });
 
   it("creates a panda card", async () => {
-    const foo = privateKeyToAddress(padHex("0xf00"));
-    await database
-      .insert(credentials)
-      .values([{ id: foo, publicKey: new Uint8Array(), account: foo, factory: zeroAddress, pandaId: "anyPanda" }]);
     vi.spyOn(panda, "createCard").mockResolvedValueOnce({ ...cardTemplate, id: "createCard" });
-
     vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
 
-    const response = await appClient.index.$post({ header: { "test-credential-id": foo } });
+    const response = await appClient.index.$post({ header: { "test-credential-id": account } });
     const json = await response.json();
 
     expect(response.status).toBe(200);
     expect(json).toStrictEqual({
       status: "active",
       lastFour: "7394",
+    });
+  });
+
+  describe("migration", () => {
+    it("creates a panda card having a cm card with upgraded plugin", async () => {
+      await database.insert(cards).values([{ id: "cm", credentialId: account, lastFour: "1234" }]);
+
+      vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
+      vi.spyOn(panda, "getCard").mockRejectedValueOnce(new Error("404 card not found"));
+      vi.spyOn(panda, "createCard").mockResolvedValueOnce({ ...cardTemplate, id: "migration:cm" });
+      vi.spyOn(panda, "isPanda").mockResolvedValueOnce(true);
+
+      const response = await appClient.index.$post({ header: { "test-credential-id": account } });
+
+      const created = await database.query.cards.findFirst({ where: eq(cards.id, "migration:cm") });
+      const deleted = await database.query.cards.findFirst({ where: eq(cards.id, "cm") });
+
+      expect(response.status).toBe(200);
+      expect(created?.status).toBe("ACTIVE");
+      expect(deleted?.status).toBe("DELETED");
+    });
+
+    it("creates a cm card if the user doesn't update plugin", async () => {
+      vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
+      vi.spyOn(cryptomate, "createCard").mockResolvedValueOnce({ ...cryptomateTemplate, id: account }); // cspell:disable-line
+      vi.spyOn(cryptomate, "getPAN").mockResolvedValueOnce("https://cm.com");
+      vi.spyOn(panda, "isPanda").mockResolvedValueOnce(false);
+
+      const response = await appClient.index.$post({ header: { "test-credential-id": account } });
+      await response.json();
+
+      const created = await database.query.cards.findFirst({ where: eq(cards.id, account) });
+
+      expect(response.status).toBe(200);
+      expect(created?.status).toBe("ACTIVE");
     });
   });
 });

@@ -83,7 +83,7 @@ export default app
           where: eq(credentials.id, credentialId),
           columns: { account: true, pandaId: true },
           with: {
-            cards: { columns: { status: true }, where: inArray(cards.status, ["ACTIVE", "FROZEN"]) },
+            cards: { columns: { id: true, status: true }, where: inArray(cards.status, ["ACTIVE", "FROZEN"]) },
           },
         });
         if (!credential) return c.json("credential not found", 401);
@@ -92,9 +92,23 @@ export default app
         const inquiry = await getInquiry(credentialId);
         if (!inquiry) return c.json("kyc not found", 404);
         if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
-        if (credential.cards.length > 0) return c.json("card already exists", 400);
-        if (pandaIssuing) {
+        if (pandaIssuing && (await isPanda(account))) {
           if (!credential.pandaId) return c.json("panda id not found", 400);
+          let numberOfCards = credential.cards.length;
+          if (credential.cards[0]) {
+            try {
+              await getCard(credential.cards[0].id);
+            } catch (error) {
+              if (error instanceof Error && (error.message === "invalid card id" || error.message.startsWith("404"))) {
+                await database.update(cards).set({ status: "DELETED" }).where(eq(cards.id, credential.cards[0].id));
+                numberOfCards--;
+                setContext("cryptomate card deleted", { id: credential.cards[0].id });
+              } else {
+                throw error;
+              }
+            }
+          }
+          if (numberOfCards > 0) return c.json(`card already exists: ${numberOfCards}`, 400);
           const card = await createPandaCard({
             userId: credential.pandaId,
             name: {
@@ -106,6 +120,8 @@ export default app
           await database.insert(cards).values([{ id: card.id, credentialId, lastFour: card.last4 }]);
           return c.json({ lastFour: card.last4, status: card.status }, 200);
         }
+        if (credential.cards.length > 0) return c.json("card already exists", 400);
+
         setContext("phone", { inquiry: inquiry.id, phone: inquiry.attributes["phone-number"] });
         const phone = parsePhoneNumberWithError(
           inquiry.attributes["phone-number"].startsWith("+")
