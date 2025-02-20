@@ -12,7 +12,7 @@ import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
 import { createCard, getPAN } from "../utils/cryptomate";
 import { createCard as createPandaCard, displayName, getCard, getSecrets, isPanda, pandaIssuing } from "../utils/panda";
-import { getInquiry } from "../utils/persona";
+import { getInquiry, templates } from "../utils/persona";
 import { track } from "../utils/segment";
 
 const mutexes = new Map<string, Mutex>();
@@ -41,12 +41,13 @@ export default app
     if (!credential) return c.json("credential not found", 401);
     const account = parse(Address, credential.account);
     setUser({ id: account });
-    const inquiry = await getInquiry(credentialId);
-    if (!inquiry) return c.json("kyc required", 403);
-    if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
+
     if (credential.cards.length > 0 && credential.cards[0]) {
       const { id, lastFour, status, mode } = credential.cards[0];
       if (await isPanda(account)) {
+        const inquiry = await getInquiry(credentialId, templates.panda);
+        if (!inquiry) return c.json("kyc required", 403);
+        if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
         if (!credential.pandaId) return c.json("panda id not found", 400);
         const session = c.req.header("SessionId");
         if (!session) return c.json("SessionId header required", 400);
@@ -69,6 +70,9 @@ export default app
           200,
         );
       }
+      const inquiry = await getInquiry(credentialId, templates.cryptomate);
+      if (!inquiry) return c.json("kyc required", 403);
+      if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
       return c.json({ provider: "cryptomate" as const, url: await getPAN(id), lastFour, status, mode }, 200);
     } else {
       return c.json("card not found", 404);
@@ -83,18 +87,33 @@ export default app
           where: eq(credentials.id, credentialId),
           columns: { account: true, pandaId: true },
           with: {
-            cards: { columns: { status: true }, where: inArray(cards.status, ["ACTIVE", "FROZEN"]) },
+            cards: { columns: { id: true, status: true }, where: inArray(cards.status, ["ACTIVE", "FROZEN"]) },
           },
         });
         if (!credential) return c.json("credential not found", 401);
         const account = parse(Address, credential.account);
         setUser({ id: account });
-        const inquiry = await getInquiry(credentialId);
-        if (!inquiry) return c.json("kyc not found", 404);
-        if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
-        if (credential.cards.length > 0) return c.json("card already exists", 400);
-        if (pandaIssuing) {
+
+        if (pandaIssuing && (await isPanda(account))) {
+          const inquiry = await getInquiry(credentialId, templates.panda);
+          if (!inquiry) return c.json("kyc not found", 404);
+          if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
           if (!credential.pandaId) return c.json("panda id not found", 400);
+          let cardCount = credential.cards.length;
+          for (const card of credential.cards) {
+            try {
+              await getCard(card.id);
+            } catch (error) {
+              if (error instanceof Error && (error.message === "invalid card id" || error.message.startsWith("404"))) {
+                await database.update(cards).set({ status: "DELETED" }).where(eq(cards.id, card.id));
+                cardCount--;
+                setContext("cryptomate card deleted", { id: card.id });
+              } else {
+                throw error;
+              }
+            }
+          }
+          if (cardCount > 0) return c.json(`card already exists: ${cardCount}`, 400);
           const card = await createPandaCard({
             userId: credential.pandaId,
             name: {
@@ -106,6 +125,11 @@ export default app
           await database.insert(cards).values([{ id: card.id, credentialId, lastFour: card.last4 }]);
           return c.json({ lastFour: card.last4, status: card.status }, 200);
         }
+        const inquiry = await getInquiry(credentialId, templates.cryptomate);
+        if (!inquiry) return c.json("kyc not found", 404);
+        if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
+        if (credential.cards.length > 0) return c.json("card already exists", 400);
+
         setContext("phone", { inquiry: inquiry.id, phone: inquiry.attributes["phone-number"] });
         const phone = parsePhoneNumberWithError(
           inquiry.attributes["phone-number"].startsWith("+")
