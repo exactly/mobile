@@ -60,7 +60,7 @@ import {
   IProposalManager,
   InsufficientLiquidity,
   NoProposal,
-  // ProposalRevoked, FIXME
+  ProposalNonceSet,
   ProposalType,
   Proposed,
   RepayData,
@@ -1031,33 +1031,38 @@ contract ExaPluginTest is ForkTest {
     assertEq(receiver.balance, 0);
   }
 
-  // function test_revokeProposal_revokes() external {
-  //   vm.startPrank(keeper);
-  //   account.poke(exaEXA);
+  function test_setProposalNonce_sets() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
 
-  //   account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
-  //   skip(exaPlugin.PROPOSAL_DELAY());
+    account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
+    skip(exaPlugin.PROPOSAL_DELAY());
 
-  //   account.revokeProposal();
+    account.setProposalNonce(1);
 
-  //   vm.expectRevert(NoProposal.selector);
-  //   account.executeProposal();
+    vm.expectRevert(NoProposal.selector);
+    account.executeProposal();
 
-  //   account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
-  //   skip(exaPlugin.PROPOSAL_DELAY());
+    account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
+    skip(exaPlugin.PROPOSAL_DELAY());
 
-  //   account.executeProposal();
-  // }
+    account.executeProposal();
+  }
 
-  // function test_revokeProposal_emitsEvent() external {
-  //   vm.startPrank(keeper);
+  function test_setProposalNonce_emitsEvent() external {
+    vm.startPrank(keeper);
 
-  //   account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
+    account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
 
-  //   vm.expectEmit(true, true, true, true, address(exaPlugin));
-  //   emit ProposalRevoked(address(account));
-  //   account.revokeProposal();
-  // }
+    assertEq(proposalManager.nextProposal(address(account)).amount, 100e6);
+
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit ProposalNonceSet(address(account), 1);
+    account.setProposalNonce(1);
+
+    vm.expectRevert(NoProposal.selector);
+    proposalManager.nextProposal(address(account));
+  }
 
   // keeper runtime validation
   function test_collectCredit_collects() external {
