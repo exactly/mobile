@@ -10,6 +10,7 @@ import { check, number, parse, pipe, safeParse } from "valibot";
 
 import { session } from "./panda";
 import queryClient from "./queryClient";
+import { templateId } from "../utils/persona";
 
 queryClient.setQueryDefaults<number | undefined>(["auth"], {
   staleTime: AUTH_EXPIRY,
@@ -94,14 +95,14 @@ export async function setCardMode(mode: number) {
 
 export async function getKYCLink() {
   await auth();
-  const response = await client.api.kyc.$post();
+  const response = await client.api.kyc.$post({ json: { templateId } });
   if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
 
 export async function getKYCStatus() {
   await auth();
-  const response = await client.api.kyc.$get();
+  const response = await client.api.kyc.$get({ query: { templateId } });
   if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }
