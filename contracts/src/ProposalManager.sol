@@ -122,7 +122,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     IMarket marketTarget = IMarket(target);
     if (!_isMarket(marketTarget)) revert Unauthorized();
 
-    uint256 assets = 0;
+    uint256 amount = 0;
     address owner = address(0);
 
     Proposal memory proposal;
@@ -142,7 +142,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     } else if (selector == IMarket.borrowAtMaturity.selector) {
       uint256 maturity;
       uint256 maxAssets;
-      (maturity, assets, maxAssets, receiver,) = abi.decode(callData, (uint256, uint256, uint256, address, address));
+      (maturity, amount, maxAssets, receiver,) = abi.decode(callData, (uint256, uint256, uint256, address, address));
       if (hasRole(COLLECTOR_ROLE, receiver)) return nonce;
       proposal = proposals[sender][nonce];
 
@@ -151,19 +151,15 @@ contract ProposalManager is IProposalManager, AccessControl {
         BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
         if (
           borrowData.maturity != maturity || borrowData.maxAssets < maxAssets || borrowData.receiver != receiver
-            || proposal.amount < assets
+            || proposal.amount < amount
         ) {
           revert NoProposal();
         }
         return nonce + 1;
       }
       revert Unauthorized();
-    } else if (selector == IERC4626.withdraw.selector) {
-      (assets, receiver, owner) = abi.decode(callData, (uint256, address, address));
-    } else if (selector == IERC4626.redeem.selector) {
-      uint256 shares;
-      (shares, receiver, owner) = abi.decode(callData, (uint256, address, address));
-      assets = marketTarget.convertToAssets(shares);
+    } else if (selector == IERC4626.withdraw.selector || selector == IERC4626.redeem.selector) {
+      (amount, receiver, owner) = abi.decode(callData, (uint256, address, address));
     } else if (selector == IMarket.borrow.selector) {
       (, receiver,) = abi.decode(callData, (uint256, address, address));
       if (!hasRole(COLLECTOR_ROLE, receiver)) revert Unauthorized();
@@ -178,10 +174,10 @@ contract ProposalManager is IProposalManager, AccessControl {
 
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (proposal.amount == 0) revert NoProposal();
-    if (proposal.amount < assets) revert NoProposal();
+    if (proposal.amount < amount) revert NoProposal();
     if (proposal.market != marketTarget) revert NoProposal();
     if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
-    if (proposal.proposalType == ProposalType.WITHDRAW) {
+    if (proposal.proposalType == ProposalType.WITHDRAW || proposal.proposalType == ProposalType.REDEEM) {
       if (abi.decode(proposal.data, (address)) != receiver) revert NoProposal();
     }
     return nonce + 1;
@@ -239,7 +235,10 @@ contract ProposalManager is IProposalManager, AccessControl {
         BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
         sumDebtPlusEffects += borrowData.maxAssets.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
       } else {
-        uint256 collateral = proposal.amount.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
+        uint256 assets = proposal.proposalType == ProposalType.REDEEM
+          ? proposal.market.convertToAssets(proposal.amount)
+          : proposal.amount;
+        uint256 collateral = assets.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
         if (sumCollateral < collateral) revert InsufficientLiquidity();
         sumCollateral -= collateral;
       }

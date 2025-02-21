@@ -163,6 +163,7 @@ enum ProposalType {
   NONE,
   BORROW_AT_MATURITY,
   CROSS_REPAY,
+  REDEEM,
   REPAY,
   ROLL_DEBT,
   SWAP,
