@@ -147,98 +147,20 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     Proposal memory proposal = proposalManager.nextProposal(msg.sender);
 
     if (proposal.amount == 0) revert NoProposal();
-
     if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
 
     if (proposal.proposalType == ProposalType.WITHDRAW || proposal.proposalType == ProposalType.REDEEM) {
-      address receiver = abi.decode(proposal.data, (address));
-      bool isWETH = proposal.market == EXA_WETH;
-      _executeFromSender(
-        address(proposal.market),
-        0,
-        proposal.proposalType == ProposalType.REDEEM
-          ? abi.encodeCall(IERC4626.redeem, (proposal.amount, isWETH ? address(this) : receiver, msg.sender))
-          : abi.encodeCall(IERC4626.withdraw, (proposal.amount, isWETH ? address(this) : receiver, msg.sender))
-      );
-      if (isWETH) {
-        uint256 assets = proposal.proposalType == ProposalType.REDEEM
-          ? proposal.market.convertToAssets(proposal.amount)
-          : proposal.amount;
-        WETH.withdraw(assets);
-        receiver.safeTransferETH(assets);
-      }
+      _withdraw(proposal);
     } else if (proposal.proposalType == ProposalType.SWAP) {
-      _executeFromSender(
-        address(proposal.market), 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, msg.sender, msg.sender))
-      );
-      SwapData memory data = abi.decode(proposal.data, (SwapData));
-      swap(IERC20(proposal.market.asset()), data.assetOut, proposal.amount, data.minAmountOut, data.route);
+      _swap(proposal);
     } else if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
-      BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
-      _executeFromSender(
-        address(EXA_USDC),
-        0,
-        abi.encodeCall(
-          IMarket.borrowAtMaturity,
-          (borrowData.maturity, proposal.amount, borrowData.maxAssets, borrowData.receiver, msg.sender)
-        )
-      );
+      _borrowAtMaturity(proposal);
     } else if (proposal.proposalType == ProposalType.CROSS_REPAY) {
-      CrossRepayData memory crossData = abi.decode(proposal.data, (CrossRepayData));
-      bytes memory data = _hash(
-        abi.encodePacked(
-          bytes1(0x02),
-          abi.encode(
-            CrossRepayCallbackData({
-              maturity: crossData.maturity,
-              borrower: msg.sender,
-              positionAssets: crossData.positionAssets,
-              maxRepay: crossData.maxRepay,
-              marketIn: proposal.market,
-              maxAmountIn: proposal.amount,
-              route: crossData.route
-            })
-          )
-        )
-      );
-      _approveFromSender(address(proposal.market), address(this), proposal.amount);
-      _flashLoan(crossData.maxRepay, data);
+      _crossRepay(proposal);
     } else if (proposal.proposalType == ProposalType.ROLL_DEBT) {
-      RollDebtData memory rollData = abi.decode(proposal.data, (RollDebtData));
-      _approveAndExecuteFromSender(
-        address(DEBT_MANAGER),
-        address(EXA_USDC),
-        rollData.maxRepayAssets,
-        abi.encodeCall(
-          IDebtManager.rollFixed,
-          (
-            EXA_USDC,
-            rollData.repayMaturity,
-            rollData.borrowMaturity,
-            rollData.maxRepayAssets,
-            proposal.amount,
-            rollData.percentage
-          )
-        )
-      );
-      _approveFromSender(address(EXA_USDC), address(DEBT_MANAGER), 0);
+      _rollDebt(proposal);
     } else if (proposal.proposalType == ProposalType.REPAY) {
-      RepayData memory repayData = abi.decode(proposal.data, (RepayData));
-      bytes memory data = _hash(
-        abi.encodePacked(
-          bytes1(0x01),
-          abi.encode(
-            RepayCallbackData({
-              maturity: repayData.maturity,
-              borrower: msg.sender,
-              positionAssets: proposal.amount,
-              maxRepay: repayData.maxRepay
-            })
-          )
-        )
-      );
-      _approveFromSender(address(EXA_USDC), address(this), EXA_USDC.previewWithdraw(repayData.maxRepay));
-      _flashLoan(repayData.maxRepay, data);
+      _repay(proposal);
     }
   }
 
@@ -532,8 +454,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
       if (preExecHookData.length == 0) return;
       uint256 nonce = abi.decode(preExecHookData, (uint256));
-      proposalManager.setNonce(msg.sender, nonce);
       emit ProposalNonceSet(msg.sender, nonce);
+      proposalManager.setNonce(msg.sender, nonce);
       return;
     }
     revert NotImplemented(msg.sig, functionId);
@@ -607,6 +529,18 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _executeFromSender(asset, 0, abi.encodeCall(IERC20.approve, (spender, amount)));
   }
 
+  function _borrowAtMaturity(Proposal memory proposal) internal {
+    BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
+    _executeFromSender(
+      address(EXA_USDC),
+      0,
+      abi.encodeCall(
+        IMarket.borrowAtMaturity,
+        (borrowData.maturity, proposal.amount, borrowData.maxAssets, borrowData.receiver, msg.sender)
+      )
+    );
+  }
+
   function _checkIssuer(address issuer, uint256 amount, uint256 timestamp, bytes calldata signature) internal {
     ISSUER_CHECKER.checkIssuer(issuer, amount, timestamp, signature);
   }
@@ -618,6 +552,28 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function _checkMarket(IMarket market) internal view {
     if (!_isMarket(market)) revert NotMarket();
+  }
+
+  function _crossRepay(Proposal memory proposal) internal {
+    CrossRepayData memory crossData = abi.decode(proposal.data, (CrossRepayData));
+    bytes memory data = _hash(
+      abi.encodePacked(
+        bytes1(0x02),
+        abi.encode(
+          CrossRepayCallbackData({
+            maturity: crossData.maturity,
+            borrower: msg.sender,
+            positionAssets: crossData.positionAssets,
+            maxRepay: crossData.maxRepay,
+            marketIn: proposal.market,
+            maxAmountIn: proposal.amount,
+            route: crossData.route
+          })
+        )
+      )
+    );
+    _approveFromSender(address(proposal.market), address(this), proposal.amount);
+    _flashLoan(crossData.maxRepay, data);
   }
 
   function _executeFromSender(address target, uint256 value, bytes memory data) internal {
@@ -664,6 +620,46 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
   }
 
+  function _repay(Proposal memory proposal) internal {
+    RepayData memory repayData = abi.decode(proposal.data, (RepayData));
+    bytes memory data = _hash(
+      abi.encodePacked(
+        bytes1(0x01),
+        abi.encode(
+          RepayCallbackData({
+            maturity: repayData.maturity,
+            borrower: msg.sender,
+            positionAssets: proposal.amount,
+            maxRepay: repayData.maxRepay
+          })
+        )
+      )
+    );
+    _approveFromSender(address(EXA_USDC), address(this), EXA_USDC.previewWithdraw(repayData.maxRepay));
+    _flashLoan(repayData.maxRepay, data);
+  }
+
+  function _rollDebt(Proposal memory proposal) internal {
+    RollDebtData memory rollData = abi.decode(proposal.data, (RollDebtData));
+    _approveAndExecuteFromSender(
+      address(DEBT_MANAGER),
+      address(EXA_USDC),
+      rollData.maxRepayAssets,
+      abi.encodeCall(
+        IDebtManager.rollFixed,
+        (
+          EXA_USDC,
+          rollData.repayMaturity,
+          rollData.borrowMaturity,
+          rollData.maxRepayAssets,
+          proposal.amount,
+          rollData.percentage
+        )
+      )
+    );
+    _approveFromSender(address(EXA_USDC), address(DEBT_MANAGER), 0);
+  }
+
   function _setCollector(address collector_) internal {
     if (collector_ == address(0)) revert ZeroAddress();
     collector = collector_;
@@ -674,6 +670,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     if (address(proposalManager_) == address(0)) revert ZeroAddress();
     proposalManager = proposalManager_;
     emit ProposalManagerSet(proposalManager_, msg.sender);
+  }
+
+  function _swap(Proposal memory proposal) internal {
+    _executeFromSender(
+      address(proposal.market), 0, abi.encodeCall(IERC4626.withdraw, (proposal.amount, msg.sender, msg.sender))
+    );
+    SwapData memory data = abi.decode(proposal.data, (SwapData));
+    swap(IERC20(proposal.market.asset()), data.assetOut, proposal.amount, data.minAmountOut, data.route);
   }
 
   function _swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
@@ -692,6 +696,25 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
     assetIn.forceApprove(SWAPPER, 0);
     amountIn = balanceIn - assetIn.balanceOf(address(this));
+  }
+
+  function _withdraw(Proposal memory proposal) internal {
+    address receiver = abi.decode(proposal.data, (address));
+    bool isWETH = proposal.market == EXA_WETH;
+    _executeFromSender(
+      address(proposal.market),
+      0,
+      proposal.proposalType == ProposalType.REDEEM
+        ? abi.encodeCall(IERC4626.redeem, (proposal.amount, isWETH ? address(this) : receiver, msg.sender))
+        : abi.encodeCall(IERC4626.withdraw, (proposal.amount, isWETH ? address(this) : receiver, msg.sender))
+    );
+    if (isWETH) {
+      uint256 assets = proposal.proposalType == ProposalType.REDEEM
+        ? proposal.market.convertToAssets(proposal.amount)
+        : proposal.amount;
+      WETH.withdraw(assets);
+      receiver.safeTransferETH(assets);
+    }
   }
 
   function supportsInterface(bytes4 interfaceId) public view override(AccessControl, BasePlugin) returns (bool) {

@@ -81,8 +81,6 @@ contract ProposalManager is IProposalManager, AccessControl {
     view
     returns (uint256 nextNonce)
   {
-    address receiver;
-
     if (target == address(AUDITOR)) {
       if (selector != IAuditor.exitMarket.selector) return nonce;
       revert Unauthorized();
@@ -112,7 +110,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     }
     if (target == address(INSTALLMENTS_ROUTER)) {
       if (selector == IInstallmentsRouter.borrow.selector) {
-        (,,,, receiver) = abi.decode(callData, (IMarket, uint256, uint256[], uint256, address));
+        (,,,, address receiver) = abi.decode(callData, (IMarket, uint256, uint256[], uint256, address));
         if (hasRole(COLLECTOR_ROLE, receiver)) return nonce;
       }
       revert Unauthorized();
@@ -122,8 +120,19 @@ contract ProposalManager is IProposalManager, AccessControl {
     IMarket marketTarget = IMarket(target);
     if (!_isMarket(marketTarget)) revert Unauthorized();
 
+    return _preExecutionMarketCheck(sender, nonce, marketTarget, selector, callData);
+  }
+
+  function _preExecutionMarketCheck(
+    address sender,
+    uint256 nonce,
+    IMarket target,
+    bytes4 selector,
+    bytes memory callData
+  ) internal view returns (uint256 nextNonce) {
     uint256 amount = 0;
     address owner = address(0);
+    address receiver = address(0);
 
     Proposal memory proposal;
     if (selector == IERC20.approve.selector) {
@@ -172,10 +181,20 @@ contract ProposalManager is IProposalManager, AccessControl {
 
     proposal = proposals[owner][nonce];
 
+    return _checkMarketProposal(proposal, target, amount, receiver, nonce);
+  }
+
+  function _checkMarketProposal(
+    Proposal memory proposal,
+    IMarket target,
+    uint256 amount,
+    address receiver,
+    uint256 nonce
+  ) internal view returns (uint256) {
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (proposal.amount == 0) revert NoProposal();
     if (proposal.amount < amount) revert NoProposal();
-    if (proposal.market != marketTarget) revert NoProposal();
+    if (proposal.market != target) revert NoProposal();
     if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
     if (proposal.proposalType == ProposalType.WITHDRAW || proposal.proposalType == ProposalType.REDEEM) {
       if (abi.decode(proposal.data, (address)) != receiver) revert NoProposal();
