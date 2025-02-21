@@ -146,7 +146,7 @@ contract ProposalManager is IProposalManager, AccessControl {
       if (hasRole(COLLECTOR_ROLE, receiver)) return nonce;
       proposal = proposals[sender][nonce];
 
-      if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY && proposal.amount != 0) {
+      if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
         if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
         BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
         if (

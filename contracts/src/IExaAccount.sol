@@ -160,6 +160,7 @@ struct RepayData {
 }
 
 enum ProposalType {
+  NONE,
   BORROW_AT_MATURITY,
   CROSS_REPAY,
   REPAY,
