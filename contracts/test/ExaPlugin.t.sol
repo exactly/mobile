@@ -63,6 +63,7 @@ import {
   InsufficientLiquidity,
   InvalidDelay,
   NoProposal,
+  NonceTooLow,
   ProposalNonceSet,
   ProposalType,
   Proposed,
@@ -2083,6 +2084,36 @@ contract ExaPluginTest is ForkTest {
     ENTRYPOINT.handleOps(userOps, payable(address(0x420)));
   }
 
+  function test_setNonce_reverts_whenNonceTooLow() external {
+    vm.startPrank(address(exaPlugin));
+    vm.expectRevert(NonceTooLow.selector);
+    proposalManager.setNonce(address(account), 0);
+  }
+
+  function test_setNonce_reverts_whenNotProposer() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), proposalManager.PROPOSER_ROLE()
+      )
+    );
+    proposalManager.setNonce(address(account), 1);
+  }
+
+  function test_propose_reverts_whenNotProposer() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, address(this), proposalManager.PROPOSER_ROLE()
+      )
+    );
+    proposalManager.propose(address(account), exaEXA, 100e18, ProposalType.WITHDRAW, "");
+  }
+
+  function test_propose_incrementsQueueNonces() external {
+    vm.startPrank(address(exaPlugin));
+    uint256 nonceBefore = proposalManager.queueNonces(address(account));
+    proposalManager.propose(address(account), exaEXA, 100e18, ProposalType.WITHDRAW, "");
+    assertEq(proposalManager.queueNonces(address(account)), nonceBefore + 1);
+  }
 
   function test_proposeZeroAmount_reverts_withZeroAmount() external {
     vm.startPrank(address(exaPlugin));
