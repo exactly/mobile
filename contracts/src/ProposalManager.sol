@@ -211,10 +211,14 @@ contract ProposalManager is IProposalManager, AccessControl {
     uint256 sumDebtPlusEffects = 0;
 
     for (uint256 i = 0; i < AUDITOR.allMarkets().length; ++i) {
+      // slither-disable-next-line calls-loop -- won't revert
       IMarket market = AUDITOR.marketList(i);
       if ((marketMap & (1 << i)) != 0) {
+        // slither-disable-next-line calls-loop -- won't revert
         MarketData memory md = AUDITOR.markets(market);
+        // slither-disable-next-line calls-loop -- won't revert
         uint256 price = uint256(md.priceFeed.latestAnswer());
+        // slither-disable-next-line calls-loop -- won't revert
         (uint256 balance, uint256 borrowBalance) = market.accountSnapshot(account);
 
         sumCollateral += balance.mulDiv(price, 10 ** md.decimals).mulWad(md.adjustFactor);
@@ -227,7 +231,9 @@ contract ProposalManager is IProposalManager, AccessControl {
     for (uint256 i = nonces[account]; i < queueNonce; ++i) {
       Proposal memory proposal = proposals[account][i];
       if (proposal.amount == 0) continue;
+      // slither-disable-next-line calls-loop -- won't revert
       MarketData memory md = AUDITOR.markets(proposal.market);
+      // slither-disable-next-line calls-loop -- won't revert
       uint256 price = uint256(md.priceFeed.latestAnswer());
       if (proposal.proposalType == ProposalType.ROLL_DEBT) {
         sumDebtPlusEffects += proposal.amount.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
@@ -235,6 +241,7 @@ contract ProposalManager is IProposalManager, AccessControl {
         BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
         sumDebtPlusEffects += borrowData.maxAssets.mulDivUp(price, 10 ** md.decimals).divWadUp(md.adjustFactor);
       } else {
+        // slither-disable-next-line calls-loop -- won't revert
         uint256 assets = proposal.proposalType == ProposalType.REDEEM
           ? proposal.market.convertToAssets(proposal.amount)
           : proposal.amount;

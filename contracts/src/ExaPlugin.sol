@@ -244,6 +244,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
     uint256 nonce = proposalManager.propose(msg.sender, market, amount, proposalType, data);
+    // slither-disable-next-line reentrancy-events -- needs returned value
     emit Proposed(msg.sender, nonce, market, proposalType, amount, data, block.timestamp + PROPOSAL_DELAY);
   }
 
@@ -576,6 +577,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     view
     returns (uint256)
   {
+    // slither-disable-next-line calls-loop -- should deny service on revert
     return proposalManager.preExecutionChecker(msg.sender, nonce, target, selector, callData);
   }
 
