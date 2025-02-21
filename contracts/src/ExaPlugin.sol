@@ -86,7 +86,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   IDebtManager public immutable DEBT_MANAGER;
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
   IssuerChecker public immutable ISSUER_CHECKER;
-  uint256 public immutable PROPOSAL_DELAY = 1 minutes;
+  uint256 public immutable UNINSTALL_DELAY = 1 minutes;
 
   IProposalManager public proposalManager;
   address public collector;
@@ -117,7 +117,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function proposeUninstall() external {
     uninstallProposals[msg.sender] = block.timestamp;
-    emit UninstallProposed(msg.sender, block.timestamp + PROPOSAL_DELAY);
+    emit UninstallProposed(msg.sender, block.timestamp + UNINSTALL_DELAY);
   }
 
   function revokeUninstall() external {
@@ -147,7 +147,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     Proposal memory proposal = proposalManager.nextProposal(msg.sender);
 
     if (proposal.amount == 0) revert NoProposal();
-    if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+    if (proposal.timestamp + proposalManager.delay() > block.timestamp) revert Timelocked();
 
     if (proposal.proposalType == ProposalType.WITHDRAW || proposal.proposalType == ProposalType.REDEEM) {
       _withdraw(proposal);
@@ -167,7 +167,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
     uint256 nonce = proposalManager.propose(msg.sender, market, amount, proposalType, data);
     // slither-disable-next-line reentrancy-events -- needs returned value
-    emit Proposed(msg.sender, nonce, market, proposalType, amount, data, block.timestamp + PROPOSAL_DELAY);
+    emit Proposed(msg.sender, nonce, market, proposalType, amount, data, block.timestamp + proposalManager.delay());
   }
 
   function setProposalNonce(uint256 nonce) external {
@@ -310,7 +310,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   /// @inheritdoc BasePlugin
   function onUninstall(bytes calldata) external override {
-    if (uninstallProposals[msg.sender] + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+    if (uninstallProposals[msg.sender] + UNINSTALL_DELAY > block.timestamp) revert Timelocked();
     uninstallProposals[msg.sender] = 0;
   }
 

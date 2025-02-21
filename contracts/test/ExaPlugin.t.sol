@@ -53,6 +53,7 @@ import {
   BorrowAtMaturityData,
   CollectorSet,
   CrossRepayData,
+  DelaySet,
   Expired,
   FixedPosition,
   IAuditor,
@@ -60,6 +61,7 @@ import {
   IMarket,
   IProposalManager,
   InsufficientLiquidity,
+  InvalidDelay,
   NoProposal,
   ProposalNonceSet,
   ProposalType,
@@ -169,7 +171,8 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(address(p.installmentsRouter())),
       address(m.swapper()),
       collector,
-      targets
+      targets,
+      1 minutes
     );
     proposalManager.setAllowedTarget(address(exa), true);
 
@@ -220,7 +223,7 @@ contract ExaPluginTest is ForkTest {
   function test_proposeUninstall_emitsUninstallProposed() external {
     vm.startPrank(owner);
     vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit UninstallProposed(address(account), block.timestamp + exaPlugin.PROPOSAL_DELAY());
+    emit UninstallProposed(address(account), block.timestamp + proposalManager.delay());
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
   }
 
@@ -339,7 +342,7 @@ contract ExaPluginTest is ForkTest {
 
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit Proposed(
-      address(account), 0, exaEXA, ProposalType.WITHDRAW, amount, data, block.timestamp + exaPlugin.PROPOSAL_DELAY()
+      address(account), 0, exaEXA, ProposalType.WITHDRAW, amount, data, block.timestamp + proposalManager.delay()
     );
     account.execute(
       address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, data))
@@ -354,7 +357,7 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(owner);
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit Proposed(
-      address(account), 0, exaEXA, ProposalType.SWAP, amount, data, block.timestamp + exaPlugin.PROPOSAL_DELAY()
+      address(account), 0, exaEXA, ProposalType.SWAP, amount, data, block.timestamp + proposalManager.delay()
     );
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.SWAP, data)));
   }
@@ -384,7 +387,7 @@ contract ExaPluginTest is ForkTest {
       )
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     vm.startPrank(address(account));
     account.executeProposal();
 
@@ -418,7 +421,7 @@ contract ExaPluginTest is ForkTest {
       )
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     account.executeProposal();
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -445,7 +448,7 @@ contract ExaPluginTest is ForkTest {
       abi.encode(RepayData({ maturity: maturity, maxRepay: positionAssets + 1 }))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     account.executeProposal();
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -470,7 +473,7 @@ contract ExaPluginTest is ForkTest {
       ProposalType.REPAY,
       abi.encode(RepayData({ maturity: maturity, maxRepay: positionAssets / 2 }))
     );
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     account.executeProposal();
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -492,7 +495,7 @@ contract ExaPluginTest is ForkTest {
     );
 
     uint256 usdcBalance = usdc.balanceOf(address(account));
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     account.executeProposal();
 
     assertEq(usdc.balanceOf(address(account)), usdcBalance + 100e6, "borrowed amount not received");
@@ -523,7 +526,7 @@ contract ExaPluginTest is ForkTest {
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     account.executeProposal();
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -559,7 +562,7 @@ contract ExaPluginTest is ForkTest {
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 21e6, maxRepay: 25e6, route: route }))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     account.executeProposal();
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -591,7 +594,7 @@ contract ExaPluginTest is ForkTest {
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     vm.startPrank(keeper);
     account.executeProposal();
 
@@ -623,7 +626,7 @@ contract ExaPluginTest is ForkTest {
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     vm.startPrank(vm.addr(0x1));
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -654,7 +657,7 @@ contract ExaPluginTest is ForkTest {
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     vm.expectRevert(Disagreement.selector);
     account.executeProposal();
   }
@@ -680,7 +683,7 @@ contract ExaPluginTest is ForkTest {
         })
       )
     );
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     account.executeProposal();
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
@@ -713,7 +716,7 @@ contract ExaPluginTest is ForkTest {
         })
       )
     );
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     account.executeProposal();
 
@@ -739,7 +742,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver)))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     assertEq(exa.balanceOf(receiver), 0);
     vm.prank(owner);
@@ -755,7 +758,7 @@ contract ExaPluginTest is ForkTest {
 
     account.propose(exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver));
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     assertEq(exa.balanceOf(receiver), 0);
     account.executeProposal();
@@ -775,7 +778,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver)))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     assertEq(exa.balanceOf(receiver), 0);
     account.executeProposal();
@@ -807,7 +810,7 @@ contract ExaPluginTest is ForkTest {
       )
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     assertEq(usdc.balanceOf(address(account)), 0);
     account.executeProposal();
@@ -827,7 +830,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaWETH, amount, ProposalType.WITHDRAW, abi.encode(receiver)))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     assertEq(receiver.balance, 0);
     vm.prank(keeper);
@@ -860,7 +863,7 @@ contract ExaPluginTest is ForkTest {
       )
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     assertEq(usdc.balanceOf(address(account)), 0);
     account.executeProposal();
@@ -880,7 +883,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver)))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     assertEq(exa.balanceOf(receiver), 0);
     vm.startPrank(owner);
@@ -962,7 +965,7 @@ contract ExaPluginTest is ForkTest {
       0,
       abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(address(account))))
     );
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -1006,7 +1009,7 @@ contract ExaPluginTest is ForkTest {
       0,
       abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver)))
     );
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -1046,7 +1049,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaWETH, 100 ether, ProposalType.WITHDRAW, abi.encode(receiver)))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY() - 1);
+    skip(proposalManager.delay() - 1);
 
     assertEq(receiver.balance, 0);
     vm.startPrank(keeper);
@@ -1068,12 +1071,8 @@ contract ExaPluginTest is ForkTest {
       0,
       abi.encodeCall(IExaAccount.propose, (exaEXA, exaShares, ProposalType.REDEEM, abi.encode(address(0x420))))
     );
-    skip(exaPlugin.PROPOSAL_DELAY());
-    account.execute(
-      address(exaEXA), 
-      0,
-      abi.encodeCall(IERC4626.redeem, (exaShares, address(0x420), address(account)))
-    );
+    skip(proposalManager.delay());
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.redeem, (exaShares, address(0x420), address(account))));
 
     assertEq(exaEXA.balanceOf(address(account)), 0);
     assertEq(exa.balanceOf(address(0x420)), exaBalance);
@@ -1084,7 +1083,7 @@ contract ExaPluginTest is ForkTest {
     account.poke(exaEXA);
 
     account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     account.setProposalNonce(1);
 
@@ -1092,7 +1091,7 @@ contract ExaPluginTest is ForkTest {
     account.executeProposal();
 
     account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     account.executeProposal();
   }
@@ -1707,7 +1706,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver)))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     assertEq(exa.balanceOf(receiver), 0);
 
     Call[] memory calls = new Call[](6);
@@ -1735,7 +1734,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver)))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     assertEq(exa.balanceOf(receiver), 0);
 
     Call[] memory calls = new Call[](3);
@@ -1773,7 +1772,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaUSDC, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420))))
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     vm.expectRevert(
       abi.encodeWithSelector(
@@ -1810,7 +1809,7 @@ contract ExaPluginTest is ForkTest {
       )
     );
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     uint256 nonce = proposalManager.nonces(address(account));
     account.execute(
@@ -1832,7 +1831,7 @@ contract ExaPluginTest is ForkTest {
       0,
       abi.encodeCall(IExaAccount.propose, (exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(0x420))))
     );
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
 
     uint256 nonce = proposalManager.nonces(address(account));
     account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
@@ -1902,7 +1901,7 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(owner);
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     account.uninstallPlugin(address(exaPlugin), "", "");
     address[] memory plugins = account.getInstalledPlugins();
     assertEq(plugins.length, 1);
@@ -1922,8 +1921,21 @@ contract ExaPluginTest is ForkTest {
     );
     account.uninstallPlugin(address(exaPlugin), "", "");
 
-    skip(exaPlugin.PROPOSAL_DELAY());
+    skip(proposalManager.delay());
     account.uninstallPlugin(address(exaPlugin), "", "");
+  }
+
+  function test_uninstall_uninstalls_whenWrongProposalManager() external {
+    exaPlugin.setProposalManager(IProposalManager(address(0x1)));
+
+    vm.startPrank(owner);
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
+
+    skip(proposalManager.delay());
+    account.uninstallPlugin(address(exaPlugin), "", "");
+    address[] memory plugins = account.getInstalledPlugins();
+    assertEq(plugins.length, 1);
+    assertEq(plugins[0], address(ownerPlugin));
   }
 
   // refunder
@@ -1998,17 +2010,39 @@ contract ExaPluginTest is ForkTest {
     proposalManager.setAllowedTarget(target, false);
   }
 
-  function test_uninstall_uninstalls_whenWrongProposalManager() external {
-    exaPlugin.setProposalManager(IProposalManager(address(0x1)));
+  // proposal manager admin tests
+  function test_setDelay_sets_whenAdmin() external {
+    uint256 delay = 1 hours;
+    proposalManager.setDelay(delay);
+    assertEq(proposalManager.delay(), delay);
+  }
 
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
+  function test_setDelay_reverts_whenZero() external {
+    vm.expectRevert(InvalidDelay.selector);
+    proposalManager.setDelay(0);
+  }
 
-    skip(exaPlugin.PROPOSAL_DELAY());
-    account.uninstallPlugin(address(exaPlugin), "", "");
-    address[] memory plugins = account.getInstalledPlugins();
-    assertEq(plugins.length, 1);
-    assertEq(plugins[0], address(ownerPlugin));
+  function test_setDelay_reverts_whenHigherThanOneHours() external {
+    vm.expectRevert(InvalidDelay.selector);
+    proposalManager.setDelay(1 hours + 1);
+  }
+
+  function test_setDelay_emitsDelaySet() external {
+    uint256 delay = 1 hours;
+    vm.expectEmit(true, true, true, true, address(proposalManager));
+    emit DelaySet(delay);
+    proposalManager.setDelay(delay);
+  }
+
+  function test_setDelay_reverts_whenNotAdmin() external {
+    address nonAdmin = address(0x1);
+    vm.startPrank(nonAdmin);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    proposalManager.setDelay(1 hours);
   }
 
   function test_userOpValidationFunction_reverts_withBadPlugin() external {
@@ -2141,7 +2175,8 @@ contract ExaPluginTest is ForkTest {
       IInstallmentsRouter(protocol("InstallmentsRouter")),
       0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
       acct("collector"),
-      targets
+      targets,
+      1 minutes
     );
     proposalManager.setAllowedTarget(address(exa), true);
 

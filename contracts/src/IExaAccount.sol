@@ -43,6 +43,7 @@ interface IExaAccount {
 
 interface IProposalManager {
   function checkLiquidity(address account) external view;
+  function delay() external view returns (uint256);
   function nextProposal(address account) external view returns (Proposal memory proposal);
   function nonces(address account) external view returns (uint256);
   function preExecutionChecker(address sender, uint256 nonce, address target, bytes4 selector, bytes memory callData)
@@ -81,6 +82,8 @@ interface IInstallmentsRouter {
 event AllowedTargetSet(address indexed target, address indexed account, bool allowed);
 
 event CollectorSet(address indexed collector, address indexed account);
+
+event DelaySet(uint256 delay);
 
 event ProposalManagerSet(IProposalManager indexed proposalManager, address indexed account);
 
@@ -182,6 +185,7 @@ error Timelocked();
 error Unauthorized();
 error Uninstalling();
 error ZeroAddress();
+error InvalidDelay();
 
 interface IAuditor {
   function accountMarkets(address account) external view returns (uint256);

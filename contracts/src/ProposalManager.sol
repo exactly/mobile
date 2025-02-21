@@ -9,12 +9,14 @@ import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import {
   AllowedTargetSet,
   BorrowAtMaturityData,
+  DelaySet,
   IAuditor,
   IDebtManager,
   IInstallmentsRouter,
   IMarket,
   IProposalManager,
   InsufficientLiquidity,
+  InvalidDelay,
   MarketData,
   NoProposal,
   NonceTooLow,
@@ -40,8 +42,8 @@ contract ProposalManager is IProposalManager, AccessControl {
   IAuditor public immutable AUDITOR;
   IDebtManager public immutable DEBT_MANAGER;
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
-  uint256 public immutable PROPOSAL_DELAY = 1 minutes;
 
+  uint256 public delay;
   mapping(address target => bool allowed) public allowlist;
   mapping(address account => uint256 nonce) public nonces;
   mapping(address account => uint256 nonce) public queueNonces;
@@ -54,7 +56,8 @@ contract ProposalManager is IProposalManager, AccessControl {
     IInstallmentsRouter installmentsRouter,
     address swapper_,
     address collector_,
-    address[] memory targets
+    address[] memory targets,
+    uint256 delay_
   ) {
     AUDITOR = auditor;
     DEBT_MANAGER = debtManager;
@@ -68,6 +71,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     for (uint256 i = 0; i < targets.length; ++i) {
       _setAllowedTarget(targets[i], true);
     }
+    _setDelay(delay_);
   }
 
   function nextProposal(address account) external view returns (Proposal memory proposal) {
@@ -96,7 +100,7 @@ contract ProposalManager is IProposalManager, AccessControl {
           uint256 percentage
         ) = abi.decode(callData, (IMarket, uint256, uint256, uint256, uint256, uint256));
         Proposal memory rollProposal = proposals[sender][nonce];
-        if (rollProposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+        if (rollProposal.timestamp + delay > block.timestamp) revert Timelocked();
 
         RollDebtData memory rollData = abi.decode(rollProposal.data, (RollDebtData));
         if (
@@ -156,7 +160,7 @@ contract ProposalManager is IProposalManager, AccessControl {
       proposal = proposals[sender][nonce];
 
       if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
-        if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+        if (proposal.timestamp + delay > block.timestamp) revert Timelocked();
         BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
         if (
           borrowData.maturity != maturity || borrowData.maxAssets < maxAssets || borrowData.receiver != receiver
@@ -195,7 +199,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     if (proposal.amount == 0) revert NoProposal();
     if (proposal.amount < amount) revert NoProposal();
     if (proposal.market != target) revert NoProposal();
-    if (proposal.timestamp + PROPOSAL_DELAY > block.timestamp) revert Timelocked();
+    if (proposal.timestamp + delay > block.timestamp) revert Timelocked();
     if (proposal.proposalType == ProposalType.WITHDRAW || proposal.proposalType == ProposalType.REDEEM) {
       if (abi.decode(proposal.data, (address)) != receiver) revert NoProposal();
     }
@@ -222,6 +226,10 @@ contract ProposalManager is IProposalManager, AccessControl {
 
   function setAllowedTarget(address target, bool allowed) external onlyRole(DEFAULT_ADMIN_ROLE) {
     _setAllowedTarget(target, allowed);
+  }
+
+  function setDelay(uint256 delay_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setDelay(delay_);
   }
 
   function checkLiquidity(address account) external view {
@@ -287,5 +295,11 @@ contract ProposalManager is IProposalManager, AccessControl {
 
     allowlist[target] = allowed;
     emit AllowedTargetSet(target, msg.sender, allowed);
+  }
+
+  function _setDelay(uint256 delay_) internal {
+    if (delay_ == 0 || delay_ > 1 hours) revert InvalidDelay();
+    delay = delay_;
+    emit DelaySet(delay_);
   }
 }
