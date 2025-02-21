@@ -186,6 +186,7 @@ error Unauthorized();
 error Uninstalling();
 error ZeroAddress();
 error InvalidDelay();
+error ZeroAmount();
 
 interface IAuditor {
   function accountMarkets(address account) external view returns (uint256);

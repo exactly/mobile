@@ -73,7 +73,8 @@ import {
   Unauthorized,
   UninstallProposed,
   UninstallRevoked,
-  Uninstalling
+  Uninstalling,
+  ZeroAmount
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 
@@ -2080,6 +2081,13 @@ contract ExaPluginTest is ForkTest {
       )
     );
     ENTRYPOINT.handleOps(userOps, payable(address(0x420)));
+  }
+
+
+  function test_proposeZeroAmount_reverts_withZeroAmount() external {
+    vm.startPrank(address(exaPlugin));
+    vm.expectRevert(ZeroAmount.selector);
+    proposalManager.propose(address(account), exaEXA, 0, ProposalType.WITHDRAW, "");
   }
 
   // solhint-enable func-name-mixedcase

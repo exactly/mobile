@@ -26,7 +26,8 @@ import {
   RollDebtData,
   Timelocked,
   Unauthorized,
-  ZeroAddress
+  ZeroAddress,
+  ZeroAmount
 } from "./IExaAccount.sol";
 
 contract ProposalManager is IProposalManager, AccessControl {
@@ -211,6 +212,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     onlyRole(PROPOSER_ROLE)
     returns (uint256 nonce)
   {
+    if (amount == 0) revert ZeroAmount();
     _checkMarket(market);
     nonce = queueNonces[account];
     proposals[account][nonce] =
