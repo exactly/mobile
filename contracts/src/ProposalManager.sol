@@ -210,7 +210,8 @@ contract ProposalManager is IProposalManager, AccessControl {
     uint256 sumCollateral = 0;
     uint256 sumDebtPlusEffects = 0;
 
-    for (uint256 i = 0; i < AUDITOR.allMarkets().length; ++i) {
+    uint256 marketCount = AUDITOR.allMarkets().length;
+    for (uint256 i = 0; i < marketCount; ++i) {
       // slither-disable-next-line calls-loop -- won't revert
       IMarket market = AUDITOR.marketList(i);
       if ((marketMap & (1 << i)) != 0) {
