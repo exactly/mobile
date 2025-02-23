@@ -163,20 +163,17 @@ contract ExaPluginTest is ForkTest {
     unset("keeper");
     refunder = r.refunder();
 
-    address[] memory targets = new address[](2);
+    address[] memory targets = new address[](3);
     targets[0] = address(usdc);
     targets[1] = exaWETH.asset();
+    targets[2] = address(exa);
     proposalManager = new ProposalManager(
-      address(this),
       IAuditor(address(auditor)),
       IDebtManager(address(p.debtManager())),
       IInstallmentsRouter(address(p.installmentsRouter())),
-      address(m.swapper()),
-      collector,
-      targets,
-      1 minutes
+      address(m.swapper())
     );
-    proposalManager.setAllowedTarget(address(exa), true);
+    proposalManager.initialize(address(this), acct("collector"), targets, 1 minutes);
 
     exaPlugin = new ExaPlugin(
       Parameters({
@@ -2204,20 +2201,17 @@ contract ExaPluginTest is ForkTest {
     issuerChecker.setIssuer(issuer);
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
-    address[] memory targets = new address[](2);
+    address[] memory targets = new address[](3);
     targets[0] = IMarket(protocol("MarketUSDC")).asset();
     targets[1] = IMarket(protocol("MarketWETH")).asset();
+    targets[2] = address(exa);
     proposalManager = new ProposalManager(
-      address(this),
       IAuditor(protocol("Auditor")),
       IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
-      0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
-      acct("collector"),
-      targets,
-      1 minutes
+      0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE
     );
-    proposalManager.setAllowedTarget(address(exa), true);
+    proposalManager.initialize(address(this), acct("collector"), targets, 1 minutes);
 
     exaPlugin = new ExaPlugin(
       Parameters({

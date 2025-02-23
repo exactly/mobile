@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.20;
 
-import { AccessControl } from "openzeppelin-contracts/contracts/access/AccessControl.sol";
+import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
@@ -30,7 +32,7 @@ import {
   ZeroAmount
 } from "./IExaAccount.sol";
 
-contract ProposalManager is IProposalManager, AccessControl {
+contract ProposalManager is IProposalManager, Initializable, AccessControlUpgradeable {
   using FixedPointMathLib for uint256;
 
   string public constant NAME = "ProposalManager";
@@ -39,9 +41,13 @@ contract ProposalManager is IProposalManager, AccessControl {
   bytes32 public constant COLLECTOR_ROLE = keccak256("COLLECTOR_ROLE");
   bytes32 public constant PROPOSER_ROLE = keccak256("PROPOSER_ROLE");
 
+  /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
   address public immutable SWAPPER;
+  /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
   IAuditor public immutable AUDITOR;
+  /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
   IDebtManager public immutable DEBT_MANAGER;
+  /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
 
   uint256 public delay;
@@ -50,21 +56,19 @@ contract ProposalManager is IProposalManager, AccessControl {
   mapping(address account => uint256 nonce) public queueNonces;
   mapping(address account => mapping(uint256 nonce => Proposal lastProposal)) public proposals;
 
-  constructor(
-    address owner,
-    IAuditor auditor,
-    IDebtManager debtManager,
-    IInstallmentsRouter installmentsRouter,
-    address swapper_,
-    address collector_,
-    address[] memory targets,
-    uint256 delay_
-  ) {
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor(IAuditor auditor, IDebtManager debtManager, IInstallmentsRouter installmentsRouter, address swapper_) {
     AUDITOR = auditor;
     DEBT_MANAGER = debtManager;
     INSTALLMENTS_ROUTER = installmentsRouter;
     if (swapper_ == address(0)) revert ZeroAddress();
     SWAPPER = swapper_;
+
+    _disableInitializers();
+  }
+
+  function initialize(address owner, address collector_, address[] memory targets, uint256 delay_) external initializer {
+    __AccessControl_init();
 
     _grantRole(COLLECTOR_ROLE, collector_);
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
@@ -72,6 +76,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     for (uint256 i = 0; i < targets.length; ++i) {
       _setAllowedTarget(targets[i], true);
     }
+
     _setDelay(delay_);
   }
 
