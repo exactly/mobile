@@ -236,6 +236,7 @@
     "neverBuiltDependencies": [],
     "peerDependencyRules": {
       "ignoreMissing": [
+        "@openzeppelin/defender-deploy-client-cli",
         "hardhat",
         "typechain"
       ]
