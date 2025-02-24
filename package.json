@@ -106,7 +106,7 @@
     "@changesets/cli": "^2.28.0",
     "@changesets/types": "^6.1.0",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.4.1",
-    "@exactly/plugin": "workspace:^0.0.3",
+    "@exactly/plugin": "workspace:^0.0.4",
     "@exactly/protocol": "exactly/protocol#16a172a",
     "@expo/fingerprint": "^0.11.10",
     "@spotlightjs/spotlight": "^2.10.3",

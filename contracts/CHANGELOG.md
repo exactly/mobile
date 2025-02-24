@@ -1,5 +1,61 @@
 # @exactly/plugin
 
+## 0.0.4
+
+### Patch Changes
+
+- [`03f2f40`](https://github.com/exactly/mobile/commit/03f2f406c1d332f083872f649e12f2e241c61895) Thanks [@itofarina](https://github.com/itofarina)! - 🛂 add reentrancy lock on internal swap
+
+- [`a2a54ac`](https://github.com/exactly/mobile/commit/a2a54ac794f11229e0159e7bd1ea5bda8a6fcc73) Thanks [@itofarina](https://github.com/itofarina)! - ✨ add revoke proposal
+
+- [`d8fde6d`](https://github.com/exactly/mobile/commit/d8fde6de9861eac365d37b800d2e196a168ad9ab) Thanks [@itofarina](https://github.com/itofarina)! - ✨ extract proposal manager
+
+- [`2be449a`](https://github.com/exactly/mobile/commit/2be449a94ad63c79aba3f10907aa206fdf0723e5) Thanks [@itofarina](https://github.com/itofarina)! - ✨ add borrow at maturity proposal
+
+- [`bff01b6`](https://github.com/exactly/mobile/commit/bff01b6af8d6a1f41d57b30a40d77e3c4edaca20) Thanks [@itofarina](https://github.com/itofarina)! - 🛂 prevent shares swap
+
+- [`7e04016`](https://github.com/exactly/mobile/commit/7e0401624f53290fc668074588d033ef99d164e9) Thanks [@itofarina](https://github.com/itofarina)! - 🔊 emit proposed for all proposals
+
+- [`45b6830`](https://github.com/exactly/mobile/commit/45b68303a5b91b6b9f13348c815987fcc4eab847) Thanks [@itofarina](https://github.com/itofarina)! - ✨ roll debt with proposals
+
+- [`be037cf`](https://github.com/exactly/mobile/commit/be037cf918ee77df5bc7c0dbdfefab52463b1c03) Thanks [@itofarina](https://github.com/itofarina)! - 🩹 reset sender approval after execution
+
+- [`172fa93`](https://github.com/exactly/mobile/commit/172fa932d5043964e6c7ec6f4c4eef2e9cc30051) Thanks [@itofarina](https://github.com/itofarina)! - 👔 enter market when depositing unspent
+
+- [`ebec51a`](https://github.com/exactly/mobile/commit/ebec51a9565379c4f6308d183e418e2e0311ad41) Thanks [@itofarina](https://github.com/itofarina)! - 👔 make delay configurable by admin
+
+- [`6d834a5`](https://github.com/exactly/mobile/commit/6d834a5d6e04a0efb0f2fa86eff88d7c2d22861a) Thanks [@itofarina](https://github.com/itofarina)! - 🔊 restructure proposed event
+
+- [`f2dc87c`](https://github.com/exactly/mobile/commit/f2dc87c8c4360f7c6a239963fb380e60eafff565) Thanks [@itofarina](https://github.com/itofarina)! - ✨ add proposal mechanism to uninstall
+
+- [`7348bce`](https://github.com/exactly/mobile/commit/7348bced2a76469493954c8ded5f2a61a2156d5c) Thanks [@cruzdanilo](https://github.com/cruzdanilo)! - 🔒️ deny direct execution through user op
+
+- [`d1d4d4b`](https://github.com/exactly/mobile/commit/d1d4d4b232ac006b1622aa0f5ca6d79d4f15d86e) Thanks [@itofarina](https://github.com/itofarina)! - 🛂 decouple uninstall from proposal manager
+
+- [`322528d`](https://github.com/exactly/mobile/commit/322528d333818302cb669a097fc3696c1e1ae878) Thanks [@itofarina](https://github.com/itofarina)! - ✨ add redeem proposal
+
+- [`5caeded`](https://github.com/exactly/mobile/commit/5caeded5defc937e4580038dd6cc619a477abcde) Thanks [@itofarina](https://github.com/itofarina)! - 🦺 validate all execute batch calls
+
+- [`3829f12`](https://github.com/exactly/mobile/commit/3829f1243657dde7e2c35713fd44f1b770baea4c) Thanks [@itofarina](https://github.com/itofarina)! - ✨ add cross repay proposal
+
+- [`3fd34e4`](https://github.com/exactly/mobile/commit/3fd34e47cfaefb2b93271b67990c05a77b76e224) Thanks [@itofarina](https://github.com/itofarina)! - 👔 allow proposals by keeper or self
+
+- [`e50add9`](https://github.com/exactly/mobile/commit/e50add9eeae6f44974ee7822ca11546b8320ecff) Thanks [@itofarina](https://github.com/itofarina)! - ♻️ receive constructor parameters on a struct
+
+- [`deb783c`](https://github.com/exactly/mobile/commit/deb783c3318d2598c6528b9632f4cecf74b148d9) Thanks [@itofarina](https://github.com/itofarina)! - 👔 unify proposals entry point
+
+- [`876fc89`](https://github.com/exactly/mobile/commit/876fc89ecaef2f8ca229665a36b44ba203bbb2db) Thanks [@itofarina](https://github.com/itofarina)! - ✨ support multiple proposals
+
+- [`8319609`](https://github.com/exactly/mobile/commit/8319609ba3060a01d7537c9ea0dcbd632f7f1739) Thanks [@itofarina](https://github.com/itofarina)! - 👔 move withdraw receiver to proposal data
+
+- [`d940729`](https://github.com/exactly/mobile/commit/d940729abcd3f9bef82d54cb222dea92cfe90edd) Thanks [@itofarina](https://github.com/itofarina)! - ✨ add repay proposal
+
+- [`a04eb0f`](https://github.com/exactly/mobile/commit/a04eb0fd7eb422bdd148edb62a96fd55477e5f52) Thanks [@itofarina](https://github.com/itofarina)! - 🛂 restrict callable targets and selectors
+
+- [`95f4ca1`](https://github.com/exactly/mobile/commit/95f4ca1b1fc7ba94c14733115561f458a1b7da5a) Thanks [@itofarina](https://github.com/itofarina)! - 👔 split operations into different types
+
+- [`05d44af`](https://github.com/exactly/mobile/commit/05d44af389a081b3fb9d74dfbd6ea28372a61e7b) Thanks [@itofarina](https://github.com/itofarina)! - 🦺 check time locked on eth withdrawal
+
 ## 0.0.3
 
 ### Patch Changes
