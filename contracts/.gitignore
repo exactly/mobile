@@ -17,6 +17,9 @@ out/
 !/broadcast/Mocks.s.sol
 /broadcast/Mocks.s.sol/*/*
 !/broadcast/Mocks.s.sol/*/run-latest.json
+!/broadcast/ProposalManager.s.sol
+/broadcast/ProposalManager.s.sol/*/*
+!/broadcast/ProposalManager.s.sol/*/run-latest.json
 !/broadcast/Refunder.s.sol
 /broadcast/Refunder.s.sol/*/*
 !/broadcast/Refunder.s.sol/*/run-latest.json

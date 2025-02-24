@@ -43,6 +43,7 @@ contract ExaAccountFactoryTest is ForkTest {
     set("DebtManager", address(this));
     set("InstallmentsRouter", address(this));
     set("IssuerChecker", address(this));
+    set("ProposalManager", address(this));
     set("WebauthnOwnerPlugin", address(ownerPlugin));
     d.run();
     unset("Auditor");
@@ -52,6 +53,7 @@ contract ExaAccountFactoryTest is ForkTest {
     unset("DebtManager");
     unset("InstallmentsRouter");
     unset("IssuerChecker");
+    unset("ProposalManager");
     unset("WebauthnOwnerPlugin");
     exaPlugin = d.exaPlugin();
     factory = d.factory();
@@ -101,7 +103,9 @@ contract ExaAccountFactoryTest is ForkTest {
     vm.createSelectFork("optimism", 127_050_624);
 
     DeployScript d = new DeployScript();
+    set("ProposalManager", address(this));
     d.run();
+    unset("ProposalManager");
 
     assertEq(address(d.factory()), address(factory), "different factory address");
     assertEq(factory.getAddress(0, owners.toPublicKeys()), account, "different account address");

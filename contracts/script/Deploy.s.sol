@@ -36,7 +36,7 @@ contract DeployScript is BaseScript {
         debtManager: IDebtManager(protocol("DebtManager")),
         installmentsRouter: IInstallmentsRouter(protocol("InstallmentsRouter")),
         issuerChecker: IssuerChecker(broadcast("IssuerChecker")),
-        proposalManager: IProposalManager(address(this)), // FIXME
+        proposalManager: IProposalManager(broadcast("ProposalManager")),
         collector: acct("collector"),
         swapper: acct("swapper"),
         firstKeeper: acct("keeper")

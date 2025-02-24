@@ -83,6 +83,7 @@ import { ProposalManager } from "../src/ProposalManager.sol";
 import { Refunder } from "../src/Refunder.sol";
 
 import { DeployIssuerChecker } from "../script/IssuerChecker.s.sol";
+import { DeployProposalManager } from "../script/ProposalManager.s.sol";
 import { DeployRefunder } from "../script/Refunder.s.sol";
 
 import { DeployAccount, ENTRYPOINT } from "./mocks/Account.s.sol";
@@ -163,20 +164,21 @@ contract ExaPluginTest is ForkTest {
     unset("keeper");
     refunder = r.refunder();
 
-    address[] memory targets = new address[](2);
-    targets[0] = address(usdc);
-    targets[1] = exaWETH.asset();
-    proposalManager = new ProposalManager(
-      address(this),
-      IAuditor(address(auditor)),
-      IDebtManager(address(p.debtManager())),
-      IInstallmentsRouter(address(p.installmentsRouter())),
-      address(m.swapper()),
-      collector,
-      targets,
-      1 minutes
-    );
-    proposalManager.setAllowedTarget(address(exa), true);
+    DeployProposalManager pm = new DeployProposalManager();
+    set("admin", address(this));
+    set("Auditor", address(auditor));
+    set("DebtManager", address(p.debtManager()));
+    set("InstallmentsRouter", address(p.installmentsRouter()));
+    set("swapper", address(m.swapper()));
+    set("collector", address(collector));
+    pm.run();
+    unset("admin");
+    unset("Auditor");
+    unset("DebtManager");
+    unset("InstallmentsRouter");
+    unset("swapper");
+    unset("collector");
+    proposalManager = pm.proposalManager();
 
     exaPlugin = new ExaPlugin(
       Parameters({
