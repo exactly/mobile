@@ -5,19 +5,18 @@ import { Environment, Inquiry } from "react-native-persona";
 
 import handleError from "./handleError";
 import queryClient from "./queryClient";
-import { getKYCLink } from "./server";
+import { getKYCLink, getTemplateId } from "./server";
 
-export const templateId = "itmpl_8uim4FvD5P3kFpKHX37CW817"; // cspell:disable-line
 export const environment = __DEV__ ? Environment.SANDBOX : Environment.PRODUCTION;
 
 export async function createInquiry(passkey: Passkey) {
   if (Platform.OS === "web") {
     const otl = await getKYCLink();
-    window.open(otl, "_blank");
+    window.open(otl);
     return;
   }
 
-  Inquiry.fromTemplate(templateId)
+  Inquiry.fromTemplate(await getTemplateId())
     .environment(environment)
     .referenceId(passkey.credentialId)
     .onCanceled(() => {
@@ -36,7 +35,7 @@ export async function createInquiry(passkey: Passkey) {
 export async function resumeInquiry(inquiryId: string, sessionToken: string) {
   if (Platform.OS === "web") {
     const otl = await getKYCLink();
-    window.open(otl, "_blank");
+    window.open(otl);
     return;
   }
 
