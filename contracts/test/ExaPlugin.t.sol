@@ -64,6 +64,7 @@ import {
   InvalidDelay,
   NoProposal,
   NonceTooLow,
+  NotMarket,
   ProposalNonceSet,
   ProposalType,
   Proposed,
@@ -664,6 +665,22 @@ contract ExaPluginTest is ForkTest {
     skip(proposalManager.delay());
     vm.expectRevert(Disagreement.selector);
     account.executeProposal();
+  }
+
+  function test_propose_reverts_whenNotMarket() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    vm.expectRevert(abi.encodeWithSelector(NotMarket.selector));
+    vm.startPrank(address(account));
+    account.propose(
+      IMarket(address(0x1234)),
+      100e18,
+      ProposalType.CROSS_REPAY,
+      abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: bytes("") }))
+    );
   }
 
   function test_rollDebt_rollsX() external {
