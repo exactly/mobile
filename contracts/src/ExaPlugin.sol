@@ -310,8 +310,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   /// @inheritdoc BasePlugin
   function onUninstall(bytes calldata) external override {
-    if (uninstallProposals[msg.sender] + UNINSTALL_DELAY > block.timestamp) revert Timelocked();
-    uninstallProposals[msg.sender] = 0;
+    uint256 timestamp = uninstallProposals[msg.sender];
+    // slither-disable-next-line incorrect-equality -- unsigned zero check
+    if (timestamp == 0) revert NoProposal();
+    if (timestamp + UNINSTALL_DELAY > block.timestamp) revert Timelocked();
+    delete uninstallProposals[msg.sender];
   }
 
   /// @inheritdoc BasePlugin

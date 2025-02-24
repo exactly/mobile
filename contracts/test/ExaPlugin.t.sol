@@ -1929,6 +1929,20 @@ contract ExaPluginTest is ForkTest {
     account.uninstallPlugin(address(exaPlugin), "", "");
   }
 
+  function test_onUninstall_reverts_whenNoProposal() external {
+    skip(1 days);
+    vm.startPrank(owner);
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        PluginManagerInternals.PluginUninstallCallbackFailed.selector,
+        exaPlugin,
+        abi.encodeWithSelector(NoProposal.selector)
+      )
+    );
+    account.uninstallPlugin(address(exaPlugin), "", "");
+  }
+
   function test_uninstall_uninstalls_whenWrongProposalManager() external {
     exaPlugin.setProposalManager(IProposalManager(address(0x1)));
 
