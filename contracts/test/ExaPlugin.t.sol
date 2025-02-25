@@ -2154,6 +2154,25 @@ contract ExaPluginTest is ForkTest {
     proposalManager.propose(address(account), exaEXA, 0, ProposalType.WITHDRAW, "");
   }
 
+  function test_transferShares_reverts_whenNoRightProposal() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    uint256 amount = 200e18;
+    vm.startPrank(address(account));
+    account.propose(exaEXA, amount, ProposalType.WITHDRAW, abi.encode(address(0x1)));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC20.transfer, (address(0x1), amount)));
+  }
+
   // solhint-enable func-name-mixedcase
 
   function _issuerOp(uint256 amount, uint256 timestamp) internal view returns (bytes memory signature) {
