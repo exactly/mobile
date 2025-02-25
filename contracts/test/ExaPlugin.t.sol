@@ -1775,6 +1775,26 @@ contract ExaPluginTest is ForkTest {
     assertEq(exa.balanceOf(receiver), 0, "receiver balance doesn't match");
   }
 
+  function test_executeBatch_reverts_whenUnauthorizedCallsNested() external {
+    Call[] memory maliciousCalls = new Call[](1);
+    maliciousCalls[0] = Call(address(auditor), 0, abi.encodeCall(IAuditor.exitMarket, exaEXA));
+
+    Call[] memory calls = new Call[](2);
+    calls[0] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[1] = Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.executeBatch, (maliciousCalls)));
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.executeBatch(calls);
+  }
+
   function test_skippingProposal_reverts_withNoProposal() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);
