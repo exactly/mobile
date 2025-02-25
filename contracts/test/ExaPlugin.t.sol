@@ -1099,6 +1099,26 @@ contract ExaPluginTest is ForkTest {
     assertEq(exa.balanceOf(address(0x420)), exaBalance);
   }
 
+  function test_redeem_withdraws_whenExecuteProposal() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    uint256 exaBalance = exaEXA.maxWithdraw(address(account));
+    uint256 exaShares = exaEXA.balanceOf(address(account));
+
+    vm.startPrank(owner);
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(IExaAccount.propose, (exaEXA, exaShares, ProposalType.REDEEM, abi.encode(address(account))))
+    );
+    skip(proposalManager.delay());
+    account.execute(address(account), 0, abi.encodeCall(IExaAccount.executeProposal, ()));
+
+    assertEq(exaEXA.balanceOf(address(account)), 0);
+    assertEq(exa.balanceOf(address(account)), exaBalance);
+  }
+
   function test_setProposalNonce_sets() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);

@@ -704,17 +704,27 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   function _withdraw(Proposal memory proposal) internal {
     address receiver = abi.decode(proposal.data, (address));
     bool isWETH = proposal.market == EXA_WETH;
-    _executeFromSender(
-      address(proposal.market),
-      0,
-      proposal.proposalType == ProposalType.REDEEM
-        ? abi.encodeCall(IERC4626.redeem, (proposal.amount, isWETH ? address(this) : receiver, msg.sender))
-        : abi.encodeCall(IERC4626.withdraw, (proposal.amount, isWETH ? address(this) : receiver, msg.sender))
-    );
+
+    uint256 assets = 0;
+    if (proposal.proposalType == ProposalType.REDEEM) {
+      assets = abi.decode(
+        IPluginExecutor(msg.sender).executeFromPluginExternal(
+          address(proposal.market),
+          0,
+          abi.encodeCall(IERC4626.redeem, (proposal.amount, isWETH ? address(this) : receiver, msg.sender))
+        ),
+        (uint256)
+      );
+    } else {
+      assets = proposal.amount;
+      _executeFromSender(
+        address(proposal.market),
+        0,
+        abi.encodeCall(IERC4626.withdraw, (assets, isWETH ? address(this) : receiver, msg.sender))
+      );
+    }
+
     if (isWETH) {
-      uint256 assets = proposal.proposalType == ProposalType.REDEEM
-        ? proposal.market.convertToAssets(proposal.amount)
-        : proposal.amount;
       WETH.withdraw(assets);
       receiver.safeTransferETH(assets);
     }
