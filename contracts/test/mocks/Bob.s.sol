@@ -101,7 +101,7 @@ contract BobScript is BaseScript {
       0,
       abi.encodeCall(
         IExaAccount.propose,
-        (exaUSDC, 420e6, ProposalType.REPAY, abi.encode(RepayData({ maturity: maturity, maxRepay: 420e6 })))
+        (exaUSDC, 420e6, ProposalType.REPAY, abi.encode(RepayData({ maturity: maturity, positionAssets: 420e6 })))
       )
     );
     calls[1] = Call(
@@ -112,14 +112,14 @@ contract BobScript is BaseScript {
         (
           exaEXA,
           100e18,
-          ProposalType.SWAP,
+          ProposalType.CROSS_REPAY,
           abi.encode(
             CrossRepayData({
               maturity: maturity,
               positionAssets: type(uint256).max,
               maxRepay: 82e6,
               route: abi.encodeCall(
-                MockSwapper.swapExactAmountOut, (address(exa), 100e18, address(usdc), 82e6, address(exaPlugin))
+                MockSwapper.swapExactAmountOut, (address(exa), 100e18, address(usdc), 82e6, address(bobAccount))
               )
             })
           )

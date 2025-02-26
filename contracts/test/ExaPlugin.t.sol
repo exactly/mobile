@@ -385,14 +385,15 @@ contract ExaPluginTest is ForkTest {
         IExaAccount.propose,
         (
           exaUSDC,
-          positionAssets,
+          positionAssets + 1, // max repay
           ProposalType.REPAY,
-          abi.encode(RepayData({ maturity: maturity, maxRepay: positionAssets + 1 }))
+          abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets }))
         )
       )
     );
 
     skip(proposalManager.delay());
+
     vm.startPrank(address(account));
     account.executeProposal();
 
@@ -421,7 +422,7 @@ contract ExaPluginTest is ForkTest {
           exaUSDC,
           positionAssets / 2,
           ProposalType.REPAY,
-          abi.encode(RepayData({ maturity: maturity, maxRepay: positionAssets / 2 }))
+          abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets / 2 }))
         )
       )
     );
@@ -448,9 +449,9 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(address(account));
     account.propose(
       exaUSDC,
-      positionAssets,
+      positionAssets + 1,
       ProposalType.REPAY,
-      abi.encode(RepayData({ maturity: maturity, maxRepay: positionAssets + 1 }))
+      abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets }))
     );
 
     skip(proposalManager.delay());
@@ -476,7 +477,7 @@ contract ExaPluginTest is ForkTest {
       exaUSDC,
       positionAssets / 2,
       ProposalType.REPAY,
-      abi.encode(RepayData({ maturity: maturity, maxRepay: positionAssets / 2 }))
+      abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets / 2 }))
     );
     skip(proposalManager.delay());
     account.executeProposal();
@@ -485,6 +486,71 @@ contract ExaPluginTest is ForkTest {
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 50e6);
     assertEq(position.principal + position.fee, positionAssets / 2);
+  }
+
+  function test_repay_consumesProposal() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    uint256 positionAssets = exaUSDC.fixedBorrowPositions(maturity, address(account)).principal
+      + exaUSDC.fixedBorrowPositions(maturity, address(account)).fee;
+
+    account.propose(
+      exaUSDC,
+      positionAssets,
+      ProposalType.REPAY,
+      abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets }))
+    );
+
+    skip(proposalManager.delay());
+
+    uint256 nonce = proposalManager.nonces(address(account));
+    uint256 queueNonce = proposalManager.queueNonces(address(account));
+    assertEq(queueNonce, nonce + 1);
+
+    vm.startPrank(address(account));
+    account.executeProposal();
+
+    assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
+    uint256 newPositionAssets = exaUSDC.fixedBorrowPositions(maturity, address(account)).principal
+      + exaUSDC.fixedBorrowPositions(maturity, address(account)).fee;
+    assertEq(newPositionAssets, 0);
+
+    assertEq(proposalManager.nonces(address(account)), nonce + 1, "nonce didn't increase");
+    assertEq(proposalManager.queueNonces(address(account)), queueNonce, "queue nonce didn't stay the same");
+  }
+
+  function test_crossRepay_consumesProposal() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+    uint256 maturity = FixedLib.INTERVAL;
+    account.collectCredit(maturity, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    uint256 amountIn = 111e18;
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(account))
+    );
+
+    vm.startPrank(address(account));
+    account.propose(
+      exaEXA,
+      amountIn,
+      ProposalType.CROSS_REPAY,
+      abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
+    );
+
+    skip(proposalManager.delay());
+
+    uint256 nonce = proposalManager.nonces(address(account));
+    uint256 queueNonce = proposalManager.queueNonces(address(account));
+    assertEq(queueNonce, nonce + 1);
+
+    account.executeProposal();
+
+    assertEq(proposalManager.nonces(address(account)), nonce + 1, "nonce didn't increase");
+    assertEq(proposalManager.queueNonces(address(account)), queueNonce, "queue nonce didn't stay the same");
   }
 
   function test_borrowAtMaturity_borrows() external {
@@ -520,7 +586,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 amountIn = 111e18;
     bytes memory route = abi.encodeCall(
-      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(exaPlugin))
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(account))
     );
     vm.startPrank(address(account));
 
@@ -551,7 +617,7 @@ contract ExaPluginTest is ForkTest {
 
     bytes memory route = bytes.concat(
       hex"4666fc80b7c64668375a12ff485d0a88dee3ac5d82d77587a6be542b9233c5eb13830c4c00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000",
-      abi.encodePacked(address(exaPlugin)),
+      abi.encodePacked(address(account)),
       hex"00000000000000000000000000000000000000000000000000000000018f7705000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000034578610000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a30783030303030303030303030303030303030303030303030303030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000111111125421ca6dc452d289314280a0f8842a65000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000004e807ed2379000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000068f180fcce6836688e9084f035309e29bf0a20950000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff85000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba0000000000000000000000001231deb6f5749ef6ce6943a275a1d3e7486f4eae0000000000000000000000000000000000000000000000000000000000009c4000000000000000000000000000000000000000000000000000000000018f770400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000039600000000000000000000000000000000000000000000000000000000037800a007e5c0d20000000000000000000000000000000000000000000000000003540000f051204c4af8dbc524681930a27b2f1af5bcc8062e6fb768f180fcce6836688e9084f035309e29bf0a209500447dc2038200000000000000000000000068f180fcce6836688e9084f035309e29bf0a209500000000000000000000000042000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000002495763e3d93b6000000000000000000000000b63aae6c353636d66df13b89ba4425cfe13d10ba00000000000000000000000042f527f50f16a103b6ccab48bccca214500c102100a0c9e75c480000000000000013130c0000000000000000000000000000000000000000000002360001d300006302a000000000000000000000000000000000000000000000000000000000005f6305ee63c1e580c1738d90e2e26c35784a0d3e3d8a9f795074bca44200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a655106a062ae8a9c5e11aaa026fc2670b0d65ccc8b285842000000000000000000000000000000000000060004cac88ea9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009708bd00000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000111111125421ca6dc452d289314280a0f8842a6500000000000000000000000000000000000000000000000000000000671fb839000000000000000000000000000000000000000000000000000000000000000100000000000000000000000042000000000000000000000000000000000000060000000000000000000000000b2c639c533813f4aa9d7837caf62653d097ff850000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f1046053aa5682b4f9a81b5481394da16be5ff5a02a0000000000000000000000000000000000000000000000000000000000097095eee63c1e580d4cb5566b5c16ef2f4a08b1438052013171212a24200000000000000000000000000000000000006111111125421ca6dc452d289314280a0f8842a65000000000000000000002a94d114000000000000000000000000000000000000000000000000"
     );
     uint256 prevCollateral = exaWBTC.balanceOf(address(account));
@@ -590,7 +656,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 amountIn = 111e18;
     bytes memory route = abi.encodeCall(
-      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(exaPlugin))
+      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(account))
     );
     account.propose(
       exaEXA,
@@ -2296,9 +2362,10 @@ contract ExaPluginTest is ForkTest {
     issuerChecker.setIssuer(issuer);
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
-    address[] memory targets = new address[](2);
+    address[] memory targets = new address[](3);
     targets[0] = IMarket(protocol("MarketUSDC")).asset();
     targets[1] = IMarket(protocol("MarketWETH")).asset();
+    targets[2] = IMarket(protocol("MarketWBTC")).asset();
     proposalManager = new ProposalManager(
       address(this),
       IAuditor(protocol("Auditor")),

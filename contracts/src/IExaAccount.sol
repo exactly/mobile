@@ -159,7 +159,7 @@ struct CrossRepayData {
 
 struct RepayData {
   uint256 maturity;
-  uint256 maxRepay;
+  uint256 positionAssets;
 }
 
 enum ProposalType {
