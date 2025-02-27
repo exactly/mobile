@@ -4,12 +4,21 @@ import "../mocks/onesignal";
 import "../mocks/panda";
 import "../mocks/redis";
 import "../mocks/sentry";
-
+import "../mocks/keeper";
 import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
 import * as sentry from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
-import { encodeFunctionData, hexToBigInt, padHex, zeroAddress, zeroHash, type Hex } from "viem";
+import {
+  decodeEventLog,
+  erc20Abi,
+  hexToBigInt,
+  padHex,
+  zeroAddress,
+  zeroHash,
+  type Hex,
+  type TransactionReceipt,
+} from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
@@ -78,28 +87,12 @@ const callFrame = {
   input: "0x",
 } as const;
 
-async function collectorBalance() {
-  return await publicClient
-    .call({
-      to: inject("USDC"),
-      data: encodeFunctionData({
-        abi: [
-          {
-            constant: true,
-            inputs: [{ name: "_owner", type: "address" }],
-            name: "balanceOf",
-            outputs: [{ name: "balance", type: "uint256" }],
-            type: "function",
-          },
-        ],
-        functionName: "balanceOf",
-        args: ["0xDb90CDB64CfF03f254e4015C4F705C3F3C834400"],
-      }),
-    })
-    .then(({ data }) => {
-      if (!data) throw new Error("No data");
-      return hexToBigInt(data);
-    });
+function usdcToCollector(purchaseReceipt: TransactionReceipt) {
+  return purchaseReceipt.logs
+    .filter((l) => l.address.toLowerCase() === inject("USDC").toLowerCase())
+    .map((l) => decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics: l.topics, data: l.data }))
+    .filter((l) => l.args.to === "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400")
+    .reduce((total, l) => total + l.args.value, 0n);
 }
 
 const owner = privateKeyToAccount(generatePrivateKey());
@@ -252,8 +245,6 @@ describe("card operations", () => {
       afterEach(() => vi.restoreAllMocks());
 
       it("clears debit", async () => {
-        const balance = await collectorBalance();
-
         const operation = "debits";
         const cardId = "debits";
         await database.insert(cards).values([{ id: "debits", credentialId: "cred", lastFour: "3456", mode: 0 }]);
@@ -271,14 +262,14 @@ describe("card operations", () => {
           },
         });
         const card = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(authorization.json.body.spend.amount * 1e4));
+        expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(authorization.json.body.spend.amount * 1e4));
+
         expect(response.status).toBe(200);
       });
 
       it("clears credit", async () => {
-        const balance = await collectorBalance();
         const amount = 10;
 
         const operation = "credits";
@@ -300,9 +291,9 @@ describe("card operations", () => {
         });
 
         const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(amount * 1e4));
+        expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e4));
         expect(response.status).toBe(200);
       });
 
@@ -366,7 +357,6 @@ describe("card operations", () => {
       });
 
       it("clears installments", async () => {
-        const balance = await collectorBalance();
         const amount = 100;
 
         const operation = "splits";
@@ -390,9 +380,9 @@ describe("card operations", () => {
         const transaction = await database.query.transactions.findFirst({
           where: eq(transactions.id, operation),
         });
-        await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(amount * 1e4));
+        expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e4));
         expect(response.status).toBe(200);
       });
 

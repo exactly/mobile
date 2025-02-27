@@ -3,6 +3,7 @@ import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/onesignal";
 import "../mocks/sentry";
+import "../mocks/keeper";
 
 import { previewerAddress, wethAddress } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";

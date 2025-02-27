@@ -3,6 +3,7 @@ import "../mocks/deployments";
 import "../mocks/onesignal";
 import "../mocks/redis";
 import "../mocks/sentry";
+import "../mocks/keeper";
 
 import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
 import * as sentry from "@sentry/node";
@@ -11,13 +12,15 @@ import { testClient } from "hono/testing";
 import {
   BaseError,
   ContractFunctionRevertedError,
+  decodeEventLog,
   encodeErrorResult,
-  encodeFunctionData,
+  erc20Abi,
   hexToBigInt,
   padHex,
   zeroAddress,
   zeroHash,
   type Hex,
+  type TransactionReceipt,
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
@@ -93,28 +96,12 @@ const callFrame = {
   input: "0x",
 } as const;
 
-async function collectorBalance() {
-  return await publicClient
-    .call({
-      to: inject("USDC"),
-      data: encodeFunctionData({
-        abi: [
-          {
-            constant: true,
-            inputs: [{ name: "_owner", type: "address" }],
-            name: "balanceOf",
-            outputs: [{ name: "balance", type: "uint256" }],
-            type: "function",
-          },
-        ],
-        functionName: "balanceOf",
-        args: ["0xDb90CDB64CfF03f254e4015C4F705C3F3C834400"],
-      }),
-    })
-    .then(({ data }) => {
-      if (!data) throw new Error("No data");
-      return hexToBigInt(data);
-    });
+function usdcToCollector(purchaseReceipt: TransactionReceipt) {
+  return purchaseReceipt.logs
+    .filter((l) => l.address.toLowerCase() === inject("USDC").toLowerCase())
+    .map((l) => decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics: l.topics, data: l.data }))
+    .filter((l) => l.args.to === "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400")
+    .reduce((total, l) => total + l.args.value, 0n);
 }
 
 const owner = privateKeyToAccount(generatePrivateKey());
@@ -263,8 +250,7 @@ describe("card operations", () => {
       afterEach(() => vi.restoreAllMocks());
 
       it("clears debit", async () => {
-        const balance = await collectorBalance();
-
+        const amount = 35;
         const operation = "debits";
         await database.insert(cards).values([{ id: "debits", credentialId: "cred", lastFour: "3456", mode: 0 }]);
         const response = await appClient.index.$post({
@@ -273,20 +259,17 @@ describe("card operations", () => {
             ...authorization.json,
             event_type: "CLEARING",
             operation_id: operation,
-            data: { ...authorization.json.data, card_id: "debits", metadata: { account } },
+            data: { ...authorization.json.data, bill_amount: amount, card_id: "debits", metadata: { account } },
           },
         });
         const card = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(
-          balance + BigInt(Math.round(authorization.json.data.bill_amount * 1e6)),
-        );
+        expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e6));
         expect(response.status).toBe(200);
       });
 
       it("clears credit", async () => {
-        const balance = await collectorBalance();
         const amount = 10;
 
         const operation = "credits";
@@ -301,15 +284,14 @@ describe("card operations", () => {
           },
         });
         const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
+        expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e6));
         expect(response.status).toBe(200);
       });
 
       it("clears installments", async () => {
-        const balance = await collectorBalance();
-        const amount = 100;
+        const amount = 60;
 
         const operation = "splits";
         await database.insert(cards).values([{ id: "splits", credentialId: "cred", lastFour: "6754", mode: 6 }]);
@@ -325,9 +307,9 @@ describe("card operations", () => {
         const transaction = await database.query.transactions.findFirst({
           where: eq(transactions.id, operation),
         });
-        await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
-        await expect(collectorBalance()).resolves.toBe(balance + BigInt(Math.round(amount * 1e6)));
+        expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e6));
         expect(response.status).toBe(200);
       });
 
@@ -377,14 +359,20 @@ describe("card operations", () => {
         vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
 
         const operation = "timeout";
-        await database.insert(cards).values([{ id: "timeout", credentialId: "cred", lastFour: "7777", mode: 6 }]);
+        await database.insert(cards).values([{ id: "timeout", credentialId: "cred", lastFour: "7777", mode: 1 }]);
         const response = await appClient.index.$post({
           ...authorization,
           json: {
             ...authorization.json,
             event_type: "CLEARING",
             operation_id: operation,
-            data: { ...authorization.json.data, card_id: "timeout", bill_amount: 60, metadata: { account } },
+            data: {
+              ...authorization.json.data,
+              bill_amount: 478,
+              card_id: "timeout",
+              created_at: new Date().toISOString(),
+              metadata: { account },
+            },
           },
         });
 
