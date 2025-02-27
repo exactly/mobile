@@ -1,4 +1,4 @@
-import { CircleDollarSign, CreditCard, FileText, Home } from "@tamagui/lucide-icons";
+import { CalendarClock, CreditCard, FileText, Home } from "@tamagui/lucide-icons";
 import { Tabs } from "expo-router";
 import React, { useEffect } from "react";
 import { useAccount } from "wagmi";
@@ -10,7 +10,7 @@ import useIntercom from "../../../utils/useIntercom";
 const tabs = [
   { name: "index", title: "Home", Icon: Home },
   { name: "card", title: "Card", Icon: CreditCard },
-  { name: "payments", title: "Pay", Icon: CircleDollarSign },
+  { name: "pay-later", title: "Pay Later", Icon: CalendarClock },
   { name: "activity", title: "Activity", Icon: FileText },
 ] as const;
 

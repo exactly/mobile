@@ -21,7 +21,7 @@ import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-export default function Payments() {
+export default function PayLater() {
   const theme = useTheme();
   const { presentArticle } = useIntercom();
   const [paySheetOpen, setPaySheetOpen] = useState(false);
