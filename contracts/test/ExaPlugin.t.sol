@@ -386,7 +386,7 @@ contract ExaPluginTest is ForkTest {
         (
           exaUSDC,
           positionAssets + 1, // max repay
-          ProposalType.REPAY,
+          ProposalType.REPAY_AT_MATURITY,
           abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets }))
         )
       )
@@ -421,7 +421,7 @@ contract ExaPluginTest is ForkTest {
         (
           exaUSDC,
           positionAssets / 2,
-          ProposalType.REPAY,
+          ProposalType.REPAY_AT_MATURITY,
           abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets / 2 }))
         )
       )
@@ -450,7 +450,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaUSDC,
       positionAssets + 1,
-      ProposalType.REPAY,
+      ProposalType.REPAY_AT_MATURITY,
       abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets }))
     );
 
@@ -476,7 +476,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaUSDC,
       positionAssets / 2,
-      ProposalType.REPAY,
+      ProposalType.REPAY_AT_MATURITY,
       abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets / 2 }))
     );
     skip(proposalManager.delay());
@@ -500,7 +500,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaUSDC,
       positionAssets,
-      ProposalType.REPAY,
+      ProposalType.REPAY_AT_MATURITY,
       abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets }))
     );
 
@@ -537,7 +537,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaEXA,
       amountIn,
-      ProposalType.CROSS_REPAY,
+      ProposalType.CROSS_REPAY_AT_MATURITY,
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
@@ -593,7 +593,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaEXA,
       amountIn,
-      ProposalType.CROSS_REPAY,
+      ProposalType.CROSS_REPAY_AT_MATURITY,
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
@@ -629,7 +629,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaWBTC,
       amount,
-      ProposalType.CROSS_REPAY,
+      ProposalType.CROSS_REPAY_AT_MATURITY,
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 21e6, maxRepay: 25e6, route: route }))
     );
 
@@ -661,7 +661,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaEXA,
       amountIn,
-      ProposalType.CROSS_REPAY,
+      ProposalType.CROSS_REPAY_AT_MATURITY,
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
@@ -693,7 +693,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaEXA,
       amountIn,
-      ProposalType.CROSS_REPAY,
+      ProposalType.CROSS_REPAY_AT_MATURITY,
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
@@ -724,7 +724,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       exaEXA,
       60e18,
-      ProposalType.CROSS_REPAY,
+      ProposalType.CROSS_REPAY_AT_MATURITY,
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
     );
 
@@ -744,7 +744,7 @@ contract ExaPluginTest is ForkTest {
     account.propose(
       IMarket(address(0x1234)),
       100e18,
-      ProposalType.CROSS_REPAY,
+      ProposalType.CROSS_REPAY_AT_MATURITY,
       abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: bytes("") }))
     );
   }

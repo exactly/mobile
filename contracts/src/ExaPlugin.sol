@@ -155,11 +155,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       _swap(proposal);
     } else if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
       _borrowAtMaturity(proposal);
-    } else if (proposal.proposalType == ProposalType.CROSS_REPAY) {
+    } else if (proposal.proposalType == ProposalType.CROSS_REPAY_AT_MATURITY) {
       _crossRepay(proposal);
     } else if (proposal.proposalType == ProposalType.ROLL_DEBT) {
       _rollDebt(proposal);
-    } else if (proposal.proposalType == ProposalType.REPAY) {
+    } else if (proposal.proposalType == ProposalType.REPAY_AT_MATURITY) {
       _repay(proposal);
     }
   }
