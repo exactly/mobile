@@ -12,11 +12,10 @@ import {
   IDebtManager,
   IInstallmentsRouter,
   IMarket,
-  IProposalManager,
   Parameters
 } from "../src/ExaPlugin.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
-
+import { ProposalManager } from "../src/ProposalManager.sol";
 import { BaseScript } from "./Base.s.sol";
 
 contract DeployScript is BaseScript {
@@ -24,7 +23,11 @@ contract DeployScript is BaseScript {
   ExaPlugin public exaPlugin;
 
   function run() external {
-    vm.startBroadcast(acct("deployer"));
+    address admin = acct("admin");
+    address deployer = acct("deployer");
+    ProposalManager proposalManager = ProposalManager(broadcast("ProposalManager"));
+
+    vm.startBroadcast(deployer);
 
     exaPlugin = new ExaPlugin(
       Parameters({
@@ -36,7 +39,7 @@ contract DeployScript is BaseScript {
         debtManager: IDebtManager(protocol("DebtManager")),
         installmentsRouter: IInstallmentsRouter(protocol("InstallmentsRouter")),
         issuerChecker: IssuerChecker(broadcast("IssuerChecker")),
-        proposalManager: IProposalManager(broadcast("ProposalManager")),
+        proposalManager: proposalManager,
         collector: acct("collector"),
         swapper: acct("swapper"),
         firstKeeper: acct("keeper")
@@ -62,6 +65,8 @@ contract DeployScript is BaseScript {
     );
 
     factory.donateStake{ value: 0.1 ether }();
+
+    if (deployer == admin) proposalManager.grantRole(keccak256("PROPOSER_ROLE"), address(exaPlugin));
 
     vm.stopBroadcast();
   }
