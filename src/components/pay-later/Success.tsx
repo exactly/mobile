@@ -137,7 +137,7 @@ export default function Success({
                   </Button>
                   <Pressable
                     onPress={() => {
-                      router.replace("/payments");
+                      router.replace("/pay-later");
                     }}
                   >
                     <Text emphasized footnote color="$uiBrandSecondary">
