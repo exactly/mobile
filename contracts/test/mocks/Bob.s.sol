@@ -17,6 +17,7 @@ import { ExaAccountFactory } from "../../src/ExaAccountFactory.sol";
 import { ExaPlugin } from "../../src/ExaPlugin.sol";
 import { CrossRepayData, IExaAccount, IMarket, ProposalType, RepayData } from "../../src/IExaAccount.sol";
 import { IssuerChecker } from "../../src/IssuerChecker.sol";
+import { ProposalManager } from "../../src/ProposalManager.sol";
 
 import { MockSwapper } from "./MockSwapper.sol";
 
@@ -31,6 +32,7 @@ contract BobScript is BaseScript {
   IMarket public exaUSDC;
   Previewer public previewer;
   ExaPlugin public exaPlugin;
+  ProposalManager public proposalManager;
   IssuerChecker internal issuerChecker;
   ExaAccountFactory public factory;
 
@@ -47,6 +49,7 @@ contract BobScript is BaseScript {
     exaUSDC = IMarket(protocol("MarketUSDC"));
     previewer = Previewer(protocol("Previewer"));
 
+    proposalManager = ProposalManager(broadcast("ProposalManager"));
     issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
     exaPlugin = ExaPlugin(payable(broadcast("Deploy")));
     factory = ExaAccountFactory(

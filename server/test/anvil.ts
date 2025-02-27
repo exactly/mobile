@@ -1,15 +1,13 @@
-import { exaPluginAbi } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { $ } from "execa";
 import { anvil } from "prool/instances";
 import { literal, object, parse, tuple } from "valibot";
-import { createWalletClient, http, padHex, zeroAddress, zeroHash } from "viem";
+import { padHex, zeroAddress } from "viem";
 import { privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
 import type { TestProject } from "vitest/node";
 
 import anvilClient from "./anvilClient";
-import deriveAddress from "../utils/deriveAddress";
 
 export default async function setup({ provide }: TestProject) {
   const instance = anvil({ codeSizeLimit: 69_000, blockBaseFeePerGas: 1n });
@@ -32,6 +30,7 @@ export default async function setup({ provide }: TestProject) {
       ISSUER_ADDRESS: privateKeyToAddress(padHex("0x420")),
       KEEPER_ADDRESS: keeper.address,
       DEPLOYER_ADDRESS: deployer,
+      ADMIN_ADDRESS: deployer,
     } as Record<string, string>,
   };
 
@@ -106,6 +105,8 @@ export default async function setup({ provide }: TestProject) {
 
   if (initialize) {
     shell.env.SWAPPER_ADDRESS = swapper.contractAddress;
+    await $(shell)`forge script script/ProposalManager.s.sol
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/Refunder.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
@@ -115,6 +116,12 @@ export default async function setup({ provide }: TestProject) {
       transactions: tuple([object({ contractName: literal("InstallmentsPreviewer"), contractAddress: Address })]),
     }),
     await import(`@exactly/plugin/broadcast/InstallmentsPreviewer.s.sol/${foundry.id}/run-latest.json`),
+  ).transactions;
+  const [proposalManager] = parse(
+    object({
+      transactions: tuple([object({ contractName: literal("ProposalManager"), contractAddress: Address })]),
+    }),
+    await import(`@exactly/plugin/broadcast/ProposalManager.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
   const [refunder] = parse(
     object({
@@ -149,12 +156,11 @@ export default async function setup({ provide }: TestProject) {
       --unlocked ${bob},${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await Promise.all([
       anvilClient.stopImpersonatingAccount({ address: bob }),
-      anvilClient.stopImpersonatingAccount({ address: keeper.address }),
+      anvilClient.increaseTime({ seconds: 10 * 60 }),
     ]);
-    await anvilClient.increaseTime({ seconds: 10 * 60 });
-    const bobAccount = deriveAddress(exaAccountFactory.contractAddress, { x: padHex(bob), y: zeroHash });
-    const keeperClient = createWalletClient({ chain: foundry, account: keeper, transport: http() });
-    await keeperClient.writeContract({ address: bobAccount, functionName: "withdraw", abi: exaPluginAbi });
+    await $(shell)`forge script test/mocks/BobExecute.s.sol
+      --unlocked ${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+    await anvilClient.stopImpersonatingAccount({ address: keeper.address });
   }
 
   provide("Auditor", auditor.contractAddress);
@@ -168,6 +174,7 @@ export default async function setup({ provide }: TestProject) {
   provide("MarketUSDC", marketUSDC.contractAddress);
   provide("MarketWETH", marketWETH.contractAddress);
   provide("Previewer", previewer.contractAddress);
+  provide("ProposalManager", proposalManager.contractAddress);
   provide("Refunder", refunder.contractAddress);
   provide("Swapper", swapper.contractAddress);
   provide("USDC", usdc.contractAddress);
@@ -235,6 +242,7 @@ declare module "vitest" {
     MarketEXA: Address;
     MarketUSDC: Address;
     MarketWETH: Address;
+    ProposalManager: Address;
     Previewer: Address;
     Refunder: Address;
     Swapper: Address;
