@@ -2308,38 +2308,6 @@ contract ExaPluginTest is ForkTest {
     view
     returns (bytes memory signature)
   {
-    if (legacyFork) {
-      return _sign(
-        issuerKey,
-        keccak256(
-          abi.encodePacked(
-            "\x19\x01",
-            domainSeparator,
-            keccak256(
-              abi.encode(
-                keccak256("Operation(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
-              )
-            )
-          )
-        )
-      );
-    }
-    if (refund) {
-      return _sign(
-        issuerKey,
-        keccak256(
-          abi.encodePacked(
-            "\x19\x01",
-            domainSeparator,
-            keccak256(
-              abi.encode(
-                keccak256("Refund(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
-              )
-            )
-          )
-        )
-      );
-    }
     return _sign(
       issuerKey,
       keccak256(
@@ -2348,7 +2316,18 @@ contract ExaPluginTest is ForkTest {
           domainSeparator,
           keccak256(
             abi.encode(
-              keccak256("Collection(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp
+              keccak256(
+                bytes(
+                  legacyFork
+                    ? "Operation(address account,uint256 amount,uint40 timestamp)"
+                    : refund
+                      ? "Refund(address account,uint256 amount,uint40 timestamp)"
+                      : "Collection(address account,uint256 amount,uint40 timestamp)"
+                )
+              ),
+              account,
+              amount,
+              timestamp
             )
           )
         )
