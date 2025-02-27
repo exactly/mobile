@@ -3,7 +3,7 @@ import { ChevronRight } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
 import React from "react";
 import { Pressable } from "react-native";
-import { XStack } from "tamagui";
+import { XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -34,8 +34,8 @@ export default function UpcomingPayments({ onSelect }: { onSelect: (maturity: bi
           Upcoming payments
         </Text>
       </View>
-      {payments.length > 1 ? (
-        payments.slice(1).map(([maturity, amount], index) => (
+      {payments.length > 0 ? (
+        payments.map(([maturity, amount], index) => (
           <Pressable
             key={index}
             onPress={() => {
@@ -62,11 +62,17 @@ export default function UpcomingPayments({ onSelect }: { onSelect: (maturity: bi
           </Pressable>
         ))
       ) : (
-        <View>
-          <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
-            No more fixed payments due.
+        <YStack alignItems="center" justifyContent="center" gap="$s4_5">
+          <Text textAlign="center" color="$uiNeutralSecondary" emphasized title>
+            🎉
           </Text>
-        </View>
+          <Text textAlign="center" color="$uiBrandSecondary" emphasized headline>
+            You&apos;re all set!
+          </Text>
+          <Text textAlign="center" color="$uiNeutralSecondary" subHeadline>
+            Any purchases made with Pay Later will appear here.
+          </Text>
+        </YStack>
       )}
     </View>
   );
