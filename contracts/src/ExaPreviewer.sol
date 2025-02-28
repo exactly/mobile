@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
-import { FixedPool, IMarket } from "./IExaAccount.sol";
+import { FixedPool, IMarket, IProposalManager, Proposal, ProposalType } from "./IExaAccount.sol";
 
 uint256 constant FIXED_INTERVAL = 4 weeks;
 
@@ -11,9 +11,26 @@ contract ExaPreviewer {
   using FixedPointMathLib for uint256;
 
   ICollectableMarket public immutable EXA_USDC;
+  IProposalManager public immutable PROPOSAL_MANAGER;
 
-  constructor(ICollectableMarket exaUSDC) {
+  constructor(ICollectableMarket exaUSDC, IProposalManager proposalManager) {
     EXA_USDC = exaUSDC;
+    PROPOSAL_MANAGER = proposalManager;
+  }
+
+  function pendingProposals(address account) external view returns (PendingProposal[] memory proposals) {
+    uint256 queueNonce = PROPOSAL_MANAGER.queueNonces(account);
+    uint256 nonce = PROPOSAL_MANAGER.nonces(account);
+    proposals = new PendingProposal[](queueNonce - nonce);
+    for (uint256 i = nonce; i < queueNonce; ++i) {
+      // slither-disable-next-line calls-loop
+      (uint256 amount, IMarket market, uint256 timestamp, ProposalType proposalType, bytes memory data) =
+        PROPOSAL_MANAGER.proposals(account, i);
+      proposals[i - nonce] = PendingProposal({
+        nonce: i,
+        proposal: Proposal({ amount: amount, market: market, timestamp: timestamp, proposalType: proposalType, data: data })
+      });
+    }
   }
 
   function utilizations() external view returns (Utilizations memory) {
@@ -80,4 +97,9 @@ struct IRMParameters {
   int256 timePreference;
   uint256 fixedAllocation;
   uint256 maxRate;
+}
+
+struct PendingProposal {
+  uint256 nonce;
+  Proposal proposal;
 }
