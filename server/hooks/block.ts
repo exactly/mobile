@@ -81,7 +81,9 @@ export default app.post(
           block: v.object({
             number: v.optional(v.number()), // TODO remove optional after migration
             timestamp: v.number(),
-            logs: v.array(v.object({ topics: v.tupleWithRest([Hash], Hash), data: Hex })),
+            logs: v.array(
+              v.object({ topics: v.tupleWithRest([Hash], Hash), data: Hex, account: v.object({ address: Address }) }),
+            ),
           }),
         }),
       }),
@@ -277,6 +279,14 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
                 .map(({ value }) => v.parse(Address, value));
               shouldUpdate ||= !currentPlugins.includes(exaPluginAddress);
             }
+            const topicsField = filterArguments.value.fields.find(({ name }) => name.value === "topics");
+            if (topicsField?.value.kind === Kind.LIST) {
+              shouldUpdate ||= !topicsField.value.values.some(
+                (value) =>
+                  value.kind === Kind.STRING &&
+                  value.value === "0x4cf7794d9c19185f7d95767c53e511e2e67ae50f68ece9c9079c6ae83403a3e7", // Proposed
+              );
+            }
           }
         }
       },
@@ -298,11 +308,17 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
               logs(
                 filter: {
                   addresses: ${JSON.stringify([...currentPlugins, exaPluginAddress])}
-                  topics: ["0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0"] # Proposed
+                  topics: [
+                    "0x4cf7794d9c19185f7d95767c53e511e2e67ae50f68ece9c9079c6ae83403a3e7" # Proposed
+                    "0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0" # Proposed (legacy)
+                  ]
                 }
               ) {
                 topics
                 data
+                account {
+                  address
+                }
               }
             }
           }`,
