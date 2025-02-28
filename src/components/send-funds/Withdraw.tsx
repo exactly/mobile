@@ -1,9 +1,10 @@
+import ProposalType from "@exactly/common/ProposalType";
 import { Address } from "@exactly/common/validation";
 import { WAD } from "@exactly/lib";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect } from "react";
 import { parse } from "valibot";
-import { erc20Abi, formatUnits, parseUnits, zeroAddress } from "viem";
+import { encodeAbiParameters, erc20Abi, formatUnits, parseUnits, zeroAddress } from "viem";
 import { useAccount, useSimulateContract, useWriteContract } from "wagmi";
 
 import Failure from "./Failure";
@@ -30,7 +31,12 @@ export default function Withdraw() {
 
   const { data: proposeSimulation } = useSimulateExaPluginPropose({
     address,
-    args: [market?.market ?? zeroAddress, withdraw?.amount ?? 0n, withdraw?.receiver ?? zeroAddress],
+    args: [
+      market?.market ?? zeroAddress,
+      withdraw?.amount ?? 0n,
+      ProposalType.Withdraw,
+      encodeAbiParameters([{ type: "address" }], [withdraw?.receiver ?? zeroAddress]),
+    ],
     query: { enabled: !!withdraw && !!market && !!address },
   });
 
