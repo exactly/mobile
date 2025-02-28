@@ -6,6 +6,7 @@ import { ScrollView, useTheme } from "tamagui";
 import { zeroAddress } from "viem";
 
 import Header from "./Header";
+import InstallmentsSelector from "./InstallmentsSelector";
 import PaymentSheet from "./PaymentSheet";
 import UpcomingPayments from "./UpcomingPayments";
 import { useReadPreviewerExactly } from "../../generated/contracts";
@@ -17,10 +18,8 @@ import View from "../shared/View";
 
 export default function PayLater() {
   const theme = useTheme();
-
   const [paySheetOpen, setPaySheetOpen] = useState(false);
   const { market, account } = useAsset(marketUSDCAddress);
-
   const { refetch, isPending } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
   let usdDue = 0n;
   if (market) {
@@ -35,7 +34,6 @@ export default function PayLater() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           flex={1}
-          backgroundColor={usdDue === 0n ? "$backgroundSoft" : "$backgroundMild"}
           refreshControl={
             <RefreshControl
               style={style}
@@ -52,6 +50,7 @@ export default function PayLater() {
               <Header />
             </View>
             <View padded gap="$s6">
+              <InstallmentsSelector />
               <UpcomingPayments
                 onSelect={(maturity) => {
                   router.setParams({ maturity: maturity.toString() });

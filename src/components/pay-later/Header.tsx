@@ -14,7 +14,6 @@ import Text from "../shared/Text";
 
 export default function Header() {
   const { presentArticle } = useIntercom();
-
   const { data: cardDetails } = useQuery({
     queryKey: ["card", "details"],
     queryFn: getCard,
@@ -54,7 +53,6 @@ export default function Header() {
   function learnMore() {
     presentArticle("9994746").catch(handleError);
   }
-
   return (
     <YStack backgroundColor="$backgroundSoft" paddingTop="$s8" paddingBottom="$s3" gap="$s4_5">
       <XStack gap={ms(10)} justifyContent="space-between" alignItems="center">
