@@ -1,3 +1,4 @@
+import ProposalType from "@exactly/common/ProposalType";
 import fixedRate from "@exactly/common/fixedRate";
 import {
   exaPluginAbi,
@@ -20,7 +21,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { titleCase } from "title-case";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
-import { zeroAddress } from "viem";
+import { encodeAbiParameters, zeroAddress } from "viem";
 import { useSimulateContract, useWriteContract } from "wagmi";
 
 import AssetSelectionSheet from "./AssetSelectionSheet";
@@ -42,7 +43,7 @@ import AssetLogo from "../shared/AssetLogo";
 export default function Pay() {
   const insets = useSafeAreaInsets();
   const [assetSelectionOpen, setAssetSelectionOpen] = useState(false);
-  const { account, market: USDCMarket, markets, queryKey: marketAccount } = useAsset(marketUSDCAddress);
+  const { account, market: exaUSDC, markets, queryKey: marketAccount } = useAsset(marketUSDCAddress);
 
   const [selectedMarket, setSelectedMarket] = useState<Address>();
   const [displayValues, setDisplayValues] = useState<{ amount: number; usdAmount: number }>({
@@ -93,20 +94,20 @@ export default function Pay() {
 
   const timestamp = BigInt(Math.floor(Date.now() / 1000));
   const isUSDCSelected = selectedMarket === parse(Address, marketUSDCAddress);
-  const borrow = USDCMarket?.fixedBorrowPositions.find((b) => b.maturity === BigInt(success ? maturity : 0));
+  const borrow = exaUSDC?.fixedBorrowPositions.find((b) => b.maturity === BigInt(success ? maturity : 0));
 
   const previewValue =
-    borrow && USDCMarket ? (borrow.previewValue * USDCMarket.usdPrice) / 10n ** BigInt(USDCMarket.decimals) : 0n;
+    borrow && exaUSDC ? (borrow.previewValue * exaUSDC.usdPrice) / 10n ** BigInt(exaUSDC.decimals) : 0n;
   const positionValue =
-    borrow && USDCMarket
-      ? ((borrow.position.principal + borrow.position.fee) * USDCMarket.usdPrice) / 10n ** BigInt(USDCMarket.decimals)
+    borrow && exaUSDC
+      ? ((borrow.position.principal + borrow.position.fee) * exaUSDC.usdPrice) / 10n ** BigInt(exaUSDC.decimals)
       : 0n;
   const discount = positionValue === 0n ? 0 : Number(WAD - (previewValue * WAD) / positionValue) / 1e18;
 
   const feeValue = borrow
     ? (fixedRate(borrow.maturity, borrow.position.principal, borrow.position.fee, timestamp) *
         borrow.position.principal) /
-      10n ** BigInt(USDCMarket ? USDCMarket.decimals : 0)
+      10n ** BigInt(exaUSDC ? exaUSDC.decimals : 0)
     : 0n;
 
   const isPending = isUSDCSelected ? isRepaying : selectedMarket ? isCrossRepaying : false;
@@ -154,16 +155,28 @@ export default function Pay() {
     isLatestPlugin
       ? {
           address: account,
-          functionName: "repay",
-          args: [success ? BigInt(maturity) : 0n, positionAssets, maxRepay],
+          functionName: "propose",
+          args: [
+            marketUSDCAddress,
+            maxRepay,
+            ProposalType.RepayAtMaturity,
+            encodeAbiParameters(
+              [
+                {
+                  type: "tuple",
+                  components: [
+                    { name: "maturity", type: "uint256" },
+                    { name: "positionAssets", type: "uint256" },
+                  ],
+                },
+              ],
+              [{ maturity: success ? BigInt(maturity) : 0n, positionAssets }],
+            ),
+          ],
           abi: [...auditorAbi, ...marketAbi, ...upgradeableModularAccountAbi, ...exaPluginAbi],
           query: {
             enabled:
-              !!account &&
-              !!USDCMarket &&
-              !!success &&
-              !!maturity &&
-              selectedMarket === parse(Address, marketUSDCAddress),
+              !!account && !!exaUSDC && success && !!maturity && selectedMarket === parse(Address, marketUSDCAddress),
           },
         }
       : {
@@ -184,11 +197,7 @@ export default function Pay() {
           ],
           query: {
             enabled:
-              !!account &&
-              !!USDCMarket &&
-              !!success &&
-              !!maturity &&
-              selectedMarket === parse(Address, marketUSDCAddress),
+              !!account && !!exaUSDC && success && !!maturity && selectedMarket === parse(Address, marketUSDCAddress),
           },
         },
   );
@@ -201,14 +210,25 @@ export default function Pay() {
     isLatestPlugin
       ? {
           address: account,
-          functionName: "crossRepay",
+          functionName: "propose",
           args: [
-            success ? BigInt(maturity) : 0n,
-            positionAssets,
-            maxRepay,
             selectedMarket ?? zeroAddress,
             maxAmountIn,
-            route.data,
+            ProposalType.CrossRepayAtMaturity,
+            encodeAbiParameters(
+              [
+                {
+                  type: "tuple",
+                  components: [
+                    { name: "maturity", type: "uint256" },
+                    { name: "positionAssets", type: "uint256" },
+                    { name: "maxRepay", type: "uint256" },
+                    { name: "route", type: "bytes" },
+                  ],
+                },
+              ],
+              [{ maturity: success ? BigInt(maturity) : 0n, positionAssets, maxRepay, route: route.data }],
+            ),
           ],
           abi: [...auditorAbi, ...marketAbi, ...upgradeableModularAccountAbi, ...exaPluginAbi],
           query: {
