@@ -9,6 +9,7 @@
     "@tamagui/config",
     "@tamagui/lucide-icons",
     "@tamagui/toast",
+    "@tanstack/react-form",
     "@types/react",
     "account-abstraction",
     "eslint",
