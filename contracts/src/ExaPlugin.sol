@@ -71,7 +71,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   using ECDSA for bytes32;
 
   string public constant NAME = "Exa Plugin";
-  string public constant VERSION = "0.0.4";
+  string public constant VERSION = "0.0.5";
   string public constant AUTHOR = "Exactly";
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");

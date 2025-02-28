@@ -1,5 +1,19 @@
 # @exactly/plugin
 
+## 0.0.5
+
+### Patch Changes
+
+- [`b69e45f`](https://github.com/exactly/mobile/commit/b69e45f77e46aa32863c0a603f701bd8370a9c2f) Thanks [@itofarina](https://github.com/itofarina)! - 🦺 prevent uninstall with no proposal
+
+- [`13815ac`](https://github.com/exactly/mobile/commit/13815ac45a0337f8da7727a998f8e2dd68d39f81) Thanks [@itofarina](https://github.com/itofarina)! - ♻️ use returned assets from redeem
+
+- [`8fc53bc`](https://github.com/exactly/mobile/commit/8fc53bc8d85efde84a03cfe02a43e47a3cc9470b) Thanks [@itofarina](https://github.com/itofarina)! - 🎨 rename repay at maturity proposal
+
+- [`4420d1a`](https://github.com/exactly/mobile/commit/4420d1a68922b54cebcbee1c7bd1a13ddecff0f1) Thanks [@itofarina](https://github.com/itofarina)! - 🐛 consume proposals on repays
+
+- [`f1c2c1e`](https://github.com/exactly/mobile/commit/f1c2c1e2ba3fdc716d8f535b755881db81b375de) Thanks [@itofarina](https://github.com/itofarina)! - 🔊 contracts: add executed to proposal nonce set
+
 ## 0.0.4
 
 ### Patch Changes

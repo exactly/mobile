@@ -11,6 +11,6 @@
     "viem": "^2.23.5"
   },
   "devDependencies": {
-    "@exactly/plugin": "workspace:^0.0.4"
+    "@exactly/plugin": "workspace:^0.0.5"
   }
 }
