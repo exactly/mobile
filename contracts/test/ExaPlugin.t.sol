@@ -1211,7 +1211,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(proposalManager.nextProposal(address(account)).amount, 100e6);
 
     vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit ProposalNonceSet(address(account), 1);
+    emit ProposalNonceSet(address(account), 1, false);
     account.setProposalNonce(1);
 
     vm.expectRevert(NoProposal.selector);
@@ -1964,6 +1964,24 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
 
     assertEq(proposalManager.nonces(address(account)), nonce + 1);
+  }
+
+  function test_withdrawProposed_emits_proposalNonceSet() external {
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    account.execute(
+      address(account),
+      0,
+      abi.encodeCall(IExaAccount.propose, (exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(0x420))))
+    );
+    skip(proposalManager.delay());
+
+    uint256 nonce = proposalManager.nonces(address(account));
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit ProposalNonceSet(address(account), nonce + 1, true);
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
   }
 
   function test_collect_reverts_whenProposalsLeaveNoLiquidity() external {

@@ -87,7 +87,7 @@ event DelaySet(uint256 delay);
 
 event ProposalManagerSet(IProposalManager indexed proposalManager, address indexed account);
 
-event ProposalNonceSet(address indexed account, uint256 nonce);
+event ProposalNonceSet(address indexed account, uint256 indexed nonce, bool indexed executed);
 
 event Proposed(
   address indexed account,

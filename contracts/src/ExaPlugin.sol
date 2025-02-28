@@ -171,7 +171,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function setProposalNonce(uint256 nonce) external {
-    emit ProposalNonceSet(msg.sender, nonce);
+    emit ProposalNonceSet(msg.sender, nonce, false);
     proposalManager.setNonce(msg.sender, nonce);
   }
 
@@ -461,7 +461,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
       if (preExecHookData.length == 0) return;
       uint256 nonce = abi.decode(preExecHookData, (uint256));
-      emit ProposalNonceSet(msg.sender, nonce);
+      emit ProposalNonceSet(msg.sender, nonce, true);
       proposalManager.setNonce(msg.sender, nonce);
       return;
     }
