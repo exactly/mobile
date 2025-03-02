@@ -19,14 +19,8 @@ import View from "../shared/View";
 export default function PayLater() {
   const theme = useTheme();
   const [paySheetOpen, setPaySheetOpen] = useState(false);
-  const { market, account } = useAsset(marketUSDCAddress);
+  const { account } = useAsset(marketUSDCAddress);
   const { refetch, isPending } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
-  let usdDue = 0n;
-  if (market) {
-    for (const { position } of market.fixedBorrowPositions.filter(({ previewValue }) => previewValue !== 0n)) {
-      usdDue += ((position.principal + position.fee) * market.usdPrice) / 10n ** BigInt(market.decimals);
-    }
-  }
   const style = { backgroundColor: theme.backgroundSoft.val, margin: -5 };
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
