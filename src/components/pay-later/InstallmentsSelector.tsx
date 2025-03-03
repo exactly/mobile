@@ -30,7 +30,6 @@ function InstallmentsSelector() {
     gcTime: 0,
     staleTime: 0,
   });
-
   const { mutateAsync: mutateMode } = useMutation({
     mutationKey: ["card", "mode"],
     mutationFn: setCardMode,
@@ -49,8 +48,11 @@ function InstallmentsSelector() {
       }
       handleError(error);
     },
-    onSettled: async () => {
+    onSettled: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
+      if (data && "mode" in data && data.mode > 0) {
+        queryClient.setQueryData(["settings", "installments"], data.mode);
+      }
     },
   });
 
