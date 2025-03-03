@@ -169,7 +169,7 @@ export default function Card() {
               <View alignItems="center" gap="$s4" width="100%" backgroundColor="$backgroundSoft" padded>
                 <XStack gap={ms(10)} justifyContent="space-between" alignItems="center" width="100%">
                   <Text fontSize={ms(20)} fontWeight="bold">
-                    My Exa Card
+                    My Exa Card*
                   </Text>
                   <View display="flex" flexDirection="row" alignItems="center" gap={16}>
                     <Pressable onPress={toggle} hitSlop={ms(15)}>
@@ -305,6 +305,12 @@ export default function Card() {
                     </YStack>
                   }
                 />
+                <Text color="$interactiveOnDisabled" caption2 textAlign="justify">
+                  *The Exa Card is issued by Third National pursuant to a license from Visa. Any credit issued by
+                  Exactly Protocol subject to its separate terms and conditions. Third National is not a party to any
+                  agreement with Exactly Protocol and is not responsible for any loan or credit arrangement between user
+                  and Exactly Protocol.
+                </Text>
               </View>
             </View>
           </View>
