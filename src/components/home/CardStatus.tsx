@@ -14,8 +14,8 @@ import View from "../shared/View";
 
 export default function CardStatus() {
   const { data: card } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
-  const isFrozen = card?.status === "FROZEN";
-  const isDebit = card?.mode === 0;
+  if (!card) return null;
+  const isFrozen = card.status === "FROZEN";
   return (
     <Pressable
       hitSlop={ms(15)}
@@ -52,7 +52,7 @@ export default function CardStatus() {
         </View>
       </View>
       <View
-        borderColor={isFrozen ? "$borderNeutralDisabled" : isDebit ? "$cardDebitBorder" : "$cardCreditBorder"}
+        borderColor={isFrozen ? "$borderNeutralDisabled" : "$borderNeutralSoft"}
         borderRadius="$r4"
         borderWidth={1}
         borderTopLeftRadius={0}
@@ -60,44 +60,34 @@ export default function CardStatus() {
         marginTop={-20}
       >
         <YStack
-          backgroundColor={isFrozen ? "$uiNeutralTertiary" : isDebit ? "$cardDebitBackground" : "$cardCreditBackground"}
+          backgroundColor={isFrozen ? "$uiNeutralTertiary" : "$backgroundSoft"}
           height={71}
           width="100%"
           justifyContent="flex-end"
           borderRadius="$r4"
         >
-          <XStack alignItems="center" height={51} justifyContent="space-around" width="100%" gap="$s4">
+          <XStack alignItems="center" height={51} justifyContent="space-between" width="100%" paddingHorizontal="$s4">
             <View
               justifyContent="center"
               alignItems="center"
-              backgroundColor={isDebit ? "$cardDebitInteractive" : "$cardCreditInteractive"}
+              backgroundColor={isFrozen ? "$interactiveDisabled" : "$interactiveBaseSuccessDefault"}
               borderRadius="$r2"
               paddingVertical="$s1"
               paddingHorizontal="$s2"
             >
               <Text
                 emphasized
-                color={isFrozen ? "$interactiveOnDisabled" : isDebit ? "$cardDebitText" : "$cardCreditText"}
+                color={isFrozen ? "$interactiveOnDisabled" : "$interactiveOnBaseSuccessDefault"}
                 maxFontSizeMultiplier={1}
               >
-                {isDebit ? "DEBIT MODE ENABLED" : "CREDIT MODE ENABLED"}
+                {`CARD ${isFrozen ? "FROZEN" : "ENABLED"}`}
               </Text>
             </View>
             <View flexDirection="row" gap="$s1" alignItems="center">
-              <Text
-                fontSize={ms(13)}
-                color={isDebit ? "$cardDebitInteractive" : "$cardCreditInteractive"}
-                emphasized
-                footnote
-                fontWeight="bold"
-              >
-                Go to Card
+              <Text fontSize={ms(13)} color="$interactiveBaseBrandDefault" emphasized footnote>
+                View card
               </Text>
-              <ChevronRight
-                size={ms(16)}
-                color={isDebit ? "$cardDebitInteractive" : "$cardCreditInteractive"}
-                fontWeight="bold"
-              />
+              <ChevronRight size={ms(16)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
             </View>
           </XStack>
         </YStack>
