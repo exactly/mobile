@@ -11,7 +11,7 @@ import { Address, Hex } from "@exactly/common/validation";
 import { WAD, withdrawLimit } from "@exactly/lib";
 import { ArrowLeft, ChevronRight, Coins } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { format, formatDistance, isAfter } from "date-fns";
+import { format } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
 import { Skeleton } from "moti/skeleton";
 import React, { useCallback, useState } from "react";
@@ -19,7 +19,6 @@ import { Pressable, Image, Appearance } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
-import { titleCase } from "title-case";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
 import { encodeFunctionData, erc20Abi, parseUnits, zeroAddress, encodeAbiParameters } from "viem";
 import { useSimulateContract, useWriteContract } from "wagmi";
@@ -396,23 +395,8 @@ export default function Pay() {
               </Pressable>
             </View>
             <Text color="$uiNeutralPrimary" emphasized subHeadline>
-              <Text
-                primary
-                textAlign="center"
-                emphasized
-                subHeadline
-                color={
-                  isAfter(new Date(Number(maturity) * 1000), new Date()) ? "$uiNeutralPrimary" : "$uiErrorSecondary"
-                }
-              >
-                {titleCase(
-                  isAfter(new Date(Number(maturity) * 1000), new Date())
-                    ? `Due in ${formatDistance(new Date(), new Date(Number(maturity) * 1000))}`
-                    : `${formatDistance(new Date(Number(maturity) * 1000), new Date())} past due`,
-                )}
-                <Text primary textAlign="center" emphasized subHeadline>
-                  &nbsp;-&nbsp;{format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}
-                </Text>
+              <Text primary textAlign="center" emphasized subHeadline>
+                Pay due {format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}
               </Text>
             </Text>
           </View>
@@ -423,7 +407,7 @@ export default function Pay() {
             <View padded>
               <YStack gap="$s4" paddingTop="$s5">
                 <XStack justifyContent="space-between" gap="$s3">
-                  <Text secondary callout textAlign="left">
+                  <Text secondary footnote textAlign="left">
                     Purchases
                   </Text>
                   <Text primary title3 textAlign="right">
@@ -436,8 +420,8 @@ export default function Pay() {
                 </XStack>
                 {borrow && (
                   <XStack justifyContent="space-between" gap="$s3">
-                    <Text secondary callout textAlign="left">
-                      Fixed borrow APR&nbsp;
+                    <Text secondary footnote textAlign="left">
+                      Interest&nbsp;
                       {(
                         Number(fixedRate(borrow.maturity, borrow.position.principal, borrow.position.fee, timestamp)) /
                         1e18
@@ -448,6 +432,7 @@ export default function Pay() {
                           maximumFractionDigits: 2,
                         })
                         .replaceAll(/\s+/g, "")}
+                      &nbsp;APR
                     </Text>
                     <Text primary title3 textAlign="right">
                       {(Number(feeValue) / 1e18).toLocaleString(undefined, {
@@ -460,23 +445,36 @@ export default function Pay() {
                   </XStack>
                 )}
                 <XStack justifyContent="space-between" gap="$s3">
-                  <Text secondary callout textAlign="left">
-                    {discount >= 0
-                      ? `Early repay ${discount
+                  {discount >= 0 ? (
+                    <Text secondary footnote textAlign="left">
+                      Early repay&nbsp;
+                      <Text color="$uiSuccessSecondary" footnote textAlign="left">
+                        {discount
                           .toLocaleString(undefined, {
                             style: "percent",
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })
-                          .replaceAll(/\s+/g, "")} OFF`
-                      : `Late repay ${(-discount)
+                          .replaceAll(/\s+/g, "")}
+                        &nbsp;OFF`
+                      </Text>
+                    </Text>
+                  ) : (
+                    <Text secondary footnote textAlign="left">
+                      Late repay&nbsp;
+                      <Text color="$uiErrorSecondary" footnote textAlign="left">
+                        {(-discount)
                           .toLocaleString(undefined, {
                             style: "percent",
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })
-                          .replaceAll(/\s+/g, "")} penalty`}
-                  </Text>
+                          .replaceAll(/\s+/g, "")}
+                        &nbsp;penalty
+                      </Text>
+                    </Text>
+                  )}
+
                   <Text
                     primary
                     title3
@@ -499,10 +497,10 @@ export default function Pay() {
                 </XStack>
                 <Separator height={1} borderColor="$borderNeutralSoft" paddingVertical="$s2" />
                 <XStack justifyContent="space-between" gap="$s3">
-                  <Text emphasized secondary callout textAlign="left">
-                    Total
+                  <Text secondary footnote textAlign="left">
+                    You&apos;ll pay
                   </Text>
-                  <Text emphasized primary title2 textAlign="right">
+                  <Text title textAlign="right" color={discount >= 0 ? "$uiSuccessSecondary" : "$uiErrorSecondary"}>
                     {(Number(previewValue) / 1e18).toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
