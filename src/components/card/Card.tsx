@@ -6,13 +6,11 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, useTheme, XStack } from "tamagui";
+import { ScrollView, useTheme, XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import CardDetails from "./CardDetails";
-import SimulatePurchase from "./SimulatePurchase";
-import SpendingLimits from "./SpendingLimits";
 import ExaCard from "./exa-card/ExaCard";
 import {
   useReadPreviewerExactly,
@@ -180,14 +178,7 @@ export default function Card() {
                     }}
                   />
                 )}
-                <ExaCard
-                  revealing={isRevealing}
-                  frozen={cardDetails?.status === "FROZEN"}
-                  onPress={() => {
-                    if (isRevealing) return;
-                    revealCard().catch(handleError);
-                  }}
-                />
+                <ExaCard revealing={isRevealing} frozen={cardDetails?.status === "FROZEN"} />
                 {revealError && (
                   <Text color="$uiErrorPrimary" fontWeight="bold">
                     {revealError.message}
@@ -195,9 +186,23 @@ export default function Card() {
                 )}
               </View>
               <View padded gap="$s5">
-                {cardDetails && cardDetails.mode > 0 && <SimulatePurchase installments={cardDetails.mode} />}
-                <LatestActivity activity={purchases} title="Latest purchases" />
-                <SpendingLimits />
+                <LatestActivity
+                  activity={purchases}
+                  title="Latest purchases"
+                  emptyComponent={
+                    <YStack alignItems="center" justifyContent="center" gap="$s4_5">
+                      <Text textAlign="center" color="$uiNeutralSecondary" emphasized title>
+                        💳
+                      </Text>
+                      <Text textAlign="center" color="$uiBrandSecondary" emphasized headline>
+                        Make your first purchase today!
+                      </Text>
+                      <Text textAlign="center" color="$uiNeutralSecondary" subHeadline>
+                        Your transactions will show up here once you start using your card.
+                      </Text>
+                    </YStack>
+                  }
+                />
               </View>
             </View>
           </View>

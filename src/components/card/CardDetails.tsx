@@ -1,11 +1,11 @@
-import { Copy, Snowflake, X } from "@tamagui/lucide-icons";
+import { Copy, X } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
 import React, { useEffect, useState } from "react";
 import { Appearance } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, Sheet, Spinner, Square, Switch, XStack, YStack } from "tamagui";
+import { ScrollView, Sheet, XStack, YStack } from "tamagui";
 
 import CardBack from "./CardBack";
 import DismissableAlert from "./DismissableAlert";
@@ -16,7 +16,7 @@ import VisaLogoLight from "../../assets/images/visa-logo-light.svg";
 import handleError from "../../utils/handleError";
 import { decrypt } from "../../utils/panda";
 import queryClient from "../../utils/queryClient";
-import { getCard, setCardStatus } from "../../utils/server";
+import { getCard } from "../../utils/server";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -25,19 +25,7 @@ import View from "../shared/View";
 export default function CardDetails({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: alertShown } = useQuery({ queryKey: ["settings", "alertShown"] });
   const toast = useToastController();
-  const { data: card, isFetching: isFetchingCard } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
-  const {
-    mutateAsync: changeCardStatus,
-    isPending: isSettingCardStatus,
-    variables: optimisticCardStatus,
-  } = useMutation({
-    mutationKey: ["card", "status"],
-    mutationFn: setCardStatus,
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
-    },
-  });
-  const displayStatus = isSettingCardStatus ? optimisticCardStatus : card?.status;
+  const { data: card } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
   const [details, setDetails] = useState({ pan: "", cvc: "" });
   useEffect(() => {
     if (card && card.provider === "panda") {
@@ -158,50 +146,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                     <CardBack uri={card.url} />
                   )
                 ) : null}
-                <XStack
-                  width="100%"
-                  paddingHorizontal="$s4"
-                  paddingVertical="$s3_5"
-                  borderRadius="$r3"
-                  borderWidth={1}
-                  borderColor="$borderNeutralSoft"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  onPress={() => {
-                    if (isFetchingCard || isSettingCardStatus) return;
-                    changeCardStatus(card?.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
-                  }}
-                >
-                  <XStack alignItems="center" gap="$s3">
-                    <Square size={ms(24)}>
-                      {isSettingCardStatus ? (
-                        <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
-                      ) : (
-                        <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
-                      )}
-                    </Square>
-                    <Text subHeadline color="$uiNeutralPrimary">
-                      {displayStatus === "FROZEN" ? "Unfreeze card" : "Freeze card"}
-                    </Text>
-                  </XStack>
-                  <Switch
-                    height={24}
-                    pointerEvents="none"
-                    checked={displayStatus === "FROZEN"}
-                    backgroundColor="$backgroundMild"
-                    borderColor="$borderNeutralSoft"
-                  >
-                    <Switch.Thumb
-                      checked={displayStatus === "FROZEN"}
-                      shadowColor="$uiNeutralSecondary"
-                      animation="moderate"
-                      backgroundColor={
-                        displayStatus === "ACTIVE" ? "$interactiveDisabled" : "$interactiveBaseBrandDefault"
-                      }
-                    />
-                  </Switch>
-                </XStack>
-                {card && card.provider === "cryptomate" && alertShown && (
+                {card && alertShown && (
                   <DismissableAlert
                     text="Manually add your card to Apple Pay & Google Pay to make contactless payments."
                     onDismiss={() => {
