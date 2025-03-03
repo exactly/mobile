@@ -196,12 +196,6 @@ interface IAuditor {
   function exitMarket(IMarket market) external;
   function marketList(uint256 index) external view returns (IMarket);
   function markets(IMarket market) external view returns (MarketData memory);
-
-  struct AccountLiquidity {
-    uint256 balance;
-    uint256 borrowBalance;
-    uint256 price;
-  }
 }
 
 interface IMarket is IERC4626 {
