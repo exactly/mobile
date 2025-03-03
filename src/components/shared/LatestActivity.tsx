@@ -14,9 +14,11 @@ import View from "../shared/View";
 export default function LatestActivity({
   activity,
   title = "Latest activity",
+  emptyComponent,
 }: {
   activity?: Awaited<ReturnType<typeof getActivity>>;
   title?: string;
+  emptyComponent?: React.ReactNode;
 }) {
   return (
     <InfoCard
@@ -39,11 +41,12 @@ export default function LatestActivity({
         ) : null
       }
     >
-      {!activity?.length && (
-        <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
-          There is no activity yet.
-        </Text>
-      )}
+      {!activity?.length &&
+        (emptyComponent ?? (
+          <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
+            There is no activity yet.
+          </Text>
+        ))}
       {activity?.slice(0, 4).map((item) => {
         const { amount, id, usdAmount, currency, type, timestamp } = item;
         return (
