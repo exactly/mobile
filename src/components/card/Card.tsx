@@ -1,12 +1,12 @@
 import { marketUSDCAddress, previewerAddress } from "@exactly/common/generated/chain";
 import type { Passkey } from "@exactly/common/validation";
-import { CircleHelp, Eye, EyeOff } from "@tamagui/lucide-icons";
+import { ChevronRight, CircleHelp, CreditCard, DollarSign, Eye, EyeOff, Snowflake } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, RefreshControl } from "react-native";
 import { ms } from "react-native-size-matters";
-import { ScrollView, useTheme, XStack, YStack } from "tamagui";
+import { ScrollView, Separator, Spinner, Square, Switch, useTheme, XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
@@ -19,7 +19,7 @@ import {
 import handleError from "../../utils/handleError";
 import { createInquiry, resumeInquiry } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
-import { APIError, getActivity, getCard, createCard, getKYCStatus } from "../../utils/server";
+import { APIError, getActivity, getCard, createCard, getKYCStatus, setCardStatus } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
 import InfoAlert from "../shared/InfoAlert";
@@ -70,7 +70,11 @@ export default function Card() {
     }
   }
 
-  const { data: cardDetails, refetch: refetchCard } = useQuery({
+  const {
+    data: cardDetails,
+    refetch: refetchCard,
+    isFetching: isFetchingCard,
+  } = useQuery({
     queryKey: ["card", "details"],
     queryFn: getCard,
     retry: false,
@@ -122,6 +126,20 @@ export default function Card() {
       }
     },
   });
+
+  const {
+    mutateAsync: changeCardStatus,
+    isPending: isSettingCardStatus,
+    variables: optimisticCardStatus,
+  } = useMutation({
+    mutationKey: ["card", "status"],
+    mutationFn: setCardStatus,
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
+    },
+  });
+
+  const displayStatus = isSettingCardStatus ? optimisticCardStatus : cardDetails?.status;
   const style = { backgroundColor: theme.backgroundSoft.val, margin: -5 };
   return (
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
@@ -146,7 +164,7 @@ export default function Card() {
         >
           <View fullScreen>
             <View flex={1}>
-              <View alignItems="center" gap="$s5" width="100%" backgroundColor="$backgroundSoft" padded>
+              <View alignItems="center" gap="$s4" width="100%" backgroundColor="$backgroundSoft" padded>
                 <XStack gap={ms(10)} justifyContent="space-between" alignItems="center" width="100%">
                   <Text fontSize={ms(20)} fontWeight="bold">
                     My Exa Card
@@ -179,6 +197,84 @@ export default function Card() {
                   />
                 )}
                 <ExaCard revealing={isRevealing} frozen={cardDetails?.status === "FROZEN"} />
+                <YStack
+                  borderRadius="$r3"
+                  borderWidth={1}
+                  borderColor="$borderNeutralSoft"
+                  width="100%"
+                  paddingHorizontal="$s4"
+                >
+                  <Pressable>
+                    <XStack
+                      justifyContent="space-between"
+                      paddingVertical="$s4"
+                      alignItems="center"
+                      onPress={() => {
+                        if (isFetchingCard || isSettingCardStatus) return;
+                        changeCardStatus(cardDetails?.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
+                      }}
+                    >
+                      <XStack alignItems="center" gap="$s3">
+                        <Square size={ms(24)}>
+                          {isSettingCardStatus ? (
+                            <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
+                          ) : (
+                            <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                          )}
+                        </Square>
+                        <Text subHeadline color="$uiNeutralPrimary">
+                          {displayStatus === "FROZEN" ? "Unfreeze card" : "Freeze card"}
+                        </Text>
+                      </XStack>
+                      <Switch
+                        scale={0.9}
+                        margin={0}
+                        padding={0}
+                        pointerEvents="none"
+                        checked={displayStatus === "FROZEN"}
+                        backgroundColor="$backgroundMild"
+                        borderColor="$borderNeutralSoft"
+                      >
+                        <Switch.Thumb
+                          checked={displayStatus === "FROZEN"}
+                          shadowColor="$uiNeutralSecondary"
+                          animation="moderate"
+                          backgroundColor={
+                            displayStatus === "ACTIVE" ? "$interactiveDisabled" : "$interactiveBaseBrandDefault"
+                          }
+                        />
+                      </Switch>
+                    </XStack>
+                  </Pressable>
+                  <Separator borderColor="$borderNeutralSoft" />
+                  <Pressable
+                    onPress={() => {
+                      revealCard().catch(handleError);
+                    }}
+                  >
+                    <XStack alignItems="center" paddingVertical="$s4" justifyContent="space-between">
+                      <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                        <CreditCard size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                        <Text subHeadline color="$uiNeutralPrimary">
+                          Card details
+                        </Text>
+                      </XStack>
+                      <ChevronRight color="$iconSecondary" size={ms(24)} />
+                    </XStack>
+                  </Pressable>
+                  <Separator borderColor="$borderNeutralSoft" />
+                  <Pressable>
+                    <XStack alignItems="center" paddingVertical="$s4" justifyContent="space-between">
+                      <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                        <DollarSign size={ms(24)} color="$backgroundBrand" />
+                        <Text subHeadline color="$uiNeutralPrimary">
+                          Spending limits
+                        </Text>
+                      </XStack>
+                      <ChevronRight color="$iconSecondary" size={ms(24)} />
+                    </XStack>
+                  </Pressable>
+                </YStack>
                 {revealError && (
                   <Text color="$uiErrorPrimary" fontWeight="bold">
                     {revealError.message}
