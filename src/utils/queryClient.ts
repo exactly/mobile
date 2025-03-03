@@ -52,6 +52,15 @@ queryClient.setQueryDefaults(["settings", "installments"], {
     throw new Error("don't refetch");
   },
 });
+queryClient.setQueryDefaults(["simulate-purchase", "installments"], {
+  initialData: 1,
+  retry: false,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  queryFn: () => {
+    throw new Error("don't refetch");
+  },
+});
 queryClient.setQueryDefaults(["contacts", "saved"], {
   initialData: undefined,
   retry: false,
