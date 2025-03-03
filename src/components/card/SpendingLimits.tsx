@@ -1,44 +1,66 @@
-import { ChevronDown } from "@tamagui/lucide-icons";
 import React from "react";
+import { Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
-import { Accordion, Square } from "tamagui";
+import { ScrollView, Sheet, YStack } from "tamagui";
 
-import SpendingLimitButton from "./SpendingLimitButton";
+import SpendingLimit from "./SpendingLimit";
+import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
+import View from "../shared/View";
 
-export default function SpendingLimits() {
+export default function SpendingLimits({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Accordion overflow="hidden" type="multiple" backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4">
-      <Accordion.Item value="a1" flex={1}>
-        <Accordion.Trigger
-          unstyled
-          flexDirection="row"
-          justifyContent="space-between"
-          backgroundColor="transparent"
-          borderWidth={0}
-          alignItems="center"
-        >
-          {({ open }: { open: boolean }) => (
-            <>
-              <Text emphasized headline>
-                Spending limits
-              </Text>
-              <Square animation="quick" rotate={open ? "180deg" : "0deg"}>
-                <ChevronDown size={ms(24)} color="$interactiveTextBrandDefault" />
-              </Square>
-            </>
-          )}
-        </Accordion.Trigger>
-        <Accordion.HeightAnimator animation="quick">
-          <Accordion.Content exitStyle={exitStyle} gap="$s4" paddingTop="$s4">
-            <SpendingLimitButton title="Daily" limit={3000} />
-            <SpendingLimitButton title="Weekly" limit={10_000} />
-            <SpendingLimitButton title="Monthly" limit={30_000} />
-          </Accordion.Content>
-        </Accordion.HeightAnimator>
-      </Accordion.Item>
-    </Accordion>
+    <Sheet
+      open={open}
+      dismissOnSnapToBottom
+      unmountChildrenWhenHidden
+      forceRemoveScrollEnabled={open}
+      animation="moderate"
+      dismissOnOverlayPress
+      onOpenChange={onClose}
+      snapPointsMode="fit"
+      zIndex={100_000}
+      modal
+    >
+      <Sheet.Overlay
+        backgroundColor="#00000090"
+        animation="quicker"
+        enterStyle={{ opacity: 0 }} // eslint-disable-line react-native/no-inline-styles
+        exitStyle={{ opacity: 0 }} // eslint-disable-line react-native/no-inline-styles
+      />
+      <Sheet.Handle />
+      <Sheet.Frame>
+        <SafeView paddingTop={0} fullScreen borderTopLeftRadius="$r4" borderTopRightRadius="$r4">
+          <ScrollView>
+            <View fullScreen flex={1}>
+              <View gap="$s4_5" flex={1} padded>
+                <YStack gap="$s7">
+                  <YStack gap="$s4">
+                    <Text emphasized headline primary>
+                      Spending limits
+                    </Text>
+                    <Text color="$uiNeutralSecondary" subHeadline>
+                      Track your spending and see how much you&apos;ve spent with your Exa Card so far.
+                    </Text>
+                  </YStack>
+                  <YStack gap="$s2">
+                    <SpendingLimit title="Daily" limit={3000} />
+                    <SpendingLimit title="Weekly" limit={10_000} />
+                    <SpendingLimit title="Monthly" limit={30_000} />
+                  </YStack>
+                  <Pressable onPress={onClose} style={styles.close} hitSlop={ms(20)}>
+                    <Text emphasized footnote color="$interactiveTextBrandDefault">
+                      Close
+                    </Text>
+                  </Pressable>
+                </YStack>
+              </View>
+            </View>
+          </ScrollView>
+        </SafeView>
+      </Sheet.Frame>
+    </Sheet>
   );
 }
 
-const exitStyle = { opacity: 0 };
+const styles = StyleSheet.create({ close: { alignSelf: "center" } });
