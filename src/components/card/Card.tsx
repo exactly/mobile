@@ -11,6 +11,7 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import CardDetails from "./CardDetails";
+import SpendingLimits from "./SpendingLimits";
 import ExaCard from "./exa-card/ExaCard";
 import {
   useReadPreviewerExactly,
@@ -32,6 +33,7 @@ export default function Card() {
   const theme = useTheme();
   const { presentArticle } = useIntercom();
   const [cardDetailsOpen, setCardDetailsOpen] = useState(false);
+  const [spendingLimitsOpen, setSpendingLimitsOpen] = useState(false);
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   function toggle() {
     queryClient.setQueryData(["settings", "sensitive"], !hidden);
@@ -263,7 +265,11 @@ export default function Card() {
                     </XStack>
                   </Pressable>
                   <Separator borderColor="$borderNeutralSoft" />
-                  <Pressable>
+                  <Pressable
+                    onPress={() => {
+                      setSpendingLimitsOpen(true);
+                    }}
+                  >
                     <XStack alignItems="center" paddingVertical="$s4" justifyContent="space-between">
                       <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
                         <DollarSign size={ms(24)} color="$backgroundBrand" />
@@ -307,6 +313,12 @@ export default function Card() {
           open={cardDetailsOpen}
           onClose={() => {
             setCardDetailsOpen(false);
+          }}
+        />
+        <SpendingLimits
+          open={spendingLimitsOpen}
+          onClose={() => {
+            setSpendingLimitsOpen(false);
           }}
         />
       </View>
