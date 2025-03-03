@@ -69,6 +69,7 @@ import {
   ProposalType,
   Proposed,
   RepayData,
+  Replay,
   RollDebtData,
   SwapData,
   Timelocked,
@@ -1295,7 +1296,7 @@ contract ExaPluginTest is ForkTest {
 
     bytes memory signature = _issuerOp(100e6, block.timestamp);
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, signature);
-    vm.expectRevert(Expired.selector);
+    vm.expectRevert(Replay.selector);
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, signature);
   }
 
@@ -1453,7 +1454,7 @@ contract ExaPluginTest is ForkTest {
 
     bytes memory signature = _issuerOp(100e6, block.timestamp);
     account.collectDebit(100e6, block.timestamp, signature);
-    vm.expectRevert(Expired.selector);
+    vm.expectRevert(Replay.selector);
     account.collectDebit(100e6, block.timestamp, signature);
   }
 
@@ -1632,7 +1633,7 @@ contract ExaPluginTest is ForkTest {
     amounts[1] = 10e6;
 
     account.collectInstallments(FixedLib.INTERVAL, amounts, type(uint256).max, block.timestamp, signature);
-    vm.expectRevert(Expired.selector);
+    vm.expectRevert(Replay.selector);
     account.collectInstallments(FixedLib.INTERVAL, amounts, type(uint256).max, block.timestamp, signature);
   }
 
@@ -2098,12 +2099,24 @@ contract ExaPluginTest is ForkTest {
   }
 
   // refunder
+
   function test_refund_refunds() external {
     vm.startPrank(keeper);
 
     uint256 balance = exaUSDC.balanceOf(address(account));
     deal(address(usdc), address(refunder), 100e6);
-    refunder.refund(address(account), 100e6, block.timestamp + 1, _issuerOp(100e6, block.timestamp + 1, true, false));
+    refunder.refund(address(account), 100e6, block.timestamp, _issuerOp(100e6, block.timestamp, true, false));
+    assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
+  }
+
+  function test_refund_refunds_whenCollectedAtSameTime() external {
+    vm.startPrank(keeper);
+    account.poke(exaUSDC);
+    account.collectDebit(100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+
+    uint256 balance = exaUSDC.balanceOf(address(account));
+    deal(address(usdc), address(refunder), 100e6);
+    refunder.refund(address(account), 100e6, block.timestamp, _issuerOp(100e6, block.timestamp, true, false));
     assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
   }
 

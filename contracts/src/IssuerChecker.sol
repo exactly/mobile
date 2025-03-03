@@ -6,6 +6,8 @@ import { AccessControl } from "openzeppelin-contracts/contracts/access/AccessCon
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
+import { Expired, Replay, Timelocked, Unauthorized, ZeroAddress } from "./IExaAccount.sol";
+
 contract IssuerChecker is AccessControl, EIP712 {
   using ECDSA for bytes32;
 
@@ -18,8 +20,8 @@ contract IssuerChecker is AccessControl, EIP712 {
   address public prevIssuer;
   uint256 public prevIssuerTimestamp;
   uint256 public prevIssuerWindow;
-  mapping(address account => bytes32 hash) public collections;
-  mapping(address account => bytes32 hash) public refunds;
+  mapping(address account => mapping(bytes32 hash => bool used)) public collections;
+  mapping(address account => mapping(bytes32 hash => bool used)) public refunds;
 
   constructor(address owner, address issuer_, uint256 operationExpiry_, uint256 prevIssuerWindow_) {
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
@@ -37,17 +39,18 @@ contract IssuerChecker is AccessControl, EIP712 {
     if (timestamp + operationExpiry < block.timestamp) revert Expired();
 
     bytes32 hash = keccak256(abi.encode(amount, timestamp));
-
     address recovered;
     if (refund) {
-      if (refunds[account] == hash) revert Expired();
+      if (refunds[account][hash]) revert Replay();
+      refunds[account][hash] = true;
       recovered = _hashTypedData(
         keccak256(
           abi.encode(keccak256("Refund(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp)
         )
       ).recoverCalldata(signature);
     } else {
-      if (collections[account] == hash) revert Expired();
+      if (collections[account][hash]) revert Replay();
+      collections[account][hash] = true;
       recovered = _hashTypedData(
         keccak256(
           abi.encode(
@@ -58,11 +61,6 @@ contract IssuerChecker is AccessControl, EIP712 {
     }
 
     if (recovered == issuer || (recovered == prevIssuer && block.timestamp <= prevIssuerWindow + prevIssuerTimestamp)) {
-      if (refund) {
-        refunds[account] = hash;
-      } else {
-        collections[account] = hash;
-      }
       return;
     }
 
@@ -117,8 +115,4 @@ event OperationExpirySet(uint256 operationExpiry, address indexed account);
 
 event PrevIssuerWindowSet(uint256 prevIssuerWindow, address indexed account);
 
-error Expired();
 error InvalidOperationExpiry();
-error Timelocked();
-error Unauthorized();
-error ZeroAddress();

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
+import { ZeroAddress } from "../src/IExaAccount.sol";
 import {
   InvalidOperationExpiry,
   IssuerChecker,
   IssuerSet,
   OperationExpirySet,
-  PrevIssuerWindowSet,
-  ZeroAddress
+  PrevIssuerWindowSet
 } from "../src/IssuerChecker.sol";
 import { ForkTest } from "./Fork.t.sol";
 import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";

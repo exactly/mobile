@@ -5,8 +5,8 @@ import { ForkTest } from "./Fork.t.sol";
 
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
-import { IMarket, Unauthorized } from "../src/IExaAccount.sol";
-import { Expired, IssuerChecker, Timelocked } from "../src/IssuerChecker.sol";
+import { Expired, IMarket, Replay, Timelocked, Unauthorized } from "../src/IExaAccount.sol";
+import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { Refunder } from "../src/Refunder.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
@@ -112,7 +112,7 @@ contract RefunderTest is ForkTest {
     refunder.refund(bob, amount, timestamp, _issuerOp(bob, amount, timestamp));
     assertEq(exaUSDC.balanceOf(bob), amount);
 
-    vm.expectRevert(Expired.selector);
+    vm.expectRevert(Replay.selector);
     refunder.refund(bob, amount, timestamp, _issuerOp(bob, amount, timestamp));
     assertEq(exaUSDC.balanceOf(bob), amount);
   }

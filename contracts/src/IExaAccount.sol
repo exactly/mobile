@@ -181,6 +181,7 @@ error NoBalance();
 error NonceTooLow();
 error NoProposal();
 error NotMarket();
+error Replay();
 error Timelocked();
 error Unauthorized();
 error Uninstalling();
