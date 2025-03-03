@@ -43,6 +43,15 @@ queryClient.setQueryDefaults(["settings", "alertShown"], {
     throw new Error("don't refetch");
   },
 });
+queryClient.setQueryDefaults(["settings", "installments"], {
+  initialData: 1,
+  retry: false,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  queryFn: () => {
+    throw new Error("don't refetch");
+  },
+});
 queryClient.setQueryDefaults(["contacts", "saved"], {
   initialData: undefined,
   retry: false,

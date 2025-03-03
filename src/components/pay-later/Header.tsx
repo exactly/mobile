@@ -13,6 +13,7 @@ import useIntercom from "../../utils/useIntercom";
 import Text from "../shared/Text";
 
 export default function Header() {
+  const { data: lastInstallments } = useQuery<number>({ queryKey: ["settings", "installments"] });
   const { presentArticle } = useIntercom();
   const { data: cardDetails } = useQuery({
     queryKey: ["card", "details"],
@@ -47,7 +48,7 @@ export default function Header() {
 
   function togglePayLater() {
     if (!cardDetails) return;
-    mutateMode(cardDetails.mode === 0 ? 1 : 0).catch(handleError);
+    mutateMode(cardDetails.mode === 0 ? (lastInstallments ?? 1) : 0).catch(handleError);
   }
 
   function learnMore() {
