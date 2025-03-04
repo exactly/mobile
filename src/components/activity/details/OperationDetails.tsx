@@ -1,7 +1,7 @@
 import chain from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
 import type { CreditActivity, DebitActivity, InstallmentsActivity } from "@exactly/server/api/activity";
-import { SquareArrowOutUpRight } from "@tamagui/lucide-icons";
+import { CalendarClock, CreditCard, SquareArrowOutUpRight } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
 import { setStringAsync } from "expo-clipboard";
 import { openBrowserAsync } from "expo-web-browser";
@@ -70,11 +70,18 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
 
         <XStack justifyContent="space-between">
           <Text emphasized footnote color="$uiNeutralSecondary">
-            Card mode
+            Mode
           </Text>
-          <Text callout color={item.mode > 0 ? "$cardCreditInteractive" : "$cardDebitInteractive"}>
-            {item.mode > 0 ? "Credit" : "Debit"}
-          </Text>
+          <XStack alignItems="center" gap="$s2">
+            <Text primary callout>
+              {item.mode > 0 ? "Pay Later" : "Card"}
+            </Text>
+            {item.mode > 0 ? (
+              <CalendarClock size={ms(20)} color="$uiBrandPrimary" />
+            ) : (
+              <CreditCard size={ms(20)} color="$uiBrandPrimary" />
+            )}
+          </XStack>
         </XStack>
 
         {item.mode > 0 && (
