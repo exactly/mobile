@@ -18,17 +18,15 @@ import Text from "../shared/Text";
 export default function CardLimits() {
   const { data: card } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
   const isCredit = card ? card.mode > 0 : false;
-
   const { address } = useAccount();
   const { presentArticle } = useIntercom();
-
   const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
 
   return (
     <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s4">
       <View display="flex" flexDirection="row" justifyContent="center" alignItems="center" gap="$s2">
         <Text emphasized subHeadline color="$uiNeutralSecondary" textAlign="center">
-          {isCredit ? "Credit card limit" : "Debit card limit"}
+          {isCredit ? "Pay Later limit" : "Spending limit"}
         </Text>
         <Pressable
           onPress={() => {
