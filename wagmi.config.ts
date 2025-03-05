@@ -25,10 +25,10 @@ const usdc = loadDeployment("USDC");
 const weth = loadDeployment("WETH");
 const [exaPlugin, , factory] = loadBroadcast("Deploy").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
-const [installmentsPreviewer] = loadBroadcast("InstallmentsPreviewer").transactions;
+const [exaPreviewer] = loadBroadcast("ExaPreviewer").transactions;
 const [, mockSwapper] =
   chainId === optimismSepolia.id ? loadBroadcast("Mocks").transactions : [{}, { contractAddress: zeroAddress }];
-if (!exaPlugin || !factory || !issuerChecker || !installmentsPreviewer) throw new Error("missing contracts");
+if (!exaPlugin || !factory || !issuerChecker || !exaPreviewer) throw new Error("missing contracts");
 
 export default defineConfig([
   {
@@ -54,7 +54,7 @@ export default defineConfig([
         auditor: auditor.address,
         exaAccountFactory: factory.contractAddress,
         exaPlugin: exaPlugin.contractAddress,
-        installmentsPreviewer: installmentsPreviewer.contractAddress,
+        exaPreviewer: exaPreviewer.contractAddress,
         marketUSDC: marketUSDC.address,
         marketWETH: marketWETH.address,
         mockSwapper: mockSwapper.contractAddress,
@@ -68,7 +68,7 @@ export default defineConfig([
         include: [
           "ExaAccountFactory.sol/ExaAccountFactory.json",
           "ExaPlugin.sol/ExaPlugin.json",
-          "InstallmentsPreviewer.sol/InstallmentsPreviewer.json",
+          "ExaPreviewer.sol/ExaPreviewer.json",
           "MockSwapper.sol/MockSwapper.json",
           "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
         ],

@@ -81,7 +81,7 @@ export default async function setup({ provide }: TestProject) {
     shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter.contractAddress; // cspell:disable-line
     await $(shell)`forge script test/mocks/Mocks.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
-    await $(shell)`forge script script/InstallmentsPreviewer.s.sol
+    await $(shell)`forge script script/ExaPreviewer.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/IssuerChecker.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
@@ -113,11 +113,11 @@ export default async function setup({ provide }: TestProject) {
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
-  const [installmentsPreviewer] = parse(
+  const [exaPreviewer] = parse(
     object({
-      transactions: tuple([object({ contractName: literal("InstallmentsPreviewer"), contractAddress: Address })]),
+      transactions: tuple([object({ contractName: literal("ExaPreviewer"), contractAddress: Address })]),
     }),
-    await import(`@exactly/plugin/broadcast/InstallmentsPreviewer.s.sol/${foundry.id}/run-latest.json`),
+    await import(`@exactly/plugin/broadcast/ExaPreviewer.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
   const [proposalManager] = parse(
     object({
@@ -166,7 +166,7 @@ export default async function setup({ provide }: TestProject) {
   }
 
   provide("Auditor", auditor.contractAddress);
-  provide("InstallmentsPreviewer", installmentsPreviewer.contractAddress);
+  provide("ExaPreviewer", exaPreviewer.contractAddress);
   provide("EXA", exa.contractAddress);
   provide("ExaAccountFactory", exaAccountFactory.contractAddress);
   provide("ExaPlugin", exaPlugin.contractAddress);
@@ -235,7 +235,7 @@ const Protocol = object({
 declare module "vitest" {
   export interface ProvidedContext {
     Auditor: Address;
-    InstallmentsPreviewer: Address;
+    ExaPreviewer: Address;
     EXA: Address;
     ExaAccountFactory: Address;
     ExaPlugin: Address;
