@@ -1,8 +1,8 @@
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import chain, {
   exaPluginAbi,
-  installmentsPreviewerAbi,
-  installmentsPreviewerAddress,
+  exaPreviewerAbi,
+  exaPreviewerAddress,
   upgradeableModularAccountAbi,
   usdcAddress,
 } from "@exactly/common/generated/chain";
@@ -269,9 +269,9 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
     }
     const preview = await startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
       publicClient.readContract({
-        abi: installmentsPreviewerAbi,
-        address: installmentsPreviewerAddress,
-        functionName: "preview",
+        abi: exaPreviewerAbi,
+        address: exaPreviewerAddress,
+        functionName: "utilizations",
       }),
     );
     setContext("preview", preview);
