@@ -91,7 +91,7 @@ export default function GettingStarted() {
 
               <Step
                 title=" Verify your identity"
-                description="To enable the Exa Card we need to verify your identity."
+                description="To enable the Exa Card we need to verify that you are you."
                 action="Learn more about the KYC process"
                 icon={<IdCard size={20} strokeWidth={2} color="$uiBrandSecondary" />}
                 completed={steps.find(({ id }) => id === "verify-identity")?.completed ?? false}
@@ -102,7 +102,7 @@ export default function GettingStarted() {
 
               <Step
                 title="Add funds to your account"
-                description="Your funds serve as collateral, increasing your credit and debit limits."
+                description="Your funds serve as collateral to increase your spending limits."
                 action="Learn more about collateral"
                 icon={<ArrowDownToLine size={20} strokeWidth={2} color="$uiBrandSecondary" />}
                 completed={steps.find(({ id }) => id === "add-funds")?.completed ?? false}
@@ -173,8 +173,8 @@ function CurrentStep() {
       <YStack>
         <Text subHeadline color="$uiNeutralSecondary">
           {currentStep.id === "add-funds"
-            ? "Your funds serve as collateral, increasing your credit and debit limits. The more funds you add, the more you can spend with the Exa Card."
-            : "Verifying your identity grants you access to our all-in-one Exa Card, enabling you to easily spend your crypto."}
+            ? "Your funds serve as collateral, increasing your spending limits. The more funds you add, the more you can spend with the Exa Card."
+            : "Verifying your identity grants you access to our onchain Exa Card, enabling you to easily spend your crypto."}
         </Text>
       </YStack>
       <StepCounter completedSteps={completedSteps} />
