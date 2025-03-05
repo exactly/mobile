@@ -1,9 +1,9 @@
-import { Copy, X } from "@tamagui/lucide-icons";
+import { Copy } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
 import React, { useEffect, useState } from "react";
-import { Appearance } from "react-native";
+import { Appearance, Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Sheet, XStack, YStack } from "tamagui";
 
@@ -17,7 +17,6 @@ import handleError from "../../utils/handleError";
 import { decrypt } from "../../utils/panda";
 import queryClient from "../../utils/queryClient";
 import { getCard } from "../../utils/server";
-import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -154,16 +153,11 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                     }}
                   />
                 )}
-                <Button
-                  main
-                  noFlex
-                  outlined
-                  spaced
-                  iconAfter={<X size={ms(20)} color="$interactiveOnBaseBrandSoft" fontWeight="bold" />}
-                  onPress={onClose}
-                >
-                  Close
-                </Button>
+                <Pressable onPress={onClose} style={styles.close} hitSlop={ms(20)}>
+                  <Text emphasized footnote color="$interactiveTextBrandDefault">
+                    Close
+                  </Text>
+                </Pressable>
               </View>
             </View>
           </ScrollView>
@@ -172,3 +166,5 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
     </Sheet>
   );
 }
+
+const styles = StyleSheet.create({ close: { alignSelf: "center" } });
