@@ -60,7 +60,6 @@ import {
   IExaAccount,
   IMarket,
   IProposalManager,
-  InsufficientLiquidity,
   InvalidDelay,
   NoProposal,
   NonceTooLow,
@@ -76,7 +75,6 @@ import {
   Unauthorized,
   UninstallProposed,
   UninstallRevoked,
-  Uninstalling,
   ZeroAmount
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
@@ -232,7 +230,7 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
   }
 
-  function test_proposeUninstall_deactivatesLiquidity() external {
+  function test_proposeUninstall_doesNotDeactivatesLiquidity() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
@@ -240,7 +238,6 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
 
     vm.startPrank(keeper);
-    vm.expectRevert(Uninstalling.selector);
     account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
   }
 
@@ -249,24 +246,6 @@ contract ExaPluginTest is ForkTest {
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit UninstallRevoked(address(account));
     account.execute(address(account), 0, abi.encodeCall(IExaAccount.revokeUninstall, ()));
-  }
-
-  function test_revokeUninstall_reactivatesLiquidity() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
-
-    vm.startPrank(keeper);
-    vm.expectRevert(Uninstalling.selector);
-    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.revokeUninstall, ()));
-
-    vm.startPrank(keeper);
-    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
   }
 
   function test_swap_swaps() external {
@@ -1338,7 +1317,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), credit);
   }
 
-  function test_collectCredit_reverts_whenProposalCausesInsufficientLiquidity() external {
+  function test_collectCredit_collects_whenProposalCausesInsufficientLiquidity() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
@@ -1355,10 +1334,9 @@ contract ExaPluginTest is ForkTest {
     );
 
     vm.startPrank(keeper);
-    vm.expectRevert(InsufficientLiquidity.selector);
     account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
 
-    assertEq(usdc.balanceOf(collector), 0);
+    assertEq(usdc.balanceOf(collector), credit);
   }
 
   function test_collectCredit_collects_whenHealthFactorHigherThanOne() external {
@@ -1373,7 +1351,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), credit);
   }
 
-  function test_collectCredit_reverts_whenHealthFactorLowerThanOne() external {
+  function test_collectCredit_collects_whenProposalLeavesHealthFactorLowerThanOne() external {
     vm.prank(keeper);
     account.poke(exaUSDC);
 
@@ -1388,7 +1366,6 @@ contract ExaPluginTest is ForkTest {
     );
 
     vm.prank(keeper);
-    vm.expectRevert(InsufficientLiquidity.selector);
     account.collectCredit(FixedLib.INTERVAL, credit, block.timestamp, _issuerOp(credit, block.timestamp));
   }
 
@@ -1494,7 +1471,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(usdc.balanceOf(collector), debit);
   }
 
-  function test_collectDebit_reverts_whenProposalCausesInsufficientLiquidity() external {
+  function test_collectDebit_collects_whenProposalCausesInsufficientLiquidity() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
@@ -1511,9 +1488,8 @@ contract ExaPluginTest is ForkTest {
     );
 
     vm.startPrank(keeper);
-    vm.expectRevert(InsufficientLiquidity.selector);
     account.collectDebit(debit, block.timestamp, _issuerOp(debit, block.timestamp));
-    assertEq(usdc.balanceOf(collector), 0);
+    assertEq(usdc.balanceOf(collector), debit);
   }
 
   function test_collectCollateral_collects() external {
@@ -1984,7 +1960,7 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
   }
 
-  function test_collect_reverts_whenProposalsLeaveNoLiquidity() external {
+  function test_collect_collects_whenProposalsLeaveNoLiquidity() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
@@ -1994,19 +1970,11 @@ contract ExaPluginTest is ForkTest {
       account.propose(exaUSDC, usdcBalance / 4, ProposalType.WITHDRAW, abi.encode(address(0x420)));
     }
 
-    vm.expectRevert(InsufficientLiquidity.selector);
     account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
-
-    // drop first proposal
-    account.setProposalNonce(1);
-
     account.collectDebit(usdcBalance / 4, block.timestamp, _issuerOp(usdcBalance / 4, block.timestamp));
-
-    vm.expectRevert(InsufficientLiquidity.selector);
-    account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
   }
 
-  function test_collect_reverts_whenTooMuchProposedDebt() external {
+  function test_collect_collects_whenTooMuchProposedDebt() external {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
@@ -2027,10 +1995,7 @@ contract ExaPluginTest is ForkTest {
       );
     }
 
-    vm.expectRevert(InsufficientLiquidity.selector);
     account.collectDebit(10, block.timestamp, _issuerOp(10, block.timestamp));
-
-    account.setProposalNonce(1);
 
     account.collectCredit(
       FixedLib.INTERVAL,

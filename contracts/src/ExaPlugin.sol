@@ -54,7 +54,6 @@ import {
   Unauthorized,
   UninstallProposed,
   UninstallRevoked,
-  Uninstalling,
   ZeroAddress
 } from "./IExaAccount.sol";
 import { IssuerChecker } from "./IssuerChecker.sol";
@@ -193,8 +192,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _depositUnspent(collateral, maxAmountIn - amountIn, msg.sender);
     _depositApprovedUnspent(amountOut - amount, msg.sender);
     _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (EXA_USDC)));
-
-    _checkLiquidity(msg.sender);
   }
 
   function collectCredit(uint256 maturity, uint256 amount, uint256 timestamp, bytes calldata signature) external {
@@ -215,13 +212,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       0,
       abi.encodeCall(IMarket.borrowAtMaturity, (maturity, amount, maxRepay, collector, msg.sender))
     );
-    _checkLiquidity(msg.sender);
   }
 
   function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external {
     _checkIssuer(msg.sender, amount, timestamp, signature);
     _withdrawFromSender(EXA_USDC, amount, collector);
-    _checkLiquidity(msg.sender);
   }
 
   function collectInstallments(
@@ -243,7 +238,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       maxRepay,
       abi.encodeCall(IInstallmentsRouter.borrow, (EXA_USDC, firstMaturity, amounts, maxRepay, collector))
     );
-    _checkLiquidity(msg.sender);
     _approveFromSender(address(EXA_USDC), address(INSTALLMENTS_ROUTER), 0);
   }
 
@@ -569,11 +563,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function _checkIssuer(address issuer, uint256 amount, uint256 timestamp, bytes calldata signature) internal {
     ISSUER_CHECKER.checkIssuer(issuer, amount, timestamp, signature);
-  }
-
-  function _checkLiquidity(address account) internal view {
-    if (uninstallProposals[account] != 0) revert Uninstalling();
-    proposalManager.checkLiquidity(account);
   }
 
   function _checkMarket(IMarket market) internal view {
