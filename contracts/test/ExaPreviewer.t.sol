@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import { ForkTest } from "./Fork.t.sol";
 import { Auditor } from "@exactly/protocol/Auditor.sol";
+import { FixedLib, Market } from "@exactly/protocol/Market.sol";
+import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
@@ -18,7 +20,7 @@ import { ExaPlugin } from "../src/ExaPlugin.sol";
 import {
   ExaPreviewer, ICollectableMarket, IProposalManager, PendingProposal, ProposalType
 } from "../src/ExaPreviewer.sol";
-import { IExaAccount } from "../src/IExaAccount.sol";
+import { BorrowAtMaturityData, IExaAccount, InsufficientLiquidity, Uninstalling } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { Refunder } from "../src/Refunder.sol";
 
@@ -28,6 +30,7 @@ import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
 // solhint-disable-next-line max-states-count
 contract ExaPreviewerTest is ForkTest {
+  using FixedPointMathLib for uint256;
   using OwnersLib for address[];
 
   address internal owner;
@@ -150,6 +153,12 @@ contract ExaPreviewerTest is ForkTest {
     usdc.mint(address(account), 100_000e6);
 
     vm.stopPrank();
+
+    vm.store(
+      address(exaPlugin),
+      keccak256(abi.encode(previewer, keccak256(abi.encode(keccak256("KEEPER_ROLE"), uint256(0))))),
+      bytes32(uint256(1))
+    );
   }
 
   // solhint-disable func-name-mixedcase
@@ -200,5 +209,111 @@ contract ExaPreviewerTest is ForkTest {
     assertEq(pendingProposals.length, 0);
   }
 
+  function test_proposeUninstall_deactivatesLiquidity() external {
+    account.poke(exaUSDC);
+
+    vm.startPrank(address(account));
+    account.proposeUninstall();
+
+    vm.expectRevert(Uninstalling.selector);
+    previewer.collectCredit(
+      FixedLib.INTERVAL, 100e6, type(uint256).max, block.timestamp, _issuerOp(100e6, block.timestamp)
+    );
+
+    vm.expectRevert(Uninstalling.selector);
+    previewer.collectDebit(100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+  }
+
+  function test_revokeUninstall_reactivatesLiquidity() external {
+    account.poke(exaUSDC);
+
+    vm.startPrank(address(account));
+    account.proposeUninstall();
+
+    vm.expectRevert(Uninstalling.selector);
+    previewer.collectCredit(
+      FixedLib.INTERVAL, 100e6, type(uint256).max, block.timestamp, _issuerOp(100e6, block.timestamp)
+    );
+
+    account.revokeUninstall();
+    previewer.collectCredit(
+      FixedLib.INTERVAL, 100e6, type(uint256).max, block.timestamp, _issuerOp(100e6, block.timestamp)
+    );
+  }
+
+  function test_collect_reverts_whenProposalsLeaveNoLiquidity() external {
+    account.poke(exaUSDC);
+
+    vm.startPrank(address(account));
+    account.propose(exaUSDC, exaUSDC.balanceOf(address(account)), ProposalType.WITHDRAW, abi.encode(address(0x1)));
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    previewer.collectCredit(
+      FixedLib.INTERVAL, 100e6, type(uint256).max, block.timestamp, _issuerOp(100e6, block.timestamp)
+    );
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    previewer.collectDebit(100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+  }
+
+  function test_collect_reverts_whenProposalsHaveTooMuchDebt() external {
+    account.poke(exaUSDC);
+
+    (uint256 adjustFactor,,,,) = auditor.markets(Market(address(exaUSDC)));
+
+    uint256 adjustedCollateral = exaUSDC.maxWithdraw(address(account)).mulWad(adjustFactor);
+    uint256 maxDebt = adjustedCollateral.mulWad(adjustFactor);
+
+    // propose borrow at maturity 3 times with maxAssets = maxDebt / 3
+    for (uint256 i = 0; i < 3; ++i) {
+      account.propose(
+        exaUSDC,
+        maxDebt / 3,
+        ProposalType.BORROW_AT_MATURITY,
+        abi.encode(
+          BorrowAtMaturityData({ maturity: FixedLib.INTERVAL, maxAssets: maxDebt / 3, receiver: address(account) })
+        )
+      );
+    }
+
+    vm.startPrank(address(account));
+    vm.expectRevert(InsufficientLiquidity.selector);
+    previewer.collectDebit(10, block.timestamp, _issuerOp(10, block.timestamp));
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    previewer.collectCredit(
+      FixedLib.INTERVAL,
+      maxDebt / 3 - 100e6,
+      maxDebt / 3,
+      block.timestamp,
+      _issuerOp(maxDebt / 3 - 100e6, block.timestamp)
+    );
+  }
+
   // solhint-enable func-name-mixedcase
+
+  function _issuerOp(uint256 amount, uint256 timestamp) internal view returns (bytes memory signature) {
+    return _sign(
+      issuerKey,
+      keccak256(
+        abi.encodePacked(
+          "\x19\x01",
+          domainSeparator,
+          keccak256(
+            abi.encode(
+              keccak256(bytes("Collection(address account,uint256 amount,uint40 timestamp)")),
+              account,
+              amount,
+              timestamp
+            )
+          )
+        )
+      )
+    );
+  }
+
+  function _sign(uint256 privateKey, bytes32 digest) internal pure returns (bytes memory) {
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+    return abi.encodePacked(r, s, v);
+  }
 }

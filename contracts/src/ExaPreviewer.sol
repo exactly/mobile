@@ -3,7 +3,9 @@ pragma solidity ^0.8.0;
 
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
-import { FixedPool, IMarket, IProposalManager, Proposal, ProposalType } from "./IExaAccount.sol";
+import {
+  FixedPool, IExaAccount, IMarket, IProposalManager, Proposal, ProposalType, Uninstalling
+} from "./IExaAccount.sol";
 
 uint256 constant FIXED_INTERVAL = 4 weeks;
 
@@ -33,6 +35,45 @@ contract ExaPreviewer {
     }
   }
 
+  function collectCredit(
+    uint256 maturity,
+    uint256 amount,
+    uint256 maxRepay,
+    uint256 timestamp,
+    bytes calldata signature
+  ) external {
+    IExaAccount(msg.sender).collectCredit(maturity, amount, maxRepay, timestamp, signature);
+    _checkLiquidity(IExaAccount(msg.sender));
+  }
+
+  function collectCollateral(
+    uint256 amount,
+    IMarket collateral,
+    uint256 maxAmountIn,
+    uint256 timestamp,
+    bytes calldata route,
+    bytes calldata signature
+  ) external {
+    IExaAccount(msg.sender).collectCollateral(amount, collateral, maxAmountIn, timestamp, route, signature);
+    _checkLiquidity(IExaAccount(msg.sender));
+  }
+
+  function collectDebit(uint256 amount, uint256 timestamp, bytes calldata signature) external {
+    IExaAccount(msg.sender).collectDebit(amount, timestamp, signature);
+    _checkLiquidity(IExaAccount(msg.sender));
+  }
+
+  function collectInstallments(
+    uint256 firstMaturity,
+    uint256[] calldata amounts,
+    uint256 maxRepay,
+    uint256 timestamp,
+    bytes calldata signature
+  ) external {
+    IExaAccount(msg.sender).collectInstallments(firstMaturity, amounts, maxRepay, timestamp, signature);
+    _checkLiquidity(IExaAccount(msg.sender));
+  }
+
   function utilizations() external view returns (Utilizations memory) {
     uint256 floatingAssets = EXA_USDC.floatingAssets();
     uint256 floatingDebt = EXA_USDC.floatingDebt();
@@ -57,6 +98,11 @@ contract ExaPreviewer {
       fixedUtilizations: fixedUtilizations,
       interestRateModel: EXA_USDC.interestRateModel().parameters()
     });
+  }
+
+  function _checkLiquidity(IExaAccount account) internal view {
+    if (IExaAccount(msg.sender).uninstallProposals(address(account)) != 0) revert Uninstalling();
+    PROPOSAL_MANAGER.checkLiquidity(address(account));
   }
 }
 
