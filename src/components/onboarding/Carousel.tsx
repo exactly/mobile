@@ -49,12 +49,12 @@ const pages: [Page, ...Page[]] = [
   {
     backgroundImage: exaCardBlob,
     image: exaCard,
-    title: "The first onchain debit & credit card",
+    title: "Introducing the first onchain card",
   },
   {
     backgroundImage: calendarBlob,
     image: calendar,
-    title: "Buy now, pay later, and hold your crypto",
+    title: "Pay later in installments and hold your crypto",
   },
   {
     backgroundImage: earningsBlob,
