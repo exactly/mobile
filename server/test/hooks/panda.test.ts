@@ -176,7 +176,7 @@ describe("card operations", () => {
 
         expect(trace).toHaveBeenCalledOnce();
         expect(captureException).toHaveBeenCalledWith(new Error("0x"), expect.anything());
-        expect(response.status).toBe(400);
+        expect(response.status).toBe(550);
       });
 
       describe("with drain proposal", () => {
@@ -208,7 +208,7 @@ describe("card operations", () => {
             },
           });
 
-          expect(response.status).toBe(400);
+          expect(response.status).toBe(550);
         });
       });
     });
