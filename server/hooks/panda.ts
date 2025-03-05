@@ -124,7 +124,7 @@ export default new Hono().post(
     }
     if (!validation.success) {
       captureException(new Error("bad panda"), { contexts: { validation } });
-      return c.text("bad request", 400);
+      return c.json("bad request", 400);
     }
   }),
   async (c) => {
@@ -137,7 +137,7 @@ export default new Hono().post(
     switch (payload.action) {
       case "requested": {
         const { account, amount, call, transaction } = await prepareCollection(payload);
-        if (amount < 0) return c.json({}, 400);
+        if (amount < 0) return c.json("negative amount", 501);
         const authorize = () => {
           try {
             track({
@@ -200,7 +200,7 @@ export default new Hono().post(
               }).errorName;
             } catch {} // eslint-disable-line no-empty
             captureException(new Error(error), { contexts: { tx: { call, trace } } });
-            return c.json({}, 400);
+            return c.json("tx reverted", 550 as UnofficialStatusCode);
           }
           if (
             usdcTransfersToCollectors(trace).reduce(
@@ -211,12 +211,12 @@ export default new Hono().post(
           ) {
             debug(`${payload.action}:${payload.body.spend.status}`, payload.body.id, "bad collection");
             captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { call, trace } } });
-            return c.json({}, 400);
+            return c.json("bad collection", 551 as UnofficialStatusCode);
           }
           return authorize();
         } catch (error: unknown) {
           captureException(error, { contexts: { tx: { call } } });
-          return c.json({}, 500);
+          return c.json({}, 569 as UnofficialStatusCode);
         }
       }
       case "updated":
