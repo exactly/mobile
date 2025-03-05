@@ -80,8 +80,10 @@ export default function Header() {
         </XStack>
       </XStack>
       <Text subHeadline secondary>
-        Turn on Pay Later to defer your purchases and spread the cost over time with multiple installments. Exactly
-        Protocol offers up to {MAX_INSTALLMENTS} fixed rate payments in USDC.
+        Turn on Pay Later to defer your future purchases and split the cost into multiple installments. Once enabled,
+        all new purchases will use Pay Later unless you turn it off. Exactly Protocol offers up to
+        {` ${MAX_INSTALLMENTS} `}
+        fixed-rate payments in USDC*.
       </Text>
       <Separator height={1} borderColor="$borderNeutralSoft" paddingVertical="$s2" />
       <Pressable onPress={learnMore}>

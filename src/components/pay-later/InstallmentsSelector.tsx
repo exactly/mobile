@@ -100,6 +100,9 @@ function InstallmentsSelector() {
           Estimate your payments
         </Text>
       </Button>
+      <Text caption2 color="$interactiveOnDisabled">
+        Installments are due every 28 days.
+      </Text>
     </YStack>
   );
 }
