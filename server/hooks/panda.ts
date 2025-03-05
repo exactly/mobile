@@ -422,13 +422,13 @@ function signIssuerOp({ account, amount, timestamp }: { account: Address; amount
   return issuer.signTypedData({
     domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
     types: {
-      Operation: [
+      Collection: [
         { name: "account", type: "address" },
         { name: "amount", type: "uint256" },
         { name: "timestamp", type: "uint40" },
       ],
     },
-    primaryType: "Operation",
+    primaryType: "Collection",
     message: { account, amount: BigInt(Math.round(amount * 1e4)), timestamp },
   });
 }
