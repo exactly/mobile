@@ -323,7 +323,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](13);
+    manifest.executionFunctions = new bytes4[](14);
     manifest.executionFunctions[0] = this.proposeUninstall.selector;
     manifest.executionFunctions[1] = this.revokeUninstall.selector;
     manifest.executionFunctions[2] = this.swap.selector;
@@ -337,6 +337,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     manifest.executionFunctions[10] = this.collectInstallments.selector;
     manifest.executionFunctions[11] = this.poke.selector;
     manifest.executionFunctions[12] = this.pokeETH.selector;
+    manifest.executionFunctions[13] = this.uninstallProposals.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -353,8 +354,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF),
       dependencyIndex: 0
     });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](13);
-
+    ManifestFunction memory alwaysAllowRuntimeValidationFunction = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.RUNTIME_VALIDATION_ALWAYS_ALLOW,
+      functionId: 0,
+      dependencyIndex: 0
+    });
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](14);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.proposeUninstall.selector,
       associatedFunction: selfRuntimeValidationFunction
@@ -406,6 +411,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
+    });
+    manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.uninstallProposals.selector,
+      associatedFunction: alwaysAllowRuntimeValidationFunction
     });
 
     ManifestFunction memory preExecutionValidationFunction = ManifestFunction({

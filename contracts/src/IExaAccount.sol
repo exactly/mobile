@@ -39,6 +39,7 @@ interface IExaAccount {
   ) external;
   function poke(IMarket market) external;
   function pokeETH() external;
+  function uninstallProposals(address account) external view returns (uint256);
 }
 
 interface IProposalManager {
