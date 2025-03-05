@@ -8,9 +8,9 @@ out/
 !/broadcast/Deploy.s.sol
 /broadcast/Deploy.s.sol/*/*
 !/broadcast/Deploy.s.sol/*/run-latest.json
-!/broadcast/InstallmentsPreviewer.s.sol
-/broadcast/InstallmentsPreviewer.s.sol/*/*
-!/broadcast/InstallmentsPreviewer.s.sol/*/run-latest.json
+!/broadcast/ExaPreviewer.s.sol
+/broadcast/ExaPreviewer.s.sol/*/*
+!/broadcast/ExaPreviewer.s.sol/*/run-latest.json
 !/broadcast/IssuerChecker.s.sol
 /broadcast/IssuerChecker.s.sol/*/*
 !/broadcast/IssuerChecker.s.sol/*/run-latest.json

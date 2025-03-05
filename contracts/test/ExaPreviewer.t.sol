@@ -3,30 +3,30 @@ pragma solidity ^0.8.0;
 
 import { ForkTest } from "./Fork.t.sol";
 
-import { DeployInstallmentsPreviewer } from "../script/InstallmentsPreviewer.s.sol";
-import { ICollectableMarket, InstallmentsPreviewer } from "../src/InstallmentsPreviewer.sol";
+import { DeployExaPreviewer } from "../script/ExaPreviewer.s.sol";
+import { ExaPreviewer, ICollectableMarket } from "../src/ExaPreviewer.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
-contract InstallmentsPreviewerTest is ForkTest {
+contract ExaPreviewerTest is ForkTest {
   ICollectableMarket internal exaUSDC;
-  InstallmentsPreviewer internal previewer;
+  ExaPreviewer internal previewer;
 
   function setUp() external {
     DeployProtocol p = new DeployProtocol();
     p.run();
     exaUSDC = ICollectableMarket(address(p.exaUSDC()));
 
-    DeployInstallmentsPreviewer ip = new DeployInstallmentsPreviewer();
+    DeployExaPreviewer ep = new DeployExaPreviewer();
     set("MarketUSDC", address(exaUSDC));
-    ip.run();
+    ep.run();
     unset("MarketUSDC");
-    previewer = ip.installmentsPreviewer();
+    previewer = ep.previewer();
   }
 
   // solhint-disable func-name-mixedcase
 
-  function test_preview_returns() external view {
-    previewer.preview();
+  function test_utilizations_returns() external view {
+    previewer.utilizations();
   }
 
   // solhint-enable func-name-mixedcase

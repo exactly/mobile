@@ -7,7 +7,7 @@ import { FixedPool, IMarket } from "./IExaAccount.sol";
 
 uint256 constant FIXED_INTERVAL = 4 weeks;
 
-contract InstallmentsPreviewer {
+contract ExaPreviewer {
   using FixedPointMathLib for uint256;
 
   ICollectableMarket public immutable EXA_USDC;
@@ -16,7 +16,7 @@ contract InstallmentsPreviewer {
     EXA_USDC = exaUSDC;
   }
 
-  function preview() external view returns (Preview memory) {
+  function utilizations() external view returns (Utilizations memory) {
     uint256 floatingAssets = EXA_USDC.floatingAssets();
     uint256 floatingDebt = EXA_USDC.floatingDebt();
     uint256 backupBorrowed = EXA_USDC.floatingBackupBorrowed();
@@ -33,7 +33,7 @@ contract InstallmentsPreviewer {
           : 0
       });
     }
-    return Preview({
+    return Utilizations({
       floatingAssets: floatingAssets,
       globalUtilization: floatingAssets != 0 ? (floatingDebt + backupBorrowed).divWadUp(floatingAssets) : 0,
       floatingUtilization: floatingAssets != 0 ? floatingDebt.divWadUp(floatingAssets) : 0,
@@ -55,7 +55,7 @@ interface IInterestRateModel {
   function parameters() external view returns (IRMParameters memory);
 }
 
-struct Preview {
+struct Utilizations {
   uint256 floatingAssets;
   uint256 globalUtilization;
   uint256 floatingUtilization;

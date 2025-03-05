@@ -22,6 +22,8 @@ contract DeployAccount is BaseScript {
     vm.startBroadcast(acct("deployer"));
     vm.etch(address(ENTRYPOINT), address(new EntryPoint()).code);
     vm.etch(ACCOUNT_IMPL, address(new UpgradeableModularAccount(ENTRYPOINT)).code);
+    vm.label(address(ENTRYPOINT), "EntryPoint");
+    vm.label(ACCOUNT_IMPL, "UpgradeableModularAccount");
 
     if (block.chainid == getChain("anvil").chainId) {
       try vm.activeFork() {

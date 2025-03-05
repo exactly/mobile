@@ -113,6 +113,7 @@ contract ExaPluginTest is ForkTest {
   ExaPlugin internal exaPlugin;
   WebauthnOwnerPlugin internal ownerPlugin;
   IssuerChecker internal issuerChecker;
+  ProposalManager internal proposalManager;
   bytes32 internal domainSeparator;
   Refunder internal refunder;
 
@@ -122,8 +123,6 @@ contract ExaPluginTest is ForkTest {
   IMarket internal exaWETH;
   MockERC20 internal exa;
   MockERC20 internal usdc;
-
-  ProposalManager internal proposalManager;
 
   function setUp() external {
     collector = payable(makeAddr("collector"));
