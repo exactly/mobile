@@ -2,7 +2,8 @@ import { previewerAddress } from "@exactly/common/generated/chain";
 import { healthFactor, WAD } from "@exactly/lib";
 import { TimeToFullDisplay } from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import { RefreshControl } from "react-native";
 import { ScrollView, useTheme } from "tamagui";
 import { zeroAddress } from "viem";
@@ -16,6 +17,8 @@ import HomeActions from "./HomeActions";
 import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import { getActivity, getKYCStatus } from "../../utils/server";
+import PaymentSheet from "../pay-later/PaymentSheet";
+import UpcomingPayments from "../pay-later/UpcomingPayments";
 import LatestActivity from "../shared/LatestActivity";
 import LiquidationAlert from "../shared/LiquidationAlert";
 import ProfileHeader from "../shared/ProfileHeader";
@@ -25,6 +28,7 @@ import View from "../shared/View";
 const HEALTH_FACTOR_THRESHOLD = (WAD * 11n) / 10n;
 
 export default function Home() {
+  const [paySheetOpen, setPaySheetOpen] = useState(false);
   const theme = useTheme();
   const {
     data: activity,
@@ -82,9 +86,21 @@ export default function Home() {
             </View>
             <View padded gap="$s5">
               <GettingStarted hasFunds={usdBalance > 0n} hasKYC={KYCStatus === "ok"} />
+              <UpcomingPayments
+                onSelect={(maturity) => {
+                  router.setParams({ maturity: maturity.toString() });
+                  setPaySheetOpen(true);
+                }}
+              />
               <LatestActivity activity={activity} />
             </View>
           </View>
+          <PaymentSheet
+            open={paySheetOpen}
+            onClose={() => {
+              setPaySheetOpen(false);
+            }}
+          />
         </ScrollView>
         <TimeToFullDisplay record={!!markets && !!activity} />
       </View>
