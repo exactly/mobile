@@ -81,8 +81,6 @@ export default async function setup({ provide }: TestProject) {
     shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter.contractAddress; // cspell:disable-line
     await $(shell)`forge script test/mocks/Mocks.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
-    await $(shell)`forge script script/InstallmentsPreviewer.s.sol
-      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/IssuerChecker.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
@@ -111,14 +109,10 @@ export default async function setup({ provide }: TestProject) {
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/Refunder.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+    await $(shell)`forge script script/ExaPreviewer.s.sol
+      --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
   }
 
-  const [installmentsPreviewer] = parse(
-    object({
-      transactions: tuple([object({ contractName: literal("InstallmentsPreviewer"), contractAddress: Address })]),
-    }),
-    await import(`@exactly/plugin/broadcast/InstallmentsPreviewer.s.sol/${foundry.id}/run-latest.json`),
-  ).transactions;
   const [proposalManager] = parse(
     object({
       transactions: tuple([object({ contractName: literal("ProposalManager"), contractAddress: Address })]),
@@ -130,6 +124,12 @@ export default async function setup({ provide }: TestProject) {
       transactions: tuple([object({ contractName: literal("Refunder"), contractAddress: Address })]),
     }),
     await import(`@exactly/plugin/broadcast/Refunder.s.sol/${foundry.id}/run-latest.json`),
+  ).transactions;
+  const [exaPreviewer] = parse(
+    object({
+      transactions: tuple([object({ contractName: literal("ExaPreviewer"), contractAddress: Address })]),
+    }),
+    await import(`@exactly/plugin/broadcast/ExaPreviewer.s.sol/${foundry.id}/run-latest.json`),
   ).transactions;
 
   if (initialize) {
@@ -158,7 +158,7 @@ export default async function setup({ provide }: TestProject) {
       --unlocked ${bob},${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await Promise.all([
       anvilClient.stopImpersonatingAccount({ address: bob }),
-      anvilClient.increaseTime({ seconds: 10 * 60 }),
+      anvilClient.mine({ blocks: 1, interval: 10 * 60 }),
     ]);
     await $(shell)`forge script test/mocks/BobExecute.s.sol
       --unlocked ${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
@@ -166,7 +166,8 @@ export default async function setup({ provide }: TestProject) {
   }
 
   provide("Auditor", auditor.contractAddress);
-  provide("InstallmentsPreviewer", installmentsPreviewer.contractAddress);
+  provide("BalancerVault", balancer.contractAddress);
+  provide("ExaPreviewer", exaPreviewer.contractAddress);
   provide("EXA", exa.contractAddress);
   provide("ExaAccountFactory", exaAccountFactory.contractAddress);
   provide("ExaPlugin", exaPlugin.contractAddress);
@@ -235,7 +236,8 @@ const Protocol = object({
 declare module "vitest" {
   export interface ProvidedContext {
     Auditor: Address;
-    InstallmentsPreviewer: Address;
+    BalancerVault: Address;
+    ExaPreviewer: Address;
     EXA: Address;
     ExaAccountFactory: Address;
     ExaPlugin: Address;
