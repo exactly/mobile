@@ -280,13 +280,7 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
               shouldUpdate ||= !currentPlugins.includes(exaPluginAddress);
             }
             const topicsField = filterArguments.value.fields.find(({ name }) => name.value === "topics");
-            if (topicsField?.value.kind === Kind.LIST) {
-              shouldUpdate ||= !topicsField.value.values.some(
-                (value) =>
-                  value.kind === Kind.STRING &&
-                  value.value === "0x4cf7794d9c19185f7d95767c53e511e2e67ae50f68ece9c9079c6ae83403a3e7", // Proposed
-              );
-            }
+            if (topicsField?.value.kind === Kind.LIST) shouldUpdate ||= topicsField.value.values[0]?.kind !== Kind.LIST;
           }
         }
       },
@@ -301,27 +295,29 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
         webhook_type: "GRAPHQL",
         webhook_url: url,
         graphql_query: `#graphql
-          {
-            block {
-              number
-              timestamp
-              logs(
-                filter: {
-                  addresses: ${JSON.stringify([...currentPlugins, exaPluginAddress])}
-                  topics: [
-                    "0x4cf7794d9c19185f7d95767c53e511e2e67ae50f68ece9c9079c6ae83403a3e7" # Proposed
-                    "0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0" # Proposed (legacy)
-                  ]
-                }
-              ) {
-                topics
-                data
-                account {
-                  address
-                }
-              }
-            }
-          }`,
+{
+  block {
+    number
+    timestamp
+    logs(
+      filter: {
+        addresses: ${JSON.stringify([...currentPlugins, exaPluginAddress])}
+        topics: [
+          [
+            "0x4cf7794d9c19185f7d95767c53e511e2e67ae50f68ece9c9079c6ae83403a3e7" # Proposed
+            "0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0" # Proposed (legacy)
+          ]
+        ]
+      }
+    ) {
+      topics
+      data
+      account {
+        address
+      }
+    }
+  }
+}`,
       }),
     });
     if (!createResponse.ok) throw new Error(`${createResponse.status} ${await createResponse.text()}`);
