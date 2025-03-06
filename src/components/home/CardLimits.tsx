@@ -21,12 +21,11 @@ export default function CardLimits() {
   const { address } = useAccount();
   const { presentArticle } = useIntercom();
   const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
-
   return (
     <View display="flex" justifyContent="center" backgroundColor="$backgroundSoft" gap="$s4">
       <View display="flex" flexDirection="row" justifyContent="center" alignItems="center" gap="$s2">
         <Text emphasized subHeadline color="$uiNeutralSecondary" textAlign="center">
-          {isCredit ? "Pay Later limit" : "Spending limit"}
+          Spending limit
         </Text>
         <Pressable
           onPress={() => {
@@ -37,6 +36,21 @@ export default function CardLimits() {
           <Info size={16} color="$uiBrandSecondary" />
         </Pressable>
       </View>
+      {isCredit && (
+        <View
+          alignSelf="center"
+          justifyContent="center"
+          alignItems="center"
+          backgroundColor="$cardCreditInteractive"
+          borderRadius="$r2"
+          paddingVertical="$s1"
+          paddingHorizontal="$s2"
+        >
+          <Text emphasized color="$cardCreditText" maxFontSizeMultiplier={1}>
+            PAY LATER ENABLED
+          </Text>
+        </View>
+      )}
       <View display="flex" justifyContent="center" alignItems="center">
         {isCredit ? (
           <Text
