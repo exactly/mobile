@@ -22,7 +22,9 @@ import {
   NonceTooLow,
   NotMarket,
   Proposal,
+  ProposalNonceSet,
   ProposalType,
+  Proposed,
   RollDebtData,
   Timelocked,
   Unauthorized,
@@ -81,13 +83,19 @@ contract ProposalManager is IProposalManager, AccessControl {
     proposal = proposals[account][nonce];
   }
 
-  function preExecutionChecker(address sender, uint256 nonce, address target, bytes4 selector, bytes memory callData)
+  function shiftProposal(address account) internal returns (Proposal memory proposal) {
+    uint256 nonce = nonces[account];
+    if (nonce == queueNonces[account]) revert NoProposal();
+    proposal = proposals[account][nonce];
+    _setNonce(account, nonce + 1, true);
+  }
+
+  function preExecutionChecker(address sender, address target, bytes4 selector, bytes memory callData)
     external
-    view
-    returns (uint256 nextNonce)
+    onlyRole(PROPOSER_ROLE)
   {
     if (target == address(AUDITOR)) {
-      if (selector != IAuditor.exitMarket.selector) return nonce;
+      if (selector != IAuditor.exitMarket.selector) return;
       revert Unauthorized();
     }
     if (target == address(DEBT_MANAGER)) {
@@ -100,7 +108,7 @@ contract ProposalManager is IProposalManager, AccessControl {
           uint256 maxBorrow,
           uint256 percentage
         ) = abi.decode(callData, (IMarket, uint256, uint256, uint256, uint256, uint256));
-        Proposal memory rollProposal = proposals[sender][nonce];
+        Proposal memory rollProposal = shiftProposal(sender);
         if (rollProposal.timestamp + delay > block.timestamp) revert Timelocked();
 
         RollDebtData memory rollData = abi.decode(rollProposal.data, (RollDebtData));
@@ -109,32 +117,25 @@ contract ProposalManager is IProposalManager, AccessControl {
             || rollData.percentage < percentage || rollData.repayMaturity != repayMaturity
             || rollData.borrowMaturity != borrowMaturity
         ) revert NoProposal();
-        return nonce + 1;
+        return;
       }
       revert Unauthorized();
     }
     if (target == address(INSTALLMENTS_ROUTER)) {
       if (selector == IInstallmentsRouter.borrow.selector) {
         (,,,, address receiver) = abi.decode(callData, (IMarket, uint256, uint256[], uint256, address));
-        if (hasRole(COLLECTOR_ROLE, receiver)) return nonce;
+        if (hasRole(COLLECTOR_ROLE, receiver)) return;
       }
       revert Unauthorized();
     }
-    if (target == address(SWAPPER) || allowlist[target]) return nonce;
-
+    if (target == address(SWAPPER) || allowlist[target]) return;
     IMarket marketTarget = IMarket(target);
     if (!_isMarket(marketTarget)) revert Unauthorized();
 
-    return _preExecutionMarketCheck(sender, nonce, marketTarget, selector, callData);
+    return _preExecutionMarketCheck(sender, marketTarget, selector, callData);
   }
 
-  function _preExecutionMarketCheck(
-    address sender,
-    uint256 nonce,
-    IMarket target,
-    bytes4 selector,
-    bytes memory callData
-  ) internal view returns (uint256 nextNonce) {
+  function _preExecutionMarketCheck(address sender, IMarket target, bytes4 selector, bytes memory callData) internal {
     uint256 amount = 0;
     address owner = address(0);
     address receiver = address(0);
@@ -146,7 +147,7 @@ contract ProposalManager is IProposalManager, AccessControl {
         receiver == address(DEBT_MANAGER) || receiver == address(INSTALLMENTS_ROUTER)
           || hasRole(PROPOSER_ROLE, receiver)
       ) {
-        return nonce;
+        return;
       }
       revert Unauthorized();
     } else if (selector == IERC20.transfer.selector) {
@@ -157,9 +158,9 @@ contract ProposalManager is IProposalManager, AccessControl {
       uint256 maturity;
       uint256 maxAssets;
       (maturity, amount, maxAssets, receiver,) = abi.decode(callData, (uint256, uint256, uint256, address, address));
-      if (hasRole(COLLECTOR_ROLE, receiver)) return nonce;
-      proposal = proposals[sender][nonce];
+      if (hasRole(COLLECTOR_ROLE, receiver)) return;
 
+      proposal = shiftProposal(sender);
       if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
         if (proposal.timestamp + delay > block.timestamp) revert Timelocked();
         BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
@@ -169,7 +170,7 @@ contract ProposalManager is IProposalManager, AccessControl {
         ) {
           revert NoProposal();
         }
-        return nonce + 1;
+        return;
       }
       revert Unauthorized();
     } else if (selector == IERC4626.withdraw.selector || selector == IERC4626.redeem.selector) {
@@ -177,25 +178,22 @@ contract ProposalManager is IProposalManager, AccessControl {
     } else if (selector == IMarket.borrow.selector) {
       (, receiver,) = abi.decode(callData, (uint256, address, address));
       if (!hasRole(COLLECTOR_ROLE, receiver)) revert Unauthorized();
-      return nonce;
+      return;
     } else {
-      return nonce;
+      return;
     }
 
-    if (hasRole(COLLECTOR_ROLE, receiver) || hasRole(PROPOSER_ROLE, receiver)) return nonce;
+    if (hasRole(COLLECTOR_ROLE, receiver) || hasRole(PROPOSER_ROLE, receiver)) return;
 
-    proposal = proposals[owner][nonce];
+    proposal = shiftProposal(owner);
 
-    return _checkMarketProposal(proposal, target, amount, receiver, nonce);
+    return _checkMarketProposal(proposal, target, amount, receiver);
   }
 
-  function _checkMarketProposal(
-    Proposal memory proposal,
-    IMarket target,
-    uint256 amount,
-    address receiver,
-    uint256 nonce
-  ) internal view returns (uint256) {
+  function _checkMarketProposal(Proposal memory proposal, IMarket target, uint256 amount, address receiver)
+    internal
+    view
+  {
     // slither-disable-next-line incorrect-equality -- unsigned zero check
     if (proposal.amount == 0) revert NoProposal();
     if (proposal.amount < amount) revert NoProposal();
@@ -204,26 +202,30 @@ contract ProposalManager is IProposalManager, AccessControl {
     if (proposal.proposalType == ProposalType.WITHDRAW || proposal.proposalType == ProposalType.REDEEM) {
       if (abi.decode(proposal.data, (address)) != receiver) revert NoProposal();
     }
-    return nonce + 1;
   }
 
   function propose(address account, IMarket market, uint256 amount, ProposalType proposalType, bytes memory data)
     external
     onlyRole(PROPOSER_ROLE)
-    returns (uint256 nonce)
   {
     if (amount == 0) revert ZeroAmount();
     _checkMarket(market);
-    nonce = queueNonces[account];
+    uint256 nonce = queueNonces[account];
     proposals[account][nonce] =
       Proposal({ amount: amount, market: market, timestamp: block.timestamp, proposalType: proposalType, data: data });
     queueNonces[account] = nonce + 1;
+    emit Proposed(account, nonce, market, proposalType, amount, data, block.timestamp + delay);
   }
 
   function setNonce(address account, uint256 nonce) external onlyRole(PROPOSER_ROLE) {
+    _setNonce(account, nonce, false);
+  }
+
+  function _setNonce(address account, uint256 nonce, bool executed) internal {
     if (nonce <= nonces[account]) revert NonceTooLow();
     if (nonce > queueNonces[account]) revert NoProposal();
     nonces[account] = nonce;
+    emit ProposalNonceSet(account, nonce, executed);
   }
 
   function setAllowedTarget(address target, bool allowed) external onlyRole(DEFAULT_ADMIN_ROLE) {

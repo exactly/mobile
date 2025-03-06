@@ -44,9 +44,7 @@ import {
   NotMarket,
   Proposal,
   ProposalManagerSet,
-  ProposalNonceSet,
   ProposalType,
-  Proposed,
   RepayData,
   RollDebtData,
   SwapData,
@@ -164,13 +162,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
-    uint256 nonce = proposalManager.propose(msg.sender, market, amount, proposalType, data);
-    // slither-disable-next-line reentrancy-events -- needs returned value
-    emit Proposed(msg.sender, nonce, market, proposalType, amount, data, block.timestamp + proposalManager.delay());
+    proposalManager.propose(msg.sender, market, amount, proposalType, data);
   }
 
   function setProposalNonce(uint256 nonce) external {
-    emit ProposalNonceSet(msg.sender, nonce, false);
     proposalManager.setNonce(msg.sender, nonce);
   }
 
@@ -460,57 +455,39 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   /// @inheritdoc BasePlugin
-  function postExecutionHook(uint8 functionId, bytes calldata preExecHookData) external override {
-    if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
-      if (preExecHookData.length == 0) return;
-      uint256 nonce = abi.decode(preExecHookData, (uint256));
-      emit ProposalNonceSet(msg.sender, nonce, true);
-      proposalManager.setNonce(msg.sender, nonce);
-      return;
-    }
+  function postExecutionHook(uint8 functionId, bytes calldata) external pure override {
+    if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) return;
     revert NotImplemented(msg.sig, functionId);
   }
 
   /// @inheritdoc BasePlugin
   function preExecutionHook(uint8 functionId, address, uint256, bytes calldata callData)
     external
-    view
     override
     returns (bytes memory)
   {
     if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
       bool isExecuteBatch = bytes4(callData[0:4]) == IStandardExecutor.executeBatch.selector;
-      uint256 nonce;
-      uint256 newNonce;
       if (isExecuteBatch) {
-        nonce = proposalManager.nonces(msg.sender);
-        newNonce = nonce;
         Call[] memory calls = abi.decode(callData[4:], (Call[]));
         for (uint256 i = 0; i < calls.length; i++) {
           Call memory call = calls[i];
           if (call.target == msg.sender) continue;
-          newNonce = _preExecutionChecker(
-            call.target, newNonce, bytes4(call.data.slice(0, 4)), call.data.slice(4, callData.length)
-          );
+          _preExecutionChecker(call.target, bytes4(call.data.slice(0, 4)), call.data.slice(4, callData.length));
         }
       } else {
         address target = address(bytes20(callData[16:36]));
         if (target == msg.sender) return "";
-        nonce = proposalManager.nonces(msg.sender);
-        newNonce = _preExecutionChecker(target, nonce, bytes4(callData[132:136]), callData[136:]);
+        _preExecutionChecker(target, bytes4(callData[132:136]), callData[136:]);
       }
-      return nonce != newNonce ? abi.encode(newNonce) : bytes("");
+      return "";
     }
     revert NotImplemented(msg.sig, functionId);
   }
 
-  function _preExecutionChecker(address target, uint256 nonce, bytes4 selector, bytes memory callData)
-    internal
-    view
-    returns (uint256)
-  {
+  function _preExecutionChecker(address target, bytes4 selector, bytes memory callData) internal {
     // slither-disable-next-line calls-loop -- should deny service on revert
-    return proposalManager.preExecutionChecker(msg.sender, nonce, target, selector, callData);
+    proposalManager.preExecutionChecker(msg.sender, target, selector, callData);
   }
 
   /// @inheritdoc BasePlugin

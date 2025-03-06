@@ -47,17 +47,13 @@ interface IProposalManager {
   function delay() external view returns (uint256);
   function nextProposal(address account) external view returns (Proposal memory proposal);
   function nonces(address account) external view returns (uint256);
-  function preExecutionChecker(address sender, uint256 nonce, address target, bytes4 selector, bytes memory callData)
-    external
-    view
-    returns (uint256);
+  function preExecutionChecker(address sender, address target, bytes4 selector, bytes memory callData) external;
   function proposals(address account, uint256 nonce)
     external
     view
     returns (uint256, IMarket, uint256, ProposalType, bytes memory);
   function propose(address account, IMarket market, uint256 amount, ProposalType proposalType, bytes memory data)
-    external
-    returns (uint256 nonce);
+    external;
   function queueNonces(address account) external view returns (uint256);
   function setAllowedTarget(address target, bool allowed) external;
   function setNonce(address account, uint256 nonce) external;

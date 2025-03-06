@@ -324,7 +324,7 @@ contract ExaPluginTest is ForkTest {
 
     bytes memory data = abi.encode(receiver);
 
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    vm.expectEmit(true, true, true, true, address(proposalManager));
     emit Proposed(
       address(account), 0, exaEXA, ProposalType.WITHDRAW, amount, data, block.timestamp + proposalManager.delay()
     );
@@ -339,7 +339,7 @@ contract ExaPluginTest is ForkTest {
     bytes memory data = abi.encode(SwapData({ assetOut: IERC20(address(usdc)), minAmountOut: 1, route: route }));
 
     vm.startPrank(owner);
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    vm.expectEmit(true, true, true, true, address(proposalManager));
     emit Proposed(
       address(account), 0, exaEXA, ProposalType.SWAP, amount, data, block.timestamp + proposalManager.delay()
     );
@@ -838,11 +838,7 @@ contract ExaPluginTest is ForkTest {
     account.poke(exaEXA);
 
     vm.startPrank(address(account));
-    account.execute(
-      address(account),
-      0,
-      abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver)))
-    );
+    account.propose(exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver));
 
     skip(proposalManager.delay());
 
@@ -1189,7 +1185,7 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(proposalManager.nextProposal(address(account)).amount, 100e6);
 
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    vm.expectEmit(true, true, true, true, address(proposalManager));
     emit ProposalNonceSet(address(account), 1, false);
     account.setProposalNonce(1);
 
@@ -1722,7 +1718,7 @@ contract ExaPluginTest is ForkTest {
     account.execute(address(exaUSDC), 0, abi.encodeCall(IMarket.borrow, (100e6, owner, owner)));
   }
 
-  function test_borrowAtMaturity_reverts_withUnauthorized_whenReceiverNotCollector() external {
+  function test_borrowAtMaturity_reverts_withNoProposal_whenReceiverNotCollector() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);
 
@@ -1732,7 +1728,7 @@ contract ExaPluginTest is ForkTest {
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
         FunctionId.PRE_EXEC_VALIDATION,
-        abi.encodeWithSelector(Unauthorized.selector)
+        abi.encodeWithSelector(NoProposal.selector)
       )
     );
     account.execute(
@@ -1955,7 +1951,7 @@ contract ExaPluginTest is ForkTest {
     skip(proposalManager.delay());
 
     uint256 nonce = proposalManager.nonces(address(account));
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    vm.expectEmit(true, true, true, true, address(proposalManager));
     emit ProposalNonceSet(address(account), nonce + 1, true);
     account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
   }
