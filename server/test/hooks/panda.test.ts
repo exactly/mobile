@@ -5,14 +5,24 @@ import "../mocks/panda";
 import "../mocks/redis";
 import "../mocks/sentry";
 import "../mocks/keeper";
-import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
+
+import ProposalType from "@exactly/common/ProposalType";
+import chain, {
+  exaAccountFactoryAbi,
+  exaPluginAbi,
+  upgradeableModularAccountAbi,
+} from "@exactly/common/generated/chain";
 import * as sentry from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
 import {
+  createWalletClient,
   decodeEventLog,
+  encodeAbiParameters,
+  encodeFunctionData,
   erc20Abi,
   hexToBigInt,
+  http,
   padHex,
   zeroAddress,
   zeroHash,
@@ -23,86 +33,24 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import database, { cards, credentials, transactions } from "../../database";
+import { auditorAbi, issuerCheckerAbi, marketAbi } from "../../generated/contracts";
 import app from "../../hooks/panda";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
 import publicClient from "../../utils/publicClient";
 import traceClient from "../../utils/traceClient";
+import anvilClient from "../anvilClient";
 
 const appClient = testClient(app);
-
-const authorization = {
-  header: { signature: "056e8b40cbffe5d26487267e00d82ef2d3331d7a6756f05a8effd86d562a02fa" },
-  json: {
-    resource: "transaction",
-    action: "requested",
-    body: {
-      id: "31eaa81e-ffd9-4a2e-97eb-dccbc5f029d7",
-      type: "spend",
-      spend: {
-        amount: 900,
-        cardId: "543c1771-beae-4f26-b662-44ea48b40dc6",
-        cardType: "virtual",
-        currency: "usd",
-        localAmount: 900,
-        localCurrency: "usd",
-        merchantName: "99999",
-        merchantCity: "buenos aires",
-        merchantCountry: "argentina",
-        merchantCategory: "food",
-        merchantCategoryCode: "FOOD",
-        userId: "2cf0c886-f7c0-40f3-a8cd-3c4ab3997b66",
-        userFirstName: "David",
-        userLastName: "Mayer",
-        userEmail: "mail@mail.com",
-        status: "pending",
-      },
-    },
-  },
-} as const;
-
-const receipt = {
-  status: "success",
-  blockHash: zeroHash,
-  blockNumber: 0n,
-  contractAddress: undefined,
-  cumulativeGasUsed: 0n,
-  effectiveGasPrice: 0n,
-  from: zeroAddress,
-  gasUsed: 0n,
-  logs: [],
-  logsBloom: "0x",
-  to: null,
-  transactionHash: "0x",
-  transactionIndex: 0,
-  type: "0x0",
-} as const;
-
-const callFrame = {
-  type: "CALL",
-  from: "",
-  to: "",
-  gas: "0x",
-  gasUsed: "0x",
-  input: "0x",
-} as const;
-
-function usdcToCollector(purchaseReceipt: TransactionReceipt) {
-  return purchaseReceipt.logs
-    .filter((l) => l.address.toLowerCase() === inject("USDC").toLowerCase())
-    .map((l) => decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics: l.topics, data: l.data }))
-    .filter((l) => l.args.to === "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400")
-    .reduce((total, l) => total + l.args.value, 0n);
-}
-
-const owner = privateKeyToAccount(generatePrivateKey());
-const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
+const owner = createWalletClient({ chain, transport: http(), account: privateKeyToAccount(generatePrivateKey()) });
+const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.account.address), y: zeroHash });
 
 beforeAll(async () => {
   await database
     .insert(credentials)
     .values([{ id: "cred", publicKey: new Uint8Array(), account, factory: zeroAddress }]);
   await database.insert(cards).values([{ id: "card", credentialId: "cred", lastFour: "1234" }]);
+  await anvilClient.setBalance({ address: owner.account.address, value: 10n ** 24n });
 });
 
 describe("validation", () => {
@@ -119,7 +67,7 @@ describe("card operations", () => {
       address: inject("ExaAccountFactory"),
       abi: exaAccountFactoryAbi,
       functionName: "createAccount",
-      args: [0n, [{ x: hexToBigInt(owner.address), y: 0n }]],
+      args: [0n, [{ x: hexToBigInt(owner.account.address), y: 0n }]],
     });
   });
 
@@ -128,9 +76,17 @@ describe("card operations", () => {
       beforeAll(async () => {
         await keeper.writeContract({
           address: inject("USDC"),
-          abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
+          abi: [
+            {
+              type: "function",
+              name: "mint",
+              inputs: [{ type: "address" }, { type: "uint256" }],
+              outputs: [],
+              stateMutability: "nonpayable",
+            },
+          ],
           functionName: "mint",
-          args: [account, 420e6],
+          args: [account, 420_000_000n],
         });
         await keeper.writeContract({
           address: account,
@@ -221,6 +177,39 @@ describe("card operations", () => {
         expect(trace).toHaveBeenCalledOnce();
         expect(captureException).toHaveBeenCalledWith(new Error("0x"), expect.anything());
         expect(response.status).toBe(400);
+      });
+
+      describe("with drain proposal", () => {
+        beforeAll(async () => {
+          await execute(
+            encodeFunctionData({
+              abi: exaPluginAbi,
+              functionName: "propose",
+              args: [
+                inject("MarketUSDC"),
+                420_000_000n - 1n,
+                ProposalType.Withdraw,
+                encodeAbiParameters([{ type: "address" }], [owner.account.address]),
+              ],
+            }),
+          );
+        });
+
+        it("declines collection", async () => {
+          await database.insert(cards).values([{ id: "drain", credentialId: "cred", lastFour: "5678", mode: 0 }]);
+          vi.spyOn(sentry, "captureException").mockImplementation(() => "");
+
+          const response = await appClient.index.$post({
+            ...authorization,
+            header: { signature: "panda-signature" },
+            json: {
+              ...authorization.json,
+              body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "drain" } },
+            },
+          });
+
+          expect(response.status).toBe(400);
+        });
       });
     });
   });
@@ -483,6 +472,116 @@ describe("card operations", () => {
         expect(captureException).toHaveBeenCalledWith(new Error("Unexpected Error"), expect.anything());
         expect(response.status).toBe(569);
       });
+
+      describe("with drain proposal", () => {
+        beforeAll(async () => {
+          await execute(
+            encodeFunctionData({
+              abi: exaPluginAbi,
+              functionName: "propose",
+              args: [
+                inject("MarketUSDC"),
+                420_000_000n - 1n,
+                ProposalType.Withdraw,
+                encodeAbiParameters([{ type: "address" }], [owner.account.address]),
+              ],
+            }),
+          );
+        });
+
+        it("clears debit", async () => {
+          await database.insert(cards).values([{ id: "drain-coll", credentialId: "cred", lastFour: "5678", mode: 0 }]);
+
+          const response = await appClient.index.$post({
+            ...authorization,
+            header: { signature: "panda-signature" },
+            json: {
+              ...authorization.json,
+              action: "created",
+              body: {
+                ...authorization.json.body,
+                id: "drain-coll",
+                spend: { ...authorization.json.body.spend, cardId: "drain-coll" },
+              },
+            },
+          });
+
+          expect(response.status).toBe(200);
+        });
+      });
     });
   });
 });
+
+const authorization = {
+  header: { signature: "056e8b40cbffe5d26487267e00d82ef2d3331d7a6756f05a8effd86d562a02fa" },
+  json: {
+    resource: "transaction",
+    action: "requested",
+    body: {
+      id: "31eaa81e-ffd9-4a2e-97eb-dccbc5f029d7",
+      type: "spend",
+      spend: {
+        amount: 900,
+        cardId: "543c1771-beae-4f26-b662-44ea48b40dc6",
+        cardType: "virtual",
+        currency: "usd",
+        localAmount: 900,
+        localCurrency: "usd",
+        merchantName: "99999",
+        merchantCity: "buenos aires",
+        merchantCountry: "argentina",
+        merchantCategory: "food",
+        merchantCategoryCode: "FOOD",
+        userId: "2cf0c886-f7c0-40f3-a8cd-3c4ab3997b66",
+        userFirstName: "David",
+        userLastName: "Mayer",
+        userEmail: "mail@mail.com",
+        status: "pending",
+      },
+    },
+  },
+} as const;
+
+const receipt = {
+  status: "success",
+  blockHash: zeroHash,
+  blockNumber: 0n,
+  contractAddress: undefined,
+  cumulativeGasUsed: 0n,
+  effectiveGasPrice: 0n,
+  from: zeroAddress,
+  gasUsed: 0n,
+  logs: [],
+  logsBloom: "0x",
+  to: null,
+  transactionHash: "0x",
+  transactionIndex: 0,
+  type: "0x0",
+} as const;
+
+const callFrame = {
+  type: "CALL",
+  from: "",
+  to: "",
+  gas: "0x",
+  gasUsed: "0x",
+  input: "0x",
+} as const;
+
+function usdcToCollector(purchaseReceipt: TransactionReceipt) {
+  return purchaseReceipt.logs
+    .filter((l) => l.address.toLowerCase() === inject("USDC").toLowerCase())
+    .map((l) => decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics: l.topics, data: l.data }))
+    .filter((l) => l.args.to === "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400")
+    .reduce((total, l) => total + l.args.value, 0n);
+}
+
+function execute(calldata: Hex) {
+  return owner.writeContract({
+    address: account,
+    functionName: "execute",
+    args: [account, 0n, calldata],
+    abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
+  });
+}
