@@ -1,3 +1,4 @@
+import ProposalType from "@exactly/common/ProposalType";
 import chain, { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
 import { Address, Hash, Hex } from "@exactly/common/validation";
@@ -12,20 +13,13 @@ import {
   startSpan,
 } from "@sentry/node";
 import { deserialize, serialize } from "@wagmi/core";
+import { Mutex } from "async-mutex";
 import createDebug from "debug";
 import { Kind, parse, visit, type StringValueNode } from "graphql";
 import { Hono } from "hono";
 import { setTimeout } from "node:timers/promises";
 import * as v from "valibot";
-import {
-  BaseError,
-  CallExecutionError,
-  ContractFunctionRevertedError,
-  decodeEventLog,
-  encodeErrorResult,
-  ExecutionRevertedError,
-  formatUnits,
-} from "viem";
+import { BaseError, ContractFunctionRevertedError, decodeAbiParameters, decodeEventLog, formatUnits } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
 import { auditorAbi, marketAbi, proposalManagerAbi, proposalManagerAddress } from "../generated/contracts";
@@ -44,27 +38,36 @@ const signingKeys = new Set([process.env.ALCHEMY_BLOCK_KEY]);
 const debug = createDebug("exa:block");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
-const Withdraw = v.pipe(
+const mutexes = new Map<Address, Mutex>();
+function createMutex(address: Address) {
+  const mutex = new Mutex();
+  mutexes.set(address, mutex);
+  return mutex;
+}
+
+const Proposal = v.pipe(
   v.object({
     account: Address,
-    market: Address,
-    receiver: Address,
     amount: v.bigint(),
-    unlock: v.bigint(),
-    timestamp: v.optional(v.number()),
-    sentryTrace: v.optional(v.string()),
+    data: Hex,
+    market: Address,
+    nonce: v.bigint(),
+    proposalType: v.enum(ProposalType),
     sentryBaggage: v.optional(v.string()),
+    sentryTrace: v.optional(v.string()),
+    timestamp: v.optional(v.number()),
+    unlock: v.bigint(),
   }),
   v.transform((withdraw) => ({
-    id: `${withdraw.account}:${withdraw.market}:${withdraw.timestamp ?? Date.now() / 1000}`,
+    id: `${withdraw.account}:${withdraw.market}:${withdraw.timestamp ?? Math.floor(Date.now() / 1000)}`,
     ...withdraw,
   })),
 );
 
 redis
-  .zrange("withdraw", 0, Infinity, "BYSCORE")
+  .zrange("proposals", 0, Infinity, "BYSCORE")
   .then((messages) => {
-    for (const message of messages) scheduleWithdraw(message);
+    for (const message of messages) scheduleProposal(message);
   })
   .catch((error: unknown) => captureException(error));
 
@@ -100,133 +103,178 @@ export default app.post(
     }
     setContext("alchemy", await c.req.json());
     getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
-    const events = logs.map(({ topics, data }) =>
-      decodeEventLog({ topics, data, abi: [...exaPluginAbi, ...proposalManagerAbi] }),
-    );
+    const eventsByAccount = logs
+      .map(({ topics, data }) => decodeEventLog({ topics, data, abi: [...exaPluginAbi, ...proposalManagerAbi] }))
+      .filter((event) => event.eventName === "Proposed")
+      .map((event) => {
+        const p = v.safeParse(Proposal, { ...event.args, timestamp });
+        if (p.success) return p.output;
+        captureException(p.issues, { level: "error" });
+        return null;
+      })
+      .filter((x) => x !== null)
+      .reduce((accumulator, event) => {
+        const account = event.account;
+        if (!accumulator.has(account)) {
+          accumulator.set(account, []);
+        }
+        accumulator.get(account)?.push(event);
+        return accumulator;
+      }, new Map<string, v.InferOutput<typeof Proposal>[]>());
+
     await Promise.all(
-      events.map(async (event) => {
-        switch (event.eventName) {
-          case "Proposed": {
-            const withdraw = v.parse(Withdraw, { ...event.args, timestamp });
-            return startSpan(
+      eventsByAccount.values().flatMap((ps) =>
+        ps
+          .sort((a, b) => Number(a.nonce - b.nonce))
+          .map((proposal) =>
+            startSpan(
               {
-                name: "schedule withdraw",
+                name: "schedule proposal",
                 op: "queue.publish",
                 attributes: {
-                  account: withdraw.account,
-                  market: withdraw.market,
-                  receiver: withdraw.receiver,
-                  amount: String(withdraw.amount),
-                  unlock: Number(withdraw.unlock),
-                  "messaging.message.id": withdraw.id,
-                  "messaging.destination.name": "withdraw",
+                  account: proposal.account,
+                  amount: String(proposal.amount),
+                  data: proposal.data,
+                  market: proposal.market,
+                  nonce: Number(proposal.nonce),
+                  proposalType: proposal.proposalType,
+                  timestamp: proposal.timestamp,
+                  unlock: Number(proposal.unlock),
+                  "messaging.destination.name": "proposals",
+                  "messaging.message.id": proposal.id,
                 },
               },
               () => {
                 const { "sentry-trace": sentryTrace, baggage: sentryBaggage } = getTraceData();
-                withdraw.sentryTrace = sentryTrace;
-                withdraw.sentryBaggage = sentryBaggage;
-                const message = serialize(withdraw);
-                scheduleWithdraw(message);
-                return redis.zadd("withdraw", Number(event.args.unlock), message);
+                proposal.sentryTrace = sentryTrace;
+                proposal.sentryBaggage = sentryBaggage;
+                const message = serialize(proposal);
+                scheduleProposal(message);
+                return redis.zadd("proposals", Number(proposal.unlock + proposal.nonce), message);
               },
-            );
-          }
-        }
-      }),
+            ),
+          ),
+      ),
     );
     return c.json({});
   },
 );
 
-const noProposal = encodeErrorResult({ errorName: "NoProposal", abi: exaPluginAbi });
-
-function scheduleWithdraw(message: string) {
-  const { id, account, market, receiver, amount, unlock, sentryTrace, sentryBaggage } = v.parse(
-    Withdraw,
-    deserialize(message),
-  );
+function scheduleProposal(message: string) {
+  const { account, amount, data, id, market, nonce, proposalType, sentryBaggage, sentryTrace, timestamp, unlock } =
+    v.parse(Proposal, deserialize(message));
   setTimeout((Number(unlock) + 10) * 1000 - Date.now())
-    .then(() =>
-      continueTrace({ sentryTrace, baggage: sentryBaggage }, () =>
-        startSpan({ name: "exa.withdraw", op: "exa.withdraw" }, (parent) =>
-          startSpan(
-            {
-              name: "process withdraw",
-              op: "queue.process",
-              attributes: {
-                account,
-                market,
-                receiver,
-                amount: String(amount),
-                unlock: Number(unlock),
-                "messaging.message.id": id,
-                "messaging.destination.name": "withdraw",
-                "messaging.message.receive.latency": Date.now() - Number(unlock) * 1000,
-              },
-            },
-            async () => {
-              const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-                publicClient.simulateContract({
-                  account: keeper.account,
-                  address: account,
-                  functionName: "withdraw",
-                  abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, marketAbi[6]],
-                  ...transactionOptions,
-                }),
-              );
-              setContext("tx", request);
-              const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-                keeper.writeContract(request),
-              );
-              setContext("tx", { ...request, transactionHash: hash });
-              const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-                publicClient.waitForTransactionReceipt({ hash }),
-              );
-              setContext("tx", { ...request, ...receipt });
-              if (receipt.status !== "success") throw new Error("tx reverted");
-              parent.setStatus({ code: 1, message: "ok" });
-              Promise.all([
-                publicClient.readContract({ address: market, abi: marketAbi, functionName: "decimals" }),
-                publicClient.readContract({ address: market, abi: marketAbi, functionName: "symbol" }),
-                ensClient.getEnsName({ address: receiver }),
-              ])
-                .then(([decimals, symbol, ensName]) =>
-                  sendPushNotification({
-                    userId: account,
-                    headings: { en: "Withdraw completed" },
-                    contents: {
-                      en: `${formatUnits(amount, decimals)} ${symbol.slice(3)} sent to ${ensName ?? shortenHex(receiver)}`,
-                    },
-                  }),
-                )
-                .catch((error: unknown) => captureException(error));
-              return redis.zrem("withdraw", message);
-            },
-          ).catch((error: unknown) => {
-            if (
-              error instanceof BaseError &&
-              error.cause instanceof ContractFunctionRevertedError &&
-              error.cause.data?.errorName === "PreExecHookReverted" &&
-              error.cause.data.args?.[2] === noProposal
-            ) {
-              parent.setStatus({ code: 2, message: "aborted" });
-              return redis.zrem("withdraw", message);
-            }
-            parent.setStatus({ code: 2, message: "failed_precondition" });
-            captureException(error);
-            if (
-              chain.id === optimismSepolia.id &&
-              error instanceof BaseError &&
-              error.cause instanceof CallExecutionError &&
-              error.cause.cause instanceof ExecutionRevertedError
-            ) {
-              return redis.zrem("withdraw", message);
-            }
-          }),
-        ),
-      ),
-    )
+    .then(async () => {
+      const mutex = mutexes.get(account) ?? createMutex(account);
+      await mutex
+        .runExclusive(async () =>
+          continueTrace({ sentryTrace, baggage: sentryBaggage }, () =>
+            startSpan({ name: "exa.execute", op: "exa.execute" }, (parent) =>
+              startSpan(
+                {
+                  name: "execute proposal",
+                  op: "queue.process",
+                  attributes: {
+                    account,
+                    amount: String(amount),
+                    data,
+                    market,
+                    nonce: Number(nonce),
+                    proposalType,
+                    timestamp,
+                    unlock: Number(unlock),
+                    "messaging.destination.name": "proposals",
+                    "messaging.message.id": id,
+                    "messaging.message.receive.latency": Date.now() - Number(unlock) * 1000,
+                  },
+                },
+                async () => {
+                  const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                    publicClient.simulateContract({
+                      account: keeper.account,
+                      address: account,
+                      functionName: "executeProposal",
+                      abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
+                      ...transactionOptions,
+                    }),
+                  );
+
+                  setContext("tx", request);
+                  const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+                    keeper.writeContract(request),
+                  );
+                  setContext("tx", { ...request, transactionHash: hash });
+                  const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+                    publicClient.waitForTransactionReceipt({ hash }),
+                  );
+                  setContext("tx", { ...request, ...receipt });
+                  if (receipt.status !== "success") throw new Error("tx reverted");
+                  parent.setStatus({ code: 1, message: "ok" });
+                  if (proposalType === ProposalType.Withdraw) {
+                    const receiver = v.parse(
+                      Address,
+                      decodeAbiParameters([{ name: "receiver", type: "address" }], data)[0],
+                    );
+                    Promise.all([
+                      publicClient.readContract({ address: market, abi: marketAbi, functionName: "decimals" }),
+                      publicClient.readContract({ address: market, abi: marketAbi, functionName: "symbol" }),
+                      ensClient.getEnsName({ address: receiver }),
+                    ])
+                      .then(([decimals, symbol, ensName]) =>
+                        sendPushNotification({
+                          userId: account,
+                          headings: { en: "Withdraw completed" },
+                          contents: {
+                            en: `${formatUnits(BigInt(amount), decimals)} ${symbol.slice(3)} sent to ${ensName ?? shortenHex(receiver)}`,
+                          },
+                        }),
+                      )
+                      .catch((error: unknown) => captureException(error));
+                  }
+                  return redis.zrem("proposals", message);
+                },
+              ).catch(async (error: unknown) => {
+                parent.setStatus({ code: 2, message: "proposal_failed" });
+                captureException(error, {
+                  level: "error",
+                  contexts: { proposal: { account, nonce, proposalType: ProposalType[proposalType] } },
+                });
+                if (error instanceof BaseError && error.cause instanceof ContractFunctionRevertedError) {
+                  try {
+                    const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+                      publicClient.simulateContract({
+                        account: keeper.account,
+                        address: account,
+                        functionName: "setProposalNonce",
+                        args: [nonce + 1n],
+                        abi: exaPluginAbi,
+                        ...transactionOptions,
+                      }),
+                    );
+
+                    setContext("tx", request);
+                    const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
+                      keeper.writeContract(request),
+                    );
+                    setContext("tx", { ...request, transactionHash: hash });
+                    const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
+                      publicClient.waitForTransactionReceipt({ hash }),
+                    );
+                    setContext("tx", { ...request, ...receipt });
+                    if (receipt.status !== "success") throw new Error("increment nonce tx reverted");
+                  } catch (error_: unknown) {
+                    captureException(error_, { level: "error" });
+                  }
+                  return redis.zrem("proposals", message);
+                }
+              }),
+            ),
+          ),
+        )
+        .finally(() => {
+          if (!mutex.isLocked()) mutexes.delete(account);
+        });
+    })
     .catch((error: unknown) => captureException(error));
 }
 
