@@ -1120,6 +1120,38 @@ contract ExaPluginTest is ForkTest {
     assertEq(receiver.balance, 0);
   }
 
+  function test_withdraw_reverts_whenNoProposalAndReceiverIsProposer() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(Unauthorized.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100, address(exaPlugin), address(account))));
+  }
+
+  function test_redeem_reverts_whenNoProposalAndReceiverIsProposer() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(Unauthorized.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.redeem, (100, address(exaPlugin), address(account))));
+  }
+
   function test_redeem_withdraws() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);

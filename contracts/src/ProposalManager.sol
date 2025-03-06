@@ -6,6 +6,7 @@ import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
+import { ExaPlugin } from "./ExaPlugin.sol";
 import {
   AllowedTargetSet,
   BorrowAtMaturityData,
@@ -175,6 +176,15 @@ contract ProposalManager is IProposalManager, AccessControl {
       revert Unauthorized();
     } else if (selector == IERC4626.withdraw.selector || selector == IERC4626.redeem.selector) {
       (amount, receiver, owner) = abi.decode(callData, (uint256, address, address));
+      if (hasRole(COLLECTOR_ROLE, receiver)) return;
+      if (hasRole(PROPOSER_ROLE, receiver)) {
+        if (
+          ExaPlugin(payable(msg.sender)).callHash() != keccak256(abi.encode(target, selector, amount, receiver, owner))
+        ) {
+          revert Unauthorized();
+        }
+        return;
+      }
     } else if (selector == IMarket.borrow.selector) {
       (, receiver,) = abi.decode(callData, (uint256, address, address));
       if (!hasRole(COLLECTOR_ROLE, receiver)) revert Unauthorized();
@@ -182,8 +192,6 @@ contract ProposalManager is IProposalManager, AccessControl {
     } else {
       return;
     }
-
-    if (hasRole(COLLECTOR_ROLE, receiver) || hasRole(PROPOSER_ROLE, receiver)) return;
 
     proposal = shiftProposal(owner);
 

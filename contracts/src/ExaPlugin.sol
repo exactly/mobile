@@ -89,7 +89,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   address public collector;
   mapping(address account => uint256 timestamp) public uninstallProposals;
 
-  bytes32 private callHash;
+  bytes32 public callHash;
 
   constructor(Parameters memory p) {
     USDC = IERC20(p.exaUSDC.asset());
@@ -180,7 +180,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _checkIssuer(msg.sender, amount, timestamp, signature);
     _checkMarket(collateral);
 
+    // slither-disable-next-line reentrancy-benign -- issuer checker is safe
+    callHash = keccak256(abi.encode(collateral, IERC4626.withdraw.selector, maxAmountIn, address(this), msg.sender));
     _withdrawFromSender(collateral, maxAmountIn, address(this));
+    // slither-disable-next-line reentrancy-benign -- markets are safe
+    delete callHash;
     (amountIn, amountOut) = _swap(IERC20(collateral.asset()), IERC20(USDC), maxAmountIn, amount, route);
     IERC20(USDC).safeTransfer(collector, amount);
 
@@ -721,6 +725,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   function _withdraw(Proposal memory proposal) internal {
     address receiver = abi.decode(proposal.data, (address));
     bool isWETH = proposal.market == EXA_WETH;
+    if (isWETH) {
+      callHash = keccak256(
+        abi.encode(
+          proposal.market,
+          proposal.proposalType == ProposalType.REDEEM ? IERC4626.redeem.selector : IERC4626.withdraw.selector,
+          proposal.amount,
+          address(this),
+          msg.sender
+        )
+      );
+    }
 
     uint256 assets = 0;
     if (proposal.proposalType == ProposalType.REDEEM) {
@@ -738,6 +753,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     }
 
     if (isWETH) {
+      // slither-disable-next-line reentrancy-benign -- markets are safe
+      delete callHash;
       WETH.withdraw(assets);
       receiver.safeTransferETH(assets);
     }
