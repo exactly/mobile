@@ -587,7 +587,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
         )
       )
     );
-    _approveFromSender(address(proposal.market), address(this), proposal.amount);
     _flashLoan(crossData.maxRepay, data);
   }
 
@@ -654,7 +653,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
         )
       )
     );
-    _approveFromSender(address(EXA_USDC), address(this), EXA_USDC.previewWithdraw(proposal.amount));
     _flashLoan(proposal.amount, data);
   }
 
