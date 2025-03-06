@@ -1,6 +1,7 @@
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import chain, {
   exaPluginAbi,
+  exaPluginAddress,
   exaPreviewerAbi,
   exaPreviewerAddress,
   upgradeableModularAccountAbi,
@@ -26,16 +27,25 @@ import * as v from "valibot";
 import {
   decodeErrorResult,
   decodeEventLog,
+  encodeAbiParameters,
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
+  keccak256,
   maxUint256,
   padHex,
+  toBytes,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, transactions } from "../database/index";
-import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
+import {
+  auditorAbi,
+  issuerCheckerAbi,
+  issuerCheckerAddress,
+  marketAbi,
+  proposalManagerAbi,
+} from "../generated/contracts";
 import collectors from "../utils/collectors";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
@@ -151,7 +161,35 @@ export default new Hono().post(
         if (!transaction) return authorize();
         try {
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
-            traceClient.traceCall(transaction),
+            traceClient.traceCall({
+              from: account,
+              to: exaPreviewerAddress,
+              data: transaction.data,
+              stateOverride: [
+                {
+                  address: exaPluginAddress,
+                  stateDiff: [
+                    {
+                      slot: keccak256(
+                        encodeAbiParameters(
+                          [{ type: "address" }, { type: "bytes32" }],
+                          [
+                            exaPreviewerAddress,
+                            keccak256(
+                              encodeAbiParameters(
+                                [{ type: "bytes32" }, { type: "uint256" }],
+                                [keccak256(toBytes("KEEPER_ROLE")), 0n],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      value: encodeAbiParameters([{ type: "uint256" }], [1n]),
+                    },
+                  ],
+                },
+              ],
+            }),
           );
           if (trace.output) {
             let error: string = trace.output;
@@ -161,6 +199,7 @@ export default new Hono().post(
                 abi: [
                   ...exaPluginAbi,
                   ...issuerCheckerAbi,
+                  ...proposalManagerAbi,
                   ...upgradeableModularAccountAbi,
                   ...auditorAbi,
                   ...marketAbi,
@@ -301,7 +340,13 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
     if (card.mode === 1 || spent < card.mode * 100 || payload.action === "requested") {
       return {
         functionName: "collectCredit",
-        args: [BigInt(firstMaturity + (card.mode - 1) * MATURITY_INTERVAL), amount, BigInt(timestamp), signature],
+        args: [
+          BigInt(firstMaturity + (card.mode - 1) * MATURITY_INTERVAL),
+          amount,
+          maxUint256,
+          BigInt(timestamp),
+          signature,
+        ],
       } as const;
     }
     const preview = await startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
