@@ -158,7 +158,7 @@ export default async function setup({ provide }: TestProject) {
       --unlocked ${bob},${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await Promise.all([
       anvilClient.stopImpersonatingAccount({ address: bob }),
-      anvilClient.increaseTime({ seconds: 10 * 60 }),
+      anvilClient.mine({ blocks: 1, interval: 10 * 60 }),
     ]);
     await $(shell)`forge script test/mocks/BobExecute.s.sol
       --unlocked ${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
