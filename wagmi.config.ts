@@ -25,10 +25,11 @@ const usdc = loadDeployment("USDC");
 const weth = loadDeployment("WETH");
 const [exaPlugin, , factory] = loadBroadcast("Deploy").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
+const [proposalManager] = loadBroadcast("ProposalManager").transactions;
 const [exaPreviewer] = loadBroadcast("ExaPreviewer").transactions;
 const [, mockSwapper] =
   chainId === optimismSepolia.id ? loadBroadcast("Mocks").transactions : [{}, { contractAddress: zeroAddress }];
-if (!exaPlugin || !factory || !issuerChecker || !exaPreviewer) throw new Error("missing contracts");
+if (!exaPlugin || !factory || !issuerChecker || !proposalManager || !exaPreviewer) throw new Error("missing contracts");
 
 export default defineConfig([
   {
@@ -84,11 +85,12 @@ export default defineConfig([
       { name: "Previewer", abi: previewer.abi },
     ],
     plugins: [
-      addresses({ issuerChecker: issuerChecker.contractAddress }),
+      addresses({ issuerChecker: issuerChecker.contractAddress, proposalManager: proposalManager.contractAddress }),
       foundry({
         project: "contracts",
         include: [
           "IssuerChecker.sol/IssuerChecker.json",
+          "ProposalManager.sol/ProposalManager.json",
           "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
         ],
       }),
