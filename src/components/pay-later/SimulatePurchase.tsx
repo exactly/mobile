@@ -19,6 +19,7 @@ import type { getCard } from "../../utils/server";
 import { setCardMode } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
 import useInstallments from "../../utils/useInstallments";
+import useIntercom from "../../utils/useIntercom";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import TamaguiInput from "../shared/TamaguiInput";
@@ -35,6 +36,7 @@ function back() {
 export default function SimulatePurchase() {
   const { canGoBack } = router;
   const insets = useSafeAreaInsets();
+  const { presentArticle } = useIntercom();
   const [input, setInput] = useState("100");
   const [assets, setAssets] = useState(100n);
   const { data: installments } = useQuery<number>({ queryKey: ["simulate-purchase", "installments"] });
@@ -102,7 +104,11 @@ export default function SimulatePurchase() {
             <Text emphasized subHeadline>
               Estimate your payments
             </Text>
-            <Pressable>
+            <Pressable
+              onPress={() => {
+                presentArticle("8971590").catch(handleError);
+              }}
+            >
               <Info color="$uiNeutralPrimary" />
             </Pressable>
           </View>
