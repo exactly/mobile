@@ -28,7 +28,7 @@ import {
 } from "viem";
 import { optimism, optimismSepolia } from "viem/chains";
 
-import { auditorAbi, marketAbi } from "../generated/contracts";
+import { auditorAbi, marketAbi, proposalManagerAbi, proposalManagerAddress } from "../generated/contracts";
 import { headerValidator, jsonValidator, webhooksKey } from "../utils/alchemy";
 import appOrigin from "../utils/appOrigin";
 import ensClient from "../utils/ensClient";
@@ -100,7 +100,9 @@ export default app.post(
     }
     setContext("alchemy", await c.req.json());
     getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
-    const events = logs.map(({ topics, data }) => decodeEventLog({ topics, data, abi: exaPluginAbi }));
+    const events = logs.map(({ topics, data }) =>
+      decodeEventLog({ topics, data, abi: [...exaPluginAbi, ...proposalManagerAbi] }),
+    );
     await Promise.all(
       events.map(async (event) => {
         switch (event.eventName) {
@@ -262,7 +264,7 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
     if (!queryResponse.ok) throw new Error(`${queryResponse.status} ${await queryResponse.text()}`);
     const { data: query } = (await queryResponse.json()) as { data: { graphql_query: string } };
     let shouldUpdate = false;
-    let currentPlugins: string[] = [];
+    let currentAddresses: string[] = [];
     visit(parse(query.graphql_query), {
       Field(node) {
         if (node.name.value === "block") {
@@ -274,10 +276,11 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
           if (filterArguments?.value.kind === Kind.OBJECT) {
             const addressesField = filterArguments.value.fields.find(({ name }) => name.value === "addresses");
             if (addressesField?.value.kind === Kind.LIST) {
-              currentPlugins = addressesField.value.values
+              currentAddresses = addressesField.value.values
                 .filter((value): value is StringValueNode => value.kind === Kind.STRING)
                 .map(({ value }) => v.parse(Address, value));
-              shouldUpdate ||= !currentPlugins.includes(exaPluginAddress);
+              shouldUpdate ||=
+                !currentAddresses.includes(exaPluginAddress) || !currentAddresses.includes(proposalManagerAddress);
             }
             const topicsField = filterArguments.value.fields.find(({ name }) => name.value === "topics");
             if (topicsField?.value.kind === Kind.LIST) shouldUpdate ||= topicsField.value.values[0]?.kind !== Kind.LIST;
@@ -301,7 +304,9 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
     timestamp
     logs(
       filter: {
-        addresses: ${JSON.stringify([...currentPlugins, exaPluginAddress])}
+        addresses: ${JSON.stringify(
+          [...new Set([...currentAddresses, exaPluginAddress, proposalManagerAddress])].sort(),
+        )}
         topics: [
           [
             "0x4cf7794d9c19185f7d95767c53e511e2e67ae50f68ece9c9079c6ae83403a3e7" # Proposed
