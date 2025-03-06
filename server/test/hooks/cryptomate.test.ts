@@ -440,3 +440,9 @@ describe("card operations", () => {
     });
   });
 });
+
+vi.mock("../../utils/cryptomate", async () => {
+  const { signIssuerOp: _, ...original } = await import("../../utils/cryptomate");
+  const { signIssuerOp } = await import("../../utils/panda");
+  return { ...original, signIssuerOp };
+});

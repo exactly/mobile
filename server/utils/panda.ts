@@ -1,5 +1,5 @@
-import { exaPluginAddress } from "@exactly/common/generated/chain";
-import type { Address } from "@exactly/common/validation";
+import chain, { exaPluginAddress } from "@exactly/common/generated/chain";
+import { type Address, Hash } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { createHmac } from "node:crypto";
 import removeAccents from "remove-accents";
@@ -17,8 +17,9 @@ import {
   string,
 } from "valibot";
 import { BaseError, ContractFunctionZeroDataError } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
-import { upgradeableModularAccountAbi } from "../generated/contracts";
+import { issuerCheckerAddress, upgradeableModularAccountAbi } from "../generated/contracts";
 import publicClient from "../utils/publicClient";
 
 const plugin = exaPluginAddress.toLowerCase();
@@ -168,5 +169,22 @@ export function headerValidator() {
         .digest("hex")
       ? undefined
       : c.text("unauthorized", 401);
+  });
+}
+
+// TODO remove code below
+const issuer = privateKeyToAccount(parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
+export function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: bigint; timestamp: number }) {
+  return issuer.signTypedData({
+    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
+    types: {
+      Collection: [
+        { name: "account", type: "address" },
+        { name: "amount", type: "uint256" },
+        { name: "timestamp", type: "uint40" },
+      ],
+    },
+    primaryType: "Collection",
+    message: { account, amount, timestamp },
   });
 }

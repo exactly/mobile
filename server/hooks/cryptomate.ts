@@ -1,12 +1,12 @@
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
-import chain, {
+import {
   exaPluginAbi,
   exaPreviewerAbi,
   exaPreviewerAddress,
   upgradeableModularAccountAbi,
   usdcAddress,
 } from "@exactly/common/generated/chain";
-import { Address, Hash, type Hex } from "@exactly/common/validation";
+import { Address, type Hash, type Hex } from "@exactly/common/validation";
 import { MATURITY_INTERVAL, splitInstallments } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -35,11 +35,11 @@ import {
   maxUint256,
   padHex,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, transactions } from "../database/index";
-import { auditorAbi, issuerCheckerAbi, issuerCheckerAddress, marketAbi } from "../generated/contracts";
+import { auditorAbi, issuerCheckerAbi, marketAbi } from "../generated/contracts";
 import collectors from "../utils/collectors";
+import { signIssuerOp } from "../utils/cryptomate";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
@@ -254,7 +254,7 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
   if (amount === 0n) return { account, amount, call: null, transaction: null };
   const call = await (async () => {
     const timestamp = Math.floor(new Date(payload.data.created_at).getTime() / 1000);
-    const signature = await signIssuerOp({ account, amount: payload.data.bill_amount, timestamp }); // TODO replace with payload signature
+    const signature = await signIssuerOp({ account, amount, timestamp }); // TODO replace with payload signature
     if (card.mode === 0) {
       return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
     }
@@ -332,21 +332,4 @@ interface TransferLog {
   topics: [Hash, Hash, Hash];
   data: Hex;
   position: Hex;
-}
-
-// TODO remove code below
-const issuer = privateKeyToAccount(v.parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
-function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: number; timestamp: number }) {
-  return issuer.signTypedData({
-    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
-    types: {
-      Operation: [
-        { name: "account", type: "address" },
-        { name: "amount", type: "uint256" },
-        { name: "timestamp", type: "uint40" },
-      ],
-    },
-    primaryType: "Operation",
-    message: { account, amount: BigInt(Math.round(amount * 1e6)), timestamp },
-  });
 }
