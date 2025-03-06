@@ -1,8 +1,11 @@
-import { Address } from "@exactly/common/validation";
+import chain from "@exactly/common/generated/chain";
+import { Address, Hash } from "@exactly/common/validation";
 import removeAccents from "remove-accents";
 import * as v from "valibot";
+import { privateKeyToAccount } from "viem/accounts";
 
 import { track } from "./segment";
+import { issuerCheckerAddress } from "../generated/contracts";
 
 if (!process.env.CRYPTOMATE_URL || !process.env.CRYPTOMATE_API_KEY) throw new Error("missing cryptomate vars");
 const baseURL = process.env.CRYPTOMATE_URL;
@@ -104,3 +107,20 @@ const CardResponse = v.object({
 });
 
 const PANResponse = v.object({ url: v.pipe(v.string(), v.url()) });
+
+// TODO remove code below
+const issuer = privateKeyToAccount(v.parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
+export function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: bigint; timestamp: number }) {
+  return issuer.signTypedData({
+    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
+    types: {
+      Operation: [
+        { name: "account", type: "address" },
+        { name: "amount", type: "uint256" },
+        { name: "timestamp", type: "uint40" },
+      ],
+    },
+    primaryType: "Operation",
+    message: { account, amount, timestamp },
+  });
+}

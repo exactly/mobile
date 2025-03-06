@@ -1,5 +1,5 @@
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
-import chain, {
+import {
   exaPluginAbi,
   exaPluginAddress,
   exaPreviewerAbi,
@@ -7,7 +7,7 @@ import chain, {
   upgradeableModularAccountAbi,
   usdcAddress,
 } from "@exactly/common/generated/chain";
-import { Address, Hash, type Hex } from "@exactly/common/validation";
+import { Address, type Hash, type Hex } from "@exactly/common/validation";
 import { MATURITY_INTERVAL, splitInstallments } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
 import {
@@ -36,20 +36,13 @@ import {
   padHex,
   toBytes,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 
 import database, { cards, transactions } from "../database/index";
-import {
-  auditorAbi,
-  issuerCheckerAbi,
-  issuerCheckerAddress,
-  marketAbi,
-  proposalManagerAbi,
-} from "../generated/contracts";
+import { auditorAbi, issuerCheckerAbi, marketAbi, proposalManagerAbi } from "../generated/contracts";
 import collectors from "../utils/collectors";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
-import { headerValidator } from "../utils/panda";
+import { headerValidator, signIssuerOp } from "../utils/panda";
 import publicClient from "../utils/publicClient";
 import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
@@ -325,19 +318,20 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
   const account = v.parse(Address, card.credential.account);
   setUser({ id: account });
   setTag("exa.mode", card.mode);
-  const spent = payload.action === "updated" ? payload.body.spend.authorizationUpdateAmount : payload.body.spend.amount;
-  const amount = BigInt(Math.round(spent * 1e4));
+  const usdAmount =
+    (payload.action === "updated" ? payload.body.spend.authorizationUpdateAmount : payload.body.spend.amount) / 100;
+  const amount = BigInt(Math.round(usdAmount * 1e6));
   if (amount === 0n) return { account, amount, call: null, transaction: null };
   const call = await (async () => {
     const timestamp = Math.floor(Date.now() / 1000);
-    const signature = await signIssuerOp({ account, amount: spent, timestamp }); // TODO replace with payload signature
+    const signature = await signIssuerOp({ account, amount, timestamp }); // TODO replace with payload signature
     if (card.mode === 0) {
       return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
     }
     const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
     const firstMaturity =
       nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
-    if (card.mode === 1 || spent < card.mode * 100 || payload.action === "requested") {
+    if (card.mode === 1 || usdAmount < card.mode || payload.action === "requested") {
       return {
         functionName: "collectCredit",
         args: [
@@ -414,21 +408,4 @@ interface TransferLog {
   topics: [Hash, Hash, Hash];
   data: Hex;
   position: Hex;
-}
-
-// TODO remove code below
-const issuer = privateKeyToAccount(v.parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
-function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: number; timestamp: number }) {
-  return issuer.signTypedData({
-    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
-    types: {
-      Collection: [
-        { name: "account", type: "address" },
-        { name: "amount", type: "uint256" },
-        { name: "timestamp", type: "uint40" },
-      ],
-    },
-    primaryType: "Collection",
-    message: { account, amount: BigInt(Math.round(amount * 1e4)), timestamp },
-  });
 }
