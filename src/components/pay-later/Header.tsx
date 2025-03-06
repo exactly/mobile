@@ -50,10 +50,6 @@ export default function Header() {
     if (!cardDetails) return;
     mutateMode(cardDetails.mode === 0 ? (lastInstallments ?? 1) : 0).catch(handleError);
   }
-
-  function learnMore() {
-    presentArticle("9994746").catch(handleError);
-  }
   return (
     <YStack backgroundColor="$backgroundSoft" paddingTop="$s8" paddingBottom="$s3" gap="$s4_5">
       <XStack gap={ms(10)} justifyContent="space-between" alignItems="center">
@@ -86,7 +82,11 @@ export default function Header() {
         fixed-rate payments in USDC*.
       </Text>
       <Separator height={1} borderColor="$borderNeutralSoft" paddingVertical="$s2" />
-      <Pressable onPress={learnMore}>
+      <Pressable
+        onPress={() => {
+          presentArticle("9465994").catch(handleError);
+        }}
+      >
         <XStack justifyContent="space-between" alignItems="center">
           <Text color="$uiBrandSecondary" footnote>
             Learn more about Pay Later and how it works
