@@ -11,6 +11,7 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import CardDetails from "./CardDetails";
+import DisclaimerDialog from "./DisclaimerDialog";
 import SpendingLimits from "./SpendingLimits";
 import ExaCard from "./exa-card/ExaCard";
 import {
@@ -32,6 +33,7 @@ import View from "../shared/View";
 export default function Card() {
   const theme = useTheme();
   const { presentArticle } = useIntercom();
+  const [disclaimerShown, setDisclaimerShown] = useState(false);
   const [cardDetailsOpen, setCardDetailsOpen] = useState(false);
   const [spendingLimitsOpen, setSpendingLimitsOpen] = useState(false);
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
@@ -105,9 +107,7 @@ export default function Card() {
         }
         const result = await getKYCStatus();
         if (result === "ok") {
-          await createCard();
-          const { data: card } = await refetchCard();
-          if (card) setCardDetailsOpen(true);
+          setDisclaimerShown(true);
         } else {
           resumeInquiry(result.inquiryId, result.sessionToken).catch(handleError);
         }
@@ -138,6 +138,20 @@ export default function Card() {
     mutationFn: setCardStatus,
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
+    },
+  });
+
+  const { mutateAsync: generateCard } = useMutation({
+    mutationKey: ["card", "create"],
+    mutationFn: async () => {
+      if (!passkey) return;
+      try {
+        await createCard();
+        const { data: card } = await refetchCard();
+        if (card) setCardDetailsOpen(true);
+      } catch (error) {
+        handleError(error);
+      }
     },
   });
 
@@ -325,6 +339,16 @@ export default function Card() {
           open={spendingLimitsOpen}
           onClose={() => {
             setSpendingLimitsOpen(false);
+          }}
+        />
+        <DisclaimerDialog
+          open={disclaimerShown}
+          onActionPress={() => {
+            setDisclaimerShown(false);
+            generateCard().catch(handleError);
+          }}
+          onClose={() => {
+            setDisclaimerShown(false);
           }}
         />
       </View>
