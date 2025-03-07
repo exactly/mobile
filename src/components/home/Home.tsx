@@ -81,10 +81,8 @@ export default function Home() {
               <HomeActions />
               <Balance usdBalance={usdBalance} />
             </View>
-            <View backgroundColor="cardCreditBackground" padded>
-              <CardStatus />
-            </View>
             <View padded gap="$s5">
+              <CardStatus />
               <GettingStarted hasFunds={usdBalance > 0n} hasKYC={KYCStatus === "ok"} />
               <UpcomingPayments
                 onSelect={(maturity) => {
