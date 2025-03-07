@@ -44,7 +44,11 @@ export default defineConfig([
     plugins: [
       foundry({
         project: "contracts",
-        include: ["ExaPlugin.sol/ExaPlugin.json", "UpgradeableModularAccount.sol/UpgradeableModularAccount.json"],
+        include: [
+          "ExaPlugin.sol/ExaPlugin.json",
+          "ExaPreviewer.sol/ExaPreviewer.json",
+          "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
+        ],
       }),
       react(),
     ],
