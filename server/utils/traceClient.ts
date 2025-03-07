@@ -50,6 +50,11 @@ export default createPublicClient({
         },
       ],
     }),
+  traceTransaction: async (hash: Hash) =>
+    client.request({
+      method: "debug_traceTransaction",
+      params: [hash, { tracer: "callTracer", tracerConfig: { withLog: true } }],
+    }),
 }));
 
 export interface CallFrame {
@@ -86,6 +91,17 @@ export type RpcSchema = [
             | { tracer: "prestateTracer"; tracerConfig: { diffMode?: boolean } }
           ) & { stateOverrides?: RpcStateOverride; blockOverrides?: RpcBlockOverrides; txIndex?: number },
         ];
+    ReturnType: CallFrame;
+  },
+  {
+    Method: "debug_traceTransaction";
+    Parameters: [
+      Hash,
+      (
+        | { tracer: "callTracer"; tracerConfig: { onlyTopCall?: boolean; withLog?: boolean } }
+        | { tracer: "prestateTracer"; tracerConfig: { diffMode?: boolean } }
+      ),
+    ];
     ReturnType: CallFrame;
   },
 ];
