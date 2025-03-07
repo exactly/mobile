@@ -166,6 +166,7 @@ export default async function setup({ provide }: TestProject) {
   }
 
   provide("Auditor", auditor.contractAddress);
+  provide("BalancerVault", balancer.contractAddress);
   provide("ExaPreviewer", exaPreviewer.contractAddress);
   provide("EXA", exa.contractAddress);
   provide("ExaAccountFactory", exaAccountFactory.contractAddress);
@@ -235,6 +236,7 @@ const Protocol = object({
 declare module "vitest" {
   export interface ProvidedContext {
     Auditor: Address;
+    BalancerVault: Address;
     ExaPreviewer: Address;
     EXA: Address;
     ExaAccountFactory: Address;
