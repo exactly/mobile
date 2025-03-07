@@ -1,5 +1,5 @@
 import fixedRate from "@exactly/common/fixedRate";
-import { previewerAddress, exaPluginAddress, marketUSDCAddress } from "@exactly/common/generated/chain";
+import chain, { previewerAddress, exaPluginAddress, marketUSDCAddress } from "@exactly/common/generated/chain";
 import { Address, Hash, type Hex } from "@exactly/common/validation";
 import { effectiveRate, WAD } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
@@ -219,7 +219,7 @@ export default app.get(
         }),
       ]
         .filter(<T>(value: T | undefined): value is T => value !== undefined)
-        .sort((a, b) => b.timestamp.localeCompare(a.timestamp)),
+        .sort((a, b) => b.timestamp.localeCompare(a.timestamp) || b.id.localeCompare(a.id)),
       200,
     );
   },
@@ -407,6 +407,7 @@ const OnchainActivity = object({
   market: object({ decimals: number(), symbol: string(), usdPrice: bigint() }),
   blockNumber: bigint(),
   transactionHash: Hash,
+  transactionIndex: number(),
   logIndex: number(),
 });
 
@@ -415,11 +416,12 @@ function transformActivity({
   market: { decimals, symbol, usdPrice },
   blockNumber,
   transactionHash,
+  transactionIndex,
   logIndex,
 }: InferOutput<typeof OnchainActivity>) {
   const baseUnit = 10 ** decimals;
   return {
-    id: `${transactionHash}:${logIndex}`,
+    id: `${chain.id}:${String(blockNumber)}:${transactionIndex}:${logIndex}`,
     currency: symbol.slice(3),
     amount: Number(value) / baseUnit,
     usdAmount: Number((value * usdPrice) / WAD) / baseUnit,

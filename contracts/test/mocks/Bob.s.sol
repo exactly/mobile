@@ -125,8 +125,8 @@ contract BobScript is BaseScript {
           ProposalType.CROSS_REPAY_AT_MATURITY,
           abi.encode(
             CrossRepayData({
-              maturity: maturity,
-              positionAssets: type(uint256).max,
+              maturity: maturity + FixedLib.INTERVAL,
+              positionAssets: 82e6,
               maxRepay: 82e6,
               route: abi.encodeCall(
                 MockSwapper.swapExactAmountOut, (address(exa), 100e18, address(usdc), 82e6, address(bobAccount))
