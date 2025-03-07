@@ -1,4 +1,5 @@
 import ProposalType from "@exactly/common/ProposalType";
+import { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { WAD } from "@exactly/lib";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ import Failure from "./Failure";
 import Pending from "./Pending";
 import Review from "./Review";
 import Success from "./Success";
-import { useSimulateExaPluginPropose } from "../../generated/contracts";
+import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import type { Withdraw as IWithdraw } from "../../utils/queryClient";
 import queryClient from "../../utils/queryClient";
 import useAsset from "../../utils/useAsset";
@@ -29,16 +30,46 @@ export default function Withdraw() {
   const { data: withdraw } = useQuery<IWithdraw>({ queryKey: ["withdrawal"] });
   const { market, externalAsset } = useAsset(withdraw?.market);
 
-  const { data: proposeSimulation } = useSimulateExaPluginPropose({
-    address,
-    args: [
-      market?.market ?? zeroAddress,
-      withdraw?.amount ?? 0n,
-      ProposalType.Withdraw,
-      encodeAbiParameters([{ type: "address" }], [withdraw?.receiver ?? zeroAddress]),
-    ],
-    query: { enabled: !!withdraw && !!market && !!address },
+  const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
+    address: address ?? zeroAddress,
   });
+  const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
+
+  const { data: proposeSimulation } = useSimulateContract(
+    isLatestPlugin
+      ? {
+          address,
+          functionName: "propose",
+          abi: [...upgradeableModularAccountAbi, ...exaPluginAbi],
+          args: [
+            market?.market ?? zeroAddress,
+            withdraw?.amount ?? 0n,
+            ProposalType.Withdraw,
+            encodeAbiParameters([{ type: "address" }], [withdraw?.receiver ?? zeroAddress]),
+          ],
+          query: { enabled: !!withdraw && !!market && !!address },
+        }
+      : {
+          address,
+          functionName: "propose",
+          abi: [
+            ...upgradeableModularAccountAbi,
+            {
+              type: "function",
+              name: "propose",
+              inputs: [
+                { internalType: "contract IMarket", name: "market", type: "address" },
+                { internalType: "uint256", name: "amount", type: "uint256" },
+                { internalType: "address", name: "receiver", type: "address" },
+              ],
+              outputs: [],
+              stateMutability: "nonpayable",
+            },
+          ],
+          args: [market?.market ?? zeroAddress, withdraw?.amount ?? 0n, withdraw?.receiver ?? zeroAddress],
+          query: { enabled: !!withdraw && !!market && !!address },
+        },
+  );
 
   const { data: transferSimulation } = useSimulateContract({
     address: externalAsset ? parse(Address, externalAsset.address) : zeroAddress,
