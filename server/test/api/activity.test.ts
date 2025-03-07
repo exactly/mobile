@@ -181,7 +181,7 @@ describe("authenticated", () => {
             if (cryptomate.success) return cryptomate.output;
             throw new Error("bad test setup");
           }),
-      ).then((results) => results.sort((a, b) => b.timestamp.localeCompare(a.timestamp)));
+      ).then((results) => results.sort((a, b) => b.timestamp.localeCompare(a.timestamp) || b.id.localeCompare(a.id)));
     });
 
     it("retries exactly when error and returns the card transaction", async () => {
@@ -259,13 +259,13 @@ describe("authenticated", () => {
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toMatchObject([
+        { amount: expect.closeTo(81, 0.5), currency: "USDC", type: "repay", usdAmount: expect.closeTo(81, 0.5) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         {
           amount: expect.closeTo(419.5, 0.01), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
           currency: "USDC",
           type: "repay",
           usdAmount: expect.closeTo(419.5, 0.01), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         },
-        { amount: expect.closeTo(81, 0.5), currency: "USDC", type: "repay", usdAmount: expect.closeTo(81, 0.5) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
       ]);
     });
 
@@ -279,6 +279,8 @@ describe("authenticated", () => {
 
       await expect(response.json()).resolves.toMatchObject([
         { amount: 69, currency: "USDC", type: "sent", usdAmount: 69, receiver: padHex("0x69", { size: 20 }) },
+        { amount: 100, currency: "EXA", type: "sent", usdAmount: 500, receiver: account },
+        { amount: 420, currency: "USDC", type: "sent", usdAmount: 420, receiver: inject("BalancerVault") },
       ]);
     });
   });
