@@ -12,7 +12,7 @@ import { ms } from "react-native-size-matters";
 import { View, Spinner } from "tamagui";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, maxUint256, zeroAddress } from "viem";
 import { optimism } from "viem/chains";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount, useSimulateContract, useWriteContract } from "wagmi";
 
 import {
   upgradeableModularAccountAbi,
@@ -59,12 +59,29 @@ export default function ContractUtils() {
     query: { enabled: !!address && !!installedPlugins },
   });
 
+  const { data: proposeUninstallSimulation } = useSimulateContract({
+    address,
+    functionName: "proposeUninstall",
+    abi: [{ type: "function", name: "proposeUninstall", inputs: [], outputs: [], stateMutability: "nonpayable" }],
+    query: { enabled: !!address && !!installedPlugins },
+  });
+
   const { writeContract: borrow, data: borrowHash, isPending: isBorrowing } = useWriteContract();
+  const {
+    writeContract: proposeUninstall,
+    data: proposeUninstallHash,
+    isPending: isProposingUninstall,
+  } = useWriteContract();
 
   const borrowUSDC = useCallback(() => {
     if (!borrowUSDCSimulation) throw new Error("no borrow simulation");
     borrow(borrowUSDCSimulation.request);
   }, [borrow, borrowUSDCSimulation]);
+
+  const uninstallPlugin = useCallback(() => {
+    if (!proposeUninstallSimulation) throw new Error("no propose uninstall simulation");
+    proposeUninstall(proposeUninstallSimulation.request);
+  }, [proposeUninstall, proposeUninstallSimulation]);
 
   const {
     data: updatePluginHash,
@@ -135,6 +152,37 @@ export default function ContractUtils() {
             borderRadius="$r2"
             onPress={() => {
               copyHash(updatePluginHash);
+            }}
+            padding={ms(10)}
+            flex={1}
+          >
+            Copy
+          </Button>
+        )}
+      </View>
+      {proposeUninstallHash && (
+        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+            {proposeUninstallHash}
+          </Text>
+        </View>
+      )}
+      <View flexDirection="row" gap="$s4">
+        <Button
+          contained
+          onPress={uninstallPlugin}
+          padding={ms(10)}
+          disabled={!proposeUninstallSimulation || isProposingUninstall}
+          flex={1}
+        >
+          Propose Plugin Uninstall
+        </Button>
+        {proposeUninstallHash && (
+          <Button
+            outlined
+            borderRadius="$r2"
+            onPress={() => {
+              copyHash(proposeUninstallHash);
             }}
             padding={ms(10)}
             flex={1}
