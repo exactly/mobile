@@ -1,8 +1,10 @@
+import { exaPluginAbi } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
 import { $ } from "execa";
+import { readdir } from "node:fs/promises";
 import { anvil } from "prool/instances";
 import { literal, object, parse, tuple } from "valibot";
-import { padHex, zeroAddress } from "viem";
+import { keccak256, padHex, toBytes, toHex, zeroAddress } from "viem";
 import { privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
 import { foundry } from "viem/chains";
 import type { TestProject } from "vitest/node";
@@ -163,6 +165,21 @@ export default async function setup({ provide }: TestProject) {
     await $(shell)`forge script test/mocks/BobExecute.s.sol
       --unlocked ${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await anvilClient.stopImpersonatingAccount({ address: keeper.address });
+
+    const files = await readdir(__dirname, { recursive: true }); // eslint-disable-line unicorn/prefer-module
+    for (const testFile of files.filter((file) => file.endsWith(".test.ts"))) {
+      const address = privateKeyToAddress(keccak256(toBytes(testFile)));
+      await Promise.all([
+        anvilClient.setBalance({ address, value: 10n ** 24n }),
+        anvilClient.writeContract({
+          address: exaPlugin.contractAddress,
+          functionName: "grantRole",
+          args: [keccak256(toHex("KEEPER_ROLE")), address],
+          abi: exaPluginAbi,
+          account: null,
+        }),
+      ]);
+    }
   }
 
   provide("Auditor", auditor.contractAddress);
