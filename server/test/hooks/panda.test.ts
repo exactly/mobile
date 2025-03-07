@@ -346,7 +346,7 @@ describe("card operations", () => {
       });
 
       it("clears installments", async () => {
-        const amount = 100;
+        const amount = 120;
 
         const operation = "splits";
         const cardId = "splits";
@@ -490,6 +490,7 @@ describe("card operations", () => {
         });
 
         it("clears debit", async () => {
+          const amount = 180;
           await database.insert(cards).values([{ id: "drain-coll", credentialId: "cred", lastFour: "5678", mode: 0 }]);
 
           const response = await appClient.index.$post({
@@ -501,7 +502,7 @@ describe("card operations", () => {
               body: {
                 ...authorization.json.body,
                 id: "drain-coll",
-                spend: { ...authorization.json.body.spend, cardId: "drain-coll" },
+                spend: { ...authorization.json.body.spend, cardId: "drain-coll", amount },
               },
             },
           });
