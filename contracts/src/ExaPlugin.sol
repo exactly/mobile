@@ -124,6 +124,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     public
+    nonReentrant
     returns (uint256 amountIn, uint256 amountOut)
   {
     if (_isMarket(IMarket(address(assetIn)))) revert Unauthorized();
