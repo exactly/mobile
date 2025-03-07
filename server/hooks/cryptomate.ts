@@ -24,8 +24,6 @@ import { Hono } from "hono";
 import type { UnofficialStatusCode } from "hono/utils/http-status";
 import * as v from "valibot";
 import {
-  BaseError,
-  ContractFunctionRevertedError,
   decodeErrorResult,
   decodeEventLog,
   encodeEventTopics,
@@ -44,7 +42,6 @@ import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
 import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
-import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.CRYPTOMATE_WEBHOOK_KEY) throw new Error("missing cryptomate webhook key");
 
@@ -166,72 +163,58 @@ export default new Hono().post(
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.clearing");
         const { account, call, mode } = await prepareCollection(payload);
         if (!call) return c.json({});
-        return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
-          try {
-            const collect = {
-              account: keeper.account,
+        try {
+          await keeper.exaSend(
+            { name: "collect credit", op: "exa.collect", attributes: { account } },
+            {
               address: account,
-              abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi],
-              ...transactionOptions,
-            };
-            const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () => {
-              if (call.functionName === "collectDebit") return publicClient.simulateContract({ ...collect, ...call });
-              if (call.functionName === "collectCredit") return publicClient.simulateContract({ ...collect, ...call });
-              return publicClient.simulateContract({ ...collect, ...call });
-            });
-            setContext("tx", { call, ...request });
-            const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-              keeper.writeContract(request as Parameters<typeof keeper.writeContract>[0]),
-            );
-            setContext("tx", { call, ...request, transactionHash: hash });
-            await database.insert(transactions).values([
-              {
-                id: payload.operation_id,
-                cardId: payload.data.card_id,
-                hashes: [hash],
-                payload: { ...jsonBody, type: "cryptomate" },
+              abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
+              ...call,
+            },
+            {
+              onHash: (hash) =>
+                database.insert(transactions).values([
+                  {
+                    id: payload.operation_id,
+                    cardId: payload.data.card_id,
+                    hashes: [hash],
+                    payload: { ...jsonBody, type: "cryptomate" },
+                  },
+                ]),
+              async ignore(reason) {
+                if (
+                  reason === "Replay()" ||
+                  reason === 'duplicate key value violates unique constraint "transactions_pkey"'
+                ) {
+                  const tx = await database.query.transactions.findFirst({
+                    where: and(
+                      eq(transactions.id, payload.operation_id),
+                      eq(transactions.cardId, payload.data.card_id),
+                    ),
+                  });
+                  if (tx?.hashes[0] && isHash(tx.hashes[0])) {
+                    const receipt = await publicClient.getTransactionReceipt({ hash: tx.hashes[0] }).catch(() => null);
+                    if (receipt?.status === "success") return receipt;
+                  }
+                }
               },
-            ]);
-            startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
-              .then((receipt) => {
-                if (receipt.status === "success") return;
-                captureException(new Error("tx reverted"), {
-                  level: "fatal",
-                  contexts: { tx: { call, ...request, ...receipt } },
-                });
-              })
-              .catch((error: unknown) => captureException(error));
-            sendPushNotification({
-              userId: account,
-              headings: { en: "Exa Card Purchase" },
-              contents: {
-                en: `${payload.data.transaction_amount.toLocaleString(undefined, {
-                  style: "currency",
-                  currency: payload.data.transaction_currency_code,
-                })} at ${payload.data.merchant_data.name}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
-              },
-            }).catch((error: unknown) => captureException(error, { level: "error" }));
-            return c.json({});
-          } catch (error: unknown) {
-            if (
-              (error instanceof BaseError &&
-                error.cause instanceof ContractFunctionRevertedError &&
-                error.cause.data?.errorName === "Expired") ||
-              (error instanceof Error &&
-                error.message === 'duplicate key value violates unique constraint "transactions_pkey"')
-            ) {
-              const tx = await database.query.transactions.findFirst({
-                where: and(eq(transactions.id, payload.operation_id), eq(transactions.cardId, payload.data.card_id)),
-              });
-              if (tx?.hashes[0] && isHash(tx.hashes[0])) {
-                const receipt = await publicClient.getTransactionReceipt({ hash: tx.hashes[0] }).catch(() => undefined);
-                if (receipt?.status === "success") return c.json({});
-              }
-            }
-            captureException(error, { level: "fatal", contexts: { tx: { call } } });
-            return c.json(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
-          }
-        });
+            },
+          );
+          sendPushNotification({
+            userId: account,
+            headings: { en: "Exa Card Purchase" },
+            contents: {
+              en: `${payload.data.transaction_amount.toLocaleString(undefined, {
+                style: "currency",
+                currency: payload.data.transaction_currency_code,
+              })} at ${payload.data.merchant_data.name}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
+            },
+          }).catch((error: unknown) => captureException(error, { level: "error" }));
+          return c.json({});
+        } catch (error: unknown) {
+          captureException(error, { level: "fatal" });
+          return c.json(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
+        }
       }
       default:
         return c.json({});

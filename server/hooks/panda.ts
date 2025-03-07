@@ -45,7 +45,6 @@ import { collectors, headerValidator, signIssuerOp } from "../utils/panda";
 import publicClient from "../utils/publicClient";
 import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
-import transactionOptions from "../utils/transactionOptions";
 
 const debug = createDebug("exa:panda");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
@@ -224,82 +223,66 @@ export default new Hono().post(
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.clearing`);
         const { account, call, mode } = await prepareCollection(payload);
         if (!call) return c.json({});
-        return startSpan({ name: "collect credit", op: "exa.collect", attributes: { account } }, async () => {
-          try {
-            const collect = {
-              account: keeper.account,
+        try {
+          await keeper.exaSend(
+            { name: "collect credit", op: "exa.collect", attributes: { account } },
+            {
               address: account,
-              abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi],
-              ...transactionOptions,
-            };
-            const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () => {
-              if (call.functionName === "collectDebit") return publicClient.simulateContract({ ...collect, ...call });
-              if (call.functionName === "collectCredit") return publicClient.simulateContract({ ...collect, ...call });
-              return publicClient.simulateContract({ ...collect, ...call });
-            });
-            setContext("tx", { call, ...request });
-            const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-              keeper.writeContract(request as Parameters<typeof keeper.writeContract>[0]),
-            );
-            setContext("tx", { call, ...request, transactionHash: hash });
-
-            const tx = await database.query.transactions.findFirst({
-              where: and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
-            });
-            await (tx
-              ? database
-                  .update(transactions)
-                  .set({
-                    hashes: [...tx.hashes, hash],
-                    payload: {
-                      ...(tx.payload as object),
-                      bodies: [...parseBodies(tx.payload), { ...jsonBody, createdAt: new Date().toISOString() }],
-                    },
-                  })
-                  .where(and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)))
-              : database.insert(transactions).values([
-                  {
-                    id: payload.body.id,
-                    cardId: payload.body.spend.cardId,
-                    hashes: [hash],
-                    payload: {
-                      bodies: [{ ...jsonBody, createdAt: new Date().toISOString() }],
-                      type: "panda",
-                      merchant: {
-                        name: payload.body.spend.merchantName,
-                        city: payload.body.spend.merchantCity,
-                        country: payload.body.spend.merchantCountry,
-                      },
-                    },
-                  },
-                ]));
-            startSpan({ name: "tx.wait", op: "tx.wait" }, () => publicClient.waitForTransactionReceipt({ hash }))
-              .then((receipt) => {
-                if (receipt.status === "success") return;
-                captureException(new Error("tx reverted"), {
-                  level: "fatal",
-                  contexts: { tx: { call, ...request, ...receipt } },
+              abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
+              ...call,
+            },
+            {
+              async onHash(hash) {
+                const tx = await database.query.transactions.findFirst({
+                  where: and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
                 });
-              })
-              .catch((error: unknown) => captureException(error));
-
-            sendPushNotification({
-              userId: account,
-              headings: { en: "Exa Card Purchase" },
-              contents: {
-                en: `${(payload.body.spend.localAmount / 100).toLocaleString(undefined, {
-                  style: "currency",
-                  currency: payload.body.spend.localCurrency,
-                })} at ${payload.body.spend.merchantName.trim()}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
+                await (tx
+                  ? database
+                      .update(transactions)
+                      .set({
+                        hashes: [...tx.hashes, hash],
+                        payload: {
+                          ...(tx.payload as object),
+                          bodies: [...parseBodies(tx.payload), { ...jsonBody, createdAt: new Date().toISOString() }],
+                        },
+                      })
+                      .where(
+                        and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
+                      )
+                  : database.insert(transactions).values([
+                      {
+                        id: payload.body.id,
+                        cardId: payload.body.spend.cardId,
+                        hashes: [hash],
+                        payload: {
+                          bodies: [{ ...jsonBody, createdAt: new Date().toISOString() }],
+                          type: "panda",
+                          merchant: {
+                            name: payload.body.spend.merchantName,
+                            city: payload.body.spend.merchantCity,
+                            country: payload.body.spend.merchantCountry,
+                          },
+                        },
+                      },
+                    ]));
               },
-            }).catch((error: unknown) => captureException(error, { level: "error" }));
-
-            return c.json({});
-          } catch (error: unknown) {
-            captureException(error, { level: "fatal", contexts: { tx: { call } } });
-            return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
-          }
-        });
+            },
+          );
+          sendPushNotification({
+            userId: account,
+            headings: { en: "Exa Card Purchase" },
+            contents: {
+              en: `${(payload.body.spend.localAmount / 100).toLocaleString(undefined, {
+                style: "currency",
+                currency: payload.body.spend.localCurrency,
+              })} at ${payload.body.spend.merchantName.trim()}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
+            },
+          }).catch((error: unknown) => captureException(error, { level: "error" }));
+          return c.json({});
+        } catch (error: unknown) {
+          captureException(error, { level: "fatal", contexts: { tx: { call } } });
+          return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
+        }
       }
       default:
         return c.json({});
