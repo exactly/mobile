@@ -26,7 +26,6 @@ import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
 import InfoAlert from "../shared/InfoAlert";
 import LatestActivity from "../shared/LatestActivity";
-import PluginUpgrade from "../shared/PluginUpgrade";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -181,7 +180,6 @@ export default function Card() {
                     }}
                   />
                 )}
-                <PluginUpgrade />
                 <ExaCard
                   revealing={isRevealing}
                   frozen={cardDetails?.status === "FROZEN"}
