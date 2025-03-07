@@ -1,25 +1,21 @@
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
-import chain, { exaPluginAbi } from "@exactly/common/generated/chain";
-import { createWalletClient, http, keccak256, nonceManager, toHex } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { inject, vi } from "vitest";
+import chain from "@exactly/common/generated/chain";
+import path from "node:path";
+import { createWalletClient, http, keccak256, nonceManager, toBytes } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { expect, vi } from "vitest";
 
-import anvilClient from "../anvilClient";
-
-const account = privateKeyToAccount(generatePrivateKey(), { nonceManager });
-await anvilClient.writeContract({
-  account: null,
-  address: inject("ExaPlugin"),
-  abi: exaPluginAbi,
-  functionName: "grantRole",
-  args: [keccak256(toHex("KEEPER_ROLE")), account.address],
+vi.mock("../../utils/keeper", async () => {
+  const { default: _, ...original } = await import("../../utils/keeper");
+  return {
+    default: createWalletClient({
+      chain,
+      transport: http(`${chain.rpcUrls.alchemy?.http[0]}/${alchemyAPIKey}`),
+      account: privateKeyToAccount(
+        keccak256(toBytes(path.relative(path.resolve(__dirname, ".."), expect.getState().testPath ?? ""))), // eslint-disable-line unicorn/prefer-module
+        { nonceManager },
+      ),
+    }),
+    ...original,
+  };
 });
-await anvilClient.setBalance({ address: account.address, value: 10n ** 24n });
-
-vi.mock("../../utils/keeper", () => ({
-  default: createWalletClient({
-    chain,
-    transport: http(`${chain.rpcUrls.alchemy?.http[0]}/${alchemyAPIKey}`),
-    account,
-  }),
-}));
