@@ -141,61 +141,72 @@ contract ProposalManager is IProposalManager, AccessControl {
     address owner = address(0);
     address receiver = address(0);
 
-    Proposal memory proposal;
     if (selector == IERC20.approve.selector) {
       (receiver,) = abi.decode(callData, (address, uint256));
-      if (
-        receiver == address(DEBT_MANAGER) || receiver == address(INSTALLMENTS_ROUTER)
-          || hasRole(PROPOSER_ROLE, receiver)
-      ) {
-        return;
-      }
+      if (receiver == address(DEBT_MANAGER) || receiver == address(INSTALLMENTS_ROUTER)) return;
       revert Unauthorized();
     } else if (selector == IERC20.transfer.selector) {
-      (receiver,) = abi.decode(callData, (address, uint256));
+      (receiver, amount) = abi.decode(callData, (address, uint256));
+      Proposal memory proposal = shiftProposal(sender);
+      if (proposal.proposalType != ProposalType.REDEEM) revert Unauthorized();
+      return _checkMarketProposal(proposal, target, amount, receiver);
     } else if (selector == IERC20.transferFrom.selector) {
       (, receiver,) = abi.decode(callData, (address, address, uint256));
-    } else if (selector == IMarket.borrowAtMaturity.selector) {
-      uint256 maturity;
-      uint256 maxAssets;
-      (maturity, amount, maxAssets, receiver,) = abi.decode(callData, (uint256, uint256, uint256, address, address));
-      if (hasRole(COLLECTOR_ROLE, receiver)) return;
-
-      proposal = shiftProposal(sender);
-      if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
-        if (proposal.timestamp + delay > block.timestamp) revert Timelocked();
-        BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
-        if (
-          borrowData.maturity != maturity || borrowData.maxAssets < maxAssets || borrowData.receiver != receiver
-            || proposal.amount < amount
-        ) {
-          revert NoProposal();
-        }
-        return;
-      }
+      if (receiver == address(DEBT_MANAGER) || receiver == address(INSTALLMENTS_ROUTER)) return;
       revert Unauthorized();
-    } else if (selector == IERC4626.withdraw.selector || selector == IERC4626.redeem.selector) {
+    } else if (selector == IMarket.borrowAtMaturity.selector) {
+      return _checkBorrowAtMaturityProposal(sender, target, callData);
+    } else if (selector == IERC4626.withdraw.selector) {
       (amount, receiver, owner) = abi.decode(callData, (uint256, address, address));
       if (hasRole(COLLECTOR_ROLE, receiver)) return;
-      if (hasRole(PROPOSER_ROLE, receiver)) {
-        if (
-          ExaPlugin(payable(msg.sender)).callHash() != keccak256(abi.encode(target, selector, amount, receiver, owner))
-        ) {
-          revert Unauthorized();
-        }
-        return;
-      }
+      if (hasRole(PROPOSER_ROLE, receiver)) return _checkCallHash(target, selector, amount, receiver, owner);
+      Proposal memory proposal = shiftProposal(owner);
+      if (
+        proposal.proposalType != ProposalType.CROSS_REPAY_AT_MATURITY
+          && proposal.proposalType != ProposalType.REPAY_AT_MATURITY && proposal.proposalType != ProposalType.SWAP
+          && proposal.proposalType != ProposalType.WITHDRAW
+      ) revert NoProposal();
+      return _checkMarketProposal(proposal, target, amount, receiver);
+    } else if (selector == IERC4626.redeem.selector) {
+      (amount, receiver, owner) = abi.decode(callData, (uint256, address, address));
+      if (hasRole(PROPOSER_ROLE, receiver)) return _checkCallHash(target, selector, amount, receiver, owner);
+      Proposal memory proposal = shiftProposal(owner);
+      if (proposal.proposalType != ProposalType.REDEEM) revert NoProposal();
+      return _checkMarketProposal(proposal, target, amount, receiver);
     } else if (selector == IMarket.borrow.selector) {
       (, receiver,) = abi.decode(callData, (uint256, address, address));
       if (!hasRole(COLLECTOR_ROLE, receiver)) revert Unauthorized();
       return;
-    } else {
+    }
+  }
+
+  function _checkBorrowAtMaturityProposal(address sender, IMarket target, bytes memory callData) internal {
+    (uint256 maturity, uint256 amount, uint256 maxAssets, address receiver,) =
+      abi.decode(callData, (uint256, uint256, uint256, address, address));
+    if (hasRole(COLLECTOR_ROLE, receiver)) return;
+
+    Proposal memory proposal = shiftProposal(sender);
+    if (proposal.proposalType == ProposalType.BORROW_AT_MATURITY) {
+      if (proposal.timestamp + delay > block.timestamp) revert Timelocked();
+      BorrowAtMaturityData memory borrowData = abi.decode(proposal.data, (BorrowAtMaturityData));
+      if (
+        borrowData.maturity != maturity || borrowData.maxAssets < maxAssets || borrowData.receiver != receiver
+          || proposal.amount < amount || proposal.market != target
+      ) {
+        revert NoProposal();
+      }
       return;
     }
+    revert Unauthorized();
+  }
 
-    proposal = shiftProposal(owner);
-
-    return _checkMarketProposal(proposal, target, amount, receiver);
+  function _checkCallHash(IMarket target, bytes4 selector, uint256 amount, address receiver, address owner)
+    internal
+    view
+  {
+    if (ExaPlugin(payable(msg.sender)).callHash() != keccak256(abi.encode(target, selector, amount, receiver, owner))) {
+      revert Unauthorized();
+    }
   }
 
   function _checkMarketProposal(Proposal memory proposal, IMarket target, uint256 amount, address receiver)

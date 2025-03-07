@@ -1225,6 +1225,85 @@ contract ExaPluginTest is ForkTest {
     proposalManager.nextProposal(address(account));
   }
 
+  function test_redeem_reverts_whenProposalTypeIsWithdraw() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(address(account));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(0x420)));
+    skip(proposalManager.delay());
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.redeem, (100e18, address(0x420), address(account))));
+  }
+
+  function test_withdraw_reverts_whenProposalTypeIsRedeem() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(address(account));
+    account.propose(exaEXA, 100e18, ProposalType.REDEEM, abi.encode(address(0x420)));
+    skip(proposalManager.delay());
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
+  }
+
+  function test_withdraw_reverts_whenProposalTypeIsBorrowAtMaturity() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(address(account));
+    account.propose(exaEXA, 100e18, ProposalType.BORROW_AT_MATURITY, abi.encode(address(0x420)));
+    skip(proposalManager.delay());
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(NoProposal.selector)
+      )
+    );
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC4626.withdraw, (100e18, address(0x420), address(account))));
+  }
+
+  function test_borrowAtMaturity_reverts_whenProposalTypeIsWithdraw() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(address(account));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(0x420)));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodePacked(Unauthorized.selector)
+      )
+    );
+    account.execute(
+      address(exaEXA),
+      0,
+      abi.encodeCall(IMarket.borrowAtMaturity, (FixedLib.INTERVAL, 100e18, 100e18, address(0x420), address(account)))
+    );
+  }
+
   // keeper runtime validation
   function test_collectCredit_collects() external {
     vm.startPrank(keeper);
@@ -2296,10 +2375,28 @@ contract ExaPluginTest is ForkTest {
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
         FunctionId.PRE_EXEC_VALIDATION,
-        abi.encodePacked(NoProposal.selector)
+        abi.encodePacked(Unauthorized.selector)
       )
     );
     account.execute(address(exaEXA), 0, abi.encodeCall(IERC20.transfer, (address(0x1), amount)));
+  }
+
+  function test_transferShares_transfers_whenRedeemProposalPresent() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    uint256 amount = 100e18;
+    address receiver = address(0x1);
+
+    vm.startPrank(address(account));
+    account.propose(exaEXA, amount, ProposalType.REDEEM, abi.encode(receiver));
+    skip(proposalManager.delay());
+
+    uint256 balance = exaEXA.balanceOf(address(account));
+    account.execute(address(exaEXA), 0, abi.encodeCall(IERC20.transfer, (receiver, amount)));
+
+    assertEq(exaEXA.balanceOf(receiver), amount);
+    assertEq(exaEXA.balanceOf(address(account)), balance - amount);
   }
 
   // solhint-enable func-name-mixedcase
