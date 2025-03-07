@@ -263,7 +263,12 @@ export const PandaActivity = pipe(
       id,
       currency,
       amount: operations.at(-1)?.amount,
-      merchant,
+      merchant: {
+        name: merchant.name.trim(),
+        city: merchant.city.trim(),
+        country: merchant.country.trim(),
+        state: merchant.state.trim(),
+      },
       operations,
       timestamp,
       type,
@@ -329,7 +334,7 @@ function transformCard(activity: InferOutput<typeof CardActivity>) {
         id: activity.body.id,
         transactionHash: activity.hash,
         timestamp: activity.createdAt,
-        currency: activity.body.spend.currency,
+        currency: activity.body.spend.localCurrency,
         amount: activity.body.spend.localAmount / 100,
         usdAmount: activity.body.spend.authorizationUpdateAmount
           ? activity.body.spend.authorizationUpdateAmount / 100
