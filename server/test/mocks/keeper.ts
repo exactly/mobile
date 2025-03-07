@@ -15,7 +15,7 @@ vi.mock("../../utils/keeper", async () => {
         keccak256(toBytes(path.relative(path.resolve(__dirname, ".."), expect.getState().testPath ?? ""))), // eslint-disable-line unicorn/prefer-module
         { nonceManager },
       ),
-    }),
+    }).extend(original.extender),
     ...original,
   };
 });

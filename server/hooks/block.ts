@@ -40,7 +40,6 @@ import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
 import redis from "../utils/redis";
-import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.ALCHEMY_BLOCK_KEY) throw new Error("missing alchemy block key");
 const signingKeys = new Set([process.env.ALCHEMY_BLOCK_KEY]);
@@ -266,27 +265,21 @@ function scheduleProposal(message: string) {
                   },
                 },
                 async () => {
-                  const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-                    publicClient.simulateContract({
-                      account: keeper.account,
+                  await keeper.exaSend(
+                    { name: "exa.execute", op: "exa.execute", attributes: { account } },
+                    {
                       address: account,
                       functionName: "executeProposal",
                       args: [nonce],
-                      abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
-                      ...transactionOptions,
-                    }),
+                      abi: [
+                        ...exaPluginAbi,
+                        ...upgradeableModularAccountAbi,
+                        ...proposalManagerAbi,
+                        ...auditorAbi,
+                        ...marketAbi,
+                      ],
+                    },
                   );
-
-                  setContext("tx", request);
-                  const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-                    keeper.writeContract(request),
-                  );
-                  setContext("tx", { ...request, transactionHash: hash });
-                  const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-                    publicClient.waitForTransactionReceipt({ hash }),
-                  );
-                  setContext("tx", { ...request, ...receipt });
-                  if (receipt.status !== "success") throw new Error("tx reverted");
                   parent.setStatus({ code: 1, message: "ok" });
                   if (proposalType === ProposalType.Withdraw) {
                     const receiver = v.parse(
@@ -318,31 +311,15 @@ function scheduleProposal(message: string) {
                   contexts: { proposal: { account, nonce, proposalType: ProposalType[proposalType] } },
                 });
                 if (error instanceof ContractFunctionExecutionError) {
-                  try {
-                    const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-                      publicClient.simulateContract({
-                        account: keeper.account,
-                        address: account,
-                        functionName: "setProposalNonce",
-                        args: [nonce + 1n],
-                        abi: exaPluginAbi,
-                        ...transactionOptions,
-                      }),
-                    );
-
-                    setContext("tx", request);
-                    const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-                      keeper.writeContract(request),
-                    );
-                    setContext("tx", { ...request, transactionHash: hash });
-                    const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-                      publicClient.waitForTransactionReceipt({ hash }),
-                    );
-                    setContext("tx", { ...request, ...receipt });
-                    if (receipt.status !== "success") throw new Error("increment nonce tx reverted");
-                  } catch (error_: unknown) {
-                    captureException(error_, { level: "error" });
-                  }
+                  await keeper.exaSend(
+                    { name: "exa.nonce", op: "exa.nonce", attributes: { account } },
+                    {
+                      address: account,
+                      functionName: "setProposalNonce",
+                      args: [nonce + 1n],
+                      abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...proposalManagerAbi],
+                    },
+                  );
                   return redis.zrem("proposals", message);
                 }
               }),
@@ -381,25 +358,14 @@ function scheduleWithdraw(message: string) {
               },
             },
             async () => {
-              const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-                publicClient.simulateContract({
-                  account: keeper.account,
+              await keeper.exaSend(
+                { name: "exa.execute", op: "exa.execute", attributes: { account } },
+                {
                   address: account,
                   functionName: "withdraw",
                   abi: [...legacyExaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, marketAbi[6]],
-                  ...transactionOptions,
-                }),
+                },
               );
-              setContext("tx", request);
-              const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-                keeper.writeContract(request),
-              );
-              setContext("tx", { ...request, transactionHash: hash });
-              const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-                publicClient.waitForTransactionReceipt({ hash }),
-              );
-              setContext("tx", { ...request, ...receipt });
-              if (receipt.status !== "success") throw new Error("tx reverted");
               parent.setStatus({ code: 1, message: "ok" });
               Promise.all([
                 publicClient.readContract({ address: market, abi: marketAbi, functionName: "decimals" }),

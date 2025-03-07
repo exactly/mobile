@@ -19,7 +19,7 @@ import createDebug from "debug";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import * as v from "valibot";
-import { BaseError, bytesToBigInt, ContractFunctionRevertedError, zeroAddress, withRetry } from "viem";
+import { bytesToBigInt, zeroAddress, withRetry } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
@@ -29,7 +29,6 @@ import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
 import publicClient from "../utils/publicClient";
-import transactionOptions from "../utils/transactionOptions";
 
 if (!process.env.ALCHEMY_ACTIVITY_KEY) throw new Error("missing alchemy activity key");
 const signingKey = process.env.ALCHEMY_ACTIVITY_KEY;
@@ -133,81 +132,37 @@ export default app.post(
             async () => {
               if (
                 !(await publicClient.getCode({ address: account })) &&
-                !(await startSpan({ name: "create account", op: "exa.account", attributes: { account } }, async () => {
-                  try {
-                    const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-                      publicClient.simulateContract({
-                        account: keeper.account,
-                        address: factory,
-                        functionName: "createAccount",
-                        args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
-                        abi: exaAccountFactoryAbi,
-                        ...transactionOptions,
-                      }),
-                    );
-                    setContext("tx", request);
-                    const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
-                      keeper.writeContract(request),
-                    );
-                    setContext("tx", { ...request, transactionHash: hash });
-                    const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-                      publicClient.waitForTransactionReceipt({ hash }),
-                    );
-                    setContext("tx", { ...request, ...receipt });
-                    return receipt.status === "success";
-                  } catch (error: unknown) {
-                    captureException(error, { level: "error" });
-                    return false;
-                  }
-                }))
+                !(await keeper
+                  .exaSend(
+                    { name: "create account", op: "exa.account", attributes: { account } },
+                    {
+                      address: factory,
+                      functionName: "createAccount",
+                      args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
+                      abi: exaAccountFactoryAbi,
+                    },
+                  )
+                  .catch(() => null))
               ) {
                 return;
               }
               await Promise.allSettled(
-                [...assets].map(async (asset) => {
-                  await startSpan(
+                [...assets].map(async (asset) =>
+                  keeper.exaSend(
                     { name: "poke account", op: "exa.poke", attributes: { account, asset } },
-                    async () => {
-                      try {
-                        const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-                          publicClient.simulateContract({
-                            abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
-                            account: keeper.account,
-                            address: account,
-                            ...(asset === ETH
-                              ? { functionName: "pokeETH" }
-                              : {
-                                  functionName: "poke",
-                                  args: [marketsByAsset.get(asset)!], // eslint-disable-line @typescript-eslint/no-non-null-assertion
-                                }),
-                            ...transactionOptions,
+                    {
+                      address: account,
+                      abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
+                      ...(asset === ETH
+                        ? { functionName: "pokeETH" }
+                        : {
+                            functionName: "poke",
+                            args: [marketsByAsset.get(asset)!], // eslint-disable-line @typescript-eslint/no-non-null-assertion
                           }),
-                        );
-                        setContext("tx", request);
-                        const hash = await startSpan({ name: "eth_sendRawTransaction", op: "tx.send" }, () =>
-                          keeper.writeContract(request),
-                        );
-                        setContext("tx", { ...request, transactionHash: hash });
-                        const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-                          publicClient.waitForTransactionReceipt({ hash }),
-                        );
-                        setContext("tx", { ...request, ...receipt });
-                        if (receipt.status !== "success") {
-                          captureException(new Error("tx reverted"), { level: "error" });
-                        }
-                      } catch (error: unknown) {
-                        if (
-                          error instanceof BaseError &&
-                          error.cause instanceof ContractFunctionRevertedError &&
-                          error.cause.data?.errorName === "NoBalance"
-                        ) {
-                          return;
-                        }
-                        captureException(error, { level: "error" });
-                      }
                     },
-                  );
-                }),
+                    { ignore: ["NoBalance()"] },
+                  ),
+                ),
               );
             },
           ),

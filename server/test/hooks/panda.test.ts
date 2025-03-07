@@ -16,6 +16,7 @@ import * as sentry from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
 import {
+  BaseError,
   createWalletClient,
   decodeEventLog,
   encodeAbiParameters,
@@ -366,9 +367,7 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({
-          where: eq(transactions.id, operation),
-        });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
         const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e4));
@@ -379,7 +378,7 @@ describe("card operations", () => {
         const captureException = vi.spyOn(sentry, "captureException");
         captureException.mockImplementation(() => "");
 
-        vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
+        vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("timeout"));
 
         const operation = "timeout";
         const cardId = "timeout";
@@ -399,13 +398,20 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({
-          where: eq(transactions.id, operation),
-        });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
 
-        expect(captureException).toHaveBeenCalledWith(new Error("Transaction Timeout"));
+        expect(captureException).toHaveBeenNthCalledWith(
+          1,
+          new Error("timeout"),
+          expect.objectContaining({ level: "error" }),
+        );
+        expect(captureException).toHaveBeenNthCalledWith(
+          2,
+          new Error("timeout"),
+          expect.objectContaining({ level: "fatal" }),
+        );
         expect(transaction).toBeDefined();
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(569);
       });
 
       it("fails with transaction revert", async () => {
@@ -436,13 +442,20 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({
-          where: eq(transactions.id, operation),
-        });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
 
-        expect(captureException).toHaveBeenCalledWith(new Error("tx reverted"), expect.anything());
+        expect(captureException).toHaveBeenNthCalledWith(
+          1,
+          expect.any(BaseError),
+          expect.objectContaining({ level: "error" }),
+        );
+        expect(captureException).toHaveBeenNthCalledWith(
+          2,
+          expect.any(BaseError),
+          expect.objectContaining({ level: "fatal" }),
+        );
         expect(transaction).toBeDefined();
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(569);
       });
 
       it("fails with unexpected error", async () => {

@@ -35,67 +35,6 @@ import traceClient from "../../utils/traceClient";
 
 const appClient = testClient(app);
 
-const authorization = {
-  header: { "x-webhook-key": "cryptomate" },
-  json: {
-    product: "CARDS",
-    event_type: "AUTHORIZATION",
-    operation_id: "op",
-    status: "PENDING",
-    data: {
-      card_id: "card",
-      bill_amount: 45.23,
-      bill_currency_number: "840",
-      bill_currency_code: "USD",
-      exchange_rate: 1,
-      transaction_amount: 45.23,
-      transaction_currency_number: "840",
-      transaction_currency_code: "USD",
-      channel: "ECOMMERCE",
-      created_at: new Date().toISOString(),
-      fees: { atm_fees: 0, fx_fees: 0 },
-      merchant_data: {
-        id: "420429000207212",
-        name: "GetYourGuideOperations",
-        city: "185-5648235",
-        post_code: "1990",
-        state: "DE",
-        country: "USA",
-        mcc_category: "Tourist Attractions and Exhibits",
-        mcc_code: "7991",
-      },
-      metadata: { account: zeroAddress },
-      signature: "0x",
-    },
-  },
-} as const;
-
-const receipt = {
-  status: "success",
-  blockHash: zeroHash,
-  blockNumber: 0n,
-  contractAddress: undefined,
-  cumulativeGasUsed: 0n,
-  effectiveGasPrice: 0n,
-  from: zeroAddress,
-  gasUsed: 0n,
-  logs: [],
-  logsBloom: "0x",
-  to: null,
-  transactionHash: "0x",
-  transactionIndex: 0,
-  type: "0x0",
-} as const;
-
-const callFrame = {
-  type: "CALL",
-  from: "",
-  to: "",
-  gas: "0x",
-  gasUsed: "0x",
-  input: "0x",
-} as const;
-
 function usdcToCollector(purchaseReceipt: TransactionReceipt) {
   return purchaseReceipt.logs
     .filter((l) => l.address.toLowerCase() === inject("USDC").toLowerCase())
@@ -304,9 +243,7 @@ describe("card operations", () => {
             data: { ...authorization.json.data, card_id: "splits", bill_amount: amount, metadata: { account } },
           },
         });
-        const transaction = await database.query.transactions.findFirst({
-          where: eq(transactions.id, operation),
-        });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
         const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e6));
@@ -322,7 +259,7 @@ describe("card operations", () => {
             cause: new ContractFunctionRevertedError({
               abi: issuerCheckerAbi,
               functionName: "collectInstallments",
-              data: encodeErrorResult({ errorName: "Expired", abi: issuerCheckerAbi }),
+              data: encodeErrorResult({ errorName: "Replay", abi: issuerCheckerAbi }),
             }),
           }),
         );
@@ -356,7 +293,7 @@ describe("card operations", () => {
         const captureException = vi.spyOn(sentry, "captureException");
         captureException.mockImplementation(() => "");
 
-        vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("Transaction Timeout"));
+        vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("timeout"));
 
         const operation = "timeout";
         await database.insert(cards).values([{ id: "timeout", credentialId: "cred", lastFour: "7777", mode: 1 }]);
@@ -368,7 +305,7 @@ describe("card operations", () => {
             operation_id: operation,
             data: {
               ...authorization.json.data,
-              bill_amount: 478,
+              bill_amount: 69,
               card_id: "timeout",
               created_at: new Date().toISOString(),
               metadata: { account },
@@ -376,13 +313,20 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({
-          where: eq(transactions.id, operation),
-        });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
 
-        expect(captureException).toHaveBeenCalledWith(new Error("Transaction Timeout"));
+        expect(captureException).toHaveBeenNthCalledWith(
+          1,
+          new Error("timeout"),
+          expect.objectContaining({ level: "error" }),
+        );
+        expect(captureException).toHaveBeenNthCalledWith(
+          2,
+          new Error("timeout"),
+          expect.objectContaining({ level: "fatal" }),
+        );
         expect(transaction).toBeDefined();
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(569);
       });
 
       it("fails with transaction revert", async () => {
@@ -407,13 +351,20 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({
-          where: eq(transactions.id, operation),
-        });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
 
-        expect(captureException).toHaveBeenCalledWith(new Error("tx reverted"), expect.anything());
+        expect(captureException).toHaveBeenNthCalledWith(
+          1,
+          expect.any(BaseError),
+          expect.objectContaining({ level: "error" }),
+        );
+        expect(captureException).toHaveBeenNthCalledWith(
+          2,
+          expect.any(BaseError),
+          expect.objectContaining({ level: "fatal" }),
+        );
         expect(transaction).toBeDefined();
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(569);
       });
 
       it("fails with unexpected error", async () => {
@@ -440,6 +391,67 @@ describe("card operations", () => {
     });
   });
 });
+
+const authorization = {
+  header: { "x-webhook-key": "cryptomate" },
+  json: {
+    product: "CARDS",
+    event_type: "AUTHORIZATION",
+    operation_id: "op",
+    status: "PENDING",
+    data: {
+      card_id: "card",
+      bill_amount: 45.23,
+      bill_currency_number: "840",
+      bill_currency_code: "USD",
+      exchange_rate: 1,
+      transaction_amount: 45.23,
+      transaction_currency_number: "840",
+      transaction_currency_code: "USD",
+      channel: "ECOMMERCE",
+      created_at: new Date().toISOString(),
+      fees: { atm_fees: 0, fx_fees: 0 },
+      merchant_data: {
+        id: "420429000207212",
+        name: "GetYourGuideOperations",
+        city: "185-5648235",
+        post_code: "1990",
+        state: "DE",
+        country: "USA",
+        mcc_category: "Tourist Attractions and Exhibits",
+        mcc_code: "7991",
+      },
+      metadata: { account: zeroAddress },
+      signature: "0x",
+    },
+  },
+} as const;
+
+const receipt = {
+  status: "success",
+  blockHash: zeroHash,
+  blockNumber: 0n,
+  contractAddress: undefined,
+  cumulativeGasUsed: 0n,
+  effectiveGasPrice: 0n,
+  from: zeroAddress,
+  gasUsed: 0n,
+  logs: [],
+  logsBloom: "0x",
+  to: null,
+  transactionHash: "0x",
+  transactionIndex: 0,
+  type: "0x0",
+} as const;
+
+const callFrame = {
+  type: "CALL",
+  from: "",
+  to: "",
+  gas: "0x",
+  gasUsed: "0x",
+  input: "0x",
+} as const;
 
 vi.mock("../../utils/cryptomate", async () => {
   const { signIssuerOp: _, ...original } = await import("../../utils/cryptomate");
