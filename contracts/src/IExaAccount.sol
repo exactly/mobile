@@ -55,7 +55,6 @@ interface IProposalManager {
   function propose(address account, IMarket market, uint256 amount, ProposalType proposalType, bytes memory data)
     external;
   function queueNonces(address account) external view returns (uint256);
-  function setAllowedTarget(address target, bool allowed) external;
   function setNonce(address account, uint256 nonce) external;
 }
 
@@ -76,8 +75,6 @@ interface IInstallmentsRouter {
     returns (uint256[] memory assetsOwed);
 }
 
-event AllowedTargetSet(address indexed target, address indexed account, bool allowed);
-
 event CollectorSet(address indexed collector, address indexed account);
 
 event DelaySet(uint256 delay);
@@ -95,6 +92,8 @@ event Proposed(
   bytes data,
   uint256 unlock
 );
+
+event TargetAllowed(address indexed target, address indexed sender, bool allowed);
 
 event UninstallProposed(address indexed account, uint256 unlock);
 

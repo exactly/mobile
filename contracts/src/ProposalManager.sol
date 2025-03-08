@@ -8,7 +8,6 @@ import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
 import { ExaPlugin } from "./ExaPlugin.sol";
 import {
-  AllowedTargetSet,
   BorrowAtMaturityData,
   DelaySet,
   IAuditor,
@@ -27,6 +26,7 @@ import {
   ProposalType,
   Proposed,
   RollDebtData,
+  TargetAllowed,
   Timelocked,
   Unauthorized,
   ZeroAddress,
@@ -73,7 +73,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
 
     for (uint256 i = 0; i < targets.length; ++i) {
-      _setAllowedTarget(targets[i], true);
+      _allowTarget(targets[i], true);
     }
     _setDelay(delay_);
   }
@@ -247,8 +247,8 @@ contract ProposalManager is IProposalManager, AccessControl {
     emit ProposalNonceSet(account, nonce, executed);
   }
 
-  function setAllowedTarget(address target, bool allowed) external onlyRole(DEFAULT_ADMIN_ROLE) {
-    _setAllowedTarget(target, allowed);
+  function allowTarget(address target, bool allowed) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _allowTarget(target, allowed);
   }
 
   function setDelay(uint256 delay_) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -305,19 +305,19 @@ contract ProposalManager is IProposalManager, AccessControl {
     if (sumDebtPlusEffects > sumCollateral) revert InsufficientLiquidity();
   }
 
+  function _allowTarget(address target, bool allowed) internal {
+    if (address(target) == address(0)) revert ZeroAddress();
+
+    allowlist[target] = allowed;
+    emit TargetAllowed(target, msg.sender, allowed);
+  }
+
   function _checkMarket(IMarket market) internal view {
     if (!_isMarket(market)) revert NotMarket();
   }
 
   function _isMarket(IMarket market) internal view returns (bool) {
     return AUDITOR.markets(market).isListed;
-  }
-
-  function _setAllowedTarget(address target, bool allowed) internal {
-    if (address(target) == address(0)) revert ZeroAddress();
-
-    allowlist[target] = allowed;
-    emit AllowedTargetSet(target, msg.sender, allowed);
   }
 
   function _setDelay(uint256 delay_) internal {
