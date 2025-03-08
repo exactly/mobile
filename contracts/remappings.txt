@@ -1,7 +1,7 @@
 FreshCryptoLib/=node_modules/fresh-crypto-lib/solidity/src/
 modular-account-libs/=node_modules/modular-account-libs/src/
 modular-account/=node_modules/modular-account/
-openzeppelin-contracts/contracts/=node_modules/openzeppelin-contracts/
+openzeppelin-contracts/contracts/=node_modules/@openzeppelin/contracts/
 solady/=node_modules/solady/src/
 webauthn-owner-plugin/=node_modules/webauthn-owner-plugin/src
 webauthn-sol/=node_modules/webauthn-sol/src
@@ -13,3 +13,4 @@ webauthn-sol/=node_modules/webauthn-sol/src
 account-abstraction/=node_modules/account-abstraction/contracts/
 forge-std/=node_modules/forge-std/src/
 solmate/=node_modules/solmate/
+surl/=node_modules/surl/src/

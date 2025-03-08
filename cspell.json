@@ -1,6 +1,9 @@
 {
   "language": "en",
-  "ignorePaths": ["*.svg", "pnpm-lock.yaml"],
+  "ignorePaths": [
+    "*.svg",
+    "pnpm-lock.yaml"
+  ],
   "words": [
     "abitype",
     "adduser",
@@ -40,6 +43,7 @@
     "libcrypto",
     "lifi",
     "mdpi",
+    "memester",
     "mipd",
     "mixedcase",
     "moti",
@@ -65,6 +69,7 @@
     "solmate",
     "spotlightjs",
     "staticcall",
+    "surl",
     "tamagui",
     "thehubbleproject",
     "timelocked",
