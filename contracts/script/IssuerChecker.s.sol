@@ -16,8 +16,8 @@ contract DeployIssuerChecker is BaseScript {
     issuerChecker = new IssuerChecker(
       acct("admin"),
       acct("issuer"),
-      abi.decode(deploy.parseRaw(".issuerChecker.operationExpiry"), (uint256)),
-      abi.decode(deploy.parseRaw(".issuerChecker.prevIssuerWindow"), (uint256))
+      deploy.readUint(".issuerChecker.operationExpiry"),
+      deploy.readUint(".issuerChecker.prevIssuerWindow")
     );
   }
 }
