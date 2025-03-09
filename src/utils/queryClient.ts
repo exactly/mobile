@@ -79,6 +79,11 @@ queryClient.setQueryDefaults(["contacts", "recent"], {
     throw new Error("don't refetch");
   },
 });
+queryClient.setQueryDefaults(["withdrawal"], {
+  queryFn: () => {
+    throw new Error("don't refetch");
+  },
+});
 
 export type ActivityItem = Awaited<ReturnType<typeof getActivity>>[number];
 export interface Withdraw {
