@@ -218,7 +218,7 @@ function scheduleProposal(message: string) {
                     Promise.all([
                       publicClient.readContract({ address: market, abi: marketAbi, functionName: "decimals" }),
                       publicClient.readContract({ address: market, abi: marketAbi, functionName: "symbol" }),
-                      ensClient.getEnsName({ address: receiver }),
+                      ensClient.getEnsName({ address: receiver }).catch(() => null),
                     ])
                       .then(([decimals, symbol, ensName]) =>
                         sendPushNotification({
