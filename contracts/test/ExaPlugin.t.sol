@@ -266,7 +266,7 @@ contract ExaPluginTest is ForkTest {
   }
 
   function testFork_swap_swaps() external {
-    _setUpLifiFork();
+    _setUpForkEnv();
     uint256 amount = 0.0004e8;
     IERC20 wbtc = IERC20(protocol("WBTC"));
     deal(address(wbtc), address(account), amount);
@@ -285,7 +285,7 @@ contract ExaPluginTest is ForkTest {
   }
 
   function testFork_claimAndVestEscrowedEXA_claimsAndVests() external {
-    _setUpLifiFork();
+    _setUpForkEnv();
 
     IEscrowedEXA esEXA = IEscrowedEXA(protocol("esEXA"));
     IRewardsController rewardsController = IRewardsController(protocol("RewardsController"));
@@ -634,7 +634,7 @@ contract ExaPluginTest is ForkTest {
   }
 
   function testFork_crossRepay_repays() external {
-    _setUpLifiFork();
+    _setUpForkEnv();
     uint256 amount = 0.0004e8;
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
     deal(address(exaWBTC), address(account), amount);
@@ -1673,7 +1673,7 @@ contract ExaPluginTest is ForkTest {
   }
 
   function testFork_collectCollateral_collects() external {
-    _setUpLifiFork();
+    _setUpForkEnv();
     uint256 maxAmountIn = 0.0004e8;
     IMarket exaWBTC = IMarket(protocol("MarketWBTC"));
     deal(exaWBTC.asset(), address(account), maxAmountIn);
@@ -1689,9 +1689,7 @@ contract ExaPluginTest is ForkTest {
     );
 
     uint256 balance = usdc.balanceOf(exaPlugin.collector());
-    account.collectCollateral(
-      21e6, exaWBTC, maxAmountIn, block.timestamp, route, _issuerOp(21e6, block.timestamp, false, true)
-    );
+    account.collectCollateral(21e6, exaWBTC, maxAmountIn, block.timestamp, route, _issuerOp(21e6, block.timestamp));
     assertEq(usdc.balanceOf(exaPlugin.collector()) - balance, 21e6);
   }
 
@@ -2238,7 +2236,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 balance = exaUSDC.balanceOf(address(account));
     deal(address(usdc), address(refunder), 100e6);
-    refunder.refund(address(account), 100e6, block.timestamp, _issuerOp(100e6, block.timestamp, true, false));
+    refunder.refund(address(account), 100e6, block.timestamp, _issuerOp(100e6, block.timestamp, true));
     assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
   }
 
@@ -2249,7 +2247,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 balance = exaUSDC.balanceOf(address(account));
     deal(address(usdc), address(refunder), 100e6);
-    refunder.refund(address(account), 100e6, block.timestamp, _issuerOp(100e6, block.timestamp, true, false));
+    refunder.refund(address(account), 100e6, block.timestamp, _issuerOp(100e6, block.timestamp, true));
     assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
   }
 
@@ -2491,14 +2489,10 @@ contract ExaPluginTest is ForkTest {
   // solhint-enable func-name-mixedcase
 
   function _issuerOp(uint256 amount, uint256 timestamp) internal view returns (bytes memory signature) {
-    return _issuerOp(amount, timestamp, false, false);
+    return _issuerOp(amount, timestamp, false);
   }
 
-  function _issuerOp(uint256 amount, uint256 timestamp, bool refund, bool legacyFork)
-    internal
-    view
-    returns (bytes memory signature)
-  {
+  function _issuerOp(uint256 amount, uint256 timestamp, bool refund) internal view returns (bytes memory signature) {
     return _sign(
       issuerKey,
       keccak256(
@@ -2509,11 +2503,9 @@ contract ExaPluginTest is ForkTest {
             abi.encode(
               keccak256(
                 bytes(
-                  legacyFork
-                    ? "Operation(address account,uint256 amount,uint40 timestamp)"
-                    : refund
-                      ? "Refund(address account,uint256 amount,uint40 timestamp)"
-                      : "Collection(address account,uint256 amount,uint40 timestamp)"
+                  refund
+                    ? "Refund(address account,uint256 amount,uint40 timestamp)"
+                    : "Collection(address account,uint256 amount,uint40 timestamp)"
                 )
               ),
               account,
@@ -2542,11 +2534,10 @@ contract ExaPluginTest is ForkTest {
     );
   }
 
-  function _setUpLifiFork() internal {
+  function _setUpForkEnv() internal {
     vm.createSelectFork("optimism", 127_050_624);
     account = ExaAccount(payable(0x6120Fb2A9d47f7955298b80363F00C620dB9f6E6));
-    issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
-    vm.prank(acct("deployer"));
+    issuerChecker = new IssuerChecker(address(this), issuer, 1 minutes, 1 minutes);
     issuerChecker.setIssuer(issuer);
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
@@ -2575,7 +2566,7 @@ contract ExaPluginTest is ForkTest {
         balancerVault: IBalancerVault(protocol("BalancerVault")),
         debtManager: IDebtManager(protocol("DebtManager")),
         installmentsRouter: IInstallmentsRouter(protocol("InstallmentsRouter")),
-        issuerChecker: IssuerChecker(broadcast("IssuerChecker")),
+        issuerChecker: issuerChecker,
         proposalManager: proposalManager,
         collector: acct("collector"),
         swapper: 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
