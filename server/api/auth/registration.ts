@@ -1,6 +1,6 @@
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
-import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
+import chain, { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
 import { Address, Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser } from "@sentry/node";
@@ -14,6 +14,7 @@ import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
 import { any, array, check, literal, nullish, object, optional, parse, pipe, string, transform } from "valibot";
 import type { Hex } from "viem";
+import { optimism } from "viem/chains";
 
 import database, { credentials } from "../../database";
 import { webhooksKey } from "../../utils/alchemy";
@@ -132,7 +133,7 @@ export default app
             account,
             id: credential.id,
             publicKey: credential.publicKey,
-            factory: exaAccountFactoryAddress,
+            factory: chain.id === optimism.id ? "0xcbeaAF42Cc39c17e84cBeFe85160995B515A9668" : exaAccountFactoryAddress,
             transports: attestation.response.transports,
             counter: credential.counter,
           },
