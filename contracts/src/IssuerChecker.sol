@@ -43,6 +43,7 @@ contract IssuerChecker is AccessControl, EIP712 {
     if (refund) {
       if (refunds[account][hash]) revert Replay();
       refunds[account][hash] = true;
+      emit Refunded(account, amount, timestamp);
       recovered = _hashTypedData(
         keccak256(
           abi.encode(keccak256("Refund(address account,uint256 amount,uint40 timestamp)"), account, amount, timestamp)
@@ -51,6 +52,7 @@ contract IssuerChecker is AccessControl, EIP712 {
     } else {
       if (collections[account][hash]) revert Replay();
       collections[account][hash] = true;
+      emit Collected(account, amount, timestamp);
       recovered = _hashTypedData(
         keccak256(
           abi.encode(
@@ -109,10 +111,14 @@ contract IssuerChecker is AccessControl, EIP712 {
   }
 }
 
+event Collected(address indexed account, uint256 amount, uint256 timestamp);
+
 event IssuerSet(address indexed issuer, address indexed account);
 
 event OperationExpirySet(uint256 operationExpiry, address indexed account);
 
 event PrevIssuerWindowSet(uint256 prevIssuerWindow, address indexed account);
+
+event Refunded(address indexed account, uint256 amount, uint256 timestamp);
 
 error InvalidOperationExpiry();

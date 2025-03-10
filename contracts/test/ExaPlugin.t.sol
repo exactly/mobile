@@ -78,7 +78,7 @@ import {
   Uninstalling,
   ZeroAmount
 } from "../src/IExaAccount.sol";
-import { IssuerChecker } from "../src/IssuerChecker.sol";
+import { Collected, IssuerChecker, Refunded } from "../src/IssuerChecker.sol";
 
 import { ProposalManager } from "../src/ProposalManager.sol";
 import { Refunder } from "../src/Refunder.sol";
@@ -2249,6 +2249,26 @@ contract ExaPluginTest is ForkTest {
     deal(address(usdc), address(refunder), 100e6);
     refunder.refund(address(account), 100e6, block.timestamp, _issuerOp(100e6, block.timestamp, true));
     assertEq(exaUSDC.balanceOf(address(account)), balance + 100e6);
+  }
+
+  // issuer checker
+
+  function test_issuerChecker_emits_collected() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    vm.expectEmit(true, true, true, true, address(issuerChecker));
+    emit Collected(address(account), 100e6, block.timestamp);
+    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
+  }
+
+  function test_issuerChecker_emits_refunded() external {
+    vm.startPrank(keeper);
+    deal(address(usdc), address(refunder), 100e6);
+
+    vm.expectEmit(true, true, true, true, address(issuerChecker));
+    emit Refunded(address(account), 100e6, block.timestamp);
+    refunder.refund(address(account), 100e6, block.timestamp, _issuerOp(100e6, block.timestamp, true));
   }
 
   // admin functions
