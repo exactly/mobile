@@ -406,7 +406,7 @@ export default function Pay() {
           >
             <View padded>
               <YStack gap="$s4" paddingTop="$s5">
-                <XStack justifyContent="space-between" gap="$s3">
+                <XStack justifyContent="space-between" gap="$s3" alignItems="center">
                   <Text secondary footnote textAlign="left">
                     Purchases
                   </Text>
@@ -419,7 +419,7 @@ export default function Pay() {
                   </Text>
                 </XStack>
                 {borrow && (
-                  <XStack justifyContent="space-between" gap="$s3">
+                  <XStack justifyContent="space-between" gap="$s3" alignItems="center">
                     <Text secondary footnote textAlign="left">
                       Interest&nbsp;
                       {(
@@ -444,7 +444,7 @@ export default function Pay() {
                     </Text>
                   </XStack>
                 )}
-                <XStack justifyContent="space-between" gap="$s3">
+                <XStack justifyContent="space-between" gap="$s3" alignItems="center">
                   {discount >= 0 ? (
                     <Text secondary footnote textAlign="left">
                       Early repay&nbsp;
@@ -456,7 +456,7 @@ export default function Pay() {
                             maximumFractionDigits: 2,
                           })
                           .replaceAll(/\s+/g, "")}
-                        &nbsp;OFF`
+                        &nbsp;OFF
                       </Text>
                     </Text>
                   ) : (
@@ -496,7 +496,7 @@ export default function Pay() {
                   </Text>
                 </XStack>
                 <Separator height={1} borderColor="$borderNeutralSoft" paddingVertical="$s2" />
-                <XStack justifyContent="space-between" gap="$s3">
+                <XStack justifyContent="space-between" gap="$s3" alignItems="center">
                   <Text secondary footnote textAlign="left">
                     You&apos;ll pay
                   </Text>
