@@ -105,6 +105,8 @@ export default async function setup({ provide }: TestProject) {
 
   if (initialize) {
     shell.env.SWAPPER_ADDRESS = swapper.contractAddress;
+    shell.env.PROTOCOL_ESEXA_ADDRESS = padHex("0x666", { size: 20 }); // cspell:disable-line
+    shell.env.PROTOCOL_REWARDSCONTROLLER_ADDRESS = padHex("0x666", { size: 20 }); // cspell:disable-line
     await $(shell)`forge script script/ProposalManager.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
     await $(shell)`forge script script/Refunder.s.sol
