@@ -284,6 +284,52 @@ contract ExaPluginTest is ForkTest {
     assertGe(usdc.balanceOf(address(account)), minAmount, "usdc dust");
   }
 
+  function testFork_claimAndVestEscrowedEXA_claimsAndVests() external {
+    _setUpLifiFork();
+
+    IEscrowedEXA esEXA = IEscrowedEXA(protocol("esEXA"));
+    IRewardsController rewardsController = IRewardsController(protocol("RewardsController"));
+    uint256 unclaimedRewards = rewardsController.allClaimable(address(account), esEXA);
+
+    exa = MockERC20(protocol("EXA"));
+    proposalManager.allowTarget(address(rewardsController), true);
+    proposalManager.allowTarget(address(exa), true);
+    proposalManager.allowTarget(address(esEXA), true);
+
+    assertEq(esEXA.balanceOf(address(account)), 0);
+
+    vm.prank(address(account));
+    account.execute(address(rewardsController), 0, abi.encodeCall(IRewardsController.claimAll, (address(account))));
+
+    uint256 balance = esEXA.balanceOf(address(account));
+    assertEq(balance, unclaimedRewards);
+    assertEq(rewardsController.allClaimable(address(account), esEXA), 0);
+
+    deal(address(exa), address(account), 1000e18);
+    uint256 exaBalance = exa.balanceOf(address(account));
+
+    vm.startPrank(address(account));
+    account.execute(address(exa), 0, abi.encodeCall(IERC20.approve, (address(esEXA), type(uint256).max)));
+
+    uint256[] memory streams = new uint256[](1);
+    streams[0] = abi.decode(
+      account.execute(
+        address(esEXA),
+        0,
+        abi.encodeCall(IEscrowedEXA.vest, (uint128(balance), address(account), type(uint256).max, type(uint256).max))
+      ),
+      (uint256)
+    );
+
+    assertEq(esEXA.balanceOf(address(account)), 0);
+
+    skip(esEXA.vestingPeriod());
+
+    account.execute(address(esEXA), 0, abi.encodeCall(IEscrowedEXA.withdrawMax, (streams)));
+
+    assertEq(exa.balanceOf(address(account)), exaBalance + balance);
+  }
+
   function test_swap_reverts_withDisagreement() external {
     uint256 prevUSDC = usdc.balanceOf(address(account));
     uint256 prevEXA = exa.balanceOf(address(account));
@@ -2608,3 +2654,25 @@ contract BadPlugin is BasePlugin {
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
 error Disagreement();
+
+interface IRewardsController {
+  function allClaimable(address account, IERC20 reward) external view returns (uint256 unclaimedRewards);
+  function allClaimable(address account) external view returns (AllClaimable[] memory unclaimedRewards);
+  function claimAll(address to) external returns (IERC20[] memory rewardsList, uint256[] memory claimedAmounts);
+}
+
+interface IEscrowedEXA is IERC20 {
+  function vest(uint128 amount, address to, uint256 maxRatio, uint256 maxPeriod) external returns (uint256 streamId);
+  function vestingPeriod() external view returns (uint256);
+  function withdrawMax(uint256[] memory streamIds) external;
+}
+
+struct AllClaimable {
+  IERC20 reward;
+  Claimable[] claimable;
+}
+
+struct Claimable {
+  address token;
+  uint256 amount;
+}
