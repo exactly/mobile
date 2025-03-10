@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
+import { YStack } from "tamagui";
 
 import queryClient from "../../utils/queryClient";
 import type { getActivity } from "../../utils/server";
@@ -43,9 +44,17 @@ export default function LatestActivity({
     >
       {!activity?.length &&
         (emptyComponent ?? (
-          <Text textAlign="center" subHeadline color="$uiNeutralSecondary">
-            There is no activity yet.
-          </Text>
+          <YStack alignItems="center" justifyContent="center" gap="$s4_5">
+            <Text textAlign="center" color="$uiNeutralSecondary" emphasized title>
+              📋
+            </Text>
+            <Text textAlign="center" color="$uiBrandSecondary" emphasized headline>
+              No activity yet
+            </Text>
+            <Text textAlign="center" color="$uiNeutralSecondary" subHeadline>
+              Your transactions will show up here once you get started. Add funds to begin!
+            </Text>
+          </YStack>
         ))}
       {activity?.slice(0, 4).map((item) => {
         const { amount, id, usdAmount, currency, type, timestamp } = item;
