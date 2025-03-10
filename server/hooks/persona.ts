@@ -1,5 +1,5 @@
 import { vValidator } from "@hono/valibot-validator";
-import { captureException } from "@sentry/node";
+import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import type { InferOutput } from "valibot";
@@ -74,6 +74,8 @@ export default new Hono().post(
     },
   ),
   async (c) => {
+    getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "persona.inquiry");
+
     const payload = c.req.valid("json");
     const {
       data: {
@@ -82,6 +84,8 @@ export default new Hono().post(
       },
       included,
     } = payload.data.attributes.payload;
+
+    setContext("persona", { inquiryId: personaShareToken });
 
     const session = included[0];
     if (!session) return c.json("no inquiry session", 400);
