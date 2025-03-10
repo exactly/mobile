@@ -107,11 +107,15 @@ contract ExaPreviewerTest is ForkTest {
     set("DebtManager", address(p.debtManager()));
     set("InstallmentsRouter", address(p.installmentsRouter()));
     set("swapper", address(m.swapper()));
+    set("esEXA", address(0x666));
+    set("RewardsController", address(0x666));
     pm.run();
     unset("Auditor");
     unset("DebtManager");
     unset("InstallmentsRouter");
     unset("swapper");
+    unset("esEXA");
+    unset("RewardsController");
     proposalManager = pm.proposalManager();
 
     DeployScript d = new DeployScript();

@@ -30,6 +30,8 @@ contract DeployProposalManager is BaseScript {
       protocolAssets[address(markets[i])] = true;
     }
     allowlist.push(acct("swapper"));
+    allowlist.push(protocol("esEXA"));
+    allowlist.push(protocol("RewardsController"));
 
     if (acct("swapper") == 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE) {
       vm.pauseTracing();

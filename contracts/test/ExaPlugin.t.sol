@@ -174,6 +174,8 @@ contract ExaPluginTest is ForkTest {
     set("InstallmentsRouter", address(p.installmentsRouter()));
     set("swapper", address(m.swapper()));
     set("collector", address(collector));
+    set("esEXA", address(0x666));
+    set("RewardsController", address(0x666));
     pm.run();
     unset("admin");
     unset("Auditor");
@@ -181,6 +183,8 @@ contract ExaPluginTest is ForkTest {
     unset("InstallmentsRouter");
     unset("swapper");
     unset("collector");
+    unset("esEXA");
+    unset("RewardsController");
     proposalManager = pm.proposalManager();
 
     debtManager = IDebtManager(address(p.debtManager()));
