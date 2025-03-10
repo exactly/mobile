@@ -110,6 +110,7 @@ contract ProposalManager is IProposalManager, AccessControl {
           uint256 percentage
         ) = abi.decode(callData, (IMarket, uint256, uint256, uint256, uint256, uint256));
         Proposal memory rollProposal = shiftProposal(sender);
+        if (rollProposal.proposalType != ProposalType.ROLL_DEBT) revert NoProposal();
         if (rollProposal.timestamp + delay > block.timestamp) revert Timelocked();
 
         RollDebtData memory rollData = abi.decode(rollProposal.data, (RollDebtData));
