@@ -33,8 +33,8 @@ export default function SpendingLimits({ open, onClose }: { open: boolean; onClo
         <SafeView paddingTop={0} fullScreen borderTopLeftRadius="$r4" borderTopRightRadius="$r4">
           <ScrollView>
             <View fullScreen flex={1}>
-              <View gap="$s4_5" flex={1} padded>
-                <YStack gap="$s7">
+              <View flex={1} padded>
+                <YStack gap="$s4_5">
                   <YStack gap="$s4">
                     <Text emphasized headline primary>
                       Spending limits
@@ -43,10 +43,8 @@ export default function SpendingLimits({ open, onClose }: { open: boolean; onClo
                       Track your spending and see how much you&apos;ve spent with your Exa Card so far.
                     </Text>
                   </YStack>
-                  <YStack gap="$s2">
-                    <SpendingLimit title="Daily" limit={3000} />
-                    <SpendingLimit title="Weekly" limit={10_000} />
-                    <SpendingLimit title="Monthly" limit={30_000} />
+                  <YStack paddingBottom="$s4">
+                    <SpendingLimit title="Weekly" limit={15_000} />
                   </YStack>
                   <Pressable onPress={onClose} style={styles.close} hitSlop={ms(20)}>
                     <Text emphasized footnote color="$interactiveTextBrandDefault">
