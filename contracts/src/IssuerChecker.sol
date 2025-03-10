@@ -102,12 +102,12 @@ contract IssuerChecker is AccessControl, EIP712 {
   function _setOperationExpiry(uint256 operationExpiry_) internal {
     if (operationExpiry_ == 0) revert InvalidOperationExpiry();
     operationExpiry = operationExpiry_;
-    emit OperationExpirySet(operationExpiry_, msg.sender);
+    emit OperationExpirySet(msg.sender, operationExpiry_);
   }
 
   function _setPrevIssuerWindow(uint256 prevIssuerWindow_) internal {
     prevIssuerWindow = prevIssuerWindow_;
-    emit PrevIssuerWindowSet(prevIssuerWindow_, msg.sender);
+    emit PrevIssuerWindowSet(msg.sender, prevIssuerWindow_);
   }
 }
 
@@ -115,9 +115,9 @@ event Collected(address indexed account, uint256 amount, uint256 timestamp);
 
 event IssuerSet(address indexed issuer, address indexed account);
 
-event OperationExpirySet(uint256 operationExpiry, address indexed account);
+event OperationExpirySet(address indexed account, uint256 operationExpiry);
 
-event PrevIssuerWindowSet(uint256 prevIssuerWindow, address indexed account);
+event PrevIssuerWindowSet(address indexed account, uint256 prevIssuerWindow);
 
 event Refunded(address indexed account, uint256 amount, uint256 timestamp);
 

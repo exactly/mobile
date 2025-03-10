@@ -58,7 +58,7 @@ contract IssuerCheckerTest is ForkTest {
     assertEq(issuerChecker.operationExpiry(), operationExpiry);
     uint256 newOperationExpiry = 20 minutes;
     vm.expectEmit(true, true, true, true, address(issuerChecker));
-    emit OperationExpirySet(newOperationExpiry, address(this));
+    emit OperationExpirySet(address(this), newOperationExpiry);
     issuerChecker.setOperationExpiry(newOperationExpiry);
 
     assertEq(issuerChecker.operationExpiry(), newOperationExpiry);
@@ -88,7 +88,7 @@ contract IssuerCheckerTest is ForkTest {
     assertEq(issuerChecker.prevIssuerWindow(), prevIssuerWindow);
     uint256 newPrevIssuerWindow = 20 days;
     vm.expectEmit(true, true, true, true, address(issuerChecker));
-    emit PrevIssuerWindowSet(newPrevIssuerWindow, address(this));
+    emit PrevIssuerWindowSet(address(this), newPrevIssuerWindow);
     issuerChecker.setPrevIssuerWindow(newPrevIssuerWindow);
 
     assertEq(issuerChecker.prevIssuerWindow(), newPrevIssuerWindow);
