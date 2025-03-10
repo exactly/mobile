@@ -17,7 +17,6 @@
     "test": "pnpm run --aggregate-output /test:/",
     "test:spell": "cspell --gitignore '**'",
     "test:deps": "pnpm audit",
-    "test:expo": "expo-doctor",
     "test:build": "expo export --platform web",
     "test:ts:expo": "tsc",
     "test:ts:node": "tsc -p tsconfig.node.json",
