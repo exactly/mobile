@@ -82,7 +82,7 @@ export default function ProfileHeader() {
             >
               <View display="flex" flexDirection="row" alignItems="flex-start">
                 <Text fontSize={ms(17)} lineHeight={ms(23)} fontFamily="$mono">
-                  {shortenHex(address).toLowerCase()}
+                  {hidden ? "0x..." : shortenHex(address).toLowerCase()}
                 </Text>
               </View>
             </Pressable>
