@@ -145,7 +145,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   function executeProposal() external {
     Proposal memory proposal = proposalManager.nextProposal(msg.sender);
 
-    if (proposal.amount == 0) revert NoProposal();
     if (proposal.timestamp + proposalManager.delay() > block.timestamp) revert Timelocked();
 
     if (proposal.proposalType == ProposalType.WITHDRAW || proposal.proposalType == ProposalType.REDEEM) {
