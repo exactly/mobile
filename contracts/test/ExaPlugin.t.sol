@@ -75,6 +75,7 @@ import {
   Unauthorized,
   UninstallProposed,
   UninstallRevoked,
+  Uninstalling,
   ZeroAmount
 } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
@@ -2397,6 +2398,13 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(exaEXA.balanceOf(receiver), amount);
     assertEq(exaEXA.balanceOf(address(account)), balance - amount);
+  }
+
+  function test_propose_reverts_whenUninstallProposalExists() external {
+    vm.startPrank(address(account));
+    account.proposeUninstall();
+    vm.expectRevert(Uninstalling.selector);
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
   }
 
   // solhint-enable func-name-mixedcase

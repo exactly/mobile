@@ -52,6 +52,7 @@ import {
   Unauthorized,
   UninstallProposed,
   UninstallRevoked,
+  Uninstalling,
   ZeroAddress
 } from "./IExaAccount.sol";
 import { IssuerChecker } from "./IssuerChecker.sol";
@@ -163,6 +164,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
+    if (uninstallProposals[msg.sender] != 0) revert Uninstalling();
     proposalManager.propose(msg.sender, market, amount, proposalType, data);
   }
 
