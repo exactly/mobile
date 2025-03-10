@@ -59,10 +59,12 @@ export default function Home() {
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View fullScreen backgroundColor="$backgroundMild">
         <ScrollView
+          ref={homeScrollReference}
           backgroundColor="$backgroundMild"
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
+              ref={homeRefreshControlReference}
               style={style}
               refreshing={isPending}
               onRefresh={() => {
@@ -105,3 +107,6 @@ export default function Home() {
     </SafeView>
   );
 }
+
+export const homeScrollReference = React.createRef<ScrollView>();
+export const homeRefreshControlReference = React.createRef<RefreshControl>();

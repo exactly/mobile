@@ -38,10 +38,12 @@ export default function Activity() {
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View gap="$s5" flex={1} backgroundColor="$backgroundMild">
         <StyledFlatList
+          ref={activityScrollReference}
           backgroundColor={data.length > 0 ? "$backgroundMild" : "$backgroundSoft"}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
+              ref={activityRefreshControlReference}
               style={style}
               refreshing={isPending}
               onRefresh={() => {
@@ -104,3 +106,5 @@ type ActivityItemType =
       event: Awaited<ReturnType<typeof getActivity>>[number];
     };
 const StyledFlatList = styled(FlatList<ActivityItemType>, { backgroundColor: "$backgroundMild" });
+export const activityScrollReference = React.createRef<FlatList>();
+export const activityRefreshControlReference = React.createRef<RefreshControl>();
