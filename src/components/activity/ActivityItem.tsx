@@ -51,7 +51,7 @@ export default function ActivityItem({ item, isLast }: { item: Item; isLast: boo
               {type === "card" && item.merchant.name}
               {type === "received" && "Received"}
               {type === "sent" && "Sent"}
-              {type === "repay" && "Debt Paid"}
+              {type === "repay" && "Protocol debt payment"}
               {type === "panda" && item.merchant.name}
             </Text>
             <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
