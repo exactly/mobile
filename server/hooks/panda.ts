@@ -1,5 +1,5 @@
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
-import {
+import chain, {
   exaPluginAbi,
   exaPluginAddress,
   exaPreviewerAbi,
@@ -36,6 +36,7 @@ import {
   padHex,
   toBytes,
 } from "viem";
+import { optimism } from "viem/chains";
 
 import database, { cards, transactions } from "../database/index";
 import { auditorAbi, issuerCheckerAbi, marketAbi, proposalManagerAbi } from "../generated/contracts";
@@ -343,11 +344,63 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
       } as const;
     }
     const preview = await startSpan({ name: "query onchain state", op: "exa.preview" }, () =>
-      publicClient.readContract({
-        abi: exaPreviewerAbi,
-        address: exaPreviewerAddress,
-        functionName: "utilizations",
-      }),
+      chain.id === optimism.id
+        ? publicClient.readContract({
+            address: "0xdfB4f5e2099C40e96Fa28Af83395d587b55C3043",
+            functionName: "preview",
+            abi: [
+              {
+                type: "function",
+                name: "preview",
+                inputs: [],
+                outputs: [
+                  {
+                    components: [
+                      { internalType: "uint256", name: "floatingAssets", type: "uint256" },
+                      { internalType: "uint256", name: "globalUtilization", type: "uint256" },
+                      { internalType: "uint256", name: "floatingUtilization", type: "uint256" },
+                      {
+                        components: [
+                          { internalType: "uint256", name: "maturity", type: "uint256" },
+                          { internalType: "uint256", name: "utilization", type: "uint256" },
+                        ],
+                        internalType: "struct FixedUtilization[]",
+                        name: "fixedUtilizations",
+                        type: "tuple[]",
+                      },
+                      {
+                        components: [
+                          { internalType: "uint256", name: "minRate", type: "uint256" },
+                          { internalType: "uint256", name: "naturalRate", type: "uint256" },
+                          { internalType: "uint256", name: "maxUtilization", type: "uint256" },
+                          { internalType: "uint256", name: "naturalUtilization", type: "uint256" },
+                          { internalType: "uint256", name: "growthSpeed", type: "uint256" },
+                          { internalType: "uint256", name: "sigmoidSpeed", type: "uint256" },
+                          { internalType: "uint256", name: "spreadFactor", type: "uint256" },
+                          { internalType: "uint256", name: "maturitySpeed", type: "uint256" },
+                          { internalType: "int256", name: "timePreference", type: "int256" },
+                          { internalType: "uint256", name: "fixedAllocation", type: "uint256" },
+                          { internalType: "uint256", name: "maxRate", type: "uint256" },
+                        ],
+                        internalType: "struct IRMParameters",
+                        name: "interestRateModel",
+                        type: "tuple",
+                      },
+                    ],
+                    internalType: "struct Preview",
+                    name: "",
+                    type: "tuple",
+                  },
+                ],
+                stateMutability: "view",
+              },
+            ],
+          })
+        : publicClient.readContract({
+            abi: exaPreviewerAbi,
+            address: exaPreviewerAddress,
+            functionName: "utilizations",
+          }),
     );
     setContext("preview", preview);
     const installments = startSpan({ name: "split installments", op: "exa.split" }, () =>
