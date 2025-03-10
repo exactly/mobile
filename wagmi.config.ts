@@ -26,8 +26,14 @@ const weth = loadDeployment("WETH");
 const balancerVault = loadDeployment("BalancerVault");
 const [exaPlugin, , factory] = loadBroadcast("Deploy").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
-const [proposalManager] = loadBroadcast("ProposalManager").transactions;
-const [exaPreviewer] = loadBroadcast("ExaPreviewer").transactions;
+const [proposalManager] =
+  chainId === optimism.id
+    ? [{ contractAddress: "0x827e9FCF0B0710EbB754695fAA813cA67e3c7458" }]
+    : loadBroadcast("ProposalManager").transactions;
+const [exaPreviewer] =
+  chainId === optimism.id
+    ? [{ contractAddress: "0x12aF1C16AA8edCA467F3598C3691a8577A4ff761" }]
+    : loadBroadcast("ExaPreviewer").transactions;
 const [, mockSwapper] =
   chainId === optimismSepolia.id ? loadBroadcast("Mocks").transactions : [{}, { contractAddress: zeroAddress }];
 if (!exaPlugin || !factory || !issuerChecker || !proposalManager || !exaPreviewer) throw new Error("missing contracts");
