@@ -27,10 +27,12 @@ export default function PayLater() {
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View fullScreen backgroundColor="$backgroundMild">
         <ScrollView
+          ref={payLaterScrollReference}
           showsVerticalScrollIndicator={false}
           flex={1}
           refreshControl={
             <RefreshControl
+              ref={payLaterRefreshControlReference}
               style={style}
               refreshing={isPending}
               onRefresh={() => {
@@ -71,3 +73,6 @@ export default function PayLater() {
     </SafeView>
   );
 }
+
+export const payLaterScrollReference = React.createRef<ScrollView>();
+export const payLaterRefreshControlReference = React.createRef<RefreshControl>();
