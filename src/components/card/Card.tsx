@@ -161,10 +161,12 @@ export default function Card() {
     <SafeView fullScreen tab backgroundColor="$backgroundSoft">
       <View fullScreen backgroundColor="$backgroundMild">
         <ScrollView
+          ref={cardScrollReference}
           backgroundColor="$backgroundMild"
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
+              ref={cardRefreshControlReference}
               style={style}
               refreshing={isPending}
               onRefresh={() => {
@@ -355,3 +357,6 @@ export default function Card() {
     </SafeView>
   );
 }
+
+export const cardScrollReference = React.createRef<ScrollView>();
+export const cardRefreshControlReference = React.createRef<RefreshControl>();
