@@ -214,7 +214,14 @@ export default function Card() {
                     }}
                   />
                 )}
-                <ExaCard revealing={isRevealing} frozen={cardDetails?.status === "FROZEN"} />
+                <ExaCard
+                  revealing={isRevealing}
+                  frozen={cardDetails?.status === "FROZEN"}
+                  onPress={() => {
+                    if (isRevealing) return;
+                    revealCard().catch(handleError);
+                  }}
+                />
                 <YStack
                   borderRadius="$r3"
                   borderWidth={1}
