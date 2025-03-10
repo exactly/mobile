@@ -2170,6 +2170,21 @@ contract ExaPluginTest is ForkTest {
     assertEq(plugins[0], address(ownerPlugin));
   }
 
+  function test_clearProposals_reverts_whenNotPlugin() external {
+    vm.startPrank(address(account));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
+
+    vm.expectRevert(Unauthorized.selector);
+    exaPlugin.clearProposals(address(account));
+
+    vm.startPrank(address(exaPlugin));
+    exaPlugin.clearProposals(address(account));
+
+    assertEq(proposalManager.nonces(address(account)), proposalManager.queueNonces(address(account)));
+  }
+
   // refunder
 
   function test_refund_refunds() external {
@@ -2405,6 +2420,26 @@ contract ExaPluginTest is ForkTest {
     account.proposeUninstall();
     vm.expectRevert(Uninstalling.selector);
     account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
+  }
+
+  function test_uninstall_removesProposals() external {
+    vm.startPrank(address(account));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
+
+    account.proposeUninstall();
+    skip(exaPlugin.UNINSTALL_DELAY());
+
+    assertEq(proposalManager.queueNonces(address(account)), 3);
+    assertEq(proposalManager.nonces(address(account)), 0);
+
+    account.execute(
+      address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", ""))
+    );
+
+    assertEq(proposalManager.queueNonces(address(account)), 3);
+    assertEq(proposalManager.nonces(address(account)), 3);
   }
 
   // solhint-enable func-name-mixedcase

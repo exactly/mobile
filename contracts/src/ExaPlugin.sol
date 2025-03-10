@@ -315,6 +315,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     if (timestamp == 0) revert NoProposal();
     if (timestamp + UNINSTALL_DELAY > block.timestamp) revert Timelocked();
     delete uninstallProposals[msg.sender];
+    try this.clearProposals(msg.sender) { } catch { } // solhint-disable-line no-empty-blocks
+  }
+
+  function clearProposals(address account) external {
+    if (msg.sender != address(this)) revert Unauthorized();
+    proposalManager.setNonce(account, proposalManager.queueNonces(account));
   }
 
   /// @inheritdoc BasePlugin
