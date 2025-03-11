@@ -1,5 +1,4 @@
 import { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
-import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import { ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
@@ -22,7 +21,7 @@ export default function HomeActions() {
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
   });
-  const isLatestPlugin = installedPlugins?.[0] === latestExaPlugin;
+  const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
   const { refetch: refetchProposals, isFetching: isFetchingProposals } = useReadContract(
     isLatestPlugin
       ? {

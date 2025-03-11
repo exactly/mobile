@@ -1,6 +1,5 @@
-import domain from "@exactly/common/domain";
 import { exaPluginAddress } from "@exactly/common/generated/chain";
-import { type Address, Hex } from "@exactly/common/validation";
+import type { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { createHmac } from "node:crypto";
 import removeAccents from "remove-accents";
@@ -22,13 +21,7 @@ import { BaseError, ContractFunctionZeroDataError } from "viem";
 import { upgradeableModularAccountAbi } from "../generated/contracts";
 import publicClient from "../utils/publicClient";
 
-const plugins = new Set(
-  (
-    {
-      "web.exactly.app": ["0x87aF7e4892e47a7De34dF689bA5f3bCccED3e5DE"],
-    }[domain] ?? [exaPluginAddress]
-  ).map((address) => parse(Hex, address.toLowerCase())),
-);
+const plugin = exaPluginAddress.toLowerCase();
 
 export const pandaIssuing = !!JSON.parse(process.env.PANDA_ISSUING ?? "false");
 
@@ -159,7 +152,7 @@ export async function isPanda(account: Address) {
       functionName: "getInstalledPlugins",
       abi: upgradeableModularAccountAbi,
     });
-    return installedPlugins.some((addr) => plugins.has(addr.toLowerCase() as Hex));
+    return installedPlugins.some((addr) => plugin === addr.toLowerCase());
   } catch (error) {
     if (error instanceof BaseError && error.cause instanceof ContractFunctionZeroDataError) return true;
     throw error;

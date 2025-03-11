@@ -1,5 +1,4 @@
 import { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
-import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import shortenHex from "@exactly/common/shortenHex";
 import { WAD } from "@exactly/lib";
 import { Check, Hourglass, ArrowUpRight } from "@tamagui/lucide-icons";
@@ -29,7 +28,7 @@ export default function Processing() {
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
   });
-  const isLatestPlugin = installedPlugins?.[0] === latestExaPlugin;
+  const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 
   const { data: proposals } = useReadContract(
     isLatestPlugin
