@@ -54,7 +54,7 @@ export default function AssetSelector({
     ?.map((market) => ({
       ...market,
       symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
-      usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
+      usdValue: (withdrawLimit(markets, market.market) * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0);
 
