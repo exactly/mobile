@@ -1,5 +1,9 @@
 import fixedRate from "@exactly/common/fixedRate";
-import chain, { previewerAddress, exaPluginAddress, marketUSDCAddress } from "@exactly/common/generated/chain";
+import chain, {
+  previewerAddress,
+  marketUSDCAddress,
+  upgradeableModularAccountAbi,
+} from "@exactly/common/generated/chain";
 import { Address, Hash, type Hex } from "@exactly/common/validation";
 import { effectiveRate, WAD } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
@@ -113,19 +117,29 @@ export default app.get(
         ? []
         : publicClient
             .getLogs({
-              event: marketAbi[38],
-              address: [...markets.keys()],
-              args: { caller: exaPluginAddress, borrower: account },
+              event: upgradeableModularAccountAbi[25],
+              address: account,
               toBlock: "latest",
               fromBlock: 0n,
               strict: true,
             })
-            .then((logs) =>
-              logs.map((log) =>
-                parse(RepayActivity, { ...log, market: market(log.address) } satisfies InferInput<
-                  typeof RepayActivity
-                >),
-              ),
+            .then((plugins) =>
+              publicClient
+                .getLogs({
+                  event: marketAbi[38],
+                  address: [...markets.keys()],
+                  args: { caller: plugins.map(({ args }) => args.plugin), borrower: account },
+                  toBlock: "latest",
+                  fromBlock: 0n,
+                  strict: true,
+                })
+                .then((logs) =>
+                  logs.map((log) =>
+                    parse(RepayActivity, { ...log, market: market(log.address) } satisfies InferInput<
+                      typeof RepayActivity
+                    >),
+                  ),
+                ),
             ),
       ignore("sent")
         ? []
