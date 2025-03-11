@@ -6,11 +6,8 @@ import { ForkTest, stdError } from "./Fork.t.sol";
 import { Auditor } from "@exactly/protocol/Auditor.sol";
 import { FixedLib, Market } from "@exactly/protocol/Market.sol";
 
-import {
-  Call,
-  PluginManagerInternals,
-  UpgradeableModularAccount
-} from "modular-account/src/account/UpgradeableModularAccount.sol";
+import { PluginManagerInternals } from "modular-account/src/account/PluginManagerInternals.sol";
+import { Call, UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
 import { IEntryPoint } from "modular-account/src/interfaces/erc4337/IEntryPoint.sol";
 
 import {
@@ -63,6 +60,7 @@ import {
   NoProposal,
   NonceTooLow,
   NotMarket,
+  PluginAllowed,
   ProposalNonceSet,
   ProposalType,
   Proposed,
@@ -73,9 +71,6 @@ import {
   TargetAllowed,
   Timelocked,
   Unauthorized,
-  UninstallProposed,
-  UninstallRevoked,
-  Uninstalling,
   ZeroAmount
 } from "../src/IExaAccount.sol";
 import { Collected, IssuerChecker, Refunded } from "../src/IssuerChecker.sol";
@@ -224,30 +219,6 @@ contract ExaPluginTest is ForkTest {
   // solhint-disable func-name-mixedcase
 
   // self runtime validation
-  function test_proposeUninstall_emitsUninstallProposed() external {
-    vm.startPrank(owner);
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit UninstallProposed(address(account), block.timestamp + proposalManager.delay());
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
-  }
-
-  function test_proposeUninstall_doesNotDeactivatesLiquidity() external {
-    vm.startPrank(keeper);
-    account.poke(exaUSDC);
-
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
-
-    vm.startPrank(keeper);
-    account.collectCredit(FixedLib.INTERVAL, 100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-  }
-
-  function test_revokeUninstall_emits_UninstallRevoked() external {
-    vm.startPrank(owner);
-    vm.expectEmit(true, true, true, true, address(exaPlugin));
-    emit UninstallRevoked(address(account));
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.revokeUninstall, ()));
-  }
 
   function test_swap_swaps() external {
     uint256 prevUSDC = usdc.balanceOf(address(account));
@@ -2159,74 +2130,209 @@ contract ExaPluginTest is ForkTest {
   }
 
   // base plugin
-  function test_onUninstall_uninstalls() external {
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
 
-    skip(proposalManager.delay());
-    account.uninstallPlugin(address(exaPlugin), "", "");
-    address[] memory plugins = account.getInstalledPlugins();
-    assertEq(plugins.length, 1);
-    assertEq(plugins[0], address(ownerPlugin));
-  }
+  function test_uninstallAndInstall_installs_whenPluginIsAllowed() external {
+    exaPlugin.allowPlugin(address(exaPlugin), true);
 
-  function test_onUninstall_reverts_whenTimelocked() external {
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        PluginManagerInternals.PluginUninstallCallbackFailed.selector,
-        exaPlugin,
-        abi.encodeWithSelector(Timelocked.selector)
+    Call[] memory calls = new Call[](4);
+    calls[0] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[1] =
+      Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", "")));
+    calls[2] = Call(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.installPlugin,
+        (address(exaPlugin), keccak256(abi.encode(exaPlugin.pluginManifest())), "", new FunctionReference[](0))
       )
     );
-    account.uninstallPlugin(address(exaPlugin), "", "");
-
-    skip(proposalManager.delay());
-    account.uninstallPlugin(address(exaPlugin), "", "");
-  }
-
-  function test_onUninstall_reverts_whenNoProposal() external {
-    skip(1 days);
-    vm.startPrank(owner);
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        PluginManagerInternals.PluginUninstallCallbackFailed.selector,
-        exaPlugin,
-        abi.encodeWithSelector(NoProposal.selector)
-      )
-    );
-    account.uninstallPlugin(address(exaPlugin), "", "");
-  }
-
-  function test_uninstall_uninstalls_whenWrongProposalManager() external {
-    exaPlugin.setProposalManager(IProposalManager(address(0x1)));
-
-    vm.startPrank(owner);
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.proposeUninstall, ()));
-
-    skip(proposalManager.delay());
-    account.uninstallPlugin(address(exaPlugin), "", "");
-    address[] memory plugins = account.getInstalledPlugins();
-    assertEq(plugins.length, 1);
-    assertEq(plugins[0], address(ownerPlugin));
-  }
-
-  function test_clearProposals_reverts_whenNotPlugin() external {
+    calls[3] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
     vm.startPrank(address(account));
-    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
-    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
-    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
+    account.executeBatch(calls);
+  }
 
-    vm.expectRevert(Unauthorized.selector);
-    exaPlugin.clearProposals(address(account));
+  function test_uninstall_reverts_withUnauthorized_whenExecute() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(address(account));
+    account.execute(
+      address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", ""))
+    );
+  }
 
-    vm.startPrank(address(exaPlugin));
-    exaPlugin.clearProposals(address(account));
+  function test_uninstall_reverts_withUnauthorized_whenInsideBatch() external {
+    Call[] memory calls = new Call[](1);
+    calls[0] =
+      Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", "")));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(address(account));
+    account.executeBatch(calls);
+  }
 
-    assertEq(proposalManager.nonces(address(account)), proposalManager.queueNonces(address(account)));
+  function test_uninstall_reverts_withUnauthorized_whenNotAllowedPlugin() external {
+    Call[] memory calls = new Call[](2);
+    calls[0] =
+      Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", "")));
+    calls[1] = Call(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.installPlugin,
+        (address(exaPlugin), keccak256(abi.encode(exaPlugin.pluginManifest())), "", new FunctionReference[](0))
+      )
+    );
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(address(account));
+    account.executeBatch(calls);
+  }
+
+  function test_uninstall_reverts_whitUnauthorized_whenNextCallIsNotInstall() external {
+    Call[] memory calls = new Call[](2);
+    calls[0] =
+      Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", "")));
+    calls[1] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(address(account));
+    account.executeBatch(calls);
+  }
+
+  function test_uninstall_reverts_whenInsideExecuteOfExecuteBatch() external {
+    Call[] memory calls = new Call[](2);
+    calls[0] = Call(address(auditor), 0, abi.encodeCall(IAuditor.enterMarket, exaEXA));
+    calls[1] = Call(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.execute,
+        (address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", "")))
+      )
+    );
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(address(account));
+    account.executeBatch(calls);
+  }
+
+  function test_uninstall_reverts_whenExecuteBatchInsideExecute() external {
+    Call[] memory calls = new Call[](1);
+    calls[0] = Call(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.execute,
+        (address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", "")))
+      )
+    );
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(address(account));
+    account.execute(address(account), 0, abi.encodeCall(UpgradeableModularAccount.executeBatch, calls));
+  }
+
+  function test_install_installs_whenNotRelatedPlugin() external {
+    vm.startPrank(owner);
+    account.installPlugin(
+      address(new BadPlugin()), keccak256(abi.encode(new BadPlugin().pluginManifest())), "", new FunctionReference[](0)
+    );
+  }
+
+  function test_install_reverts_whenAlreadyInstalled() external {
+    ExaPlugin newPlugin = new ExaPlugin(
+      Parameters({
+        owner: address(this),
+        auditor: IAuditor(address(auditor)),
+        exaUSDC: exaUSDC,
+        exaWETH: exaWETH,
+        balancerVault: IBalancerVault(address(this)),
+        debtManager: IDebtManager(address(this)),
+        installmentsRouter: IInstallmentsRouter(address(this)),
+        issuerChecker: issuerChecker,
+        proposalManager: IProposalManager(address(proposalManager)),
+        collector: collector,
+        swapper: address(this),
+        firstKeeper: keeper
+      })
+    );
+    exaPlugin.allowPlugin(address(newPlugin), true);
+
+    Call[] memory calls = new Call[](1);
+    calls[0] = Call(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.installPlugin,
+        (address(newPlugin), keccak256(abi.encode(newPlugin.pluginManifest())), "", new FunctionReference[](0))
+      )
+    );
+    vm.expectRevert(
+      abi.encodeWithSelector(PluginManagerInternals.ExecutionFunctionAlreadySet.selector, IExaAccount.swap.selector)
+    );
+    vm.startPrank(address(account));
+    account.executeBatch(calls);
+  }
+
+  function test_uninstall_uninstalls_whenItsAnotherPlugin() external {
+    BadPlugin badPlugin = new BadPlugin();
+    vm.startPrank(owner);
+    account.installPlugin(
+      address(badPlugin), keccak256(abi.encode(badPlugin.pluginManifest())), "", new FunctionReference[](0)
+    );
+    account.execute(
+      address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(badPlugin), "", ""))
+    );
+  }
+
+  function test_uninstall_uninstalls_whenItsAnotherPluginOnBatch() external {
+    BadPlugin badPlugin = new BadPlugin();
+    vm.startPrank(owner);
+    account.installPlugin(
+      address(badPlugin), keccak256(abi.encode(badPlugin.pluginManifest())), "", new FunctionReference[](0)
+    );
+    Call[] memory calls = new Call[](1);
+    calls[0] =
+      Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(badPlugin), "", "")));
+    account.executeBatch(calls);
   }
 
   // refunder
@@ -2300,6 +2406,36 @@ contract ExaPluginTest is ForkTest {
     exaPlugin.setCollector(newCollector);
   }
 
+  function test_allowPlugin_sets_whenAdmin() external {
+    exaPlugin.allowPlugin(address(0x1), true);
+    assertTrue(exaPlugin.allowlist(address(0x1)), "plugin not allowed");
+  }
+
+  function test_allowPlugin_reverts_whenNotAdmin() external {
+    address nonAdmin = address(0x1);
+    vm.startPrank(nonAdmin);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    exaPlugin.allowPlugin(address(0x1), true);
+  }
+
+  function test_allowPlugin_reverts_whenAddressZero() external {
+    vm.expectRevert(ZeroAddress.selector);
+    exaPlugin.allowPlugin(address(0), true);
+  }
+
+  function test_allowPlugin_emitsPluginAllowed() external {
+    address plugin = address(0x1);
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit PluginAllowed(plugin, address(this), true);
+    exaPlugin.allowPlugin(plugin, true);
+  }
+
+  // proposal manager admin tests
+
   function test_allowTarget_sets_whenAdmin() external {
     address target = address(0x1);
     proposalManager.allowTarget(target, true);
@@ -2333,7 +2469,6 @@ contract ExaPluginTest is ForkTest {
     proposalManager.allowTarget(target, false);
   }
 
-  // proposal manager admin tests
   function test_setDelay_sets_whenAdmin() external {
     uint256 delay = 1 hours;
     proposalManager.setDelay(delay);
@@ -2377,10 +2512,6 @@ contract ExaPluginTest is ForkTest {
     UserOperation[] memory userOps = new UserOperation[](1);
 
     userOps[0] = _op(abi.encodeCall(IExaAccount.poke, (exaEXA)), ownerKey);
-    vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA23 reverted (or OOG)"));
-    ENTRYPOINT.handleOps(userOps, payable(address(0x420)));
-
-    userOps[0] = _op(abi.encodeCall(IExaAccount.proposeUninstall, ()), ownerKey);
     vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOp.selector, 0, "AA23 reverted (or OOG)"));
     ENTRYPOINT.handleOps(userOps, payable(address(0x420)));
 
@@ -2477,33 +2608,6 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(exaEXA.balanceOf(receiver), amount);
     assertEq(exaEXA.balanceOf(address(account)), balance - amount);
-  }
-
-  function test_propose_reverts_whenUninstallProposalExists() external {
-    vm.startPrank(address(account));
-    account.proposeUninstall();
-    vm.expectRevert(Uninstalling.selector);
-    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
-  }
-
-  function test_uninstall_removesProposals() external {
-    vm.startPrank(address(account));
-    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
-    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
-    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(this)));
-
-    account.proposeUninstall();
-    skip(exaPlugin.UNINSTALL_DELAY());
-
-    assertEq(proposalManager.queueNonces(address(account)), 3);
-    assertEq(proposalManager.nonces(address(account)), 0);
-
-    account.execute(
-      address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", ""))
-    );
-
-    assertEq(proposalManager.queueNonces(address(account)), 3);
-    assertEq(proposalManager.nonces(address(account)), 3);
   }
 
   // solhint-enable func-name-mixedcase
@@ -2648,6 +2752,8 @@ contract BadPlugin is BasePlugin {
   }
 
   function onInstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
+
+  function onUninstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
     manifest.userOpValidationFunctions = new ManifestAssociatedFunction[](1);

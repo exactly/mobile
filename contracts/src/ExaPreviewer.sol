@@ -3,9 +3,7 @@ pragma solidity ^0.8.0;
 
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
 
-import {
-  FixedPool, IExaAccount, IMarket, IProposalManager, Proposal, ProposalType, Uninstalling
-} from "./IExaAccount.sol";
+import { FixedPool, IExaAccount, IMarket, IProposalManager, Proposal, ProposalType } from "./IExaAccount.sol";
 
 uint256 constant FIXED_INTERVAL = 4 weeks;
 
@@ -101,7 +99,6 @@ contract ExaPreviewer {
   }
 
   function _checkLiquidity(IExaAccount account) internal view {
-    if (IExaAccount(msg.sender).uninstallProposals(address(account)) != 0) revert Uninstalling();
     PROPOSAL_MANAGER.checkLiquidity(address(account));
   }
 }

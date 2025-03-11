@@ -17,6 +17,7 @@ import {
   PluginMetadata
 } from "modular-account-libs/interfaces/IPlugin.sol";
 import { IPluginExecutor } from "modular-account-libs/interfaces/IPluginExecutor.sol";
+import { FunctionReference, IPluginManager } from "modular-account-libs/interfaces/IPluginManager.sol";
 import { Call, IStandardExecutor } from "modular-account-libs/interfaces/IStandardExecutor.sol";
 import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
 
@@ -40,8 +41,8 @@ import {
   IMarket,
   IProposalManager,
   NoBalance,
-  NoProposal,
   NotMarket,
+  PluginAllowed,
   Proposal,
   ProposalManagerSet,
   ProposalType,
@@ -50,9 +51,6 @@ import {
   SwapData,
   Timelocked,
   Unauthorized,
-  UninstallProposed,
-  UninstallRevoked,
-  Uninstalling,
   ZeroAddress
 } from "./IExaAccount.sol";
 import { IssuerChecker } from "./IssuerChecker.sol";
@@ -84,11 +82,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   IDebtManager public immutable DEBT_MANAGER;
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
   IssuerChecker public immutable ISSUER_CHECKER;
-  uint256 public immutable UNINSTALL_DELAY = 1 minutes;
 
   IProposalManager public proposalManager;
   address public collector;
-  mapping(address account => uint256 timestamp) public uninstallProposals;
+  mapping(address plugin => bool allowed) public allowlist;
 
   bytes32 public callHash;
 
@@ -111,16 +108,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _setProposalManager(p.proposalManager);
 
     IERC20(USDC).forceApprove(address(EXA_USDC), type(uint256).max);
-  }
-
-  function proposeUninstall() external {
-    uninstallProposals[msg.sender] = block.timestamp;
-    emit UninstallProposed(msg.sender, block.timestamp + UNINSTALL_DELAY);
-  }
-
-  function revokeUninstall() external {
-    delete uninstallProposals[msg.sender];
-    emit UninstallRevoked(msg.sender);
   }
 
   function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
@@ -163,7 +150,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
-    if (uninstallProposals[msg.sender] != 0) revert Uninstalling();
     proposalManager.propose(msg.sender, market, amount, proposalType, data);
   }
 
@@ -304,41 +290,32 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _setProposalManager(proposalManager_);
   }
 
+  function allowPlugin(address plugin, bool allowed) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    if (plugin == address(0)) revert ZeroAddress();
+    allowlist[plugin] = allowed;
+    emit PluginAllowed(plugin, msg.sender, allowed);
+  }
+
   /// @inheritdoc BasePlugin
   function onInstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
-  function onUninstall(bytes calldata) external override {
-    uint256 timestamp = uninstallProposals[msg.sender];
-    // slither-disable-next-line incorrect-equality -- unsigned zero check
-    if (timestamp == 0) revert NoProposal();
-    if (timestamp + UNINSTALL_DELAY > block.timestamp) revert Timelocked();
-    delete uninstallProposals[msg.sender];
-    try this.clearProposals(msg.sender) { } catch { } // solhint-disable-line no-empty-blocks
-  }
-
-  function clearProposals(address account) external {
-    if (msg.sender != address(this)) revert Unauthorized();
-    proposalManager.setNonce(account, proposalManager.queueNonces(account));
-  }
+  function onUninstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    manifest.executionFunctions = new bytes4[](14);
-    manifest.executionFunctions[0] = this.proposeUninstall.selector;
-    manifest.executionFunctions[1] = this.revokeUninstall.selector;
-    manifest.executionFunctions[2] = this.swap.selector;
-    manifest.executionFunctions[3] = this.executeProposal.selector;
-    manifest.executionFunctions[4] = this.propose.selector;
-    manifest.executionFunctions[5] = this.setProposalNonce.selector;
-    manifest.executionFunctions[6] = this.collectCollateral.selector;
-    manifest.executionFunctions[7] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
-    manifest.executionFunctions[8] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
-    manifest.executionFunctions[9] = this.collectDebit.selector;
-    manifest.executionFunctions[10] = this.collectInstallments.selector;
-    manifest.executionFunctions[11] = this.poke.selector;
-    manifest.executionFunctions[12] = this.pokeETH.selector;
-    manifest.executionFunctions[13] = this.uninstallProposals.selector;
+    manifest.executionFunctions = new bytes4[](11);
+    manifest.executionFunctions[0] = this.swap.selector;
+    manifest.executionFunctions[1] = this.executeProposal.selector;
+    manifest.executionFunctions[2] = this.propose.selector;
+    manifest.executionFunctions[3] = this.setProposalNonce.selector;
+    manifest.executionFunctions[4] = this.collectCollateral.selector;
+    manifest.executionFunctions[5] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[6] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
+    manifest.executionFunctions[7] = this.collectDebit.selector;
+    manifest.executionFunctions[8] = this.collectInstallments.selector;
+    manifest.executionFunctions[9] = this.poke.selector;
+    manifest.executionFunctions[10] = this.pokeETH.selector;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
@@ -355,67 +332,50 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       functionId: uint8(FunctionId.RUNTIME_VALIDATION_KEEPER_OR_SELF),
       dependencyIndex: 0
     });
-    ManifestFunction memory alwaysAllowRuntimeValidationFunction = ManifestFunction({
-      functionType: ManifestAssociatedFunctionType.RUNTIME_VALIDATION_ALWAYS_ALLOW,
-      functionId: 0,
-      dependencyIndex: 0
-    });
-    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](14);
+    manifest.runtimeValidationFunctions = new ManifestAssociatedFunction[](11);
     manifest.runtimeValidationFunctions[0] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.proposeUninstall.selector,
-      associatedFunction: selfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.revokeUninstall.selector,
-      associatedFunction: selfRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.swap.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[1] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.executeProposal.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[2] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.propose.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[3] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.setProposalNonce.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[4] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectCollateral.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[5] = ManifestAssociatedFunction({
       executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[6] = ManifestAssociatedFunction({
       executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[7] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[8] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.collectInstallments.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[11] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[9] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.poke.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
-    manifest.runtimeValidationFunctions[12] = ManifestAssociatedFunction({
+    manifest.runtimeValidationFunctions[10] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
-    });
-    manifest.runtimeValidationFunctions[13] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.uninstallProposals.selector,
-      associatedFunction: alwaysAllowRuntimeValidationFunction
     });
 
     ManifestFunction memory preExecutionValidationFunction = ManifestFunction({
@@ -482,15 +442,36 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       bool isExecuteBatch = bytes4(callData[0:4]) == IStandardExecutor.executeBatch.selector;
       if (isExecuteBatch) {
         Call[] memory calls = abi.decode(callData[4:], (Call[]));
-        for (uint256 i = 0; i < calls.length; i++) {
+        for (uint256 i = 0; i < calls.length; ++i) {
           Call memory call = calls[i];
-          if (call.target == msg.sender) continue;
-          _preExecutionChecker(call.target, bytes4(call.data.slice(0, 4)), call.data.slice(4, callData.length));
+          bytes4 selector = bytes4(call.data.slice(0, 4));
+          bytes memory data = call.data.slice(4, call.data.length);
+          if (call.target == msg.sender) {
+            if (selector == IPluginManager.uninstallPlugin.selector) {
+              (address plugin,,) = abi.decode(data, (address, bytes, bytes));
+              if (plugin != address(this)) continue;
+              if (i == calls.length - 1) revert Unauthorized();
+              if (bytes4(calls[i + 1].data.slice(0, 4)) != IPluginManager.installPlugin.selector) revert Unauthorized();
+              bytes memory nextCallData = calls[i + 1].data.slice(4, calls[i + 1].data.length);
+              (address newPlugin,,,) = abi.decode(nextCallData, (address, bytes32, bytes, FunctionReference[]));
+              if (!allowlist[newPlugin]) revert Unauthorized();
+            }
+            continue;
+          }
+          _preExecutionChecker(call.target, selector, data);
         }
       } else {
         address target = address(bytes20(callData[16:36]));
-        if (target == msg.sender) return "";
-        _preExecutionChecker(target, bytes4(callData[132:136]), callData[136:]);
+        bytes4 selector = bytes4(callData[132:136]);
+        bytes memory data = callData[136:];
+        if (target == msg.sender) {
+          if (selector == IPluginManager.uninstallPlugin.selector) {
+            (address plugin,,) = abi.decode(data, (address, bytes, bytes));
+            if (plugin == address(this)) revert Unauthorized();
+          }
+          return "";
+        }
+        _preExecutionChecker(target, selector, data);
       }
       return "";
     }

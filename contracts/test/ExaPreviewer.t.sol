@@ -20,7 +20,7 @@ import { ExaPlugin } from "../src/ExaPlugin.sol";
 import {
   ExaPreviewer, ICollectableMarket, IProposalManager, PendingProposal, ProposalType
 } from "../src/ExaPreviewer.sol";
-import { BorrowAtMaturityData, IExaAccount, InsufficientLiquidity, Uninstalling } from "../src/IExaAccount.sol";
+import { BorrowAtMaturityData, IExaAccount, InsufficientLiquidity } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { Refunder } from "../src/Refunder.sol";
 
@@ -207,38 +207,6 @@ contract ExaPreviewerTest is ForkTest {
 
     pendingProposals = previewer.pendingProposals(address(account));
     assertEq(pendingProposals.length, 0);
-  }
-
-  function test_proposeUninstall_deactivatesLiquidity() external {
-    account.poke(exaUSDC);
-
-    vm.startPrank(address(account));
-    account.proposeUninstall();
-
-    vm.expectRevert(Uninstalling.selector);
-    previewer.collectCredit(
-      FixedLib.INTERVAL, 100e6, type(uint256).max, block.timestamp, _issuerOp(100e6, block.timestamp)
-    );
-
-    vm.expectRevert(Uninstalling.selector);
-    previewer.collectDebit(100e6, block.timestamp, _issuerOp(100e6, block.timestamp));
-  }
-
-  function test_revokeUninstall_reactivatesLiquidity() external {
-    account.poke(exaUSDC);
-
-    vm.startPrank(address(account));
-    account.proposeUninstall();
-
-    vm.expectRevert(Uninstalling.selector);
-    previewer.collectCredit(
-      FixedLib.INTERVAL, 100e6, type(uint256).max, block.timestamp, _issuerOp(100e6, block.timestamp)
-    );
-
-    account.revokeUninstall();
-    previewer.collectCredit(
-      FixedLib.INTERVAL, 100e6, type(uint256).max, block.timestamp, _issuerOp(100e6, block.timestamp)
-    );
   }
 
   function test_collect_reverts_whenProposalsLeaveNoLiquidity() external {

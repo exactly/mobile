@@ -5,8 +5,6 @@ import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import { IERC4626 } from "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 
 interface IExaAccount {
-  function proposeUninstall() external;
-  function revokeUninstall() external;
   function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     external
     returns (uint256 amountIn, uint256 amountOut);
@@ -39,7 +37,6 @@ interface IExaAccount {
   ) external;
   function poke(IMarket market) external;
   function pokeETH() external;
-  function uninstallProposals(address account) external view returns (uint256);
 }
 
 interface IProposalManager {
@@ -79,6 +76,8 @@ event CollectorSet(address indexed collector, address indexed account);
 
 event DelaySet(uint256 delay);
 
+event PluginAllowed(address indexed plugin, address indexed sender, bool allowed);
+
 event ProposalManagerSet(IProposalManager indexed proposalManager, address indexed account);
 
 event ProposalNonceSet(address indexed account, uint256 indexed nonce, bool indexed executed);
@@ -94,10 +93,6 @@ event Proposed(
 );
 
 event TargetAllowed(address indexed target, address indexed sender, bool allowed);
-
-event UninstallProposed(address indexed account, uint256 unlock);
-
-event UninstallRevoked(address indexed account);
 
 struct FixedPool {
   uint256 borrowed;
@@ -180,7 +175,6 @@ error NotMarket();
 error Replay();
 error Timelocked();
 error Unauthorized();
-error Uninstalling();
 error ZeroAddress();
 error InvalidDelay();
 error ZeroAmount();
