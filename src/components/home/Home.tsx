@@ -1,4 +1,4 @@
-import { previewerAddress } from "@exactly/common/generated/chain";
+import { exaPreviewerAddress, previewerAddress } from "@exactly/common/generated/chain";
 import { healthFactor, WAD } from "@exactly/lib";
 import { TimeToFullDisplay } from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ import CardLimits from "./CardLimits";
 import CardStatus from "./CardStatus";
 import GettingStarted from "./GettingStarted";
 import HomeActions from "./HomeActions";
-import { useReadPreviewerExactly } from "../../generated/contracts";
+import { useReadExaPreviewerPendingProposals, useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import { getActivity, getKYCStatus } from "../../utils/server";
 import PaymentSheet from "../pay-later/PaymentSheet";
@@ -28,14 +28,23 @@ import View from "../shared/View";
 const HEALTH_FACTOR_THRESHOLD = (WAD * 11n) / 10n;
 
 export default function Home() {
+  const { address } = useAccount();
   const [paySheetOpen, setPaySheetOpen] = useState(false);
   const theme = useTheme();
+  const { refetch: refetchPendingProposals } = useReadExaPreviewerPendingProposals({
+    address: exaPreviewerAddress,
+    args: [address ?? zeroAddress],
+    query: {
+      enabled: !!address,
+      gcTime: 0,
+      refetchInterval: 30_000,
+    },
+  });
   const {
     data: activity,
     refetch: refetchActivity,
     isPending: isPendingActivity,
   } = useQuery({ queryKey: ["activity"], queryFn: () => getActivity() });
-  const { address } = useAccount();
   const {
     data: markets,
     refetch: refetchMarkets,
@@ -71,6 +80,7 @@ export default function Home() {
                 refetchActivity().catch(handleError);
                 refetchMarkets().catch(handleError);
                 refetchKYCStatus().catch(handleError);
+                refetchPendingProposals().catch(handleError);
               }}
             />
           }

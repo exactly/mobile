@@ -55,13 +55,16 @@ export default function HomeActions() {
   );
 
   const handleSend = async () => {
+    if (isLatestPlugin) {
+      router.push("/send-funds");
+      return;
+    }
+
     if (isFetchingProposals) return;
     const { data: proposals } = await refetchProposals();
-    if (proposals && proposals[0] > 0n) {
-      router.push(`/send-funds/processing`);
-    } else {
-      router.push(`/send-funds`);
-    }
+    const hasActiveProposal = proposals && proposals[0] > 0n;
+    const route = hasActiveProposal ? "/send-funds/processing" : "/send-funds";
+    router.push(route);
   };
   return (
     <View flexDirection="row" display="flex" gap="$s4" justifyContent="center" alignItems="center">
@@ -94,10 +97,10 @@ export default function HomeActions() {
         }}
         disabled={isFetchingProposals}
         iconAfter={
-          isFetchingProposals ? (
-            <Spinner height={ms(18) * fontScale} width={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
-          ) : (
+          isLatestPlugin || !isFetchingProposals ? (
             <ArrowUpRight size={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
+          ) : (
+            <Spinner height={ms(18) * fontScale} width={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
           )
         }
         backgroundColor="$interactiveBaseBrandSoftDefault"

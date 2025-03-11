@@ -1,5 +1,6 @@
+import { exaPreviewerAddress } from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
-import { Eye, EyeOff, Settings } from "@tamagui/lucide-icons";
+import { Eye, EyeOff, Settings, ClockArrowUp } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
@@ -8,9 +9,11 @@ import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Image, styled } from "tamagui";
+import { zeroAddress } from "viem";
 import { useAccount, useConnect } from "wagmi";
 
 import AddressDialog from "./AddressDialog";
+import { useReadExaPreviewerPendingProposals } from "../../generated/contracts";
 import alchemyConnector from "../../utils/alchemyConnector";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
@@ -30,6 +33,17 @@ const OnlineIndicator = styled(View, {
   zIndex: 1,
 });
 
+const NotificationIndicator = styled(View, {
+  width: 8,
+  height: 8,
+  borderRadius: 100,
+  backgroundColor: "$uiInfoSecondary",
+  position: "absolute",
+  right: -1,
+  top: -1,
+  zIndex: 1,
+});
+
 function settings() {
   router.push("/settings");
 }
@@ -40,6 +54,15 @@ export default function ProfileHeader() {
   const { isConnected } = useAccount();
   const [alertShown, setAlertShown] = useState(false);
   const toast = useToastController();
+  const { data: pendingProposals, isFetching: pendingProposalsFetching } = useReadExaPreviewerPendingProposals({
+    address: exaPreviewerAddress,
+    args: [address ?? zeroAddress],
+    query: {
+      enabled: !!address,
+      gcTime: 0,
+      refetchInterval: 30_000,
+    },
+  });
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   function toggle() {
     queryClient.setQueryData(["settings", "sensitive"], !hidden);
@@ -99,6 +122,18 @@ export default function ProfileHeader() {
           <Pressable onPress={toggle} hitSlop={ms(15)}>
             {hidden ? <EyeOff color="$uiNeutralPrimary" /> : <Eye color="$uiNeutralPrimary" />}
           </Pressable>
+          {pendingProposals && pendingProposals.length > 0 && (
+            <Pressable
+              disabled={pendingProposalsFetching}
+              onPress={() => {
+                router.push("/pending-proposals");
+              }}
+              hitSlop={ms(15)}
+            >
+              <NotificationIndicator />
+              <ClockArrowUp color="$uiNeutralPrimary" />
+            </Pressable>
+          )}
           <Pressable onPress={settings} hitSlop={ms(15)}>
             <Settings color="$uiNeutralPrimary" />
           </Pressable>
