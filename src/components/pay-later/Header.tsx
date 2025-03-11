@@ -58,13 +58,13 @@ export default function Header() {
         </Text>
         <XStack alignItems="center" gap={16}>
           <Switch
-            onPress={togglePayLater}
             height={24}
             checked={!!(cardDetails?.mode && cardDetails.mode > 0)}
             backgroundColor="$backgroundMild"
             borderColor="$borderNeutralSoft"
           >
             <Switch.Thumb
+              onPress={togglePayLater}
               checked={!!(cardDetails?.mode && cardDetails.mode > 0)}
               shadowColor="$uiNeutralSecondary"
               animation="moderate"
