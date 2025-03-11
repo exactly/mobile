@@ -11,6 +11,7 @@ import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import { getActivity } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
+import ProposalBanner from "../shared/ProposalBanner";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -53,13 +54,16 @@ export default function Activity() {
             />
           }
           ListHeaderComponent={
-            <View padded gap="$s5" backgroundColor="$backgroundSoft">
-              <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-                <Text fontSize={ms(20)} fontWeight="bold">
-                  All Activity
-                </Text>
+            <>
+              <View padded gap="$s5" backgroundColor="$backgroundSoft">
+                <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+                  <Text fontSize={ms(20)} fontWeight="bold">
+                    All Activity
+                  </Text>
+                </View>
               </View>
-            </View>
+              <ProposalBanner />
+            </>
           }
           ListEmptyComponent={<Empty />}
           data={data}
