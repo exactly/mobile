@@ -84,17 +84,14 @@ contract ProposalManager is IProposalManager, AccessControl {
     proposal = proposals[account][nonce];
   }
 
-  function shiftProposal(address account) internal returns (Proposal memory proposal) {
+  function shiftProposal(address account) internal onlyRole(PROPOSER_ROLE) returns (Proposal memory proposal) {
     uint256 nonce = nonces[account];
     if (nonce == queueNonces[account]) revert NoProposal();
     proposal = proposals[account][nonce];
     _setNonce(account, nonce + 1, true);
   }
 
-  function preExecutionChecker(address sender, address target, bytes4 selector, bytes memory callData)
-    external
-    onlyRole(PROPOSER_ROLE)
-  {
+  function preExecutionChecker(address sender, address target, bytes4 selector, bytes memory callData) external {
     if (target == address(AUDITOR)) {
       if (selector != IAuditor.exitMarket.selector) return;
       revert Unauthorized();
