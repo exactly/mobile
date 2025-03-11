@@ -53,6 +53,7 @@ export default function HomeLayout() {
               }
               if (scrollView) {
                 if (scrollView instanceof FlatList) {
+                  if (!scrollView.props.data?.length) return;
                   scrollView.scrollToIndex({ index: 0, animated: true });
                 } else {
                   scrollView.scrollTo({ y: 0, animated: true });
