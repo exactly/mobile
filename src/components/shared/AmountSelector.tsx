@@ -23,7 +23,7 @@ export default function AmountSelector({ onChange }: { onChange: (value: bigint)
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   const { market, externalAsset, available } = useAsset(withdraw?.market);
 
-  const { Field, setFieldValue } = useForm<{ assetInput: string; usdInput: string }>({
+  const { Field, setFieldValue } = useForm({
     defaultValues: { assetInput: "", usdInput: "" },
   });
 
