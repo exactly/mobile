@@ -1,6 +1,6 @@
 import { Address } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, setUser } from "@sentry/node";
+import { captureException, setContext, setUser } from "@sentry/node";
 import createDebug from "debug";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -27,6 +27,7 @@ export default app
     });
     if (!credential) return c.json("credential not found", 404);
     setUser({ id: parse(Address, credential.account) });
+    setContext("exa", { credential });
     const inquiry = await getInquiry(credentialId, templateId);
     if (!inquiry) return c.json("kyc not found", 404);
     if (inquiry.attributes.status === "created") return c.json("kyc not started", 400);
@@ -62,6 +63,7 @@ export default app
       });
       if (!credential) return c.json("credential not found", 404);
       setUser({ id: parse(Address, credential.account) });
+      setContext("exa", { credential });
       const inquiry = await getInquiry(credentialId, templateId);
       if (inquiry) {
         if (inquiry.attributes.status === "approved") return c.json("kyc already approved", 400);
