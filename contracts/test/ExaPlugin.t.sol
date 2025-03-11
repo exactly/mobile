@@ -63,6 +63,7 @@ import {
   NotNext,
   PluginAllowed,
   Proposal,
+  ProposalManagerSet,
   ProposalNonceSet,
   ProposalType,
   Proposed,
@@ -2453,6 +2454,34 @@ contract ExaPluginTest is ForkTest {
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit PluginAllowed(plugin, address(this), true);
     exaPlugin.allowPlugin(plugin, true);
+  }
+
+  function test_setProposalManager_sets_whenAdmin() external {
+    exaPlugin.setProposalManager(IProposalManager(address(0x1)));
+    assertEq(address(exaPlugin.proposalManager()), address(0x1));
+  }
+
+  function test_setProposalManager_reverts_whenNotAdmin() external {
+    address nonAdmin = address(0x1);
+    vm.startPrank(nonAdmin);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    exaPlugin.setProposalManager(IProposalManager(address(0x2)));
+  }
+
+  function test_setProposalManager_reverts_whenAddressZero() external {
+    vm.expectRevert(ZeroAddress.selector);
+    exaPlugin.setProposalManager(IProposalManager(address(0)));
+  }
+
+  function test_setProposalManager_emitsProposalManagerSet() external {
+    IProposalManager newProposalManager = IProposalManager(address(0x1));
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit ProposalManagerSet(newProposalManager, address(this));
+    exaPlugin.setProposalManager(newProposalManager);
   }
 
   // proposal manager admin tests
