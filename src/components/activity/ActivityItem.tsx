@@ -66,7 +66,7 @@ export default function ActivityItem({ item, isLast }: { item: Item; isLast: boo
                     .join(", ")
                     .toLowerCase(),
                 )}
-              {type !== "card" && format(timestamp, "yyyy-MM-dd")}
+              {type !== "card" && type !== "panda" && format(timestamp, "yyyy-MM-dd")}
             </Text>
           </View>
           <View gap="$s2">
