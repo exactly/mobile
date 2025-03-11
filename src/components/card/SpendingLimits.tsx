@@ -44,7 +44,7 @@ export default function SpendingLimits({ open, onClose }: { open: boolean; onClo
                     </Text>
                   </YStack>
                   <YStack paddingBottom="$s4">
-                    <SpendingLimit title="Weekly" limit={15_000} />
+                    <SpendingLimit title="Weekly" limit={10_000} />
                   </YStack>
                   <Pressable onPress={onClose} style={styles.close} hitSlop={ms(20)}>
                     <Text emphasized footnote color="$interactiveTextBrandDefault">
