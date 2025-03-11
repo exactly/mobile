@@ -151,10 +151,6 @@ contract ProposalManager is IProposalManager, AccessControl {
       Proposal memory proposal = shiftProposal(sender);
       if (proposal.proposalType != ProposalType.REDEEM) revert Unauthorized();
       return _checkMarketProposal(proposal, target, amount, receiver);
-    } else if (selector == IERC20.transferFrom.selector) {
-      (, receiver,) = abi.decode(callData, (address, address, uint256));
-      if (receiver == address(DEBT_MANAGER) || receiver == address(INSTALLMENTS_ROUTER)) return;
-      revert Unauthorized();
     } else if (selector == IMarket.borrowAtMaturity.selector) {
       return _checkBorrowAtMaturityProposal(sender, target, callData);
     } else if (selector == IERC4626.withdraw.selector) {
