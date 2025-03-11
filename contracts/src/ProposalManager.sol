@@ -307,7 +307,7 @@ contract ProposalManager is IProposalManager, AccessControl {
   }
 
   function _allowTarget(address target, bool allowed) internal {
-    if (address(target) == address(0)) revert ZeroAddress();
+    if (target == address(0)) revert ZeroAddress();
 
     allowlist[target] = allowed;
     emit TargetAllowed(target, msg.sender, allowed);
