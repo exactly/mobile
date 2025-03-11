@@ -1,5 +1,6 @@
 import ProposalType from "@exactly/common/ProposalType";
 import chain, { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
+import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import shortenHex from "@exactly/common/shortenHex";
 import { Address, Hash, Hex } from "@exactly/common/validation";
 import {
@@ -495,7 +496,9 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
                 .filter((value): value is StringValueNode => value.kind === Kind.STRING)
                 .map(({ value }) => v.parse(Address, value));
               shouldUpdate ||=
-                !currentAddresses.includes(exaPluginAddress) || !currentAddresses.includes(proposalManagerAddress);
+                !currentAddresses.includes(exaPluginAddress) ||
+                !currentAddresses.includes(proposalManagerAddress) ||
+                !currentAddresses.includes(latestExaPlugin);
             }
             const topicsField = filterArguments.value.fields.find(({ name }) => name.value === "topics");
             if (topicsField?.value.kind === Kind.LIST) shouldUpdate ||= topicsField.value.values[0]?.kind !== Kind.LIST;
@@ -520,7 +523,7 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
     logs(
       filter: {
         addresses: ${JSON.stringify(
-          [...new Set([...currentAddresses, exaPluginAddress, proposalManagerAddress])].sort(),
+          [...new Set([...currentAddresses, exaPluginAddress, proposalManagerAddress, latestExaPlugin])].sort(),
         )}
         topics: [
           [
