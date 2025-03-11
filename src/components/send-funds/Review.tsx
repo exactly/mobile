@@ -44,17 +44,17 @@ export default function Review({
               Sending
             </Text>
             <XStack alignItems="center" gap="$s3">
-              {market && (
+              {market ? (
                 <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
-              )}
-              {externalAsset && (
+              ) : externalAsset ? (
                 <Image
                   source={{ uri: externalAsset.logoURI }}
                   width={ms(40)}
                   height={ms(40)}
                   style={{ borderRadius: ms(20) }}
                 />
-              )}
+              ) : null}
+
               <YStack flex={1}>
                 <Text title color="$uiNeutralPrimary">
                   {amount} {assetName}
