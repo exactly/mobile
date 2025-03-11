@@ -13,6 +13,7 @@ import { useAccount } from "wagmi";
 import CardDetails from "./CardDetails";
 import CardDisclaimer from "./CardDisclaimer";
 import SpendingLimits from "./SpendingLimits";
+import VerificationFailure from "./VerificationFailure";
 import ExaCard from "./exa-card/ExaCard";
 import {
   useReadPreviewerExactly,
@@ -34,6 +35,7 @@ export default function Card() {
   const theme = useTheme();
   const { presentArticle } = useIntercom();
   const [disclaimerShown, setDisclaimerShown] = useState(false);
+  const [verificationFailureShown, setVerificationFailureShown] = useState(false);
   const [cardDetailsOpen, setCardDetailsOpen] = useState(false);
   const [spendingLimitsOpen, setSpendingLimitsOpen] = useState(false);
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
@@ -117,6 +119,10 @@ export default function Card() {
           return;
         }
         const { code, text } = error;
+        if ((code === 403 || code === 404) && text === "kyc not approved") {
+          setVerificationFailureShown(true);
+          return;
+        }
         if (
           (code === 403 && text === "kyc required") ||
           (code === 404 && text === "kyc not found") ||
@@ -358,6 +364,12 @@ export default function Card() {
           }}
           onClose={() => {
             setDisclaimerShown(false);
+          }}
+        />
+        <VerificationFailure
+          open={verificationFailureShown}
+          onClose={() => {
+            setVerificationFailureShown(false);
           }}
         />
       </View>
