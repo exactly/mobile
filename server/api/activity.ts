@@ -349,7 +349,7 @@ function transformCard(activity: InferOutput<typeof CardActivity>) {
         id: activity.body.id,
         transactionHash: activity.hash,
         timestamp: activity.createdAt,
-        currency: activity.body.spend.localCurrency,
+        currency: activity.body.spend.localCurrency.toUpperCase(),
         amount: activity.body.spend.localAmount / 100,
         usdAmount: activity.body.spend.authorizationUpdateAmount
           ? activity.body.spend.authorizationUpdateAmount / 100
