@@ -34,7 +34,7 @@ export default function AddressSelection() {
 
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
 
-  const { Field, Subscribe, handleSubmit, setFieldValue, validateAllFields } = useForm<{ receiver: string }>({
+  const form = useForm({
     defaultValues: { receiver: withdraw?.receiver ?? "" },
     onSubmit: ({ value }) => {
       const receiver = parse(Address, value.receiver);
@@ -48,8 +48,8 @@ export default function AddressSelection() {
   const { success, output } = safeParse(Address, parameters.receiver);
 
   if (success) {
-    setFieldValue("receiver", output);
-    validateAllFields("change").catch(handleError);
+    form.setFieldValue("receiver", output);
+    form.validateAllFields("change").catch(handleError);
   }
 
   return (
@@ -74,7 +74,7 @@ export default function AddressSelection() {
         </View>
         <ScrollView flex={1}>
           <YStack gap="$s5">
-            <Field name="receiver" validators={{ onChange: Address }}>
+            <form.Field name="receiver" validators={{ onChange: Address }}>
               {({ state: { value, meta }, handleChange }) => (
                 <YStack gap="$s2">
                   <XStack flexDirection="row">
@@ -106,19 +106,19 @@ export default function AddressSelection() {
                   </XStack>
                   {meta.errors.length > 0 ? (
                     <Text padding="$s3" footnote color="$uiNeutralSecondary">
-                      {meta.errors[0]?.toString().split(",")[0]}
+                      {meta.errors[0]?.message.split(",")[0]}
                     </Text>
                   ) : undefined}
                 </YStack>
               )}
-            </Field>
+            </form.Field>
             {(recentContacts ?? savedContacts) && (
               <ScrollView maxHeight={350} gap="$s4">
                 {recentContacts && recentContacts.length > 0 && (
                   <RecentContacts
                     onContactPress={(address) => {
-                      setFieldValue("receiver", address);
-                      validateAllFields("change").catch(handleError);
+                      form.setFieldValue("receiver", address);
+                      form.validateAllFields("change").catch(handleError);
                     }}
                   />
                 )}
@@ -130,8 +130,8 @@ export default function AddressSelection() {
                 {savedContacts && savedContacts.length > 0 && (
                   <Contacts
                     onContactPress={(address) => {
-                      setFieldValue("receiver", address);
-                      validateAllFields("change").catch(handleError);
+                      form.setFieldValue("receiver", address);
+                      form.validateAllFields("change").catch(handleError);
                     }}
                   />
                 )}
@@ -147,7 +147,7 @@ export default function AddressSelection() {
             <Text color="$uiNeutralPlaceholder" caption2 textAlign="justify">
               Arrival time ≈ 5 min.
             </Text>
-            <Subscribe selector={({ canSubmit }) => canSubmit}>
+            <form.Subscribe selector={({ canSubmit }) => canSubmit}>
               {(canSubmit) => {
                 return (
                   <Button
@@ -159,14 +159,14 @@ export default function AddressSelection() {
                       <ArrowRight color={canSubmit ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"} />
                     }
                     onPress={() => {
-                      handleSubmit().catch(handleError);
+                      form.handleSubmit().catch(handleError);
                     }}
                   >
                     Next
                   </Button>
                 );
               }}
-            </Subscribe>
+            </form.Subscribe>
           </YStack>
         </ScrollView>
       </View>
