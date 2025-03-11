@@ -96,7 +96,7 @@ export default function HomeActions() {
         onPress={() => {
           handleSend().catch(handleError);
         }}
-        disabled={isFetchingProposals}
+        disabled={isLatestPlugin ? false : isFetchingProposals}
         iconAfter={
           isLatestPlugin || !isFetchingProposals ? (
             <ArrowUpRight size={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
