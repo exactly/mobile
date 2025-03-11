@@ -11,7 +11,7 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import CardDetails from "./CardDetails";
-import DisclaimerDialog from "./DisclaimerDialog";
+import CardDisclaimer from "./CardDisclaimer";
 import SpendingLimits from "./SpendingLimits";
 import ExaCard from "./exa-card/ExaCard";
 import {
@@ -350,7 +350,7 @@ export default function Card() {
             setSpendingLimitsOpen(false);
           }}
         />
-        <DisclaimerDialog
+        <CardDisclaimer
           open={disclaimerShown}
           onActionPress={() => {
             setDisclaimerShown(false);
