@@ -235,49 +235,53 @@ export default function Card() {
                   width="100%"
                   paddingHorizontal="$s4"
                 >
-                  <Pressable>
-                    <XStack
-                      justifyContent="space-between"
-                      paddingVertical="$s4"
-                      alignItems="center"
-                      onPress={() => {
-                        if (isFetchingCard || isSettingCardStatus) return;
-                        changeCardStatus(cardDetails?.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
-                      }}
-                    >
-                      <XStack alignItems="center" gap="$s3">
-                        <Square size={ms(24)}>
-                          {isSettingCardStatus ? (
-                            <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
-                          ) : (
-                            <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
-                          )}
-                        </Square>
-                        <Text subHeadline color="$uiNeutralPrimary">
-                          {displayStatus === "FROZEN" ? "Unfreeze card" : "Freeze card"}
-                        </Text>
-                      </XStack>
-                      <Switch
-                        scale={0.9}
-                        margin={0}
-                        padding={0}
-                        pointerEvents="none"
-                        checked={displayStatus === "FROZEN"}
-                        backgroundColor="$backgroundMild"
-                        borderColor="$borderNeutralSoft"
-                      >
-                        <Switch.Thumb
-                          checked={displayStatus === "FROZEN"}
-                          shadowColor="$uiNeutralSecondary"
-                          animation="moderate"
-                          backgroundColor={
-                            displayStatus === "ACTIVE" ? "$interactiveDisabled" : "$interactiveBaseBrandDefault"
-                          }
-                        />
-                      </Switch>
-                    </XStack>
-                  </Pressable>
-                  <Separator borderColor="$borderNeutralSoft" />
+                  {cardDetails && (
+                    <>
+                      <Pressable>
+                        <XStack
+                          justifyContent="space-between"
+                          paddingVertical="$s4"
+                          alignItems="center"
+                          onPress={() => {
+                            if (isFetchingCard || isSettingCardStatus) return;
+                            changeCardStatus(cardDetails.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
+                          }}
+                        >
+                          <XStack alignItems="center" gap="$s3">
+                            <Square size={ms(24)}>
+                              {isSettingCardStatus ? (
+                                <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
+                              ) : (
+                                <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                              )}
+                            </Square>
+                            <Text subHeadline color="$uiNeutralPrimary">
+                              {displayStatus === "FROZEN" ? "Unfreeze card" : "Freeze card"}
+                            </Text>
+                          </XStack>
+                          <Switch
+                            scale={0.9}
+                            margin={0}
+                            padding={0}
+                            pointerEvents="none"
+                            checked={displayStatus === "FROZEN"}
+                            backgroundColor="$backgroundMild"
+                            borderColor="$borderNeutralSoft"
+                          >
+                            <Switch.Thumb
+                              checked={displayStatus === "FROZEN"}
+                              shadowColor="$uiNeutralSecondary"
+                              animation="moderate"
+                              backgroundColor={
+                                displayStatus === "ACTIVE" ? "$interactiveDisabled" : "$interactiveBaseBrandDefault"
+                              }
+                            />
+                          </Switch>
+                        </XStack>
+                      </Pressable>
+                      <Separator borderColor="$borderNeutralSoft" />
+                    </>
+                  )}
                   <Pressable
                     onPress={() => {
                       revealCard().catch(handleError);
@@ -293,7 +297,9 @@ export default function Card() {
                       <ChevronRight color="$iconSecondary" size={ms(24)} />
                     </XStack>
                   </Pressable>
+
                   <Separator borderColor="$borderNeutralSoft" />
+
                   <Pressable
                     onPress={() => {
                       setSpendingLimitsOpen(true);
