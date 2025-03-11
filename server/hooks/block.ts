@@ -22,6 +22,7 @@ import * as v from "valibot";
 import {
   BaseError,
   CallExecutionError,
+  ContractFunctionExecutionError,
   ContractFunctionRevertedError,
   decodeAbiParameters,
   decodeEventLog,
@@ -317,7 +318,7 @@ function scheduleProposal(message: string) {
                   level: "error",
                   contexts: { proposal: { account, nonce, proposalType: ProposalType[proposalType] } },
                 });
-                if (error instanceof BaseError && error.cause instanceof ContractFunctionRevertedError) {
+                if (error instanceof ContractFunctionExecutionError) {
                   try {
                     const { request } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
                       publicClient.simulateContract({
