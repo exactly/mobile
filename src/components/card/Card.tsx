@@ -141,7 +141,7 @@ export default function Card() {
     },
   });
 
-  const { mutateAsync: generateCard } = useMutation({
+  const { mutateAsync: generateCard, isPending: isGeneratingCard } = useMutation({
     mutationKey: ["card", "create"],
     mutationFn: async () => {
       if (!passkey) return;
@@ -215,10 +215,10 @@ export default function Card() {
                   />
                 )}
                 <ExaCard
-                  revealing={isRevealing}
+                  revealing={isRevealing || isGeneratingCard}
                   frozen={cardDetails?.status === "FROZEN"}
                   onPress={() => {
-                    if (isRevealing) return;
+                    if (isRevealing || isGeneratingCard) return;
                     revealCard().catch(handleError);
                   }}
                 />
