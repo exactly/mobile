@@ -210,8 +210,6 @@ contract ProposalManager is IProposalManager, AccessControl {
     internal
     view
   {
-    // slither-disable-next-line incorrect-equality -- unsigned zero check
-    if (proposal.amount == 0) revert NoProposal();
     if (proposal.amount < amount) revert NoProposal();
     if (proposal.market != target) revert NoProposal();
     if (proposal.timestamp + delay > block.timestamp) revert Timelocked();
