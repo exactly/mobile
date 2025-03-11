@@ -1,5 +1,6 @@
+import { previewerAddress } from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
-import { WAD } from "@exactly/lib";
+import { WAD, withdrawLimit } from "@exactly/lib";
 import { ArrowLeft, ArrowRight, Coins, DollarSign, User } from "@tamagui/lucide-icons";
 import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +11,10 @@ import { Appearance, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack } from "tamagui";
 import { bigint, check, pipe } from "valibot";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
+import { useReadPreviewerExactly } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import useAsset from "../../utils/useAsset";
@@ -21,8 +25,10 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Amount() {
+  const { address: account } = useAccount();
   const { canGoBack } = router;
   const { data: withdraw } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
+  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
 
   const { market, externalAsset, available, isFetching } = useAsset(withdraw?.market);
 
@@ -132,10 +138,10 @@ export default function Amount() {
                         Value:
                       </Text>
                       <Text callout color="$uiNeutralPrimary" numberOfLines={1}>
-                        {market ? (
+                        {market && markets ? (
                           <>
                             {(
-                              Number((market.floatingDepositAssets * market.usdPrice) / WAD) /
+                              Number((withdrawLimit(markets, market.market) * market.usdPrice) / WAD) /
                               10 ** market.decimals
                             ).toLocaleString(undefined, {
                               style: "currency",
