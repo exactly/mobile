@@ -1,5 +1,6 @@
 import domain from "@exactly/common/domain";
 import chain, { exaPluginAddress } from "@exactly/common/generated/chain";
+import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import { Address, Hash, Hex } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { createHmac } from "node:crypto";
@@ -27,7 +28,7 @@ import publicClient from "../utils/publicClient";
 const plugins = new Set(
   (
     {
-      "web.exactly.app": ["0x87aF7e4892e47a7De34dF689bA5f3bCccED3e5DE"],
+      "web.exactly.app": [latestExaPlugin],
     }[domain] ?? [exaPluginAddress]
   ).map((address) => parse(Hex, address.toLowerCase())),
 );
