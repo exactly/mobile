@@ -18,7 +18,9 @@ import {
   upgradeableModularAccountAbi,
   useReadExaPluginPluginManifest,
   useReadPreviewerExactly,
+  useReadProposalManagerQueueNonces,
   useReadUpgradeableModularAccountGetInstalledPlugins,
+  useSimulateExaPluginSetProposalNonce,
   useSimulateMarketBorrowAtMaturity,
   useSimulateUpgradeableModularAccountUninstallPlugin,
 } from "../../generated/contracts";
@@ -59,6 +61,17 @@ export default function ContractUtils() {
     query: { enabled: !!address && !!installedPlugins },
   });
 
+  const { data: queueNonce } = useReadProposalManagerQueueNonces({
+    address: "0x827e9FCF0B0710EbB754695fAA813cA67e3c7458",
+    args: [address ?? zeroAddress],
+  });
+
+  const { data: setNonceSimulation } = useSimulateExaPluginSetProposalNonce({
+    address,
+    args: [queueNonce ?? 0n],
+    query: { enabled: !!address && !!queueNonce },
+  });
+
   const { data: proposeUninstallSimulation } = useSimulateContract({
     address,
     functionName: "proposeUninstall",
@@ -72,6 +85,7 @@ export default function ContractUtils() {
     data: proposeUninstallHash,
     isPending: isProposingUninstall,
   } = useWriteContract();
+  const { writeContract: setLatestNonce, data: setNonceHash, isPending: isSettingNonce } = useWriteContract();
 
   const borrowUSDC = useCallback(() => {
     if (!borrowUSDCSimulation) throw new Error("no borrow simulation");
@@ -82,6 +96,11 @@ export default function ContractUtils() {
     if (!proposeUninstallSimulation) throw new Error("no propose uninstall simulation");
     proposeUninstall(proposeUninstallSimulation.request);
   }, [proposeUninstall, proposeUninstallSimulation]);
+
+  const setNonce = useCallback(() => {
+    if (!setNonceSimulation) throw new Error("no set nonce simulation");
+    setLatestNonce(setNonceSimulation.request);
+  }, [setLatestNonce, setNonceSimulation]);
 
   const {
     data: updatePluginHash,
@@ -120,7 +139,6 @@ export default function ContractUtils() {
       return accountClient.waitForUserOperationTransaction(hash);
     },
   });
-
   return (
     <View gap="$s4">
       <Text fontSize={ms(16)} subHeadline fontWeight="bold">
@@ -183,6 +201,31 @@ export default function ContractUtils() {
             borderRadius="$r2"
             onPress={() => {
               copyHash(proposeUninstallHash);
+            }}
+            padding={ms(10)}
+            flex={1}
+          >
+            Copy
+          </Button>
+        )}
+      </View>
+      {setNonceHash && (
+        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
+          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+            {setNonceHash}
+          </Text>
+        </View>
+      )}
+      <View flexDirection="row" gap="$s4">
+        <Button contained onPress={setNonce} padding={ms(10)} disabled={!setNonceSimulation || isSettingNonce} flex={1}>
+          Set Nonce
+        </Button>
+        {setNonceHash && (
+          <Button
+            outlined
+            borderRadius="$r2"
+            onPress={() => {
+              copyHash(setNonceHash);
             }}
             padding={ms(10)}
             flex={1}
