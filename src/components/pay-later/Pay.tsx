@@ -21,7 +21,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
 import { encodeFunctionData, erc20Abi, parseUnits, zeroAddress, encodeAbiParameters } from "viem";
-import { useSimulateContract, useWriteContract } from "wagmi";
+import { useAccount, useSimulateContract, useWriteContract } from "wagmi";
 
 import AssetSelectionSheet from "./AssetSelectionSheet";
 import Failure from "./Failure";
@@ -42,16 +42,19 @@ import AssetLogo from "../shared/AssetLogo";
 
 export default function Pay() {
   const insets = useSafeAreaInsets();
+  const { address: account } = useAccount();
   const [assetSelectionOpen, setAssetSelectionOpen] = useState(false);
-  const { account, market: exaUSDC, markets, queryKey: marketAccount } = useAsset(marketUSDCAddress);
+  const { market: exaUSDC } = useAsset(marketUSDCAddress);
   const [selectedAsset, setSelectedAsset] = useState<{ address: Address; isExternalAsset: boolean }>({
     address: parse(Address, zeroAddress),
     isExternalAsset: true,
   });
   const {
+    markets,
     externalAsset,
     available: externalAssetAvailable,
     isFetching: isFetchingAsset,
+    queryKey: assetQueryKey,
   } = useAsset(selectedAsset.address);
   const [displayValues, setDisplayValues] = useState<{ amount: number; usdAmount: number }>({
     amount: 0,
@@ -81,7 +84,7 @@ export default function Pay() {
   } = useWriteContract({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: marketAccount }).catch(handleError);
+        queryClient.invalidateQueries({ queryKey: assetQueryKey }).catch(handleError);
       },
     },
   });
@@ -94,7 +97,7 @@ export default function Pay() {
   } = useWriteContract({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: marketAccount }).catch(handleError);
+        queryClient.invalidateQueries({ queryKey: assetQueryKey }).catch(handleError);
       },
     },
   });
