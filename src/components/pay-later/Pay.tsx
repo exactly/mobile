@@ -143,16 +143,22 @@ export default function Pay() {
     queryKey: ["lifi", "route", selectedAsset], // eslint-disable-line @tanstack/query/exhaustive-deps
     queryFn: async () => {
       if (!account || !borrow) return { fromAmount: 0n, data: parse(Hex, "0x") };
-      if (!repayMarket) {
-        return await getRoute(selectedAsset.address, usdcAddress, maxRepay, account, account);
+      if (repayMarket) {
+        return await getRoute(
+          repayMarket.asset,
+          usdcAddress,
+          maxRepay,
+          account,
+          isLatestPlugin ? account : exaPluginAddress,
+        );
       }
-      return await getRoute(repayMarket.asset, usdcAddress, maxRepay, account, exaPluginAddress);
+      return await getRoute(selectedAsset.address, usdcAddress, maxRepay, account, account);
     },
     refetchInterval: 5000,
   });
 
   const positionAssets = borrow ? borrow.position.principal + borrow.position.fee : 0n;
-  const maxAmountIn = route.fromAmount;
+  const maxAmountIn = (route.fromAmount * slippage) / WAD;
 
   const {
     data: repaySimulation,
