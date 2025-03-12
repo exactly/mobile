@@ -237,8 +237,6 @@ export default app.post(
   },
 );
 
-const noProposal = encodeErrorResult({ errorName: "NoProposal", abi: exaPluginAbi });
-
 function scheduleProposal(message: string) {
   const { account, amount, data, id, market, nonce, proposalType, sentryBaggage, sentryTrace, timestamp, unlock } =
     v.parse(Proposal, deserialize(message));
@@ -273,6 +271,7 @@ function scheduleProposal(message: string) {
                       account: keeper.account,
                       address: account,
                       functionName: "executeProposal",
+                      args: [nonce],
                       abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
                       ...transactionOptions,
                     }),
@@ -424,7 +423,7 @@ function scheduleWithdraw(message: string) {
               error instanceof BaseError &&
               error.cause instanceof ContractFunctionRevertedError &&
               error.cause.data?.errorName === "PreExecHookReverted" &&
-              error.cause.data.args?.[2] === noProposal
+              error.cause.data.args?.[2] === encodeErrorResult({ errorName: "NoProposal", abi: legacyExaPluginAbi })
             ) {
               parent.setStatus({ code: 2, message: "aborted" });
               return redis.zrem("withdraw", message);
@@ -568,4 +567,5 @@ const legacyExaPluginAbi = [
     ],
     anonymous: false,
   },
+  { type: "error", name: "NoProposal", inputs: [] },
 ] as const;
