@@ -195,7 +195,12 @@ export const collectors: Address[] = (
 const issuer = privateKeyToAccount(parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
 export function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: bigint; timestamp: number }) {
   return issuer.signTypedData({
-    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
+    domain: {
+      chainId: chain.id,
+      name: "IssuerChecker",
+      version: "1",
+      verifyingContract: chain.id === optimism.id ? "0xAAC0780c9e17F6FAbD1C6d34b80001bE10F50a28" : issuerCheckerAddress,
+    },
     types: {
       Collection: [
         { name: "account", type: "address" },
