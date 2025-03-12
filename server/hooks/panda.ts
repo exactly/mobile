@@ -1,12 +1,12 @@
 import MIN_BORROW_INTERVAL from "@exactly/common/MIN_BORROW_INTERVAL";
 import chain, {
   exaPluginAbi,
-  exaPluginAddress,
   exaPreviewerAbi,
   exaPreviewerAddress,
   upgradeableModularAccountAbi,
   usdcAddress,
 } from "@exactly/common/generated/chain";
+import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import { Address, type Hash, type Hex } from "@exactly/common/validation";
 import { MATURITY_INTERVAL, splitInstallments } from "@exactly/lib";
 import { vValidator } from "@hono/valibot-validator";
@@ -160,7 +160,7 @@ export default new Hono().post(
               data: transaction.data,
               stateOverride: [
                 {
-                  address: exaPluginAddress,
+                  address: latestExaPlugin,
                   stateDiff: [
                     {
                       slot: keccak256(
