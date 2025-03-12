@@ -8,41 +8,18 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { Image, styled } from "tamagui";
+import { Image } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount, useConnect } from "wagmi";
 
 import AddressDialog from "./AddressDialog";
+import StatusIndicator from "./StatusIndicator";
 import { useReadExaPreviewerPendingProposals } from "../../generated/contracts";
 import alchemyConnector from "../../utils/alchemyConnector";
 import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
 import Text from "../shared/Text";
 import View from "../shared/View";
-
-const OnlineIndicator = styled(View, {
-  width: 12,
-  height: 12,
-  borderRadius: 100,
-  backgroundColor: "$uiBrandPrimary",
-  position: "absolute",
-  right: -2,
-  top: -2,
-  borderWidth: 2,
-  borderColor: "$borderBrandSoft",
-  zIndex: 1,
-});
-
-const NotificationIndicator = styled(View, {
-  width: 8,
-  height: 8,
-  borderRadius: 100,
-  backgroundColor: "$uiInfoSecondary",
-  position: "absolute",
-  right: -1,
-  top: -1,
-  zIndex: 1,
-});
 
 function settings() {
   router.push("/settings");
@@ -87,7 +64,7 @@ export default function ProfileHeader() {
               connect({ connector: alchemyConnector });
             }}
           >
-            {isConnected && <OnlineIndicator />}
+            {isConnected && <StatusIndicator type="online" />}
             <Image
               source={{ uri: "https://avatars.githubusercontent.com/u/83888950?s=200&v=4" }}
               alt="Profile picture"
@@ -130,7 +107,7 @@ export default function ProfileHeader() {
               }}
               hitSlop={ms(15)}
             >
-              <NotificationIndicator />
+              <StatusIndicator type="notification" />
               <ClockArrowUp color="$uiNeutralPrimary" />
             </Pressable>
           )}
