@@ -1,5 +1,5 @@
 import release from "@exactly/common/generated/release";
-import { ArrowLeft, HelpCircle } from "@tamagui/lucide-icons";
+import { ArrowLeft, ChevronRight, FlaskConical, HelpCircle } from "@tamagui/lucide-icons";
 import { setStringAsync } from "expo-clipboard";
 import { router, useRouter } from "expo-router";
 import React from "react";
@@ -41,7 +41,6 @@ export default function Settings() {
         <ScrollView flex={1}>
           <View gap="$s4_5">
             <View borderRadius="$r3" borderWidth={1} borderColor="$borderNeutralSoft">
-              <Separator borderColor="$borderNeutralSoft" />
               <Pressable onPress={handleSupport}>
                 <XStack justifyContent="space-between" alignItems="center" padding="$s4">
                   <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
@@ -49,6 +48,24 @@ export default function Settings() {
                     <Text subHeadline color="$uiNeutralPrimary">
                       Support
                     </Text>
+                  </XStack>
+                </XStack>
+              </Pressable>
+              <Separator borderColor="$borderNeutralSoft" />
+              <Pressable
+                onPress={() => {
+                  router.push("/settings/beta");
+                }}
+              >
+                <XStack justifyContent="space-between" alignItems="center" padding="$s4">
+                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                    <FlaskConical color="$backgroundBrand" />
+                    <Text subHeadline color="$uiNeutralPrimary">
+                      Beta
+                    </Text>
+                  </XStack>
+                  <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
+                    <ChevronRight color="$iconSecondary" />
                   </XStack>
                 </XStack>
               </Pressable>
