@@ -25,6 +25,7 @@ import { IssuerChecker } from "../src/IssuerChecker.sol";
 import { Refunder } from "../src/Refunder.sol";
 
 import { DeployAccount } from "./mocks/Account.s.sol";
+import { MockSwapper } from "./mocks/MockSwapper.sol";
 import { DeployMocks } from "./mocks/Mocks.s.sol";
 import { DeployProtocol } from "./mocks/Protocol.s.sol";
 
@@ -123,6 +124,7 @@ contract ExaPreviewerTest is ForkTest {
     set("IssuerChecker", address(issuerChecker));
     set("ProposalManager", address(proposalManager));
     set("WebauthnOwnerPlugin", address(ownerPlugin));
+    set("swapper", address(m.swapper()));
     d.run();
     unset("Auditor");
     unset("MarketUSDC");
@@ -133,6 +135,7 @@ contract ExaPreviewerTest is ForkTest {
     unset("IssuerChecker");
     unset("ProposalManager");
     unset("WebauthnOwnerPlugin");
+    unset("swapper");
     exaPlugin = d.exaPlugin();
     factory = d.factory();
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
@@ -256,6 +259,59 @@ contract ExaPreviewerTest is ForkTest {
       block.timestamp,
       _issuerOp(maxDebt / 3 - 100e6, block.timestamp)
     );
+  }
+
+  function test_collect_reverts_whenProposalsHaveTooMuchRollDebt() external {
+    account.poke(exaUSDC);
+
+    (uint256 adjustFactor,,,,) = auditor.markets(Market(address(exaUSDC)));
+
+    uint256 adjustedCollateral = exaUSDC.maxWithdraw(address(account)).mulWad(adjustFactor);
+    uint256 maxDebt = adjustedCollateral.mulWad(adjustFactor);
+
+    vm.startPrank(address(account));
+    account.propose(exaUSDC, maxDebt, ProposalType.ROLL_DEBT, "");
+
+    vm.expectRevert(InsufficientLiquidity.selector);
+    previewer.collectDebit(10, block.timestamp, _issuerOp(10, block.timestamp));
+  }
+
+  function test_collectCollateral_collects() external {
+    account.poke(exaEXA);
+    account.poke(exaUSDC);
+
+    uint256 maxAmountIn = 111e18;
+    uint256 minAmountOut = 110e6;
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (exaEXA.asset(), maxAmountIn, address(usdc), minAmountOut, address(exaPlugin))
+    );
+
+    uint256 balanceIn = exaEXA.balanceOf(address(account));
+    uint256 balanceOut = exaUSDC.balanceOf(address(account));
+
+    vm.startPrank(address(account));
+    previewer.collectCollateral(
+      minAmountOut, exaEXA, maxAmountIn, block.timestamp, route, _issuerOp(minAmountOut, block.timestamp)
+    );
+
+    assertGe(exaEXA.balanceOf(address(account)), balanceIn - maxAmountIn);
+    assertGe(exaUSDC.balanceOf(address(account)), balanceOut);
+  }
+
+  function test_collectInstallments_collects() external {
+    account.poke(exaUSDC);
+
+    uint256[] memory amounts = new uint256[](3);
+    amounts[0] = 10e6;
+    amounts[1] = 10e6;
+    amounts[2] = 10e6;
+
+    vm.startPrank(address(account));
+    previewer.collectInstallments(
+      FixedLib.INTERVAL, amounts, type(uint256).max, block.timestamp, _issuerOp(30e6, block.timestamp)
+    );
+
+    assertEq(usdc.balanceOf(address(exaPlugin.collector())), 30e6);
   }
 
   // solhint-enable func-name-mixedcase

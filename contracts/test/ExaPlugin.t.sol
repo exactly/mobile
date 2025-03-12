@@ -18,7 +18,7 @@ import {
 } from "modular-account-libs/interfaces/IPlugin.sol";
 import { FunctionReference } from "modular-account-libs/interfaces/IPluginManager.sol";
 import { UserOperation } from "modular-account-libs/interfaces/UserOperation.sol";
-import { BasePlugin } from "modular-account-libs/plugins/BasePlugin.sol";
+import { BasePlugin, PluginMetadata } from "modular-account-libs/plugins/BasePlugin.sol";
 
 import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
 import { IERC20 } from "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
@@ -57,6 +57,7 @@ import {
   IMarket,
   IProposalManager,
   InvalidDelay,
+  NoBalance,
   NoProposal,
   NonceTooLow,
   NotMarket,
@@ -115,6 +116,7 @@ contract ExaPluginTest is ForkTest {
   Refunder internal refunder;
 
   Auditor internal auditor;
+  IDebtManager internal debtManager;
   IMarket internal exaEXA;
   IMarket internal exaUSDC;
   IMarket internal exaWETH;
@@ -178,6 +180,8 @@ contract ExaPluginTest is ForkTest {
     unset("collector");
     proposalManager = pm.proposalManager();
 
+    debtManager = IDebtManager(address(p.debtManager()));
+
     exaPlugin = new ExaPlugin(
       Parameters({
         owner: address(this),
@@ -185,7 +189,7 @@ contract ExaPluginTest is ForkTest {
         exaUSDC: exaUSDC,
         exaWETH: exaWETH,
         balancerVault: p.balancer(),
-        debtManager: IDebtManager(address(p.debtManager())),
+        debtManager: debtManager,
         installmentsRouter: IInstallmentsRouter(address(p.installmentsRouter())),
         issuerChecker: issuerChecker,
         proposalManager: IProposalManager(address(proposalManager)),
@@ -334,6 +338,19 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(address(account));
     vm.expectRevert(Unauthorized.selector);
     account.swap(IERC20(address(exaEXA)), IERC20(address(usdc)), maxAmountIn, amountOut, route);
+  }
+
+  function test_swap_reverts_whenCallerIsNotSelf() external {
+    vm.startPrank(keeper);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_SELF,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.swap(IERC20(address(exaEXA)), IERC20(address(usdc)), 1, 1, "");
   }
 
   // keeper or self runtime validation
@@ -1657,6 +1674,21 @@ contract ExaPluginTest is ForkTest {
     assertEq(exaUSDC.balanceOf(address(exaPlugin)), 0, "usdc dust");
   }
 
+  function test_collectCollateral_reverts_withDisagreement() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    uint256 maxAmountIn = 111e18;
+    uint256 minAmountOut = 110e6;
+    bytes memory route = abi.encodeCall(
+      MockSwapper.swapExactAmountOut, (exaEXA.asset(), maxAmountIn, address(usdc), minAmountOut, address(exaPlugin))
+    );
+    vm.expectRevert(Disagreement.selector);
+    account.collectCollateral(
+      minAmountOut * 2, exaEXA, maxAmountIn, block.timestamp, route, _issuerOp(minAmountOut * 2, block.timestamp)
+    );
+  }
+
   function testFork_collectCollateral_collects() external {
     _setUpForkEnv();
     uint256 maxAmountIn = 0.0004e8;
@@ -1803,6 +1835,21 @@ contract ExaPluginTest is ForkTest {
 
     vm.expectRevert(abi.encodeWithSelector(NotNext.selector));
     account.executeProposal(1);
+  }
+
+  function test_poke_reverts_withNotMarket() external {
+    vm.startPrank(keeper);
+    vm.expectRevert(abi.encodeWithSelector(NotMarket.selector));
+    account.poke(IMarket(address(0)));
+  }
+
+  function test_poke_reverts_withNoBalance() external {
+    vm.startPrank(address(account));
+    exa.transfer(address(0x1), exa.balanceOf(address(account)));
+
+    vm.startPrank(keeper);
+    vm.expectRevert(abi.encodeWithSelector(NoBalance.selector));
+    account.poke(exaEXA);
   }
 
   // runtime validations
@@ -2151,6 +2198,218 @@ contract ExaPluginTest is ForkTest {
     );
   }
 
+  // pre execution hooks
+
+  function test_approveMarket_reverts_whenNotAllowlisted() external {
+    vm.startPrank(owner);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.execute(address(exaUSDC), 0, abi.encodeCall(IERC20.approve, (address(this), 100e6)));
+  }
+
+  function test_rollFixed_reverts__withNoProposal_proposalTypeDiffers() external {
+    vm.startPrank(address(account));
+
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, abi.encode(address(0x420)));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(NoProposal.selector)
+      )
+    );
+    account.execute(
+      address(debtManager), 0, abi.encodeCall(IDebtManager.rollFixed, (exaEXA, 100e18, 100e18, 100e18, 100e18, 100e18))
+    );
+  }
+
+  function test_rollFixed_reverts_whenTimelocked() external {
+    vm.startPrank(address(account));
+
+    account.propose(exaEXA, 100e18, ProposalType.ROLL_DEBT, abi.encode(address(0x420)));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Timelocked.selector)
+      )
+    );
+    account.execute(
+      address(debtManager), 0, abi.encodeCall(IDebtManager.rollFixed, (exaEXA, 100e18, 100e18, 100e18, 100e18, 100e18))
+    );
+  }
+
+  function test_rollFixed_reverts_withNoProposal_whenRollDataDiffers() external {
+    vm.startPrank(address(account));
+    account.propose(
+      exaEXA,
+      100e18,
+      ProposalType.ROLL_DEBT,
+      abi.encode(
+        RollDebtData({
+          repayMaturity: FixedLib.INTERVAL,
+          borrowMaturity: FixedLib.INTERVAL * 2,
+          maxRepayAssets: 100e18,
+          percentage: 1e18
+        })
+      )
+    );
+    skip(proposalManager.delay());
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(NoProposal.selector)
+      )
+    );
+    account.execute(
+      address(debtManager), 0, abi.encodeCall(IDebtManager.rollFixed, (exaEXA, 100e18, 100e18, 100e18, 100e18, 100e18))
+    );
+  }
+
+  function test_debtManagerCalls_revert_withUnauthorized_whenSelectorNotRollFixed() external {
+    vm.startPrank(address(account));
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.execute(address(debtManager), 0, abi.encodeCall(IAuditor.enterMarket, (exaEXA)));
+  }
+
+  function test_installmentsRouterCalls_revert_withUnauthorized_whenSelectorNotBorrow() external {
+    vm.startPrank(address(account));
+
+    address router = address(exaPlugin.INSTALLMENTS_ROUTER());
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    account.execute(router, 0, abi.encodeCall(IAuditor.enterMarket, (exaEXA)));
+  }
+
+  function test_borrowToCollector_borrows() external {
+    vm.prank(keeper);
+    account.poke(exaEXA);
+
+    vm.startPrank(owner);
+    account.execute(address(exaUSDC), 0, abi.encodeCall(IMarket.borrow, (100e6, collector, address(account))));
+
+    assertEq(usdc.balanceOf(collector), 100e6);
+  }
+
+  function test_borrowAtMaturity_reverts_whenTimelocked() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    uint256 maturity = FixedLib.INTERVAL;
+    vm.startPrank(address(account));
+    account.propose(
+      exaUSDC,
+      100e6,
+      ProposalType.BORROW_AT_MATURITY,
+      abi.encode(BorrowAtMaturityData({ maturity: maturity, maxAssets: 110e6, receiver: address(account) }))
+    );
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(Timelocked.selector)
+      )
+    );
+    account.execute(
+      address(exaUSDC),
+      0,
+      abi.encodeCall(IMarket.borrowAtMaturity, (maturity, 100e6, 110e6, address(account), address(account)))
+    );
+  }
+
+  function test_borrowAtMaturity_reverts_withNoProposal_whenDataDiffers() external {
+    vm.startPrank(keeper);
+    account.poke(exaEXA);
+
+    uint256 maturity = FixedLib.INTERVAL;
+    vm.startPrank(address(account));
+    account.propose(
+      exaUSDC,
+      100e6,
+      ProposalType.BORROW_AT_MATURITY,
+      abi.encode(BorrowAtMaturityData({ maturity: maturity, maxAssets: 110e6, receiver: address(account) }))
+    );
+
+    skip(proposalManager.delay());
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(NoProposal.selector)
+      )
+    );
+    account.execute(
+      address(exaUSDC),
+      0,
+      abi.encodeCall(IMarket.borrowAtMaturity, (maturity, 100e6 + 1, 110e6, address(account), address(account)))
+    );
+  }
+
+  function test_proposalManagerConstructor_reverts_whenSwapperIsZeroAddress() external {
+    vm.expectRevert(ZeroAddress.selector);
+    new ProposalManager(
+      address(this),
+      IAuditor(address(this)),
+      IDebtManager(address(this)),
+      IInstallmentsRouter(address(this)),
+      address(0),
+      address(this),
+      new address[](0),
+      1 minutes
+    );
+  }
+
+  function test_exaPluginConstructor_reverts_whenSwapperIsZeroAddress() external {
+    vm.expectRevert(ZeroAddress.selector);
+    new ExaPlugin(
+      Parameters({
+        owner: address(this),
+        auditor: IAuditor(address(this)),
+        exaUSDC: exaUSDC,
+        exaWETH: exaWETH,
+        balancerVault: IBalancerVault(address(this)),
+        debtManager: IDebtManager(address(this)),
+        installmentsRouter: IInstallmentsRouter(address(this)),
+        issuerChecker: issuerChecker,
+        proposalManager: IProposalManager(address(proposalManager)),
+        collector: collector,
+        swapper: address(0),
+        firstKeeper: keeper
+      })
+    );
+  }
+
   // base plugin
 
   function test_uninstallAndInstall_installs_whenPluginIsAllowed() external {
@@ -2355,6 +2614,34 @@ contract ExaPluginTest is ForkTest {
     calls[0] =
       Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(badPlugin), "", "")));
     account.executeBatch(calls);
+  }
+
+  function test_postExecutionHook_reverts_withNotImplemented() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(BasePlugin.NotImplemented.selector, BasePlugin.postExecutionHook.selector, 0)
+    );
+    exaPlugin.postExecutionHook(0, "");
+  }
+
+  function test_preExecutionHook_reverts_withNotImplemented() external {
+    vm.expectRevert(abi.encodeWithSelector(BasePlugin.NotImplemented.selector, BasePlugin.preExecutionHook.selector, 0));
+    exaPlugin.preExecutionHook(0, address(this), 0, "");
+  }
+
+  function test_runtimeValidationFunction_reverts_withNotImplemented() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        BasePlugin.NotImplemented.selector, BasePlugin.runtimeValidationFunction.selector, type(uint8).max
+      )
+    );
+    exaPlugin.runtimeValidationFunction(type(uint8).max, address(this), 0, "");
+  }
+
+  function test_pluginMetadata() external view {
+    PluginMetadata memory pluginMetadata = exaPlugin.pluginMetadata();
+    assertEq(pluginMetadata.name, exaPlugin.NAME());
+    assertEq(pluginMetadata.version, exaPlugin.VERSION());
+    assertEq(pluginMetadata.author, exaPlugin.AUTHOR());
   }
 
   // refunder
@@ -2590,6 +2877,12 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(address(exaPlugin));
     vm.expectRevert(NonceTooLow.selector);
     proposalManager.setNonce(address(account), 0);
+  }
+
+  function test_setNonce_reverts_whenNonceTooHigh() external {
+    vm.startPrank(address(exaPlugin));
+    vm.expectRevert(NoProposal.selector);
+    proposalManager.setNonce(address(account), 1);
   }
 
   function test_setNonce_reverts_whenNotProposer() external {
