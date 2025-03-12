@@ -60,7 +60,9 @@ import {
   NoProposal,
   NonceTooLow,
   NotMarket,
+  NotNext,
   PluginAllowed,
+  Proposal,
   ProposalNonceSet,
   ProposalType,
   Proposed,
@@ -392,7 +394,7 @@ contract ExaPluginTest is ForkTest {
     skip(proposalManager.delay());
 
     vm.startPrank(address(account));
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
@@ -426,7 +428,7 @@ contract ExaPluginTest is ForkTest {
 
     skip(proposalManager.delay());
 
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 50e6);
@@ -453,7 +455,7 @@ contract ExaPluginTest is ForkTest {
 
     skip(proposalManager.delay());
 
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
     assertEq(position.principal, 0);
@@ -477,7 +479,7 @@ contract ExaPluginTest is ForkTest {
       abi.encode(RepayData({ maturity: maturity, positionAssets: positionAssets / 2 }))
     );
     skip(proposalManager.delay());
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     position = exaUSDC.fixedBorrowPositions(maturity, address(account));
@@ -508,7 +510,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(queueNonce, nonce + 1);
 
     vm.startPrank(address(account));
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     uint256 newPositionAssets = exaUSDC.fixedBorrowPositions(maturity, address(account)).principal
@@ -544,7 +546,7 @@ contract ExaPluginTest is ForkTest {
     uint256 queueNonce = proposalManager.queueNonces(address(account));
     assertEq(queueNonce, nonce + 1);
 
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(proposalManager.nonces(address(account)), nonce + 1, "nonce didn't increase");
     assertEq(proposalManager.queueNonces(address(account)), queueNonce, "queue nonce didn't stay the same");
@@ -564,7 +566,7 @@ contract ExaPluginTest is ForkTest {
 
     uint256 usdcBalance = usdc.balanceOf(address(account));
     skip(proposalManager.delay());
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(usdc.balanceOf(address(account)), usdcBalance + 100e6, "borrowed amount not received");
     assertEq(exaUSDC.fixedBorrowPositions(maturity, address(account)).principal, 100e6);
@@ -595,7 +597,7 @@ contract ExaPluginTest is ForkTest {
     );
 
     skip(proposalManager.delay());
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
@@ -631,7 +633,7 @@ contract ExaPluginTest is ForkTest {
     );
 
     skip(proposalManager.delay());
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(prevCollateral, exaWBTC.balanceOf(address(account)), "collateral didn't decrease");
@@ -664,7 +666,7 @@ contract ExaPluginTest is ForkTest {
 
     skip(proposalManager.delay());
     vm.startPrank(keeper);
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
     assertGt(exaUSDC.balanceOf(address(account)), 0, "left usdc not deposited");
@@ -696,6 +698,7 @@ contract ExaPluginTest is ForkTest {
 
     skip(proposalManager.delay());
     vm.startPrank(vm.addr(0x1));
+    uint256 nonce = proposalManager.nonces(address(account));
     vm.expectRevert(
       abi.encodeWithSelector(
         UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
@@ -704,7 +707,7 @@ contract ExaPluginTest is ForkTest {
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
-    account.executeProposal();
+    account.executeProposal(nonce);
   }
 
   function test_crossRepay_reverts_whenDisagreement() external {
@@ -726,8 +729,9 @@ contract ExaPluginTest is ForkTest {
     );
 
     skip(proposalManager.delay());
+    uint256 nonce = proposalManager.nonces(address(account));
     vm.expectRevert(Disagreement.selector);
-    account.executeProposal();
+    account.executeProposal(nonce);
   }
 
   function test_propose_reverts_whenNotMarket() external {
@@ -768,7 +772,7 @@ contract ExaPluginTest is ForkTest {
       )
     );
     skip(proposalManager.delay());
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
     assertEq(position.principal, 0);
@@ -802,7 +806,7 @@ contract ExaPluginTest is ForkTest {
     );
     skip(proposalManager.delay());
 
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     FixedPosition memory position = exaUSDC.fixedBorrowPositions(FixedLib.INTERVAL, address(account));
     assertEq(position.principal, 0);
@@ -845,7 +849,7 @@ contract ExaPluginTest is ForkTest {
     skip(proposalManager.delay());
 
     assertEq(exa.balanceOf(receiver), 0);
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
     assertEq(exa.balanceOf(receiver), amount);
   }
 
@@ -861,7 +865,7 @@ contract ExaPluginTest is ForkTest {
     skip(proposalManager.delay());
 
     assertEq(exa.balanceOf(receiver), 0);
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
     assertEq(exa.balanceOf(receiver), amount);
   }
 
@@ -893,7 +897,7 @@ contract ExaPluginTest is ForkTest {
     skip(proposalManager.delay());
 
     assertEq(usdc.balanceOf(address(account)), 0);
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
     assertGe(usdc.balanceOf(address(account)), minAmountOut, "usdc balance != min amount out");
   }
 
@@ -913,8 +917,8 @@ contract ExaPluginTest is ForkTest {
     skip(proposalManager.delay());
 
     assertEq(receiver.balance, 0);
-    vm.prank(keeper);
-    account.executeProposal();
+    vm.startPrank(keeper);
+    account.executeProposal(proposalManager.nonces(address(account)));
     assertEq(receiver.balance, amount);
   }
 
@@ -946,7 +950,7 @@ contract ExaPluginTest is ForkTest {
     skip(proposalManager.delay());
 
     assertEq(usdc.balanceOf(address(account)), 0);
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
     assertGe(usdc.balanceOf(address(account)), minAmountOut);
   }
 
@@ -998,9 +1002,9 @@ contract ExaPluginTest is ForkTest {
   function test_withdraw_reverts_whenNoProposalKeeper() external {
     vm.startPrank(keeper);
     account.poke(exaEXA);
-
+    uint256 nonce = proposalManager.nonces(address(account));
     vm.expectRevert(NoProposal.selector);
-    account.executeProposal();
+    account.executeProposal(nonce);
   }
 
   function test_withdraw_reverts_whenTimelocked() external {
@@ -1032,9 +1036,10 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaEXA, amount, ProposalType.WITHDRAW, abi.encode(address(account))))
     );
 
+    uint256 nonce = proposalManager.nonces(address(account));
     vm.prank(keeper);
     vm.expectRevert(Timelocked.selector);
-    account.executeProposal();
+    account.executeProposal(nonce);
   }
 
   function test_withdraw_reverts_whenWrongAmount() external {
@@ -1106,6 +1111,7 @@ contract ExaPluginTest is ForkTest {
     vm.prank(keeper);
     account.poke(exaEXA);
 
+    uint256 nonce = proposalManager.nonces(address(account));
     vm.expectRevert(
       abi.encodeWithSelector(
         UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
@@ -1114,7 +1120,7 @@ contract ExaPluginTest is ForkTest {
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
-    account.executeProposal();
+    account.executeProposal(nonce);
   }
 
   function test_withdraw_reverts_whenTimelockedETH() external {
@@ -1133,8 +1139,9 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(receiver.balance, 0);
     vm.startPrank(keeper);
+    uint256 nonce = proposalManager.nonces(address(account));
     vm.expectRevert(Timelocked.selector);
-    account.executeProposal();
+    account.executeProposal(nonce);
     assertEq(receiver.balance, 0);
   }
 
@@ -1204,7 +1211,9 @@ contract ExaPluginTest is ForkTest {
       abi.encodeCall(IExaAccount.propose, (exaEXA, exaShares, ProposalType.REDEEM, abi.encode(address(account))))
     );
     skip(proposalManager.delay());
-    account.execute(address(account), 0, abi.encodeCall(IExaAccount.executeProposal, ()));
+    account.execute(
+      address(account), 0, abi.encodeCall(IExaAccount.executeProposal, (proposalManager.nonces(address(account))))
+    );
 
     assertEq(exaEXA.balanceOf(address(account)), 0);
     assertEq(exa.balanceOf(address(account)), exaBalance);
@@ -1219,26 +1228,30 @@ contract ExaPluginTest is ForkTest {
 
     account.setProposalNonce(1);
 
+    uint256 nonce = proposalManager.nonces(address(account));
     vm.expectRevert(NoProposal.selector);
-    account.executeProposal();
+    account.executeProposal(nonce);
 
     account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
     skip(proposalManager.delay());
 
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
   }
 
   function test_setProposalNonce_emitsEvent() external {
     vm.startPrank(keeper);
 
     account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
-
-    assertEq(proposalManager.nextProposal(address(account)).amount, 100e6);
+    uint256 nonce;
+    Proposal memory proposal;
+    (nonce, proposal) = proposalManager.nextProposal(address(account));
+    assertEq(proposal.amount, 100e6);
 
     vm.expectEmit(true, true, true, true, address(proposalManager));
-    emit ProposalNonceSet(address(account), 1, false);
-    account.setProposalNonce(1);
+    emit ProposalNonceSet(address(account), nonce + 1, false);
+    account.setProposalNonce(nonce + 1);
 
+    nonce = proposalManager.nonces(address(account));
     vm.expectRevert(NoProposal.selector);
     proposalManager.nextProposal(address(account));
   }
@@ -1781,6 +1794,14 @@ contract ExaPluginTest is ForkTest {
 
     assertEq(address(account).balance, 0, "ETH unwrapped");
     assertEq(exaWETH.maxWithdraw(address(account)), balance, "WETH left");
+  }
+
+  function test_executeProposal_reverts_whenInvalidNonce() external {
+    vm.startPrank(address(account));
+    account.propose(exaEXA, 1, ProposalType.WITHDRAW, abi.encode(address(this)));
+
+    vm.expectRevert(abi.encodeWithSelector(NotNext.selector));
+    account.executeProposal(1);
   }
 
   // runtime validations

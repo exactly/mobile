@@ -192,7 +192,7 @@ contract ExaPreviewerTest is ForkTest {
     assertEq(abi.decode(pendingProposals[1].proposal.data, (address)), address(0x2));
 
     skip(proposalManager.delay());
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     pendingProposals = previewer.pendingProposals(address(account));
     assertEq(pendingProposals.length, 1);
@@ -203,7 +203,7 @@ contract ExaPreviewerTest is ForkTest {
     assertEq(pendingProposals[0].proposal.timestamp, timestamp);
     assertEq(abi.decode(pendingProposals[0].proposal.data, (address)), address(0x2));
 
-    account.executeProposal();
+    account.executeProposal(proposalManager.nonces(address(account)));
 
     pendingProposals = previewer.pendingProposals(address(account));
     assertEq(pendingProposals.length, 0);

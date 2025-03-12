@@ -44,9 +44,9 @@ contract BobExecuteScript is BaseScript {
 
   function run() external {
     vm.startBroadcast(acct("keeper"));
-    bobAccount.executeProposal();
-    bobAccount.executeProposal();
-    bobAccount.executeProposal();
+    bobAccount.executeProposal(0);
+    bobAccount.executeProposal(1);
+    bobAccount.executeProposal(2);
     vm.stopBroadcast();
   }
 }

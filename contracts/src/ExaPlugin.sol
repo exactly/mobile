@@ -42,6 +42,7 @@ import {
   IProposalManager,
   NoBalance,
   NotMarket,
+  NotNext,
   PluginAllowed,
   Proposal,
   ProposalManagerSet,
@@ -129,8 +130,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     amountIn = balanceIn - assetIn.balanceOf(msg.sender);
   }
 
-  function executeProposal() external {
-    Proposal memory proposal = proposalManager.nextProposal(msg.sender);
+  function executeProposal(uint256 nonce) external {
+    (uint256 nextNonce, Proposal memory proposal) = proposalManager.nextProposal(msg.sender);
+    if (nonce != nextNonce) revert NotNext();
 
     if (proposal.timestamp + proposalManager.delay() > block.timestamp) revert Timelocked();
 
