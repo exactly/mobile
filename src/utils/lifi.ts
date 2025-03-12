@@ -41,6 +41,7 @@ export async function getRoute(fromToken: Hex, toToken: Hex, toAmount: bigint, a
     fromAddress: account,
     contractCalls: [],
     toFallbackAddress: receiver,
+    denyExchanges: ["bebop"],
   });
   return { fromAmount: BigInt(estimate.fromAmount), data: parse(Hex, transactionRequest?.data) };
 }
