@@ -1,5 +1,10 @@
-import ProposalType from "@exactly/common/ProposalType";
+import ProposalType, {
+  decodeCrossRepayAtMaturity,
+  decodeRepayAtMaturity,
+  decodeWithdraw,
+} from "@exactly/common/ProposalType";
 import { exaPreviewerAddress } from "@exactly/common/generated/chain";
+import shortenHex from "@exactly/common/shortenHex";
 import {
   ArrowLeft,
   CircleHelp,
@@ -9,32 +14,49 @@ import {
   ArrowUpRight,
   SearchSlash,
 } from "@tamagui/lucide-icons";
+import { format } from "date-fns";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, RefreshControl, ScrollView } from "react-native";
 import { ms } from "react-native-size-matters";
+import { XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadExaPreviewerPendingProposals } from "../../generated/contracts";
 import handleError from "../../utils/handleError";
+import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-function getProposalTypeLabel(proposalType: ProposalType): { label: string; icon: React.ReactNode } {
-  switch (proposalType) {
+interface Proposal {
+  amount: bigint;
+  market: `0x${string}`;
+  timestamp: bigint;
+  proposalType: ProposalType;
+  data: `0x${string}`;
+}
+
+function getProposal(proposal: Proposal) {
+  switch (proposal.proposalType) {
     case ProposalType.BorrowAtMaturity:
       return {
         label: "Protocol borrow",
         icon: <Coins color="$interactiveOnBaseInformationSoft" />,
       };
     case ProposalType.RepayAtMaturity:
+      return {
+        label: "Protocol debt payment",
+        icon: <Coins color="$interactiveOnBaseInformationSoft" />,
+        maturity: decodeRepayAtMaturity(proposal.data).maturity,
+      };
     case ProposalType.CrossRepayAtMaturity:
       return {
         label: "Protocol debt payment",
         icon: <Coins color="$interactiveOnBaseInformationSoft" />,
+        maturity: decodeCrossRepayAtMaturity(proposal.data).maturity,
       };
     case ProposalType.RollDebt:
       return {
@@ -43,14 +65,15 @@ function getProposalTypeLabel(proposalType: ProposalType): { label: string; icon
       };
     case ProposalType.Swap:
       return {
-        label: "Asset swap",
+        label: "Swapping",
         icon: <ArrowLeftRight color="$interactiveOnBaseInformationSoft" />,
       };
     case ProposalType.Redeem:
     case ProposalType.Withdraw:
       return {
-        label: "Send",
+        label: "Sending to",
         icon: <ArrowUpRight color="$interactiveOnBaseInformationSoft" />,
+        address: decodeWithdraw(proposal.data),
       };
     default:
       return {
@@ -80,7 +103,6 @@ export default function PendingProposals() {
       refetchInterval: 30_000,
     },
   });
-
   return (
     <SafeView fullScreen>
       <View fullScreen padded>
@@ -121,25 +143,7 @@ export default function PendingProposals() {
               </Text>
             )}
             {pendingProposals?.map(({ nonce, proposal }) => {
-              return (
-                <View key={`${nonce}`} flexDirection="row" gap="$s4" alignItems="center" paddingVertical="$s3">
-                  <View
-                    width={ms(40)}
-                    height={ms(40)}
-                    borderRadius="$r3"
-                    backgroundColor="$interactiveBaseInformationSoftDefault"
-                    justifyContent="center"
-                    alignItems="center"
-                  >
-                    {getProposalTypeLabel(proposal.proposalType).icon}
-                  </View>
-                  <View flex={1} alignSelf="center" justifyContent="center">
-                    <Text subHeadline maxFontSizeMultiplier={1} color="$uiPrimary">
-                      {getProposalTypeLabel(proposal.proposalType).label}
-                    </Text>
-                  </View>
-                </View>
-              );
+              return <ProposalItem key={nonce.toString()} proposal={proposal} />;
             })}
           </View>
         </ScrollView>
@@ -150,5 +154,82 @@ export default function PendingProposals() {
         </View>
       </View>
     </SafeView>
+  );
+}
+
+function ProposalItem({ proposal }: { proposal: Proposal }) {
+  const { label, icon, maturity, address: proposalAddress } = getProposal(proposal);
+  const { market } = useAsset(proposal.market);
+  const symbol = market ? (market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3)) : null;
+  const usdValue = market ? (proposal.amount * market.usdPrice) / BigInt(10 ** market.decimals) : 0n;
+  return (
+    <XStack gap="$s4" paddingVertical="$s3">
+      <View
+        width={ms(40)}
+        height={ms(40)}
+        borderRadius="$r3"
+        backgroundColor="$interactiveBaseInformationSoftDefault"
+        justifyContent="center"
+        alignItems="center"
+      >
+        {icon}
+      </View>
+      <XStack justifyContent="space-between" flex={1}>
+        <YStack flex={1}>
+          <Text subHeadline maxFontSizeMultiplier={1} color="$uiPrimary" numberOfLines={1}>
+            {label}
+          </Text>
+          {proposal.proposalType === ProposalType.RepayAtMaturity ||
+          proposal.proposalType === ProposalType.CrossRepayAtMaturity ? (
+            <Text footnote maxFontSizeMultiplier={1} color="$uiNeutralSecondary" numberOfLines={1}>
+              {format(new Date(Number(maturity) * 1000), "MMM dd")}
+            </Text>
+          ) : proposal.proposalType === ProposalType.Redeem || proposal.proposalType === ProposalType.Withdraw ? (
+            <Text footnote maxFontSizeMultiplier={1} color="$uiNeutralSecondary" numberOfLines={1}>
+              {shortenHex(proposalAddress ?? "", 5, 5)}
+            </Text>
+          ) : null}
+        </YStack>
+        <YStack alignItems="flex-end">
+          <Text primary emphasized subHeadline numberOfLines={1}>
+            {(Number(usdValue) / 1e18).toLocaleString(undefined, {
+              style: "currency",
+              currency: "USD",
+              currencyDisplay: "narrowSymbol",
+            })}
+          </Text>
+          {proposal.proposalType === ProposalType.RepayAtMaturity ||
+          proposal.proposalType === ProposalType.CrossRepayAtMaturity ? (
+            <Text secondary footnote maxFontSizeMultiplier={1} numberOfLines={1}>
+              {`${(Number(proposal.amount) / 10 ** (market?.decimals ?? 18)).toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: Math.min(
+                  8,
+                  Math.max(
+                    0,
+                    (market?.decimals ?? 18) - Math.ceil(Math.log10(Math.max(1, Number(proposal.amount) / 1e18))),
+                  ),
+                ),
+                useGrouping: false,
+              })} ${symbol}`}
+            </Text>
+          ) : proposal.proposalType === ProposalType.Redeem || proposal.proposalType === ProposalType.Withdraw ? (
+            <Text secondary footnote maxFontSizeMultiplier={1} numberOfLines={1}>
+              {`${(Number(proposal.amount) / 10 ** (market?.decimals ?? 18)).toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: Math.min(
+                  8,
+                  Math.max(
+                    0,
+                    (market?.decimals ?? 18) - Math.ceil(Math.log10(Math.max(1, Number(proposal.amount) / 1e18))),
+                  ),
+                ),
+                useGrouping: false,
+              })} ${symbol}`}
+            </Text>
+          ) : null}
+        </YStack>
+      </XStack>
+    </XStack>
   );
 }
