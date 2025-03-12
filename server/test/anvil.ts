@@ -156,14 +156,14 @@ export default async function setup({ provide }: TestProject) {
       anvilClient.impersonateAccount({ address: bob }),
       anvilClient.impersonateAccount({ address: keeper.address }),
     ]);
-    await $(shell)`forge script test/mocks/Bob.s.sol
-      --unlocked ${bob},${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+    await $({ ...shell, verbose: "full" })`forge script test/mocks/Bob.s.sol
+      --unlocked ${bob},${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation -vvvv`;
     await Promise.all([
       anvilClient.stopImpersonatingAccount({ address: bob }),
       anvilClient.mine({ blocks: 1, interval: 10 * 60 }),
     ]);
-    await $(shell)`forge script test/mocks/BobExecute.s.sol
-      --unlocked ${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation`;
+    await $({ ...shell, verbose: "full" })`forge script test/mocks/BobExecute.s.sol
+      --unlocked ${keeper.address} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --slow --skip-simulation -vvvv`;
     await anvilClient.stopImpersonatingAccount({ address: keeper.address });
 
     const files = await readdir(__dirname, { recursive: true }); // eslint-disable-line unicorn/prefer-module
