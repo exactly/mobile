@@ -8,7 +8,7 @@ interface IExaAccount {
   function swap(IERC20 assetIn, IERC20 assetOut, uint256 maxAmountIn, uint256 minAmountOut, bytes memory route)
     external
     returns (uint256 amountIn, uint256 amountOut);
-  function executeProposal() external;
+  function executeProposal(uint256 nonce) external;
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external;
   function setProposalNonce(uint256 nonce) external;
   function collectCollateral(
@@ -42,7 +42,7 @@ interface IExaAccount {
 interface IProposalManager {
   function checkLiquidity(address account) external view;
   function delay() external view returns (uint256);
-  function nextProposal(address account) external view returns (Proposal memory proposal);
+  function nextProposal(address account) external view returns (uint256 nonce, Proposal memory proposal);
   function nonces(address account) external view returns (uint256);
   function preExecutionChecker(address sender, address target, bytes4 selector, bytes memory callData) external;
   function proposals(address account, uint256 nonce)
@@ -168,6 +168,7 @@ error BorrowLimitExceeded();
 error Disagreement();
 error Expired();
 error InsufficientLiquidity();
+error NotNext();
 error NoBalance();
 error NonceTooLow();
 error NoProposal();

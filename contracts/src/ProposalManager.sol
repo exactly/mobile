@@ -78,8 +78,8 @@ contract ProposalManager is IProposalManager, AccessControl {
     _setDelay(delay_);
   }
 
-  function nextProposal(address account) external view returns (Proposal memory proposal) {
-    uint256 nonce = nonces[account];
+  function nextProposal(address account) external view returns (uint256 nonce, Proposal memory proposal) {
+    nonce = nonces[account];
     if (nonce == queueNonces[account]) revert NoProposal();
     proposal = proposals[account][nonce];
   }
