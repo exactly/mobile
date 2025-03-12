@@ -10,7 +10,6 @@ import { useReadPreviewerExactly } from "../generated/contracts";
 
 export default function useAsset(address?: Address) {
   const { address: account } = useAccount();
-
   const { data: externalAsset, isFetching: isExternalAssetFetching } = useQuery({
     initialData: null,
     queryKey: ["asset", address],
@@ -20,18 +19,15 @@ export default function useAsset(address?: Address) {
     },
     enabled: !!address && !!account,
   });
-
   const {
     data: markets,
     queryKey,
     isFetching: isMarketsFetching,
   } = useReadPreviewerExactly({ address: previewerAddress, args: [account ?? zeroAddress] });
-
   const market = useMemo(() => markets?.find(({ market: m }) => m === address), [address, markets]);
-
   const { data: available } = useQuery({
     initialData: 0n,
-    queryKey: ["available", address], // eslint-disable-line @tanstack/query/exhaustive-deps
+    queryKey: ["available", address, market?.asset, externalAsset, account], // eslint-disable-line @tanstack/query/exhaustive-deps
     queryFn: async () => {
       if (markets && market) {
         return withdrawLimit(markets, market.market);
@@ -44,7 +40,6 @@ export default function useAsset(address?: Address) {
     },
     enabled: !!address && !!account,
   });
-
   return {
     address,
     account,
