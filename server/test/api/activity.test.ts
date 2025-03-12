@@ -240,7 +240,11 @@ describe.concurrent("authenticated", () => {
       );
 
       expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toMatchObject([
+
+      const repay = response.json();
+      console.log(await repay); // eslint-disable-line no-console
+
+      await expect(repay).resolves.toMatchObject([
         { amount: expect.closeTo(81, 0.5), currency: "USDC", type: "repay", usdAmount: expect.closeTo(81, 0.5) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         {
           type: "repay",

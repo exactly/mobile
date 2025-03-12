@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0;
 
+import { Market } from "@exactly/protocol/Market.sol"; // solhint-disable-line no-unused-import
 import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factory.s.sol";
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 
@@ -36,7 +37,7 @@ contract BobExecuteScript is BaseScript {
     );
     address[] memory owners = new address[](1);
     owners[0] = vm.addr(0xb0b);
-    bobAccount = IExaAccount(factory.createAccount(0, owners.toPublicKeys()));
+    bobAccount = IExaAccount(factory.getAddress(0, owners.toPublicKeys()));
     vm.label(address(exaPlugin), "ExaPlugin");
     vm.label(address(factory), "ExaAccountFactory");
     vm.label(address(bobAccount), "bobAccount");
