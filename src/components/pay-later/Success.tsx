@@ -1,21 +1,21 @@
-import chain from "@exactly/common/generated/chain";
+import { exaPluginAddress } from "@exactly/common/generated/chain";
 import type { Address } from "@exactly/common/validation";
-import { Check, ExternalLink } from "@tamagui/lucide-icons";
+import { Check, Loader } from "@tamagui/lucide-icons";
 import { format, isAfter } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
 import { Pressable, Image } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Square, styled, useTheme, XStack, YStack } from "tamagui";
+import { zeroAddress } from "viem";
+import { useAccount } from "wagmi";
 
 import TransactionDetails from "./TransactionDetails";
+import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
-import handleError from "../../utils/handleError";
 import useAsset from "../../utils/useAsset";
 import AssetLogo from "../shared/AssetLogo";
-import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -25,19 +25,21 @@ export default function Success({
   amount,
   currency,
   maturity,
-  hash,
   selectedAsset,
 }: {
   usdAmount: number;
   amount: number;
   currency?: string;
   maturity: string;
-  hash?: string;
   selectedAsset: Address;
 }) {
-  const { externalAsset } = useAsset(selectedAsset);
   const theme = useTheme();
-  if (!hash) return null;
+  const { externalAsset } = useAsset(selectedAsset);
+  const { address } = useAccount();
+  const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
+    address: address ?? zeroAddress,
+  });
+  const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
   return (
     <View fullScreen backgroundColor="$backgroundSoft">
       <StyledGradient
@@ -48,7 +50,11 @@ export default function Success({
         right={0}
         height={220}
         opacity={0.2}
-        colors={[theme.uiSuccessSecondary.val, theme.backgroundSoft.val]}
+        colors={
+          isLatestPlugin
+            ? [theme.uiInfoSecondary.val, theme.backgroundSoft.val]
+            : [theme.uiSuccessSecondary.val, theme.backgroundSoft.val]
+        }
       />
       <SafeView backgroundColor="transparent">
         <View fullScreen padded>
@@ -68,13 +74,23 @@ export default function Success({
               <View flex={1}>
                 <YStack gap="$s7" paddingBottom="$s9">
                   <XStack justifyContent="center" alignItems="center">
-                    <Square borderRadius="$r4" backgroundColor="$interactiveBaseSuccessSoftDefault" size={ms(80)}>
-                      <Check size={ms(48)} color="$uiSuccessSecondary" strokeWidth={2} />
+                    <Square
+                      borderRadius="$r4"
+                      backgroundColor={
+                        isLatestPlugin ? "$interactiveBaseInformationSoftDefault" : "$interactiveBaseSuccessSoftDefault"
+                      }
+                      size={ms(80)}
+                    >
+                      {isLatestPlugin ? (
+                        <Loader size={ms(48)} color="$uiInfoSecondary" strokeWidth={2} />
+                      ) : (
+                        <Check size={ms(48)} color="$uiSuccessSecondary" strokeWidth={2} />
+                      )}
                     </Square>
                   </XStack>
                   <YStack gap="$s4_5" justifyContent="center" alignItems="center">
                     <Text secondary body>
-                      Paid&nbsp;
+                      {isLatestPlugin ? "Processing" : "Paid"}&nbsp;
                       <Text
                         emphasized
                         primary
@@ -119,25 +135,13 @@ export default function Success({
                     </XStack>
                   </YStack>
                 </YStack>
-                <TransactionDetails transactionHash={hash} />
+                <TransactionDetails />
               </View>
               <View flex={2} justifyContent="flex-end">
                 <YStack alignItems="center" gap="$s4">
-                  <Button
-                    onPress={() => {
-                      openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${hash}`).catch(handleError);
-                    }}
-                    contained
-                    main
-                    spaced
-                    fullwidth
-                    iconAfter={<ExternalLink color="$interactiveOnBaseBrandDefault" />}
-                  >
-                    View on explorer
-                  </Button>
                   <Pressable
                     onPress={() => {
-                      router.replace("/pay-later");
+                      router.replace(isLatestPlugin ? "/(app)/pending-proposals" : "/pay-later");
                     }}
                   >
                     <Text emphasized footnote color="$uiBrandSecondary">
