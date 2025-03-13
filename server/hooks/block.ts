@@ -1,5 +1,11 @@
 import ProposalType from "@exactly/common/ProposalType";
-import chain, { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
+import chain, {
+  exaPluginAbi,
+  exaPluginAddress,
+  exaPreviewerAbi,
+  exaPreviewerAddress,
+  upgradeableModularAccountAbi,
+} from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
 import { Address, Hash, Hex } from "@exactly/common/validation";
 import {
@@ -137,6 +143,12 @@ export default app.post(
     setContext("alchemy", await c.req.json());
     getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
 
+    const delay = await publicClient.readContract({
+      address: proposalManagerAddress,
+      functionName: "delay",
+      abi: proposalManagerAbi,
+    });
+
     const proposalsBySignature = logs.reduce((accumulator, event) => {
       const signature = event.topics[0];
       if (!accumulator.has(signature)) {
@@ -147,65 +159,86 @@ export default app.post(
     }, new Map<string, typeof logs>());
 
     // TODO use .filter((event) => event.eventName === "Proposed") after migration
-    const proposalsByAccount =
-      proposalsBySignature
-        .get("0x4cf7794d9c19185f7d95767c53e511e2e67ae50f68ece9c9079c6ae83403a3e7")
-        ?.map(({ topics, data }) => decodeEventLog({ topics, data, abi: [...exaPluginAbi, ...proposalManagerAbi] }))
-        .map((event) => {
-          const p = v.safeParse(Proposal, { ...event.args, timestamp });
-          if (p.success) return p.output;
-          captureException(p.issues, { level: "error" });
-          return null;
-        })
-        .filter((x) => x !== null)
-        .reduce((accumulator, event) => {
-          const account = event.account;
-          if (!accumulator.has(account)) {
-            accumulator.set(account, []);
-          }
-          accumulator.get(account)?.push(event);
-          return accumulator;
-        }, new Map<string, v.InferOutput<typeof Proposal>[]>()) ?? [];
+    const proposalsByAccount = proposalsBySignature
+      .get("0x4cf7794d9c19185f7d95767c53e511e2e67ae50f68ece9c9079c6ae83403a3e7")
+      ?.map(({ topics, data }) => decodeEventLog({ topics, data, abi: [...exaPluginAbi, ...proposalManagerAbi] }))
+      .map((event) => {
+        const p = v.safeParse(Proposal, { ...event.args, timestamp });
+        if (p.success) return p.output;
+        captureException(p.issues, { level: "error" });
+        return null;
+      })
+      .filter((x) => x !== null)
+      .reduce((accumulator, event) => {
+        const account = event.account;
+        if (!accumulator.has(account)) {
+          accumulator.set(account, []);
+        }
+        accumulator.get(account)?.push(event);
+        return accumulator;
+      }, new Map<Address, v.InferOutput<typeof Proposal>[]>());
 
-    const oldWithdraws =
-      proposalsBySignature
-        .get("0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0")
-        ?.map(({ topics, data }) => decodeEventLog({ topics, data, abi: legacyExaPluginAbi })) ?? [];
+    const oldWithdraws = proposalsBySignature
+      .get("0x0c652a21d96e4efed065c3ef5961e4be681be99b95dd55126669ae9be95767e0")
+      ?.map(({ topics, data }) => decodeEventLog({ topics, data, abi: legacyExaPluginAbi }));
 
     await Promise.all([
-      ...proposalsByAccount.values().flatMap((ps) =>
-        ps
-          .sort((a, b) => Number(a.nonce - b.nonce))
-          .map((proposal) =>
-            startSpan(
-              {
-                name: "schedule proposal",
-                op: "queue.publish",
-                attributes: {
-                  account: proposal.account,
-                  amount: String(proposal.amount),
-                  data: proposal.data,
-                  market: proposal.market,
-                  nonce: Number(proposal.nonce),
-                  proposalType: proposal.proposalType,
-                  timestamp: proposal.timestamp,
-                  unlock: Number(proposal.unlock),
-                  "messaging.destination.name": "proposals",
-                  "messaging.message.id": proposal.id,
+      ...(proposalsByAccount?.entries().map(async ([account, currentProposals]) => {
+        const pendingProposals = await publicClient.readContract({
+          address: exaPreviewerAddress,
+          functionName: "pendingProposals",
+          abi: exaPreviewerAbi,
+          args: [account],
+        });
+        const minNonce = Math.min(...currentProposals.map((x) => Number(x.nonce)));
+        const idleProposals = pendingProposals
+          .filter((idle) => Number(idle.nonce) < minNonce)
+          .map((idle) =>
+            v.parse(Proposal, {
+              ...idle.proposal,
+              timestamp: Number(idle.proposal.timestamp),
+              nonce: idle.nonce,
+              account,
+              unlock: idle.proposal.timestamp + delay,
+            }),
+          );
+
+        setContext("exa", { idleProposals });
+
+        await Promise.all(
+          [...idleProposals, ...currentProposals]
+            .sort((a, b) => Number(a.nonce - b.nonce))
+            .map((proposal) =>
+              startSpan(
+                {
+                  name: "schedule proposal",
+                  op: "queue.publish",
+                  attributes: {
+                    account: proposal.account,
+                    amount: String(proposal.amount),
+                    data: proposal.data,
+                    market: proposal.market,
+                    nonce: Number(proposal.nonce),
+                    proposalType: proposal.proposalType,
+                    timestamp: proposal.timestamp,
+                    unlock: Number(proposal.unlock),
+                    "messaging.destination.name": "proposals",
+                    "messaging.message.id": proposal.id,
+                  },
                 },
-              },
-              () => {
-                const { "sentry-trace": sentryTrace, baggage: sentryBaggage } = getTraceData();
-                proposal.sentryTrace = sentryTrace;
-                proposal.sentryBaggage = sentryBaggage;
-                const message = serialize(proposal);
-                scheduleProposal(message);
-                return redis.zadd("proposals", Number(proposal.unlock + proposal.nonce), message);
-              },
+                () => {
+                  const { "sentry-trace": sentryTrace, baggage: sentryBaggage } = getTraceData();
+                  proposal.sentryTrace = sentryTrace;
+                  proposal.sentryBaggage = sentryBaggage;
+                  const message = serialize(proposal);
+                  scheduleProposal(message);
+                  return redis.zadd("proposals", Number(proposal.unlock + proposal.nonce), message);
+                },
+              ),
             ),
-          ),
-      ),
-      ...oldWithdraws.map(async (event) => {
+        );
+      }) ?? []),
+      ...(oldWithdraws?.map(async (event) => {
         const withdraw = v.parse(Withdraw, { ...event.args, timestamp });
         return startSpan(
           {
@@ -230,7 +263,7 @@ export default app.post(
             return redis.zadd("withdraw", Number(event.args.unlock), message);
           },
         );
-      }),
+      }) ?? []),
     ]);
     return c.json({});
   },
