@@ -1,20 +1,16 @@
-import chain from "@exactly/common/generated/chain";
 import type { Address } from "@exactly/common/validation";
-import { ExternalLink, X } from "@tamagui/lucide-icons";
+import { X } from "@tamagui/lucide-icons";
 import { format, isAfter } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
 import { Pressable, Image } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Square, styled, useTheme, XStack, YStack } from "tamagui";
 
 import assetLogos from "../../utils/assetLogos";
-import handleError from "../../utils/handleError";
 import useAsset from "../../utils/useAsset";
 import AssetLogo from "../shared/AssetLogo";
-import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -24,14 +20,12 @@ export default function Failure({
   amount,
   currency,
   maturity,
-  hash,
   selectedAsset,
 }: {
   usdAmount: number;
   amount: number;
   currency?: string;
   maturity: string;
-  hash?: string;
   selectedAsset: Address;
 }) {
   const { externalAsset } = useAsset(selectedAsset);
@@ -120,19 +114,6 @@ export default function Failure({
               </View>
               <View flex={2} justifyContent="flex-end">
                 <YStack alignItems="center" gap="$s4">
-                  <Button
-                    onPress={() => {
-                      openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${hash}`).catch(handleError);
-                    }}
-                    contained
-                    main
-                    spaced
-                    fullwidth
-                    iconAfter={<ExternalLink color="$interactiveOnBaseBrandDefault" />}
-                  >
-                    View on explorer
-                  </Button>
-
                   <Pressable
                     onPress={() => {
                       router.replace("/pay-later");

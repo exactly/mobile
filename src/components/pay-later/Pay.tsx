@@ -77,7 +77,6 @@ export default function Pay() {
   };
 
   const {
-    data: repayHash,
     writeContract: repay,
     isPending: isRepaying,
     isSuccess: isRepaySuccess,
@@ -90,7 +89,6 @@ export default function Pay() {
     },
   });
   const {
-    data: crossRepayHash,
     writeContract: crossRepay,
     isPending: isCrossRepaying,
     isSuccess: isCrossRepaySuccess,
@@ -322,7 +320,6 @@ export default function Pay() {
   }
 
   const {
-    data: repayWithExternalAssetHash,
     mutateAsync: repayWithExternalAsset,
     isPending: isRepayingWithExternalAsset,
     isSuccess: isRepayWithExternalAssetSuccess,
@@ -387,7 +384,6 @@ export default function Pay() {
     : selectedAsset.isExternalAsset
       ? isRepayWithExternalAssetError
       : crossRepayError;
-  const hash = isUSDCSelected ? repayHash : selectedAsset.isExternalAsset ? repayWithExternalAssetHash : crossRepayHash;
 
   if (!success) return;
   if (!isPending && !isSuccess && !error)
@@ -739,7 +735,6 @@ export default function Pay() {
         amount={displayValues.amount}
         usdAmount={displayValues.usdAmount}
         currency={repayMarket?.assetSymbol ?? externalAsset?.symbol}
-        hash={hash}
         selectedAsset={selectedAsset.address}
       />
     );
@@ -750,7 +745,6 @@ export default function Pay() {
         amount={displayValues.amount}
         usdAmount={displayValues.usdAmount}
         currency={repayMarket?.assetSymbol ?? externalAsset?.symbol}
-        hash={hash}
         selectedAsset={selectedAsset.address}
       />
     );
