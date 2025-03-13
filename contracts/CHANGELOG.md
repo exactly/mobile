@@ -1,5 +1,57 @@
 # @exactly/plugin
 
+## 0.0.6
+
+### Patch Changes
+
+- [`29706a3`](https://github.com/exactly/mobile/commit/29706a3947d117a6548abf22cdd7f5e9115cc0a1) Thanks [@itofarina](https://github.com/itofarina)! - ✨ detach collect from proposals
+
+- [`a116719`](https://github.com/exactly/mobile/commit/a116719ab14a96e3bbec3bc123585c1f40c36d1e) Thanks [@itofarina](https://github.com/itofarina)! - 🔥 drop unneeded check
+
+- [`614a3ff`](https://github.com/exactly/mobile/commit/614a3ff07d916fdc8aa67954e9aacaab15572b19) Thanks [@itofarina](https://github.com/itofarina)! - 🔥 drop unneeded check
+
+- [`d3c5264`](https://github.com/exactly/mobile/commit/d3c526482b3cc77e5c51c3fdaab47d13adb700c3) Thanks [@itofarina](https://github.com/itofarina)! - ✨ expose uninstall proposals through account
+
+- [`76a2ce4`](https://github.com/exactly/mobile/commit/76a2ce4bfa8d375f72b512fd44a440bc4084447f) Thanks [@itofarina](https://github.com/itofarina)! - 🔒️ clear pending proposals on uninstall
+
+- [`de9ece9`](https://github.com/exactly/mobile/commit/de9ece96f24992387de0010fb8c9f7a866da7608) Thanks [@itofarina](https://github.com/itofarina)! - 🚸 execute proposal deterministically
+
+- [`0b289f9`](https://github.com/exactly/mobile/commit/0b289f9ea7a9abff9524bcc80df93ea24e8ebed6) Thanks [@itofarina](https://github.com/itofarina)! - 🔒 invalidate already used issuer hashes
+
+- [`47939dc`](https://github.com/exactly/mobile/commit/47939dca018f55837963edac08db0dfff1a1a770) Thanks [@itofarina](https://github.com/itofarina)! - 🔥 drop unneeded cast
+
+- [`cf9565a`](https://github.com/exactly/mobile/commit/cf9565a67d7771b8aa1015dfce07ec69a4ccdef9) Thanks [@itofarina](https://github.com/itofarina)! - ✨ check call hash on withdrawal to proposer
+
+- [`8605a61`](https://github.com/exactly/mobile/commit/8605a611fcffd1053ca04991a6cfc4ce03f43b27) Thanks [@cruzdanilo](https://github.com/cruzdanilo)! - 🎨 refactor allowlist management interface
+
+- [`6574a07`](https://github.com/exactly/mobile/commit/6574a075a336cd42778ded8aa61b43244ef69d45) Thanks [@itofarina](https://github.com/itofarina)! - 🔥 drop unneeded check
+
+- [`b9b1515`](https://github.com/exactly/mobile/commit/b9b1515fd6eb43657b310e17901ebf27d0b67b56) Thanks [@itofarina](https://github.com/itofarina)! - 🔒️ add reentrancy lock on public swap
+
+- [`6647f88`](https://github.com/exactly/mobile/commit/6647f887400ec130e9f8e34fc858066f27c43d0d) Thanks [@cruzdanilo](https://github.com/cruzdanilo)! - 🚚 rename exa previewer
+
+- [`e463014`](https://github.com/exactly/mobile/commit/e463014f8eacac899c88d6d21ca20c986b043221) Thanks [@itofarina](https://github.com/itofarina)! - 🔊 emit collected and refunded on issuer checker
+
+- [`84e3e33`](https://github.com/exactly/mobile/commit/84e3e333a8bc6246194ff25b1a53f3b427b2c01b) Thanks [@itofarina](https://github.com/itofarina)! - 🔒️ restrict uninstalls
+
+- [`ca25e38`](https://github.com/exactly/mobile/commit/ca25e38ee45feaf24f441657aa4da51cea785864) Thanks [@itofarina](https://github.com/itofarina)! - 🔊 sort event parameters on issuer checker
+
+- [`04b96bf`](https://github.com/exactly/mobile/commit/04b96bf0b07725f016d20cc8e01408113759faa8) Thanks [@itofarina](https://github.com/itofarina)! - 🔥 remove unneeded approvals
+
+- [`4377c4a`](https://github.com/exactly/mobile/commit/4377c4aa3126e8d2029a66504e7cb8164b365468) Thanks [@itofarina](https://github.com/itofarina)! - ✨ increment nonce when reading proposals
+
+- [`8809e0e`](https://github.com/exactly/mobile/commit/8809e0e857c0bbca5e407ecf21d689d5ba3d37e9) Thanks [@itofarina](https://github.com/itofarina)! - 🛂 move role restriction to shift proposal
+
+- [`ba97c56`](https://github.com/exactly/mobile/commit/ba97c5686ed1d2ddd1b80e525cffcfd417ac013e) Thanks [@itofarina](https://github.com/itofarina)! - 🦺 check proposal type on roll debt
+
+- [`9f69cac`](https://github.com/exactly/mobile/commit/9f69cace539a6230a6844ad3b95173ff4d1ba6a6) Thanks [@itofarina](https://github.com/itofarina)! - ✨ add pending proposals to previewer
+
+- [`0322e47`](https://github.com/exactly/mobile/commit/0322e47cac3d692ee90cf5b27679a812b54748d4) Thanks [@itofarina](https://github.com/itofarina)! - 🦺 validate proposal type on pre execution
+
+- [`fde5d2f`](https://github.com/exactly/mobile/commit/fde5d2f1df71199f12b9a59d5d2b16f5b1873863) Thanks [@itofarina](https://github.com/itofarina)! - ✨ simulate collects on previewer using proposals
+
+- [`08edc63`](https://github.com/exactly/mobile/commit/08edc637efc6cbd801720c0d33e56327edf6b07a) Thanks [@itofarina](https://github.com/itofarina)! - 🔒️ prevent new proposals when uninstalling
+
 ## 0.0.5
 
 ### Patch Changes

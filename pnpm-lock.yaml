@@ -60,13 +60,13 @@ importers:
         specifier: ^3.19.0
         version: 3.19.0(typescript@5.8.2)(viem@2.23.10(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2))
       '@exactly/common':
-        specifier: workspace:^0.0.1
+        specifier: workspace:^0.0.2
         version: link:common
       '@exactly/lib':
         specifier: exactly/lib#a8895cd
         version: https://codeload.github.com/exactly/lib/tar.gz/a8895cd
       '@exactly/server':
-        specifier: workspace:^0.0.1
+        specifier: workspace:^0.0.2
         version: link:server
       '@expo/metro-runtime':
         specifier: ~4.0.1
@@ -280,7 +280,7 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1(eslint@8.57.1)
       '@exactly/plugin':
-        specifier: workspace:^0.0.5
+        specifier: workspace:^0.0.6
         version: link:contracts
       '@exactly/protocol':
         specifier: exactly/protocol#16a172a
@@ -431,7 +431,7 @@ importers:
         version: 2.23.10(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.2)
     devDependencies:
       '@exactly/plugin':
-        specifier: workspace:^0.0.5
+        specifier: workspace:^0.0.6
         version: link:../contracts
 
   contracts:
@@ -562,10 +562,10 @@ importers:
         specifier: ^0.2.17
         version: 0.2.17
       '@exactly/common':
-        specifier: workspace:^0.0.1
+        specifier: workspace:^0.0.2
         version: link:../common
       '@exactly/plugin':
-        specifier: workspace:^0.0.5
+        specifier: workspace:^0.0.6
         version: link:../contracts
       '@sentry/cli':
         specifier: ^2.42.2
