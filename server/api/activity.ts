@@ -39,7 +39,7 @@ import {
 import { withRetry, zeroAddress } from "viem";
 
 import database, { credentials } from "../database";
-import { previewerAbi, marketAbi } from "../generated/contracts";
+import { balancerVaultAddress, marketAbi, previewerAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
 import { collectors as cryptomateCollectors } from "../utils/cryptomate";
 import { collectors as pandaCollectors } from "../utils/panda";
@@ -51,6 +51,7 @@ app.use(auth);
 const ActivityTypes = picklist(["card", "received", "repay", "sent"]);
 
 const collectorSet = new Set([...cryptomateCollectors, ...pandaCollectors].map((address) => address.toLowerCase()));
+const balancerVault = balancerVaultAddress.toLowerCase();
 
 export default app.get(
   "/",
@@ -154,7 +155,10 @@ export default app.get(
             })
             .then((logs) =>
               logs
-                .filter(({ args }) => !collectorSet.has(args.receiver.toLowerCase()))
+                .filter(({ args }) => {
+                  const receiver = args.receiver.toLowerCase();
+                  return !collectorSet.has(receiver) && receiver !== balancerVault;
+                })
                 .map((log) =>
                   parse(WithdrawActivity, { ...log, market: market(log.address) } satisfies InferInput<
                     typeof WithdrawActivity
