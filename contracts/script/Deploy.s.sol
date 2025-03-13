@@ -8,8 +8,8 @@ import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import {
   ExaPlugin,
   IAuditor,
-  IBalancerVault,
   IDebtManager,
+  IFlashLoaner,
   IInstallmentsRouter,
   IMarket,
   Parameters
@@ -35,7 +35,7 @@ contract DeployScript is BaseScript {
         auditor: IAuditor(protocol("Auditor")),
         exaUSDC: IMarket(protocol("MarketUSDC")),
         exaWETH: IMarket(protocol("MarketWETH")),
-        balancerVault: IBalancerVault(protocol("BalancerVault")),
+        flashLoaner: IFlashLoaner(protocol("BalancerVault")),
         debtManager: IDebtManager(protocol("DebtManager")),
         installmentsRouter: IInstallmentsRouter(protocol("InstallmentsRouter")),
         issuerChecker: IssuerChecker(broadcast("IssuerChecker")),

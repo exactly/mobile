@@ -72,6 +72,12 @@ interface IInstallmentsRouter {
     returns (uint256[] memory assetsOwed);
 }
 
+interface IFlashLoaner {
+  function flashLoan(address recipient, IERC20[] memory tokens, uint256[] memory amounts, bytes memory data) external;
+}
+
+event FlashLoanerSet(address indexed account, IFlashLoaner indexed flashLoaner);
+
 event CollectorSet(address indexed collector, address indexed account);
 
 event DelaySet(uint256 delay);

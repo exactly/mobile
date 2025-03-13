@@ -18,7 +18,7 @@ import { MockWETH } from "@exactly/protocol/mocks/MockWETH.sol";
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { BaseScript } from "../../script/Base.s.sol";
-import { IBalancerVault } from "../../src/ExaPlugin.sol";
+import { IFlashLoaner } from "../../src/ExaPlugin.sol";
 
 contract DeployProtocol is BaseScript {
   Auditor public auditor;
@@ -32,7 +32,7 @@ contract DeployProtocol is BaseScript {
   Previewer public previewer;
   InstallmentsRouter public installmentsRouter;
 
-  IBalancerVault public balancer;
+  IFlashLoaner public balancer;
 
   function run() external {
     vm.startBroadcast(acct("deployer"));
@@ -80,7 +80,7 @@ contract DeployProtocol is BaseScript {
     vm.label(address(exaWETH), "exaWETH");
     auditor.enableMarket(exaWETH, new MockPriceFeed(18, 2500e18), 0.86e18);
 
-    balancer = IBalancerVault(address(new MockBalancerVault()));
+    balancer = IFlashLoaner(address(new MockBalancerVault()));
     debtManager = new DebtManager(auditor, IPermit2(address(0)), BalancerVault(address(balancer)));
     debtManager.approve(exaUSDC);
     previewer = new Previewer(auditor, IPriceFeed(address(0)));

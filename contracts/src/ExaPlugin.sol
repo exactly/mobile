@@ -34,9 +34,11 @@ import {
   CollectorSet,
   CrossRepayData,
   Disagreement,
+  FlashLoanerSet,
   IAuditor,
   IDebtManager,
   IExaAccount,
+  IFlashLoaner,
   IInstallmentsRouter,
   IMarket,
   IProposalManager,
@@ -81,11 +83,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
   IMarket public immutable EXA_WETH;
-  IBalancerVault public immutable BALANCER_VAULT;
   IDebtManager public immutable DEBT_MANAGER;
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
   IssuerChecker public immutable ISSUER_CHECKER;
 
+  IFlashLoaner public flashLoaner;
   IProposalManager public proposalManager;
   address public collector;
   mapping(address plugin => bool allowed) public allowlist;
@@ -98,7 +100,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     AUDITOR = p.auditor;
     EXA_USDC = p.exaUSDC;
     EXA_WETH = p.exaWETH;
-    BALANCER_VAULT = p.balancerVault;
     DEBT_MANAGER = p.debtManager;
     INSTALLMENTS_ROUTER = p.installmentsRouter;
     ISSUER_CHECKER = p.issuerChecker;
@@ -107,6 +108,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
     _grantRole(KEEPER_ROLE, p.firstKeeper);
     _grantRole(DEFAULT_ADMIN_ROLE, p.owner);
+    _setFlashLoaner(p.flashLoaner);
     _setCollector(p.collector);
     _setProposalManager(p.proposalManager);
 
@@ -245,7 +247,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function receiveFlashLoan(IERC20[] calldata, uint256[] calldata, uint256[] calldata, bytes calldata data) external {
     // slither-disable-next-line incorrect-equality -- hash comparison
-    assert(msg.sender == address(BALANCER_VAULT) && callHash == keccak256(data));
+    assert(msg.sender == address(flashLoaner) && callHash == keccak256(data));
     delete callHash;
 
     uint256 actualRepay = 0;
@@ -259,7 +261,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       _execute(
         r.borrower, address(EXA_USDC), 0, abi.encodeCall(IMarket.withdraw, (actualRepay, address(this), r.borrower))
       );
-      USDC.safeTransfer(address(BALANCER_VAULT), r.maxRepay);
+      USDC.safeTransfer(address(flashLoaner), r.maxRepay);
       return;
     }
     CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
@@ -271,7 +273,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       _swap(c.borrower, IERC20(c.marketIn.asset()), USDC, c.maxAmountIn, c.maxRepay, c.route);
 
     _transferFromAccount(c.borrower, USDC, address(this), actualRepay);
-    USDC.safeTransfer(address(BALANCER_VAULT), c.maxRepay);
+    USDC.safeTransfer(address(flashLoaner), c.maxRepay);
 
     uint256 unspent = amountOut - actualRepay;
     if (unspent != 0) {
@@ -286,6 +288,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   receive() external payable { } // solhint-disable-line no-empty-blocks
+
+  function setFlashLoaner(IFlashLoaner flashLoaner_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setFlashLoaner(flashLoaner_);
+  }
 
   function setCollector(address collector_) external onlyRole(DEFAULT_ADMIN_ROLE) {
     _setCollector(collector_);
@@ -598,7 +604,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     uint256[] memory amounts = new uint256[](1);
     amounts[0] = amount;
 
-    BALANCER_VAULT.flashLoan(address(this), tokens, amounts, data);
+    flashLoaner.flashLoan(address(this), tokens, amounts, data);
   }
 
   function _depositApprovedUnspent(uint256 unspent, address receiver) internal {
@@ -669,6 +675,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       )
     );
     _approveFromSender(address(EXA_USDC), address(DEBT_MANAGER), 0);
+  }
+
+  function _setFlashLoaner(IFlashLoaner flashLoaner_) internal {
+    if (address(flashLoaner_) == address(0)) revert ZeroAddress();
+    flashLoaner = flashLoaner_;
+    emit FlashLoanerSet(msg.sender, flashLoaner_);
   }
 
   function _setCollector(address collector_) internal {
@@ -785,10 +797,6 @@ enum FunctionId {
   PRE_EXEC_VALIDATION
 }
 
-interface IBalancerVault {
-  function flashLoan(address recipient, IERC20[] memory tokens, uint256[] memory amounts, bytes memory data) external;
-}
-
 struct CrossRepayCallbackData {
   uint256 maturity;
   address borrower;
@@ -811,7 +819,7 @@ struct Parameters {
   IAuditor auditor;
   IMarket exaUSDC;
   IMarket exaWETH;
-  IBalancerVault balancerVault;
+  IFlashLoaner flashLoaner;
   IDebtManager debtManager;
   IInstallmentsRouter installmentsRouter;
   IssuerChecker issuerChecker;

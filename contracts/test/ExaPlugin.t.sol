@@ -39,8 +39,8 @@ import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import {
   ExaPlugin,
   FunctionId,
-  IBalancerVault,
   IDebtManager,
+  IFlashLoaner,
   IInstallmentsRouter,
   Parameters,
   ZeroAddress
@@ -52,6 +52,7 @@ import {
   DelaySet,
   Expired,
   FixedPosition,
+  FlashLoanerSet,
   IAuditor,
   IExaAccount,
   IMarket,
@@ -189,7 +190,7 @@ contract ExaPluginTest is ForkTest {
         auditor: IAuditor(address(auditor)),
         exaUSDC: exaUSDC,
         exaWETH: exaWETH,
-        balancerVault: p.balancer(),
+        flashLoaner: p.balancer(),
         debtManager: debtManager,
         installmentsRouter: IInstallmentsRouter(address(p.installmentsRouter())),
         issuerChecker: issuerChecker,
@@ -2399,7 +2400,7 @@ contract ExaPluginTest is ForkTest {
         auditor: IAuditor(address(this)),
         exaUSDC: exaUSDC,
         exaWETH: exaWETH,
-        balancerVault: IBalancerVault(address(this)),
+        flashLoaner: IFlashLoaner(address(this)),
         debtManager: IDebtManager(address(this)),
         installmentsRouter: IInstallmentsRouter(address(this)),
         issuerChecker: issuerChecker,
@@ -2566,7 +2567,7 @@ contract ExaPluginTest is ForkTest {
         auditor: IAuditor(address(auditor)),
         exaUSDC: exaUSDC,
         exaWETH: exaWETH,
-        balancerVault: IBalancerVault(address(this)),
+        flashLoaner: IFlashLoaner(address(this)),
         debtManager: IDebtManager(address(this)),
         installmentsRouter: IInstallmentsRouter(address(this)),
         issuerChecker: issuerChecker,
@@ -2750,6 +2751,28 @@ contract ExaPluginTest is ForkTest {
   }
 
   // admin functions
+
+  function test_setFlashLoaner_sets_whenAdmin() external {
+    exaPlugin.setFlashLoaner(IFlashLoaner(address(0x1)));
+    assertEq(address(exaPlugin.flashLoaner()), address(0x1));
+  }
+
+  function test_setFlashLoaner_emitsFlashLoanerSet() external {
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit FlashLoanerSet(address(this), IFlashLoaner(address(0x1)));
+    exaPlugin.setFlashLoaner(IFlashLoaner(address(0x1)));
+  }
+
+  function test_setFlashLoaner_reverts_whenNotAdmin() external {
+    vm.startPrank(address(0x1));
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, address(0x1), exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    exaPlugin.setFlashLoaner(IFlashLoaner(address(0x2)));
+  }
+
   function test_setCollector_sets_whenAdmin() external {
     exaPlugin.setCollector(address(0x1));
     assertEq(exaPlugin.collector(), address(0x1));
@@ -3093,7 +3116,7 @@ contract ExaPluginTest is ForkTest {
         auditor: IAuditor(protocol("Auditor")),
         exaUSDC: IMarket(protocol("MarketUSDC")),
         exaWETH: IMarket(protocol("MarketWETH")),
-        balancerVault: IBalancerVault(protocol("BalancerVault")),
+        flashLoaner: IFlashLoaner(protocol("BalancerVault")),
         debtManager: IDebtManager(protocol("DebtManager")),
         installmentsRouter: IInstallmentsRouter(protocol("InstallmentsRouter")),
         issuerChecker: issuerChecker,
