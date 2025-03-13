@@ -1,6 +1,6 @@
 import ProposalType from "@exactly/common/ProposalType";
 import fixedRate from "@exactly/common/fixedRate";
-import {
+import chain, {
   exaPluginAbi,
   exaPluginAddress,
   marketUSDCAddress,
@@ -22,6 +22,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
 import { encodeFunctionData, erc20Abi, parseUnits, zeroAddress, encodeAbiParameters } from "viem";
+import { optimism } from "viem/chains";
 import { useAccount, useSimulateContract, useWriteContract } from "wagmi";
 
 import AssetSelectionSheet from "./AssetSelectionSheet";
@@ -36,10 +37,11 @@ import { auditorAbi, marketAbi, useReadUpgradeableModularAccountGetInstalledPlug
 import { accountClient } from "../../utils/alchemyConnector";
 import assetLogos from "../../utils/assetLogos";
 import handleError from "../../utils/handleError";
-import { getRoute } from "../../utils/lifi";
+import { getRoute, getTokenBalances } from "../../utils/lifi";
 import queryClient from "../../utils/queryClient";
 import useAsset from "../../utils/useAsset";
 import AssetLogo from "../shared/AssetLogo";
+import type { ExternalAsset, ProtocolAsset } from "../shared/AssetSelector";
 
 export default function Pay() {
   const insets = useSafeAreaInsets();
@@ -61,7 +63,6 @@ export default function Pay() {
     amount: 0,
     usdAmount: 0,
   });
-
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
   });
@@ -123,11 +124,6 @@ export default function Pay() {
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0n);
-
-  if (selectedAsset.address === parse(Address, zeroAddress) && positions?.[0]) {
-    const { market } = positions[0];
-    setSelectedAsset({ address: parse(Address, market), isExternalAsset: false });
-  }
 
   const repayMarket = positions?.find((p) => p.market === selectedAsset.address);
   const repayMarketAvailable =
@@ -313,11 +309,6 @@ export default function Pay() {
   const simulation = isUSDCSelected ? repaySimulation : crossRepaySimulation;
   const isSimulating = isUSDCSelected ? isSimulatingRepay : isSimulatingCrossRepay;
 
-  if (selectedAsset.address === parse(Address, zeroAddress) && positions?.[0]) {
-    const { market } = positions[0];
-    setSelectedAsset({ address: parse(Address, market), isExternalAsset: false });
-  }
-
   const {
     mutateAsync: repayWithExternalAsset,
     isPending: isRepayingWithExternalAsset,
@@ -383,6 +374,45 @@ export default function Pay() {
     : selectedAsset.isExternalAsset
       ? isRepayWithExternalAssetError
       : crossRepayError;
+
+  const { data: externalAssets } = useQuery({
+    queryKey: ["externalAssets", account],
+    queryFn: async () => {
+      if (chain.id !== optimism.id || !account) return [];
+      const balances = await getTokenBalances(account);
+      return balances.filter(
+        ({ address }) => markets && !markets.some(({ market }) => address.toLowerCase() === market.toLowerCase()),
+      );
+    },
+    enabled: !!account,
+  });
+
+  const protocol = (markets ?? [])
+    .map((market) => ({
+      ...market,
+      usdValue: markets
+        ? Number((withdrawLimit(markets, market.market) * market.usdPrice) / BigInt(10 ** market.decimals)) / 1e18
+        : 0,
+      type: "protocol",
+    }))
+    .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0) as ProtocolAsset[];
+
+  const external = (externalAssets ?? []).map((asset) => ({
+    ...asset,
+    usdValue: (Number(asset.priceUSD) * Number(asset.amount ?? 0n)) / 10 ** asset.decimals,
+    type: "external",
+  })) as ExternalAsset[];
+
+  const combinedAssets = [...protocol, ...external].sort((a, b) => Number(b.usdValue) - Number(a.usdValue));
+
+  if (selectedAsset.address === parse(Address, zeroAddress) && combinedAssets[0]) {
+    const { type } = combinedAssets[0];
+    setSelectedAsset({
+      address:
+        type === "external" ? parse(Address, combinedAssets[0].address) : parse(Address, combinedAssets[0].market),
+      isExternalAsset: type === "external",
+    });
+  }
 
   if (!success) return;
   if (!isPending && !isSuccess && !error)
