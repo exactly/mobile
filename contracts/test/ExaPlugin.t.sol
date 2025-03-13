@@ -62,6 +62,7 @@ import {
   NonceTooLow,
   NotMarket,
   NotNext,
+  PendingProposals,
   PluginAllowed,
   Proposal,
   ProposalManagerSet,
@@ -2613,6 +2614,56 @@ contract ExaPluginTest is ForkTest {
     Call[] memory calls = new Call[](1);
     calls[0] =
       Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(badPlugin), "", "")));
+    account.executeBatch(calls);
+  }
+
+  function test_uninstall_reverts_whenPendingProposals() external {
+    exaPlugin.allowPlugin(address(exaPlugin), true);
+
+    Call[] memory calls = new Call[](2);
+    calls[0] =
+      Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", "")));
+    calls[1] = Call(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.installPlugin,
+        (address(exaPlugin), keccak256(abi.encode(exaPlugin.pluginManifest())), "", new FunctionReference[](0))
+      )
+    );
+
+    vm.startPrank(address(account));
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, "");
+    account.propose(exaEXA, 100e18, ProposalType.WITHDRAW, "");
+
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.PRE_EXEC_VALIDATION,
+        abi.encodeWithSelector(PendingProposals.selector)
+      )
+    );
+    account.executeBatch(calls);
+  }
+
+  function test_uninstall_uninstalls_whenWrongProposalManager() external {
+    exaPlugin.allowPlugin(address(exaPlugin), true);
+    Call[] memory calls = new Call[](2);
+    calls[0] =
+      Call(address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", "")));
+    calls[1] = Call(
+      address(account),
+      0,
+      abi.encodeCall(
+        UpgradeableModularAccount.installPlugin,
+        (address(exaPlugin), keccak256(abi.encode(exaPlugin.pluginManifest())), "", new FunctionReference[](0))
+      )
+    );
+
+    exaPlugin.setProposalManager(IProposalManager(address(0x1)));
+
+    vm.startPrank(address(account));
     account.executeBatch(calls);
   }
 
