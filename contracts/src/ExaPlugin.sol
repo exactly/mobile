@@ -452,8 +452,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
             if (selector == IPluginManager.uninstallPlugin.selector) {
               (address plugin,,) = abi.decode(data, (address, bytes, bytes));
               if (plugin != address(this)) continue;
-              if (i == calls.length - 1) revert Unauthorized();
-              if (bytes4(calls[i + 1].data.slice(0, 4)) != IPluginManager.installPlugin.selector) revert Unauthorized();
+              if (
+                i == calls.length - 1 || calls[i + 1].target != msg.sender
+                  || bytes4(calls[i + 1].data.slice(0, 4)) != IPluginManager.installPlugin.selector
+              ) revert Unauthorized();
               bytes memory nextCallData = calls[i + 1].data.slice(4, calls[i + 1].data.length);
               (address newPlugin,,,) = abi.decode(nextCallData, (address, bytes32, bytes, FunctionReference[]));
               if (!allowlist[newPlugin]) revert Unauthorized();
