@@ -156,7 +156,7 @@ contract ProposalManager is IProposalManager, AccessControl {
     } else if (selector == IERC4626.withdraw.selector) {
       (amount, receiver, owner) = abi.decode(callData, (uint256, address, address));
       if (hasRole(COLLECTOR_ROLE, receiver)) return;
-      if (hasRole(PROPOSER_ROLE, receiver)) return _checkCallHash(target, selector, amount, receiver, owner);
+      if (hasRole(PROPOSER_ROLE, receiver) && !_checkCallHash(target, selector, amount, receiver, owner)) return;
       Proposal memory proposal = shiftProposal(owner);
       if (
         proposal.proposalType != ProposalType.CROSS_REPAY_AT_MATURITY
@@ -166,7 +166,7 @@ contract ProposalManager is IProposalManager, AccessControl {
       return _checkMarketProposal(proposal, target, amount, receiver);
     } else if (selector == IERC4626.redeem.selector) {
       (amount, receiver, owner) = abi.decode(callData, (uint256, address, address));
-      if (hasRole(PROPOSER_ROLE, receiver)) return _checkCallHash(target, selector, amount, receiver, owner);
+      if (hasRole(PROPOSER_ROLE, receiver) && !_checkCallHash(target, selector, amount, receiver, owner)) return;
       Proposal memory proposal = shiftProposal(owner);
       if (proposal.proposalType != ProposalType.REDEEM) revert NoProposal();
       return _checkMarketProposal(proposal, target, amount, receiver);
@@ -200,10 +200,16 @@ contract ProposalManager is IProposalManager, AccessControl {
   function _checkCallHash(IMarket target, bytes4 selector, uint256 amount, address receiver, address owner)
     internal
     view
+    returns (bool shouldConsume)
   {
-    if (ExaPlugin(payable(msg.sender)).callHash() != keccak256(abi.encode(target, selector, amount, receiver, owner))) {
+    bytes32 callHash = ExaPlugin(payable(msg.sender)).callHash();
+    if (
+      callHash | bytes32(uint256(1))
+        != keccak256(abi.encode(target, selector, amount, receiver, owner)) | bytes32(uint256(1))
+    ) {
       revert Unauthorized();
     }
+    shouldConsume = callHash & bytes32(uint256(1)) == bytes32(uint256(1));
   }
 
   function _checkMarketProposal(Proposal memory proposal, IMarket target, uint256 amount, address receiver)
