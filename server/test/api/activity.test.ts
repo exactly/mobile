@@ -2,6 +2,7 @@ import "../mocks/auth";
 import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/sentry";
+import "../expect";
 
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
@@ -261,10 +262,10 @@ describe("authenticated", () => {
       await expect(response.json()).resolves.toMatchObject([
         { amount: expect.closeTo(81, 0.5), currency: "USDC", type: "repay", usdAmount: expect.closeTo(81, 0.5) }, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
         {
-          amount: expect.closeTo(419.5, 0.01), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-          currency: "USDC",
           type: "repay",
-          usdAmount: expect.closeTo(419.5, 0.01), // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+          currency: "USDC",
+          amount: expect.withinRange(419, 420),
+          usdAmount: expect.withinRange(419, 420),
         },
       ]);
     });
