@@ -1,4 +1,5 @@
-import { previewerAddress } from "@exactly/common/generated/chain";
+import ProposalType, { decodeCrossRepayAtMaturity, decodeRepayAtMaturity } from "@exactly/common/ProposalType";
+import { exaPreviewerAddress, previewerAddress } from "@exactly/common/generated/chain";
 import { ChevronRight } from "@tamagui/lucide-icons";
 import { format } from "date-fns";
 import React from "react";
@@ -7,13 +8,22 @@ import { XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import { useReadPreviewerExactly } from "../../generated/contracts";
+import { useReadExaPreviewerPendingProposals, useReadPreviewerExactly } from "../../generated/contracts";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function UpcomingPayments({ onSelect }: { onSelect: (maturity: bigint, amount: bigint) => void }) {
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
+  const { data: pendingProposals } = useReadExaPreviewerPendingProposals({
+    address: exaPreviewerAddress,
+    args: [address ?? zeroAddress],
+    query: {
+      enabled: !!address,
+      gcTime: 0,
+      refetchInterval: 30_000,
+    },
+  });
   const duePayments = new Map<bigint, bigint>();
   if (markets) {
     for (const { fixedBorrowPositions, usdPrice, decimals } of markets) {
@@ -35,32 +45,66 @@ export default function UpcomingPayments({ onSelect }: { onSelect: (maturity: bi
         </Text>
       </View>
       {payments.length > 0 ? (
-        payments.map(([maturity, amount], index) => (
-          <Pressable
-            key={index}
-            onPress={() => {
-              onSelect(maturity, amount);
-            }}
-          >
-            <View flexDirection="row" justifyContent="space-between" alignItems="center">
-              <View>
-                <Text subHeadline>{format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}</Text>
-              </View>
-              <View flexDirection="row" alignItems="center" gap="$s2">
+        payments.map(([maturity, amount], index) => {
+          const isProcessing = pendingProposals?.some(({ proposal }) => {
+            const { proposalType: type, data } = proposal;
+            const isRepayProposal =
+              type === Number(ProposalType.RepayAtMaturity) || type === Number(ProposalType.CrossRepayAtMaturity);
+            const decoded =
+              type === Number(ProposalType.RepayAtMaturity)
+                ? decodeRepayAtMaturity(data)
+                : decodeCrossRepayAtMaturity(data);
+            return isRepayProposal && decoded.maturity === maturity;
+          });
+          return (
+            <Pressable
+              key={index}
+              disabled={isProcessing}
+              onPress={() => {
+                if (isProcessing) return;
+                onSelect(maturity, amount);
+              }}
+            >
+              <XStack justifyContent="space-between" alignItems="center">
+                <XStack alignItems="center" gap="$s3">
+                  <Text subHeadline color={isProcessing ? "$interactiveTextDisabled" : "$uiNeutralPrimary"}>
+                    {format(new Date(Number(maturity) * 1000), "MMM dd, yyyy")}
+                  </Text>
+                  {isProcessing && (
+                    <View
+                      alignSelf="center"
+                      justifyContent="center"
+                      alignItems="center"
+                      backgroundColor="$interactiveDisabled"
+                      borderRadius="$r2"
+                      paddingVertical="$s1"
+                      paddingHorizontal="$s2"
+                    >
+                      <Text emphasized color="$interactiveOnDisabled" maxFontSizeMultiplier={1} caption2>
+                        PROCESSING
+                      </Text>
+                    </View>
+                  )}
+                </XStack>
                 <XStack alignItems="center" gap="$s2">
-                  <Text sensitive emphasized body>
+                  <Text
+                    sensitive
+                    emphasized
+                    body
+                    color={isProcessing ? "$interactiveTextDisabled" : "$uiNeutralPrimary"}
+                  >
                     {(Number(amount) / 1e18).toLocaleString(undefined, {
                       style: "currency",
                       currency: "USD",
                       currencyDisplay: "narrowSymbol",
                     })}
                   </Text>
-                  <ChevronRight size={24} color="$iconBrandDefault" />
+                  <ChevronRight size={24} color={isProcessing ? "$iconDisabled" : "$iconBrandDefault"} />
                 </XStack>
-              </View>
-            </View>
-          </Pressable>
-        ))
+              </XStack>
+            </Pressable>
+          );
+        })
       ) : (
         <YStack alignItems="center" justifyContent="center" gap="$s4_5">
           <Text textAlign="center" color="$uiNeutralSecondary" emphasized title>
