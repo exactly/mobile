@@ -173,6 +173,7 @@ error NoBalance();
 error NonceTooLow();
 error NoProposal();
 error NotMarket();
+error PendingProposals();
 error Replay();
 error Timelocked();
 error Unauthorized();

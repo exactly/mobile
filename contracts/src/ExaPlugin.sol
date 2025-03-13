@@ -43,6 +43,7 @@ import {
   NoBalance,
   NotMarket,
   NotNext,
+  PendingProposals,
   PluginAllowed,
   Proposal,
   ProposalManagerSet,
@@ -444,42 +445,54 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       bool isExecuteBatch = bytes4(callData[0:4]) == IStandardExecutor.executeBatch.selector;
       if (isExecuteBatch) {
         Call[] memory calls = abi.decode(callData[4:], (Call[]));
-        for (uint256 i = 0; i < calls.length; ++i) {
-          Call memory call = calls[i];
-          bytes4 selector = bytes4(call.data.slice(0, 4));
-          bytes memory data = call.data.slice(4, call.data.length);
-          if (call.target == msg.sender) {
-            if (selector == IPluginManager.uninstallPlugin.selector) {
-              (address plugin,,) = abi.decode(data, (address, bytes, bytes));
-              if (plugin != address(this)) continue;
-              if (
-                i == calls.length - 1 || calls[i + 1].target != msg.sender
-                  || bytes4(calls[i + 1].data.slice(0, 4)) != IPluginManager.installPlugin.selector
-              ) revert Unauthorized();
-              bytes memory nextCallData = calls[i + 1].data.slice(4, calls[i + 1].data.length);
-              (address newPlugin,,,) = abi.decode(nextCallData, (address, bytes32, bytes, FunctionReference[]));
-              if (!allowlist[newPlugin]) revert Unauthorized();
-            }
-            continue;
-          }
-          _preExecutionChecker(call.target, selector, data);
-        }
-      } else {
-        address target = address(bytes20(callData[16:36]));
-        bytes4 selector = bytes4(callData[132:136]);
-        bytes memory data = callData[136:];
-        if (target == msg.sender) {
-          if (selector == IPluginManager.uninstallPlugin.selector) {
-            (address plugin,,) = abi.decode(data, (address, bytes, bytes));
-            if (plugin == address(this)) revert Unauthorized();
-          }
-          return "";
-        }
-        _preExecutionChecker(target, selector, data);
+        return _checkBatch(calls);
       }
+      address target = address(bytes20(callData[16:36]));
+      bytes4 selector = bytes4(callData[132:136]);
+      bytes memory data = callData[136:];
+      if (target == msg.sender) {
+        if (selector == IPluginManager.uninstallPlugin.selector) {
+          (address plugin,,) = abi.decode(data, (address, bytes, bytes));
+          if (plugin == address(this)) revert Unauthorized();
+        }
+        return "";
+      }
+      _preExecutionChecker(target, selector, data);
       return "";
     }
     revert NotImplemented(msg.sig, functionId);
+  }
+
+  function _checkBatch(Call[] memory calls) internal returns (bytes memory) {
+    for (uint256 i = 0; i < calls.length; ++i) {
+      Call memory call = calls[i];
+      bytes4 selector = bytes4(call.data.slice(0, 4));
+      bytes memory data = call.data.slice(4, call.data.length);
+      if (call.target == msg.sender) {
+        if (selector == IPluginManager.uninstallPlugin.selector) {
+          (address plugin,,) = abi.decode(data, (address, bytes, bytes));
+          if (plugin != address(this)) continue;
+          if (
+            i == calls.length - 1 || bytes4(calls[i + 1].data.slice(0, 4)) != IPluginManager.installPlugin.selector
+              || calls[i + 1].target != msg.sender
+          ) revert Unauthorized();
+          bytes memory nextCallData = calls[i + 1].data.slice(4, calls[i + 1].data.length);
+          (address newPlugin,,,) = abi.decode(nextCallData, (address, bytes32, bytes, FunctionReference[]));
+          if (!allowlist[newPlugin]) revert Unauthorized();
+          // slither-disable-next-line calls-loop -- should deny service on revert
+          try this.hasPendingProposals(msg.sender) returns (bool pending) {
+            if (pending) revert PendingProposals();
+          } catch { } // solhint-disable-line no-empty-blocks
+        }
+        continue;
+      }
+      _preExecutionChecker(call.target, selector, data);
+    }
+    return "";
+  }
+
+  function hasPendingProposals(address account) external view returns (bool) {
+    return proposalManager.nonces(account) != proposalManager.queueNonces(account);
   }
 
   function _preExecutionChecker(address target, bytes4 selector, bytes memory callData) internal {
