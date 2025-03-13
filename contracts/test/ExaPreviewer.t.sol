@@ -183,6 +183,8 @@ contract ExaPreviewerTest is ForkTest {
     assertEq(pendingProposals.length, 2);
     assertEq(pendingProposals[0].nonce, 0);
     assertEq(pendingProposals[1].nonce, 1);
+    assertEq(pendingProposals[0].unlock, timestamp + proposalManager.delay());
+    assertEq(pendingProposals[1].unlock, timestamp + proposalManager.delay());
     assertEq(pendingProposals[0].proposal.amount, 100e18);
     assertEq(pendingProposals[1].proposal.amount, 10e6);
     assertTrue(pendingProposals[0].proposal.market == exaEXA);

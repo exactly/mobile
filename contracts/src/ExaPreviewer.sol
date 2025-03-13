@@ -21,6 +21,7 @@ contract ExaPreviewer {
   function pendingProposals(address account) external view returns (PendingProposal[] memory proposals) {
     uint256 queueNonce = PROPOSAL_MANAGER.queueNonces(account);
     uint256 nonce = PROPOSAL_MANAGER.nonces(account);
+    uint256 delay = PROPOSAL_MANAGER.delay();
     proposals = new PendingProposal[](queueNonce - nonce);
     for (uint256 i = nonce; i < queueNonce; ++i) {
       // slither-disable-next-line calls-loop
@@ -28,6 +29,7 @@ contract ExaPreviewer {
         PROPOSAL_MANAGER.proposals(account, i);
       proposals[i - nonce] = PendingProposal({
         nonce: i,
+        unlock: timestamp + delay,
         proposal: Proposal({ amount: amount, market: market, timestamp: timestamp, proposalType: proposalType, data: data })
       });
     }
@@ -144,5 +146,6 @@ struct IRMParameters {
 
 struct PendingProposal {
   uint256 nonce;
+  uint256 unlock;
   Proposal proposal;
 }
