@@ -19,7 +19,7 @@ import { getTokenBalances } from "../../utils/lifi";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
-interface ProtocolAsset {
+export interface ProtocolAsset {
   type: "protocol";
   symbol: string;
   assetName: string;
@@ -29,7 +29,7 @@ interface ProtocolAsset {
   market: `0x${string}`;
 }
 
-interface ExternalAsset {
+export interface ExternalAsset {
   type: "external";
   name: string;
   symbol: string;
