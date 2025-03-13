@@ -90,7 +90,7 @@ export default function LatestActivity({
                     {type === "card" && item.merchant.name}
                     {type === "received" && "Received"}
                     {type === "sent" && "Sent"}
-                    {type === "repay" && "Protocol debt payment"}
+                    {type === "repay" && "Debt payment"}
                     {type === "panda" && item.merchant.name}
                   </Text>
                   <Text caption color="$uiNeutralSecondary" numberOfLines={1}>

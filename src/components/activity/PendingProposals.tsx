@@ -48,19 +48,19 @@ function getProposal(proposal: Proposal) {
       };
     case ProposalType.RepayAtMaturity:
       return {
-        label: "Protocol debt payment",
+        label: "Debt payment",
         icon: <Coins color="$interactiveOnBaseInformationSoft" />,
         maturity: decodeRepayAtMaturity(proposal.data).maturity,
       };
     case ProposalType.CrossRepayAtMaturity:
       return {
-        label: "Protocol debt payment",
+        label: "Debt payment",
         icon: <Coins color="$interactiveOnBaseInformationSoft" />,
         maturity: decodeCrossRepayAtMaturity(proposal.data).maturity,
       };
     case ProposalType.RollDebt:
       return {
-        label: "Protocol debt rollover",
+        label: "Debt rollover",
         icon: <RefreshCw color="$interactiveOnBaseInformationSoft" />,
       };
     case ProposalType.Swap:
