@@ -55,7 +55,7 @@ export default function AssetSelectionSheet({
           <View padded paddingTop="$s6" fullScreen flex={1}>
             <>
               <View gap="$s5">
-                <AssetSelector positions={positions} onSubmit={onAssetSelected} useExternalAssets />
+                <AssetSelector positions={positions} onSubmit={onAssetSelected} />
                 <View>
                   <Button
                     onPress={onClose}
