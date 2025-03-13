@@ -73,6 +73,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   string public constant AUTHOR = "Exactly";
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
+  bytes32 public constant UNINSTALL_CODE = keccak256("UNINSTALL");
 
   IERC20 public immutable USDC;
   IWETH public immutable WETH;
@@ -303,7 +304,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   function onInstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
-  function onUninstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
+  function onUninstall(bytes calldata) external override {
+    if (callHash != UNINSTALL_CODE) revert Unauthorized();
+    delete callHash;
+  }
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
@@ -483,9 +487,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
           try this.hasPendingProposals(msg.sender) returns (bool pending) {
             if (pending) revert PendingProposals();
           } catch { } // solhint-disable-line no-empty-blocks
+          callHash = UNINSTALL_CODE;
         }
         continue;
       }
+      // slither-disable-next-line reentrancy-benign -- proposal manager is safe
       _preExecutionChecker(call.target, selector, data);
     }
     return "";

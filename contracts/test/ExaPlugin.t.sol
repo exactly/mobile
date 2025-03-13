@@ -2667,6 +2667,18 @@ contract ExaPluginTest is ForkTest {
     account.executeBatch(calls);
   }
 
+  function test_uninstall_reverts_withUnauthorized_withoutExecute() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        PluginManagerInternals.PluginUninstallCallbackFailed.selector,
+        exaPlugin,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(owner);
+    account.uninstallPlugin(address(exaPlugin), "", "");
+  }
+
   function test_postExecutionHook_reverts_withNotImplemented() external {
     vm.expectRevert(
       abi.encodeWithSelector(BasePlugin.NotImplemented.selector, BasePlugin.postExecutionHook.selector, 0)
