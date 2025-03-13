@@ -119,7 +119,6 @@ export default function Pay() {
   const positions = markets
     ?.map((market) => ({
       ...market,
-      symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
       usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
     }))
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0n);
@@ -540,7 +539,13 @@ export default function Pay() {
                   >
                     {repayMarket && (
                       <AssetLogo
-                        uri={assetLogos[repayMarket.assetSymbol as keyof typeof assetLogos]}
+                        uri={
+                          assetLogos[
+                            repayMarket.symbol.slice(3) === "WETH"
+                              ? "ETH"
+                              : (repayMarket.symbol.slice(3) as keyof typeof assetLogos)
+                          ]
+                        }
                         width={ms(16)}
                         height={ms(16)}
                       />
@@ -549,29 +554,12 @@ export default function Pay() {
                       <Image source={{ uri: externalAsset.logoURI }} width={ms(16)} height={ms(16)} borderRadius={50} />
                     )}
                     <Text primary emphasized headline textAlign="right">
-                      {repayMarket?.assetSymbol ?? externalAsset?.symbol}
+                      {repayMarket?.symbol.slice(3) === "WETH"
+                        ? "ETH"
+                        : (repayMarket?.symbol.slice(3) ?? externalAsset?.symbol)}
                     </Text>
                     <ChevronRight size={ms(24)} color="$interactiveBaseBrandDefault" />
                   </XStack>
-                  {repayMarket && (
-                    <Text secondary footnote textAlign="right">
-                      {`${(
-                        Number(isUSDCSelected ? positionAssets : route.fromAmount) /
-                        10 ** repayMarket.decimals
-                      ).toLocaleString(undefined, {
-                        maximumFractionDigits: 8,
-                        useGrouping: false,
-                      })} ${repayMarket.assetSymbol}`}
-                    </Text>
-                  )}
-                  {selectedAsset.isExternalAsset && externalAsset && (
-                    <Text secondary footnote textAlign="right">
-                      {`${(Number(route.fromAmount) / 10 ** externalAsset.decimals).toLocaleString(undefined, {
-                        maximumFractionDigits: 8,
-                        useGrouping: false,
-                      })} ${externalAsset.symbol}`}
-                    </Text>
-                  )}
                 </YStack>
               </XStack>
               <XStack justifyContent="space-between" gap="$s3">
@@ -607,7 +595,7 @@ export default function Pay() {
                                 ),
                               ),
                               useGrouping: false,
-                            })} ${repayMarket.assetSymbol}`}
+                            })} ${repayMarket.symbol.slice(3) === "WETH" ? "ETH" : repayMarket.symbol.slice(3)}`}
                           </Text>
                         </>
                       )}
