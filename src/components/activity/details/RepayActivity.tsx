@@ -21,11 +21,8 @@ export default function RepayActivity({ item }: { item: Omit<RepayActivityType, 
           </Square>
         </XStack>
         <YStack gap="$s4_5" justifyContent="center" alignItems="center">
-          <Text secondary body textAlign="center">
-            Paid&nbsp;
-            <Text primary body emphasized>
-              Protocol debt
-            </Text>
+          <Text primary body emphasized textAlign="center">
+            Debt payment
           </Text>
           <Text title primary color="$uiErrorSecondary">
             {Number(usdAmount).toLocaleString(undefined, {
