@@ -20,6 +20,7 @@ import SafeView from "../shared/SafeView";
 import View from "../shared/View";
 
 export interface WithdrawDetails {
+  isExternalAsset: boolean;
   assetName?: string;
   amount: string;
   usdValue: string;
@@ -29,7 +30,6 @@ export default function Withdraw() {
   const { address } = useAccount();
   const { data: withdraw } = useQuery<IWithdraw>({ queryKey: ["withdrawal"] });
   const { market, externalAsset } = useAsset(withdraw?.market);
-
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
   });
@@ -93,6 +93,7 @@ export default function Withdraw() {
   }, [market, proposeSimulation, writeContract, externalAsset, transferSimulation]);
 
   const details: WithdrawDetails = {
+    isExternalAsset: !!externalAsset,
     assetName: market ? (market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3)) : externalAsset?.symbol,
     amount: market
       ? formatUnits(withdraw?.amount ?? 0n, market.decimals)

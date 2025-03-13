@@ -5,15 +5,15 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
+import Details from "./Details";
 import Values from "./Values";
 import type { WithdrawDetails } from "./Withdraw";
 import queryClient from "../../utils/queryClient";
-import Details from "../shared/Details";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Failure({
-  details: { assetName, amount, usdValue },
+  details: { assetName, amount, usdValue, isExternalAsset },
   hash,
 }: {
   details: WithdrawDetails;
@@ -40,10 +40,11 @@ export default function Failure({
                 Transaction failed
               </Text>
             </View>
-            <Values amount={amount} assetName={assetName} usdValue={usdValue} />
+            <Values amount={amount} assetName={assetName} usdValue={usdValue} isExternalAsset={isExternalAsset} />
           </View>
         </View>
         <Details
+          isExternalAsset={isExternalAsset}
           hash={hash}
           onClose={() => {
             queryClient.setQueryData(["withdrawal"], { receiver: undefined, market: undefined, amount: 0n });

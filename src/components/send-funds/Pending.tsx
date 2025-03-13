@@ -2,15 +2,15 @@ import { router } from "expo-router";
 import React from "react";
 import { ScrollView } from "tamagui";
 
+import Details from "./Details";
 import Values from "./Values";
 import type { WithdrawDetails } from "./Withdraw";
-import Details from "../shared/Details";
 import Spinner from "../shared/Spinner";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
 export default function Pending({
-  details: { assetName, amount, usdValue },
+  details: { assetName, amount, usdValue, isExternalAsset },
   hash,
 }: {
   details: WithdrawDetails;
@@ -27,10 +27,11 @@ export default function Pending({
                 Sending...
               </Text>
             </View>
-            <Values amount={amount} assetName={assetName} usdValue={usdValue} />
+            <Values amount={amount} assetName={assetName} usdValue={usdValue} isExternalAsset={false} />
           </View>
         </View>
         <Details
+          isExternalAsset={isExternalAsset}
           hash={hash}
           onClose={() => {
             router.back();

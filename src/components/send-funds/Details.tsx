@@ -10,13 +10,21 @@ import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack, Avatar } from "tamagui";
 
-import Button from "./Button";
-import Text from "./Text";
-import View from "./View";
 import handleError from "../../utils/handleError";
 import type { Withdraw } from "../../utils/queryClient";
+import Button from "../shared/Button";
+import Text from "../shared/Text";
+import View from "../shared/View";
 
-export default function Details({ hash, onClose }: { hash?: string; onClose: () => void }) {
+export default function Details({
+  hash,
+  onClose,
+  isExternalAsset,
+}: {
+  hash?: string;
+  onClose: () => void;
+  isExternalAsset: boolean;
+}) {
   const { data } = useQuery<Withdraw>({ queryKey: ["withdrawal"] });
   return (
     <View padded gap="$s4">
@@ -26,23 +34,25 @@ export default function Details({ hash, onClose }: { hash?: string; onClose: () 
             <Avatar size={ms(20)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
               <User size={ms(16)} color="$interactiveOnBaseBrandDefault" />
             </Avatar>
-            <Text footnote color="$uiNeutralSecondary">
+            <Text emphasized footnote color="$uiNeutralSecondary">
               To
             </Text>
           </XStack>
-          <Text fontFamily="$mono">{shortenHex(data.receiver ?? "")}</Text>
+          <Text callout fontFamily="$mono">
+            {shortenHex(data.receiver ?? "")}
+          </Text>
         </XStack>
       )}
       <XStack justifyContent="space-between" alignItems="center">
         <XStack alignItems="center" gap="$s3">
           <Calendar size={ms(20)} color="$uiBrandPrimary" />
-          <Text footnote color="$uiNeutralSecondary">
+          <Text emphasized footnote color="$uiNeutralSecondary">
             Date
           </Text>
         </XStack>
-        <Text>{format(new Date(), "yyyy-MM-dd")}</Text>
+        <Text callout>{format(new Date(), "yyyy-MM-dd")}</Text>
       </XStack>
-      {hash && (
+      {hash && isExternalAsset && (
         <>
           <XStack
             hitSlop={ms(15)}
@@ -55,13 +65,14 @@ export default function Details({ hash, onClose }: { hash?: string; onClose: () 
           >
             <XStack alignItems="center" gap="$s3">
               <Hash size={ms(20)} color="$uiBrandPrimary" />
-              <Text footnote color="$uiNeutralSecondary">
+              <Text emphasized footnote color="$uiNeutralSecondary">
                 Transaction hash
               </Text>
             </XStack>
-            <Text fontFamily="$mono">{shortenHex(hash)}</Text>
+            <Text callout fontFamily="$mono">
+              {shortenHex(hash)}
+            </Text>
           </XStack>
-
           <Button
             onPress={() => {
               openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${hash}`).catch(handleError);
@@ -74,16 +85,15 @@ export default function Details({ hash, onClose }: { hash?: string; onClose: () 
           >
             View on explorer
           </Button>
-
-          <View padded alignItems="center">
-            <Pressable onPress={onClose}>
-              <Text emphasized footnote color="$interactiveBaseBrandDefault">
-                Close
-              </Text>
-            </Pressable>
-          </View>
         </>
       )}
+      <View padded alignItems="center">
+        <Pressable onPress={onClose}>
+          <Text emphasized footnote color="$interactiveBaseBrandDefault">
+            Close
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
