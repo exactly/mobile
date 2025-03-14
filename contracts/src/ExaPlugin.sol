@@ -75,7 +75,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   string public constant AUTHOR = "Exactly";
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
-  bytes32 public constant UNINSTALL_CODE = keccak256("UNINSTALL");
+  bytes32 public constant UNINSTALL_CODE = "UNINSTALL";
 
   IERC20 public immutable USDC;
   IWETH public immutable WETH;
@@ -311,10 +311,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   function onInstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
-  function onUninstall(bytes calldata) external override {
-    if (callHash != UNINSTALL_CODE) revert Unauthorized();
-    delete callHash;
-  }
+  function onUninstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
@@ -413,6 +410,15 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       preExecHook: preExecutionValidationFunction,
       postExecHook: preExecutionValidationFunction
     });
+    manifest.preRuntimeValidationHooks = new ManifestAssociatedFunction[](1);
+    manifest.preRuntimeValidationHooks[0] = ManifestAssociatedFunction({
+      executionSelector: IPluginManager.uninstallPlugin.selector,
+      associatedFunction: ManifestFunction({
+        functionType: ManifestAssociatedFunctionType.SELF,
+        functionId: uint8(FunctionId.PRE_RUNTIME_VALIDATION),
+        dependencyIndex: 0
+      })
+    });
 
     ManifestFunction memory alwaysDeny = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
@@ -441,8 +447,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   /// @inheritdoc BasePlugin
-  function postExecutionHook(uint8 functionId, bytes calldata) external pure override {
-    if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) return;
+  function postExecutionHook(uint8 functionId, bytes calldata) external override {
+    if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
+      if (callHash.length != 0) delete callHash;
+      return;
+    }
     revert NotImplemented(msg.sig, functionId);
   }
 
@@ -474,6 +483,22 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     revert NotImplemented(msg.sig, functionId);
   }
 
+  function preRuntimeValidationHook(uint8 functionId, address sender, uint256, bytes calldata callData)
+    external
+    view
+    override
+  {
+    if (functionId == uint8(FunctionId.PRE_RUNTIME_VALIDATION)) {
+      if (bytes4(callData[0:4]) == IPluginManager.uninstallPlugin.selector) {
+        (address plugin,,) = abi.decode(callData[4:], (address, bytes, bytes));
+        if (plugin != address(this)) return;
+        if (callHash != keccak256(abi.encode(UNINSTALL_CODE, sender))) revert Unauthorized();
+      }
+      return;
+    }
+    revert NotImplemented(msg.sig, functionId);
+  }
+
   function _checkBatch(Call[] memory calls) internal returns (bytes memory) {
     for (uint256 i = 0; i < calls.length; ++i) {
       Call memory call = calls[i];
@@ -494,7 +519,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
           try this.hasPendingProposals(msg.sender) returns (bool pending) {
             if (pending) revert PendingProposals();
           } catch { } // solhint-disable-line no-empty-blocks
-          callHash = UNINSTALL_CODE;
+          callHash = keccak256(abi.encode(UNINSTALL_CODE, msg.sender));
         }
         continue;
       }
@@ -794,7 +819,8 @@ enum FunctionId {
   RUNTIME_VALIDATION_SELF,
   RUNTIME_VALIDATION_KEEPER,
   RUNTIME_VALIDATION_KEEPER_OR_SELF,
-  PRE_EXEC_VALIDATION
+  PRE_EXEC_VALIDATION,
+  PRE_RUNTIME_VALIDATION
 }
 
 struct CrossRepayCallbackData {

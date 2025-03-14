@@ -2449,6 +2449,29 @@ contract ExaPluginTest is ForkTest {
     );
   }
 
+  function test_forceUninstall_reverts_withUnauthorized_whenExecute() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreRuntimeValidationHookFailed.selector,
+        exaPlugin,
+        FunctionId.PRE_RUNTIME_VALIDATION,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(owner);
+    account.uninstallPlugin(
+      address(exaPlugin),
+      abi.encode(
+        UpgradeableModularAccount.UninstallPluginConfig({
+          serializedManifest: "",
+          forceUninstall: true,
+          callbackGasLimit: 0
+        })
+      ),
+      ""
+    );
+  }
+
   function test_uninstall_reverts_withUnauthorized_whenInsideBatch() external {
     Call[] memory calls = new Call[](1);
     calls[0] =
@@ -2671,8 +2694,9 @@ contract ExaPluginTest is ForkTest {
   function test_uninstall_reverts_withUnauthorized_withoutExecute() external {
     vm.expectRevert(
       abi.encodeWithSelector(
-        PluginManagerInternals.PluginUninstallCallbackFailed.selector,
+        UpgradeableModularAccount.PreRuntimeValidationHookFailed.selector,
         exaPlugin,
+        FunctionId.PRE_RUNTIME_VALIDATION,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
