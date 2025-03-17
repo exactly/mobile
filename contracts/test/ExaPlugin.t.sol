@@ -995,7 +995,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -1012,7 +1012,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -1040,7 +1040,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(Timelocked.selector)
       )
     );
@@ -1076,7 +1076,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -1098,7 +1098,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -1120,7 +1120,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -1174,7 +1174,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(Unauthorized.selector)
       )
     );
@@ -1190,7 +1190,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(Unauthorized.selector)
       )
     );
@@ -1288,7 +1288,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -1307,7 +1307,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -1326,7 +1326,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -1344,7 +1344,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(Unauthorized.selector)
       )
     );
@@ -1864,7 +1864,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -1885,7 +1885,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -1909,7 +1909,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -1925,7 +1925,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(NoProposal.selector)
       )
     );
@@ -1946,7 +1946,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_BATCH,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2023,7 +2023,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_BATCH,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -2044,7 +2044,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_BATCH,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2075,7 +2075,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(NoProposal.selector)
       )
     );
@@ -2208,7 +2208,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2224,7 +2224,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(NoProposal.selector)
       )
     );
@@ -2242,7 +2242,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Timelocked.selector)
       )
     );
@@ -2272,7 +2272,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(NoProposal.selector)
       )
     );
@@ -2288,7 +2288,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2303,7 +2303,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2337,7 +2337,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Timelocked.selector)
       )
     );
@@ -2367,7 +2367,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(NoProposal.selector)
       )
     );
@@ -2439,13 +2439,36 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
     vm.startPrank(address(account));
     account.execute(
       address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(exaPlugin), "", ""))
+    );
+  }
+
+  function test_forceUninstall_reverts_withUnauthorized_withoutExecute() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.PreExecHookReverted.selector,
+        exaPlugin,
+        FunctionId.EXECUTION_HOOK_UNINSTALL,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
+    vm.startPrank(owner);
+    account.uninstallPlugin(
+      address(exaPlugin),
+      abi.encode(
+        UpgradeableModularAccount.UninstallPluginConfig({
+          serializedManifest: "",
+          forceUninstall: true,
+          callbackGasLimit: 0
+        })
+      ),
+      ""
     );
   }
 
@@ -2457,7 +2480,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_BATCH,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2481,7 +2504,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_BATCH,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2498,7 +2521,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_BATCH,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2522,7 +2545,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2545,7 +2568,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2601,12 +2624,21 @@ contract ExaPluginTest is ForkTest {
     account.installPlugin(
       address(badPlugin), keccak256(abi.encode(badPlugin.pluginManifest())), "", new FunctionReference[](0)
     );
+    account.uninstallPlugin(address(badPlugin), "", "");
+  }
+
+  function test_uninstall_uninstalls_whenExecuteWithAnotherPlugin() external {
+    BadPlugin badPlugin = new BadPlugin();
+    vm.startPrank(owner);
+    account.installPlugin(
+      address(badPlugin), keccak256(abi.encode(badPlugin.pluginManifest())), "", new FunctionReference[](0)
+    );
     account.execute(
       address(account), 0, abi.encodeCall(UpgradeableModularAccount.uninstallPlugin, (address(badPlugin), "", ""))
     );
   }
 
-  function test_uninstall_uninstalls_whenItsAnotherPluginOnBatch() external {
+  function test_uninstall_uninstalls_whenBatchedWithAnotherPlugin() external {
     BadPlugin badPlugin = new BadPlugin();
     vm.startPrank(owner);
     account.installPlugin(
@@ -2641,7 +2673,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_BATCH,
         abi.encodeWithSelector(PendingProposals.selector)
       )
     );
@@ -2671,8 +2703,9 @@ contract ExaPluginTest is ForkTest {
   function test_uninstall_reverts_withUnauthorized_withoutExecute() external {
     vm.expectRevert(
       abi.encodeWithSelector(
-        PluginManagerInternals.PluginUninstallCallbackFailed.selector,
+        UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
+        FunctionId.EXECUTION_HOOK_UNINSTALL,
         abi.encodeWithSelector(Unauthorized.selector)
       )
     );
@@ -2682,14 +2715,16 @@ contract ExaPluginTest is ForkTest {
 
   function test_postExecutionHook_reverts_withNotImplemented() external {
     vm.expectRevert(
-      abi.encodeWithSelector(BasePlugin.NotImplemented.selector, BasePlugin.postExecutionHook.selector, 0)
+      abi.encodeWithSelector(BasePlugin.NotImplemented.selector, BasePlugin.postExecutionHook.selector, 69)
     );
-    exaPlugin.postExecutionHook(0, "");
+    exaPlugin.postExecutionHook(69, "");
   }
 
   function test_preExecutionHook_reverts_withNotImplemented() external {
-    vm.expectRevert(abi.encodeWithSelector(BasePlugin.NotImplemented.selector, BasePlugin.preExecutionHook.selector, 0));
-    exaPlugin.preExecutionHook(0, address(this), 0, "");
+    vm.expectRevert(
+      abi.encodeWithSelector(BasePlugin.NotImplemented.selector, BasePlugin.preExecutionHook.selector, 69)
+    );
+    exaPlugin.preExecutionHook(69, address(this), 0, "");
   }
 
   function test_runtimeValidationFunction_reverts_withNotImplemented() external {
@@ -3014,7 +3049,7 @@ contract ExaPluginTest is ForkTest {
       abi.encodeWithSelector(
         UpgradeableModularAccount.PreExecHookReverted.selector,
         exaPlugin,
-        FunctionId.PRE_EXEC_VALIDATION,
+        FunctionId.EXECUTION_HOOK_SINGLE,
         abi.encodePacked(Unauthorized.selector)
       )
     );

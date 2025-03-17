@@ -75,7 +75,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   string public constant AUTHOR = "Exactly";
 
   bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
-  bytes32 public constant UNINSTALL_CODE = keccak256("UNINSTALL");
 
   IERC20 public immutable USDC;
   IWETH public immutable WETH;
@@ -312,10 +311,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   function onInstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
-  function onUninstall(bytes calldata) external override {
-    if (callHash != UNINSTALL_CODE) revert Unauthorized();
-    delete callHash;
-  }
+  function onUninstall(bytes calldata) external override { } // solhint-disable-line no-empty-blocks
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
@@ -393,38 +389,54 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       associatedFunction: keeperRuntimeValidationFunction
     });
 
-    ManifestFunction memory preExecutionValidationFunction = ManifestFunction({
+    ManifestFunction memory singleExecutionHook = ManifestFunction({
       functionType: ManifestAssociatedFunctionType.SELF,
-      functionId: uint8(FunctionId.PRE_EXEC_VALIDATION),
+      functionId: uint8(FunctionId.EXECUTION_HOOK_SINGLE),
       dependencyIndex: 0
     });
-    manifest.executionHooks = new ManifestExecutionHook[](3);
+    ManifestFunction memory batchExecutionHook = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.SELF,
+      functionId: uint8(FunctionId.EXECUTION_HOOK_BATCH),
+      dependencyIndex: 0
+    });
+    ManifestFunction memory uninstallExecutionHook = ManifestFunction({
+      functionType: ManifestAssociatedFunctionType.SELF,
+      functionId: uint8(FunctionId.EXECUTION_HOOK_UNINSTALL),
+      dependencyIndex: 0
+    });
+    ManifestFunction memory none =
+      ManifestFunction({ functionType: ManifestAssociatedFunctionType.NONE, functionId: 0, dependencyIndex: 0 });
+    manifest.executionHooks = new ManifestExecutionHook[](4);
     manifest.executionHooks[0] = ManifestExecutionHook({
       executionSelector: IStandardExecutor.execute.selector,
-      preExecHook: preExecutionValidationFunction,
-      postExecHook: preExecutionValidationFunction
+      preExecHook: singleExecutionHook,
+      postExecHook: none
     });
     manifest.executionHooks[1] = ManifestExecutionHook({
       executionSelector: IStandardExecutor.executeBatch.selector,
-      preExecHook: preExecutionValidationFunction,
-      postExecHook: preExecutionValidationFunction
+      preExecHook: batchExecutionHook,
+      postExecHook: none
     });
     manifest.executionHooks[2] = ManifestExecutionHook({
       executionSelector: IPluginExecutor.executeFromPluginExternal.selector,
-      preExecHook: preExecutionValidationFunction,
-      postExecHook: preExecutionValidationFunction
+      preExecHook: singleExecutionHook,
+      postExecHook: none
+    });
+    manifest.executionHooks[3] = ManifestExecutionHook({
+      executionSelector: IPluginManager.uninstallPlugin.selector,
+      preExecHook: uninstallExecutionHook,
+      postExecHook: none
     });
 
-    ManifestFunction memory alwaysDeny = ManifestFunction({
-      functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
-      functionId: 0,
-      dependencyIndex: 0
-    });
     manifest.preUserOpValidationHooks = new ManifestAssociatedFunction[](manifest.executionFunctions.length);
     for (uint256 i = 0; i < manifest.executionFunctions.length; ++i) {
       manifest.preUserOpValidationHooks[i] = ManifestAssociatedFunction({
         executionSelector: manifest.executionFunctions[i],
-        associatedFunction: alwaysDeny
+        associatedFunction: ManifestFunction({
+          functionType: ManifestAssociatedFunctionType.PRE_HOOK_ALWAYS_DENY,
+          functionId: 0,
+          dependencyIndex: 0
+        })
       });
     }
 
@@ -442,34 +454,26 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   /// @inheritdoc BasePlugin
-  function postExecutionHook(uint8 functionId, bytes calldata) external pure override {
-    if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) return;
-    revert NotImplemented(msg.sig, functionId);
-  }
-
-  /// @inheritdoc BasePlugin
   function preExecutionHook(uint8 functionId, address, uint256, bytes calldata callData)
     external
     override
     returns (bytes memory)
   {
-    if (functionId == uint8(FunctionId.PRE_EXEC_VALIDATION)) {
-      bool isExecuteBatch = bytes4(callData[0:4]) == IStandardExecutor.executeBatch.selector;
-      if (isExecuteBatch) {
-        Call[] memory calls = abi.decode(callData[4:], (Call[]));
-        return _checkBatch(calls);
-      }
+    if (functionId == uint8(FunctionId.EXECUTION_HOOK_BATCH)) return _checkBatch(abi.decode(callData[4:], (Call[])));
+    if (functionId == uint8(FunctionId.EXECUTION_HOOK_SINGLE)) {
       address target = address(bytes20(callData[16:36]));
       bytes4 selector = bytes4(callData[132:136]);
       bytes memory data = callData[136:];
       if (target == msg.sender) {
-        if (selector == IPluginManager.uninstallPlugin.selector) {
-          (address plugin,,) = abi.decode(data, (address, bytes, bytes));
-          if (plugin == address(this)) revert Unauthorized();
-        }
+        if (selector == IPluginManager.uninstallPlugin.selector && _willUninstallThis(data)) revert Unauthorized();
         return "";
       }
       _preExecutionChecker(target, selector, data);
+      return "";
+    }
+    if (functionId == uint8(FunctionId.EXECUTION_HOOK_UNINSTALL)) {
+      if (_willUninstallThis(callData[4:]) && callHash != bytes32(bytes20(msg.sender))) revert Unauthorized();
+      delete callHash;
       return "";
     }
     revert NotImplemented(msg.sig, functionId);
@@ -481,9 +485,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       bytes4 selector = bytes4(call.data.slice(0, 4));
       bytes memory data = call.data.slice(4, call.data.length);
       if (call.target == msg.sender) {
-        if (selector == IPluginManager.uninstallPlugin.selector) {
-          (address plugin,,) = abi.decode(data, (address, bytes, bytes));
-          if (plugin != address(this)) continue;
+        if (selector == IPluginManager.uninstallPlugin.selector && _willUninstallThis(data)) {
           if (
             i == calls.length - 1 || bytes4(calls[i + 1].data.slice(0, 4)) != IPluginManager.installPlugin.selector
               || calls[i + 1].target != msg.sender
@@ -495,7 +497,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
           try this.hasPendingProposals(msg.sender) returns (bool pending) {
             if (pending) revert PendingProposals();
           } catch { } // solhint-disable-line no-empty-blocks
-          callHash = UNINSTALL_CODE;
+          callHash = bytes32(bytes20(msg.sender));
         }
         continue;
       }
@@ -744,6 +746,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     _execute(account, address(asset), 0, abi.encodeCall(IERC20.transfer, (receiver, amount)));
   }
 
+  function _willUninstallThis(bytes memory data) internal view returns (bool) {
+    (address plugin,,) = abi.decode(data, (address, bytes, bytes));
+    return plugin == address(this);
+  }
+
   function _withdrawFromSender(IMarket market, uint256 amount, address receiver) internal {
     _executeFromSender(address(market), 0, abi.encodeCall(IERC4626.withdraw, (amount, receiver, msg.sender)));
   }
@@ -792,10 +799,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 }
 
 enum FunctionId {
+  EXECUTION_HOOK_SINGLE,
+  EXECUTION_HOOK_BATCH,
+  EXECUTION_HOOK_UNINSTALL,
   RUNTIME_VALIDATION_SELF,
   RUNTIME_VALIDATION_KEEPER,
-  RUNTIME_VALIDATION_KEEPER_OR_SELF,
-  PRE_EXEC_VALIDATION
+  RUNTIME_VALIDATION_KEEPER_OR_SELF
 }
 
 struct CrossRepayCallbackData {
