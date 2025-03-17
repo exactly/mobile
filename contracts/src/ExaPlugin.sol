@@ -261,6 +261,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       _execute(
         r.borrower, address(EXA_USDC), 0, abi.encodeCall(IMarket.withdraw, (actualRepay, address(this), r.borrower))
       );
+      delete callHash;
       USDC.safeTransfer(address(flashLoaner), r.maxRepay);
       return;
     }
