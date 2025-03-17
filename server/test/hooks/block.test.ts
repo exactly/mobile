@@ -77,7 +77,11 @@ describe("proposal", () => {
       );
       await anvilClient.mine({ blocks: 1, interval: 10 * 60 });
       proposals = await getLogs(hashes);
+      const unlock = proposals[0]?.args.unlock ?? 0n;
+      vi.setSystemTime(new Date(Number(unlock + 10n) * 1000));
     });
+
+    afterEach(() => vi.useRealTimers());
 
     it("execute withdraws", async () => {
       const withdraw = proposals[0]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
@@ -100,18 +104,12 @@ describe("proposal", () => {
                 logs: [
                   {
                     topics: withdraw.topics,
-                    data: encodeAbiParameters(
-                      proposalManagerAbi[29].inputs.filter((x) => !x.indexed),
-                      [withdraw.args.proposalType, withdraw.args.amount, withdraw.args.data, 0],
-                    ),
+                    data: withdraw.data,
                     account: { address: withdraw.address },
                   },
                   {
                     topics: anotherWithdraw.topics,
-                    data: encodeAbiParameters(
-                      proposalManagerAbi[29].inputs.filter((x) => !x.indexed),
-                      [anotherWithdraw.args.proposalType, anotherWithdraw.args.amount, anotherWithdraw.args.data, 0],
-                    ),
+                    data: anotherWithdraw.data,
                     account: { address: anotherWithdraw.address },
                   },
                 ],
@@ -150,13 +148,14 @@ describe("proposal", () => {
 
   describe("with reverting proposals", () => {
     beforeEach(async () => {
-      const hashes = await Promise.all([
-        proposeWithdraw(maxUint256, padHex("0x69", { size: 20 })),
-        proposeWithdraw(maxUint256, padHex("0x69", { size: 20 })),
-      ]);
+      const hash = await proposeWithdraw(maxUint256, padHex("0x69", { size: 20 }));
       await anvilClient.mine({ blocks: 1, interval: 10 * 60 });
-      proposals = await getLogs(hashes);
+      proposals = await getLogs([hash]);
+      const unlock = proposals[0]?.args.unlock ?? 0n;
+      vi.setSystemTime(new Date(Number(unlock + 10n) * 1000));
     });
+
+    afterEach(() => vi.useRealTimers());
 
     it("increments nonce", async () => {
       const revert = proposals[0]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
@@ -178,10 +177,7 @@ describe("proposal", () => {
                 logs: [
                   {
                     topics: revert.topics,
-                    data: encodeAbiParameters(
-                      proposalManagerAbi[29].inputs.filter((x) => !x.indexed),
-                      [revert.args.proposalType, revert.args.amount, revert.args.data, 0],
-                    ),
+                    data: revert.data,
                     account: { address: revert.address },
                   },
                 ],
@@ -201,6 +197,90 @@ describe("proposal", () => {
           : -1n;
 
       expect(newNonce).toBe(revert.args.nonce + 1n);
+    });
+  });
+
+  describe("with idle proposals", () => {
+    beforeEach(async () => {
+      const hashes = await Promise.all(
+        [4000n, 5000n, 6000n, 7000n, 8000n, 9000n].map((amount) =>
+          execute(
+            encodeFunctionData({
+              abi: exaPluginAbi,
+              functionName: "propose",
+              args: [
+                inject("MarketUSDC"),
+                amount,
+                ProposalType.Withdraw,
+                encodeAbiParameters([{ type: "address" }], [padHex("0x69", { size: 20 })]),
+              ],
+            }),
+          ),
+        ),
+      );
+      await anvilClient.mine({ blocks: 1, interval: 10 * 60 });
+      proposals = await getLogs(hashes);
+      const unlock = proposals[0]?.args.unlock ?? 0n;
+      vi.setSystemTime(new Date(Number(unlock + 10n) * 1000));
+    });
+
+    afterEach(() => vi.useRealTimers());
+
+    it("execute proposal", async () => {
+      const idle = proposals[1]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      const withdraw = proposals[3]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+      const another = proposals[4]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+
+      const waitForTransactionReceipt = vi.spyOn(publicClient, "waitForTransactionReceipt");
+      const captureException = vi.spyOn(sentry, "captureException");
+      captureException.mockImplementation(() => "");
+
+      await Promise.all([
+        appClient.index.$post({
+          ...withdrawProposal,
+          json: {
+            ...withdrawProposal.json,
+            event: {
+              ...withdrawProposal.json.event,
+              data: {
+                ...withdrawProposal.json.event.data,
+                block: {
+                  ...withdrawProposal.json.event.data.block,
+                  logs: [
+                    { topics: withdraw.topics, data: withdraw.data, account: { address: withdraw.address } },
+                    { topics: another.topics, data: another.data, account: { address: another.address } },
+                  ],
+                },
+              },
+            },
+          },
+        }),
+        vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 5),
+      ]);
+
+      const withdrawReceipt = waitForTransactionReceipt.mock.settledResults[3];
+      const idleProposalReceipt = waitForTransactionReceipt.mock.settledResults[1];
+
+      expect(withdrawReceipt).toBeDefined();
+      expect(idleProposalReceipt).toBeDefined();
+
+      expect(
+        withdrawReceipt && withdrawReceipt.type === "fulfilled"
+          ? usdcToAddress(
+              withdrawReceipt.value,
+              decodeAbiParameters([{ name: "receiver", type: "address" }], withdraw.args.data)[0],
+            )
+          : 0n,
+      ).toBe(withdraw.args.amount);
+
+      expect(
+        idleProposalReceipt && idleProposalReceipt.type === "fulfilled"
+          ? usdcToAddress(
+              idleProposalReceipt.value,
+              decodeAbiParameters([{ name: "receiver", type: "address" }], idle.args.data)[0],
+            )
+          : 0n,
+      ).toBe(idle.args.amount);
     });
   });
 });

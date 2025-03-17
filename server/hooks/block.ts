@@ -1,5 +1,11 @@
 import ProposalType from "@exactly/common/ProposalType";
-import chain, { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
+import chain, {
+  exaPluginAbi,
+  exaPluginAddress,
+  exaPreviewerAbi,
+  exaPreviewerAddress,
+  upgradeableModularAccountAbi,
+} from "@exactly/common/generated/chain";
 import shortenHex from "@exactly/common/shortenHex";
 import { Address, Hash, Hex } from "@exactly/common/validation";
 import {
@@ -100,7 +106,7 @@ redis
 redis
   .zrange("proposals", 0, Infinity, "BYSCORE")
   .then((messages) => {
-    for (const message of messages) scheduleProposal(message);
+    for (const message of messages) scheduleMessage(message);
   })
   .catch((error: unknown) => captureException(error));
 
@@ -173,38 +179,9 @@ export default app.post(
         ?.map(({ topics, data }) => decodeEventLog({ topics, data, abi: legacyExaPluginAbi })) ?? [];
 
     await Promise.all([
-      ...proposalsByAccount.values().flatMap((ps) =>
-        ps
-          .sort((a, b) => Number(a.nonce - b.nonce))
-          .map((proposal) =>
-            startSpan(
-              {
-                name: "schedule proposal",
-                op: "queue.publish",
-                attributes: {
-                  account: proposal.account,
-                  amount: String(proposal.amount),
-                  data: proposal.data,
-                  market: proposal.market,
-                  nonce: Number(proposal.nonce),
-                  proposalType: proposal.proposalType,
-                  timestamp: proposal.timestamp,
-                  unlock: Number(proposal.unlock),
-                  "messaging.destination.name": "proposals",
-                  "messaging.message.id": proposal.id,
-                },
-              },
-              () => {
-                const { "sentry-trace": sentryTrace, baggage: sentryBaggage } = getTraceData();
-                proposal.sentryTrace = sentryTrace;
-                proposal.sentryBaggage = sentryBaggage;
-                const message = serialize(proposal);
-                scheduleProposal(message);
-                return redis.zadd("proposals", Number(proposal.unlock + proposal.nonce), message);
-              },
-            ),
-          ),
-      ),
+      ...proposalsByAccount
+        .values()
+        .flatMap((ps) => ps.sort((a, b) => Number(a.nonce - b.nonce)).map((proposal) => scheduleProposal(proposal))),
       ...oldWithdraws.map(async (event) => {
         const withdraw = v.parse(Withdraw, { ...event.args, timestamp });
         return startSpan(
@@ -236,7 +213,36 @@ export default app.post(
   },
 );
 
-function scheduleProposal(message: string) {
+function scheduleProposal(proposal: v.InferOutput<typeof Proposal>) {
+  return startSpan(
+    {
+      name: "schedule proposal",
+      op: "queue.publish",
+      attributes: {
+        account: proposal.account,
+        amount: String(proposal.amount),
+        data: proposal.data,
+        market: proposal.market,
+        nonce: Number(proposal.nonce),
+        proposalType: proposal.proposalType,
+        timestamp: proposal.timestamp,
+        unlock: Number(proposal.unlock),
+        "messaging.destination.name": "proposals",
+        "messaging.message.id": proposal.id,
+      },
+    },
+    () => {
+      const { "sentry-trace": sentryTrace, baggage: sentryBaggage } = getTraceData();
+      proposal.sentryTrace = sentryTrace;
+      proposal.sentryBaggage = sentryBaggage;
+      const message = serialize(proposal);
+      scheduleMessage(message);
+      return redis.zadd("proposals", Number(proposal.unlock + proposal.nonce), message);
+    },
+  );
+}
+
+function scheduleMessage(message: string) {
   const { account, amount, data, id, market, nonce, proposalType, sentryBaggage, sentryTrace, timestamp, unlock } =
     v.parse(Proposal, deserialize(message));
   setTimeout((Number(unlock) + 10) * 1000 - Date.now())
@@ -280,6 +286,7 @@ function scheduleProposal(message: string) {
                       ],
                     },
                   );
+
                   parent.setStatus({ code: 1, message: "ok" });
                   if (proposalType === ProposalType.Withdraw) {
                     const receiver = v.parse(
@@ -310,6 +317,34 @@ function scheduleProposal(message: string) {
                   level: "error",
                   contexts: { proposal: { account, nonce, proposalType: ProposalType[proposalType] } },
                 });
+
+                if (
+                  error instanceof BaseError &&
+                  error.cause instanceof ContractFunctionRevertedError &&
+                  error.cause.data?.errorName === "NotNext"
+                ) {
+                  const pendingProposals = await publicClient.readContract({
+                    address: exaPreviewerAddress,
+                    functionName: "pendingProposals",
+                    abi: exaPreviewerAbi,
+                    args: [account],
+                  });
+                  const idleProposals = pendingProposals
+                    .filter((idle) => Number(idle.nonce) <= nonce)
+                    .map((idle) =>
+                      v.parse(Proposal, {
+                        ...idle.proposal,
+                        timestamp: Number(idle.proposal.timestamp),
+                        nonce: idle.nonce,
+                        account,
+                        unlock: idle.unlock,
+                      }),
+                    );
+                  setContext("exa", { idleProposals });
+                  await Promise.all(idleProposals.map((proposal) => scheduleProposal(proposal)));
+                  return redis.zrem("proposals", message);
+                }
+
                 if (error instanceof ContractFunctionExecutionError) {
                   await keeper.exaSend(
                     { name: "exa.nonce", op: "exa.nonce", attributes: { account } },
