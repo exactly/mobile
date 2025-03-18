@@ -92,6 +92,15 @@ queryClient.setQueryDefaults(["activity", "details"], {
     throw new Error("don't refetch");
   },
 });
+queryClient.setQueryDefaults(["card-upgrade"], {
+  initialData: undefined,
+  retry: false,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  queryFn: () => {
+    throw new Error("don't refetch");
+  },
+});
 
 export type ActivityItem = Awaited<ReturnType<typeof getActivity>>[number];
 export interface Withdraw {
