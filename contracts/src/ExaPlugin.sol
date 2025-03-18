@@ -136,10 +136,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function executeProposal(uint256 nonce) external {
-    (uint256 nextNonce, Proposal memory proposal) = proposalManager.nextProposal(msg.sender);
+    IProposalManager _proposalManager = proposalManager;
+    (uint256 nextNonce, Proposal memory proposal) = _proposalManager.nextProposal(msg.sender);
     if (nonce != nextNonce) revert NotNext();
 
-    if (proposal.timestamp + proposalManager.delay() > block.timestamp) revert Timelocked();
+    if (proposal.timestamp + _proposalManager.delay() > block.timestamp) revert Timelocked();
 
     if (proposal.proposalType == ProposalType.WITHDRAW || proposal.proposalType == ProposalType.REDEEM) {
       _withdraw(proposal);
@@ -247,8 +248,9 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function receiveFlashLoan(IERC20[] calldata, uint256[] calldata, uint256[] calldata, bytes calldata data) external {
+    address _flashLoaner = address(flashLoaner);
     // slither-disable-next-line incorrect-equality -- hash comparison
-    assert(msg.sender == address(flashLoaner) && flashLoaning == keccak256(data));
+    assert(msg.sender == _flashLoaner && flashLoaning == keccak256(data));
     delete flashLoaning;
 
     uint256 actualRepay = 0;
@@ -265,7 +267,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       );
       // slither-disable-next-line reentrancy-benign -- markets are safe
       delete callHash;
-      USDC.safeTransfer(address(flashLoaner), r.maxRepay);
+      USDC.safeTransfer(_flashLoaner, r.maxRepay);
       return;
     }
     CrossRepayCallbackData memory c = abi.decode(data[1:], (CrossRepayCallbackData));
@@ -277,7 +279,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       _swap(c.borrower, IERC20(c.marketIn.asset()), USDC, c.maxAmountIn, c.maxRepay, c.route);
 
     _transferFromAccount(c.borrower, USDC, address(this), actualRepay);
-    USDC.safeTransfer(address(flashLoaner), c.maxRepay);
+    USDC.safeTransfer(_flashLoaner, c.maxRepay);
 
     uint256 unspent = amountOut - actualRepay;
     if (unspent != 0) {
@@ -512,7 +514,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function hasPendingProposals(address account) external view returns (bool) {
-    return proposalManager.nonces(account) != proposalManager.queueNonces(account);
+    IProposalManager _proposalManager = proposalManager;
+    return _proposalManager.nonces(account) != _proposalManager.queueNonces(account);
   }
 
   function _preExecutionChecker(address target, bytes4 selector, bytes memory callData) internal {
