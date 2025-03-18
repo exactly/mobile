@@ -2809,6 +2809,11 @@ contract ExaPluginTest is ForkTest {
     exaPlugin.setFlashLoaner(IFlashLoaner(address(0x2)));
   }
 
+  function test_setFlashLoaner_reverts_whenAddressZero() external {
+    vm.expectRevert(ZeroAddress.selector);
+    exaPlugin.setFlashLoaner(IFlashLoaner(address(0)));
+  }
+
   function test_setCollector_sets_whenAdmin() external {
     exaPlugin.setCollector(address(0x1));
     assertEq(exaPlugin.collector(), address(0x1));
