@@ -98,6 +98,8 @@ event Proposed(
   uint256 unlock
 );
 
+event SwapperSet(address indexed swapper, address indexed sender);
+
 event TargetAllowed(address indexed target, address indexed sender, bool allowed);
 
 struct FixedPool {

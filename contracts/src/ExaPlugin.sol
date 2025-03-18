@@ -53,6 +53,7 @@ import {
   RepayData,
   RollDebtData,
   SwapData,
+  SwapperSet,
   Timelocked,
   Unauthorized,
   ZeroAddress
@@ -78,7 +79,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   IERC20 public immutable USDC;
   IWETH public immutable WETH;
-  address public immutable SWAPPER;
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
   IMarket public immutable EXA_WETH;
@@ -88,6 +88,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   IFlashLoaner public flashLoaner;
   IProposalManager public proposalManager;
+  address public swapper;
   address public collector;
   mapping(address plugin => bool allowed) public allowlist;
 
@@ -104,12 +105,11 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     DEBT_MANAGER = p.debtManager;
     INSTALLMENTS_ROUTER = p.installmentsRouter;
     ISSUER_CHECKER = p.issuerChecker;
-    if (p.swapper == address(0)) revert ZeroAddress();
-    SWAPPER = p.swapper;
 
     _grantRole(KEEPER_ROLE, p.firstKeeper);
     _grantRole(DEFAULT_ADMIN_ROLE, p.owner);
     _setFlashLoaner(p.flashLoaner);
+    _setSwapper(p.swapper);
     _setCollector(p.collector);
     _setProposalManager(p.proposalManager);
 
@@ -125,13 +125,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
     uint256 balanceIn = assetIn.balanceOf(msg.sender);
     uint256 balanceOut = assetOut.balanceOf(msg.sender);
+    address _swapper = swapper;
 
-    _approveAndExecuteFromSender(SWAPPER, address(assetIn), maxAmountIn, route);
+    _approveAndExecuteFromSender(_swapper, address(assetIn), maxAmountIn, route);
 
     amountOut = assetOut.balanceOf(msg.sender) - balanceOut;
     if (amountOut < minAmountOut) revert Disagreement();
 
-    _approveFromSender(address(assetIn), SWAPPER, 0);
+    _approveFromSender(address(assetIn), _swapper, 0);
     amountIn = balanceIn - assetIn.balanceOf(msg.sender);
   }
 
@@ -305,6 +306,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function setProposalManager(IProposalManager proposalManager_) external onlyRole(DEFAULT_ADMIN_ROLE) {
     _setProposalManager(proposalManager_);
+  }
+
+  function setSwapper(address swapper_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    _setSwapper(swapper_);
   }
 
   function allowPlugin(address plugin, bool allowed) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -712,6 +717,12 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     emit ProposalManagerSet(proposalManager_, msg.sender);
   }
 
+  function _setSwapper(address swapper_) internal {
+    if (swapper_ == address(0)) revert ZeroAddress();
+    swapper = swapper_;
+    emit SwapperSet(swapper_, msg.sender);
+  }
+
   function _swap(Proposal memory proposal) internal {
     _withdrawFromSender(proposal.market, proposal.amount, msg.sender);
     SwapData memory data = abi.decode(proposal.data, (SwapData));
@@ -723,16 +734,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     nonReentrant
     returns (uint256 amountIn, uint256 amountOut)
   {
+    address _swapper = swapper;
     uint256 balanceIn = assetIn.balanceOf(address(this));
     uint256 balanceOut = assetOut.balanceOf(address(this));
 
-    assetIn.forceApprove(SWAPPER, maxAmountIn);
-    SWAPPER.functionCall(route);
+    assetIn.forceApprove(_swapper, maxAmountIn);
+    _swapper.functionCall(route);
 
     amountOut = assetOut.balanceOf(address(this)) - balanceOut;
     if (minAmountOut > amountOut) revert Disagreement();
 
-    assetIn.forceApprove(SWAPPER, 0);
+    assetIn.forceApprove(_swapper, 0);
     amountIn = balanceIn - assetIn.balanceOf(address(this));
   }
 
@@ -746,13 +758,14 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   ) internal nonReentrant returns (uint256 amountIn, uint256 amountOut) {
     uint256 balanceIn = assetIn.balanceOf(account);
     uint256 balanceOut = assetOut.balanceOf(account);
+    address _swapper = swapper;
 
-    _approveAndExecute(account, SWAPPER, address(assetIn), maxAmountIn, route);
+    _approveAndExecute(account, _swapper, address(assetIn), maxAmountIn, route);
 
     amountOut = assetOut.balanceOf(account) - balanceOut;
     if (minAmountOut > amountOut) revert Disagreement();
 
-    _approve(account, address(assetIn), SWAPPER, 0);
+    _approve(account, address(assetIn), _swapper, 0);
     amountIn = balanceIn - assetIn.balanceOf(account);
   }
 

@@ -74,6 +74,7 @@ import {
   Replay,
   RollDebtData,
   SwapData,
+  SwapperSet,
   TargetAllowed,
   Timelocked,
   Unauthorized,
@@ -2834,6 +2835,34 @@ contract ExaPluginTest is ForkTest {
     vm.expectEmit(true, true, true, true, address(exaPlugin));
     emit CollectorSet(newCollector, address(this));
     exaPlugin.setCollector(newCollector);
+  }
+
+  function test_setSwapper_sets_whenAdmin() external {
+    exaPlugin.setSwapper(address(0x1));
+    assertEq(exaPlugin.swapper(), address(0x1));
+  }
+
+  function test_setSwapper_emitsSwapperSet() external {
+    address newSwapper = address(0x1);
+    vm.expectEmit(true, true, true, true, address(exaPlugin));
+    emit SwapperSet(newSwapper, address(this));
+    exaPlugin.setSwapper(newSwapper);
+  }
+
+  function test_setSwapper_reverts_whenNotAdmin() external {
+    address nonAdmin = address(0x1);
+    vm.startPrank(nonAdmin);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        IAccessControl.AccessControlUnauthorizedAccount.selector, nonAdmin, exaPlugin.DEFAULT_ADMIN_ROLE()
+      )
+    );
+    exaPlugin.setSwapper(address(0x2));
+  }
+
+  function test_setSwapper_reverts_whenAddressZero() external {
+    vm.expectRevert(ZeroAddress.selector);
+    exaPlugin.setSwapper(address(0));
   }
 
   function test_allowPlugin_sets_whenAdmin() external {
