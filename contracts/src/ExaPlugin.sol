@@ -465,7 +465,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     override
     returns (bytes memory)
   {
-    if (functionId == uint8(FunctionId.EXECUTION_HOOK_BATCH)) return _checkBatch(abi.decode(callData[4:], (Call[])));
+    if (functionId == uint8(FunctionId.EXECUTION_HOOK_BATCH)) {
+      _checkBatch(abi.decode(callData[4:], (Call[])));
+      return "";
+    }
     if (functionId == uint8(FunctionId.EXECUTION_HOOK_SINGLE)) {
       address target = address(bytes20(callData[16:36]));
       bytes4 selector = bytes4(callData[132:136]);
@@ -485,7 +488,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
     revert NotImplemented(msg.sig, functionId);
   }
 
-  function _checkBatch(Call[] memory calls) internal returns (bytes memory) {
+  function _checkBatch(Call[] memory calls) internal {
     for (uint256 i = 0; i < calls.length; ++i) {
       Call memory call = calls[i];
       bytes4 selector = bytes4(call.data.slice(0, 4));
@@ -510,7 +513,6 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       // slither-disable-next-line reentrancy-benign -- proposal manager is safe
       _preExecutionChecker(call.target, selector, data);
     }
-    return "";
   }
 
   function hasPendingProposals(address account) external view returns (bool) {
