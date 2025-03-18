@@ -92,6 +92,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   mapping(address plugin => bool allowed) public allowlist;
 
   bytes32 public callHash;
+  bytes32 private flashLoaning;
+  address private uninstalling;
 
   constructor(Parameters memory p) {
     USDC = IERC20(p.exaUSDC.asset());
@@ -246,8 +248,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   function receiveFlashLoan(IERC20[] calldata, uint256[] calldata, uint256[] calldata, bytes calldata data) external {
     // slither-disable-next-line incorrect-equality -- hash comparison
-    assert(msg.sender == address(flashLoaner) && callHash == keccak256(data));
-    delete callHash;
+    assert(msg.sender == address(flashLoaner) && flashLoaning == keccak256(data));
+    delete flashLoaning;
 
     uint256 actualRepay = 0;
     if (data[0] == 0x01) {
@@ -255,11 +257,13 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       // slither-disable-next-line reentrancy-no-eth -- markets are safe
       actualRepay = EXA_USDC.repayAtMaturity(r.maturity, r.positionAssets, r.maxRepay, r.borrower);
 
+      // slither-disable-next-line reentrancy-benign -- markets are safe
       callHash = keccak256(abi.encode(EXA_USDC, IERC4626.withdraw.selector, actualRepay, address(this), r.borrower))
         | bytes32(uint256(1));
       _execute(
         r.borrower, address(EXA_USDC), 0, abi.encodeCall(IMarket.withdraw, (actualRepay, address(this), r.borrower))
       );
+      // slither-disable-next-line reentrancy-benign -- markets are safe
       delete callHash;
       USDC.safeTransfer(address(flashLoaner), r.maxRepay);
       return;
@@ -472,8 +476,8 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       return "";
     }
     if (functionId == uint8(FunctionId.EXECUTION_HOOK_UNINSTALL)) {
-      if (_willUninstallThis(callData[4:]) && callHash != bytes32(bytes20(msg.sender))) revert Unauthorized();
-      delete callHash;
+      if (_willUninstallThis(callData[4:]) && uninstalling != msg.sender) revert Unauthorized();
+      delete uninstalling;
       return "";
     }
     revert NotImplemented(msg.sig, functionId);
@@ -497,7 +501,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
           try this.hasPendingProposals(msg.sender) returns (bool pending) {
             if (pending) revert PendingProposals();
           } catch { } // solhint-disable-line no-empty-blocks
-          callHash = bytes32(bytes20(msg.sender));
+          uninstalling = msg.sender;
         }
         continue;
       }
@@ -622,7 +626,7 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function _hash(bytes memory data) internal returns (bytes memory) {
-    callHash = keccak256(data);
+    flashLoaning = keccak256(data);
     return data;
   }
 
