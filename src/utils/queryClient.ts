@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { persistQueryClientRestore, persistQueryClientSubscribe } from "@tanstack/query-persist-client-core";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryCache, QueryClient } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { deserialize, serialize } from "wagmi";
 import { structuralSharing } from "wagmi/query";
@@ -10,7 +10,10 @@ import reportError from "./reportError";
 import type { getActivity } from "./server";
 
 export const persister = createAsyncStoragePersister({ serialize, deserialize, storage: AsyncStorage });
-const queryClient = new QueryClient({ defaultOptions: { queries: { structuralSharing } } });
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: reportError }),
+  defaultOptions: { queries: { structuralSharing } },
+});
 
 if (typeof window !== "undefined") {
   persistQueryClientRestore({ queryClient, persister, maxAge: Infinity }).catch(reportError);
