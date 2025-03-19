@@ -18,7 +18,12 @@ import { DeployRefunder } from "../script/Refunder.s.sol";
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import { ExaPlugin } from "../src/ExaPlugin.sol";
 import {
-  ExaPreviewer, ICollectableMarket, IProposalManager, PendingProposal, ProposalType
+  Asset,
+  ExaPreviewer,
+  ICollectableMarket,
+  IProposalManager,
+  PendingProposal,
+  ProposalType
 } from "../src/ExaPreviewer.sol";
 import { BorrowAtMaturityData, IExaAccount, InsufficientLiquidity } from "../src/IExaAccount.sol";
 import { IssuerChecker } from "../src/IssuerChecker.sol";
@@ -145,9 +150,11 @@ contract ExaPreviewerTest is ForkTest {
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
     DeployExaPreviewer ep = new DeployExaPreviewer();
+    set("Auditor", address(p.auditor()));
     set("MarketUSDC", address(exaUSDC));
     set("ProposalManager", address(proposalManager));
     ep.run();
+    unset("Auditor");
     unset("MarketUSDC");
     unset("ProposalManager");
     previewer = ep.previewer();
@@ -318,6 +325,17 @@ contract ExaPreviewerTest is ForkTest {
     );
 
     assertEq(usdc.balanceOf(address(exaPlugin.collector())), 30e6);
+  }
+
+  function test_assets_returnsAssets() external view {
+    Asset[] memory assets = previewer.assets();
+    assertEq(assets.length, 3);
+    assertTrue(assets[0].market == address(exaEXA));
+    assertTrue(assets[1].market == address(exaUSDC));
+    assertTrue(assets[2].market == address(exaWETH));
+    assertTrue(assets[0].asset == exaEXA.asset());
+    assertTrue(assets[1].asset == exaUSDC.asset());
+    assertTrue(assets[2].asset == exaWETH.asset());
   }
 
   // solhint-enable func-name-mixedcase
