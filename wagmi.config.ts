@@ -28,10 +28,13 @@ const balancerVault = loadDeployment("BalancerVault");
 const [exaPlugin] = loadBroadcast("ExaPlugin").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
 const [proposalManager] = loadBroadcast("ProposalManager").transactions;
+const [refunder] = loadBroadcast("Refunder").transactions;
 const [exaPreviewer] = loadBroadcast("ExaPreviewer").transactions;
 const [, mockSwapper] =
   chainId === optimismSepolia.id ? loadBroadcast("Mocks").transactions : [{}, { contractAddress: zeroAddress }];
-if (!exaPlugin || !issuerChecker || !proposalManager || !exaPreviewer) throw new Error("missing contracts");
+if (!exaPlugin || !issuerChecker || !proposalManager || !exaPreviewer || !refunder) {
+  throw new Error("missing contracts");
+}
 
 execSync("forge build", { cwd: "contracts", stdio: "inherit" });
 
@@ -101,6 +104,7 @@ export default defineConfig([
         balancerVault: balancerVault.address,
         issuerChecker: issuerChecker.contractAddress,
         proposalManager: proposalManager.contractAddress,
+        refunder: refunder.contractAddress,
       }),
       foundry({
         forge: { build: false },
@@ -108,6 +112,7 @@ export default defineConfig([
         include: [
           "IssuerChecker.sol/IssuerChecker.json",
           "ProposalManager.sol/ProposalManager.json",
+          "Refunder.sol/Refunder.json",
           "UpgradeableModularAccount.sol/UpgradeableModularAccount.json",
         ],
       }),

@@ -16,4 +16,5 @@ vi.mock("../../generated/contracts", async (importOriginal) => ({
   ...(await importOriginal()),
   issuerCheckerAddress: inject("IssuerChecker"),
   proposalManagerAddress: inject("ProposalManager"),
+  refunderAddress: inject("Refunder"),
 }));

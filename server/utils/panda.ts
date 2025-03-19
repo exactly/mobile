@@ -195,8 +195,13 @@ export function signIssuerOp({ account, amount, timestamp }: { account: Address;
         { name: "amount", type: "uint256" },
         { name: "timestamp", type: "uint40" },
       ],
+      Refund: [
+        { name: "account", type: "address" },
+        { name: "amount", type: "uint256" },
+        { name: "timestamp", type: "uint40" },
+      ],
     },
-    primaryType: "Collection",
-    message: { account, amount, timestamp },
+    primaryType: amount < 0n ? "Refund" : "Collection",
+    message: { account, amount: amount < 0n ? -amount : amount, timestamp },
   });
 }

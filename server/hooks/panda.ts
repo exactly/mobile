@@ -38,7 +38,14 @@ import {
 } from "viem";
 
 import database, { cards, transactions } from "../database/index";
-import { auditorAbi, issuerCheckerAbi, marketAbi, proposalManagerAbi } from "../generated/contracts";
+import {
+  auditorAbi,
+  issuerCheckerAbi,
+  marketAbi,
+  proposalManagerAbi,
+  refunderAbi,
+  refunderAddress,
+} from "../generated/contracts";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
 import { collectors, headerValidator, signIssuerOp } from "../utils/panda";
@@ -129,8 +136,8 @@ export default new Hono().post(
 
     switch (payload.action) {
       case "requested": {
+        if (payload.body.spend.amount < 0) return c.json({});
         const { account, amount, call, transaction } = await prepareCollection(payload);
-        if (amount < 0) return c.json("negative amount", 501);
         const authorize = () => {
           try {
             track({
@@ -212,9 +219,124 @@ export default new Hono().post(
           return c.json({}, 569 as UnofficialStatusCode);
         }
       }
+      case "completed":
+        if (payload.body.spend.amount >= 0) return c.json({});
+      // falls through
       case "updated":
+        if (payload.body.spend.status === "reversed" || payload.body.spend.status === "completed") {
+          getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.refund`);
+          const refundAmountUsd =
+            (payload.body.spend.status === "reversed"
+              ? -payload.body.spend.authorizationUpdateAmount
+              : -payload.body.spend.amount) / 100;
+          const refundAmount = BigInt(Math.round(refundAmountUsd * 1e6));
+          const card = await database.query.cards.findFirst({
+            columns: {},
+            where: eq(cards.id, payload.body.spend.cardId),
+            with: { credential: { columns: { account: true } } },
+          });
+          if (!card) throw new Error("card not found");
+          const account = v.parse(Address, card.credential.account);
+          setUser({ id: account });
+
+          const tx = await database.query.transactions.findFirst({
+            where: and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
+          });
+          if (tx) {
+            const payloads = v.parse(v.object({ bodies: v.array(Payload) }), tx.payload);
+            const totalSpendUsd =
+              payloads.bodies.reduce((accumulator, body) => {
+                if (body.action === "created" && body.body.spend.status === "pending") {
+                  return accumulator + body.body.spend.amount;
+                }
+                if (
+                  body.action === "updated" &&
+                  (body.body.spend.status === "pending" || body.body.spend.status === "reversed")
+                ) {
+                  return accumulator + body.body.spend.authorizationUpdateAmount;
+                }
+                return accumulator;
+              }, 0) / 100;
+            const totalSpend = BigInt(Math.round(totalSpendUsd * 1e6));
+            if (refundAmount > totalSpend) return c.json("refund higher than spend", 552 as UnofficialStatusCode);
+          } else if (payload.body.spend.status === "reversed") {
+            return c.json("spending transaction not found", 553 as UnofficialStatusCode);
+          }
+          const timestamp = Math.floor(Date.now() / 1000); // TODO use payload timestamp when provided
+          const signature = await signIssuerOp({ account, amount: -refundAmount, timestamp }); // TODO replace with payload signature
+          try {
+            await keeper.exaSend(
+              { name: "exa.refund", op: "exa.refund", attributes: { account } },
+              {
+                address: v.parse(Address, refunderAddress),
+                functionName: "refund",
+                args: [account, refundAmount, timestamp, signature],
+                abi: [
+                  ...auditorAbi,
+                  ...exaPluginAbi,
+                  ...issuerCheckerAbi,
+                  ...marketAbi,
+                  ...refunderAbi,
+                  ...upgradeableModularAccountAbi,
+                ],
+              },
+              {
+                async onHash(hash) {
+                  await (tx
+                    ? database
+                        .update(transactions)
+                        .set({
+                          hashes: [...tx.hashes, hash],
+                          payload: {
+                            ...(tx.payload as object),
+                            bodies: [...parseBodies(tx.payload), { ...jsonBody, createdAt: new Date().toISOString() }],
+                          },
+                        })
+                        .where(
+                          and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
+                        )
+                    : database.insert(transactions).values([
+                        {
+                          id: payload.body.id,
+                          cardId: payload.body.spend.cardId,
+                          hashes: [hash],
+                          payload: {
+                            bodies: [{ ...jsonBody, createdAt: new Date().toISOString() }],
+                            type: "panda",
+                            merchant: {
+                              name: payload.body.spend.merchantName,
+                              city: payload.body.spend.merchantCity,
+                              country: payload.body.spend.merchantCountry,
+                            },
+                          },
+                        },
+                      ]));
+                },
+              },
+            );
+            try {
+              track({
+                userId: account,
+                event: "TransactionRefund",
+                properties: {
+                  id: payload.body.id,
+                  type: payload.body.spend.status === "reversed" ? "reversal" : "refund",
+                  usdAmount: refundAmountUsd,
+                },
+              });
+            } catch (error: unknown) {
+              captureException(error, { level: "error" });
+            }
+            return c.json({});
+          } catch (error: unknown) {
+            captureException(error, { level: "fatal", contexts: {} });
+            return c.json(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
+          }
+        }
+      // falls through
       case "created": {
         if (payload.body.spend.status !== "pending") return c.json({});
+        if (payload.body.spend.amount < 0) return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.clearing`);
         const { account, call, mode } = await prepareCollection(payload);
         if (!call) return c.json({});

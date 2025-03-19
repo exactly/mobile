@@ -12,9 +12,11 @@ import chain, {
   exaPluginAbi,
   upgradeableModularAccountAbi,
 } from "@exactly/common/generated/chain";
+import { Address } from "@exactly/common/validation";
 import { captureException } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
+import { parse } from "valibot";
 import {
   BaseError,
   createWalletClient,
@@ -149,6 +151,22 @@ describe("card operations", () => {
             body: {
               ...authorization.json.body,
               spend: { ...authorization.json.body.spend, cardId: "card", amount: 0 },
+            },
+          },
+        });
+
+        expect(response.status).toBe(200);
+      });
+
+      it("authorizes negative amount", async () => {
+        const response = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: {
+              ...authorization.json.body,
+              spend: { ...authorization.json.body.spend, cardId: "card", amount: -100 },
             },
           },
         });
@@ -311,9 +329,9 @@ describe("card operations", () => {
               id: operation,
               spend: {
                 ...authorization.json.body.spend,
-                cardId,
-                authorizationUpdateAmount: update,
                 amount: amount + update,
+                authorizationUpdateAmount: update,
+                cardId,
                 localAmount: amount + update,
               },
             },
@@ -508,6 +526,256 @@ describe("card operations", () => {
       });
     });
   });
+
+  describe("refund and reversal", () => {
+    describe("with collateral", () => {
+      beforeAll(async () => {
+        await Promise.all(
+          [account, inject("Refunder")].map((receiver) =>
+            keeper.writeContract({
+              address: inject("USDC"),
+              abi: [
+                {
+                  type: "function",
+                  name: "mint",
+                  inputs: [{ type: "address" }, { type: "uint256" }],
+                  outputs: [],
+                  stateMutability: "nonpayable",
+                },
+              ],
+              functionName: "mint",
+              args: [receiver, 100_000_000n],
+            }),
+          ),
+        );
+        await keeper.writeContract({
+          address: account,
+          abi: exaPluginAbi,
+          functionName: "poke",
+          args: [inject("MarketUSDC")],
+        });
+      });
+
+      it("handles reversal", async () => {
+        const amount = 2073;
+        const operation = "reversal";
+        const cardId = "card";
+
+        await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
+            },
+          },
+        });
+
+        const response = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "updated",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: {
+                ...authorization.json.body.spend,
+                cardId,
+                authorizationUpdateAmount: -amount,
+                status: "reversed",
+              },
+            },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const refundReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[1] as Hex });
+        const deposit = refundReceipt.logs
+          .filter((l) => l.address.toLowerCase() === inject("MarketUSDC").toLowerCase())
+          .map((l) => decodeEventLog({ abi: marketAbi, eventName: "Deposit", topics: l.topics, data: l.data }))
+          .find((l) => l.args.owner === account);
+
+        expect(deposit?.args.assets).toBe(BigInt(amount * 1e4));
+        expect(response.status).toBe(200);
+      });
+
+      it("fails with refund higher than spend", async () => {
+        const amount = 800;
+        const operation = "high-reversal";
+        const cardId = "card";
+
+        await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
+            },
+          },
+        });
+
+        await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "updated",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, authorizationUpdateAmount: -400, status: "reversed" },
+            },
+          },
+        });
+
+        const response = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "updated",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: {
+                ...authorization.json.body.spend,
+                cardId,
+                authorizationUpdateAmount: -2 * amount,
+                status: "reversed",
+              },
+            },
+          },
+        });
+
+        await expect(response.json()).resolves.toBe("refund higher than spend");
+        expect(response.status).toBe(552);
+      });
+
+      it("fails with spending transaction not found", async () => {
+        const amount = 5;
+        const operation = "reversal-without-pending";
+        const cardId = "card";
+
+        const response = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "updated",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: {
+                ...authorization.json.body.spend,
+                cardId,
+                authorizationUpdateAmount: -amount,
+                status: "reversed",
+              },
+            },
+          },
+        });
+
+        await expect(response.json()).resolves.toBe("spending transaction not found");
+        expect(response.status).toBe(553);
+      });
+
+      it("handles refund", async () => {
+        const amount = 2000;
+        const operation = "refund";
+        const cardId = "card";
+
+        await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
+            },
+          },
+        });
+
+        const response = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "completed",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: {
+                ...authorization.json.body.spend,
+                cardId,
+                amount: -amount,
+                localAmount: -amount,
+                status: "completed",
+              },
+            },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const refundReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[1] as Hex });
+        const deposit = refundReceipt.logs
+          .filter((l) => l.address.toLowerCase() === inject("MarketUSDC").toLowerCase())
+          .map((l) => decodeEventLog({ abi: marketAbi, eventName: "Deposit", topics: l.topics, data: l.data }))
+          .find((l) => l.args.owner === account);
+
+        expect(deposit?.args.assets).toBe(BigInt(amount * 1e4));
+        expect(response.status).toBe(200);
+      });
+
+      it("refunds without traceable spending", async () => {
+        const amount = 3000;
+        const operation = "refund-without-spending";
+        const cardId = "card";
+
+        const response = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "completed",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: {
+                ...authorization.json.body.spend,
+                cardId,
+                amount: -amount,
+                localAmount: -amount,
+                status: "completed",
+              },
+            },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const refundReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
+        const deposit = refundReceipt.logs
+          .filter((l) => l.address.toLowerCase() === inject("MarketUSDC").toLowerCase())
+          .map((l) => decodeEventLog({ abi: marketAbi, eventName: "Deposit", topics: l.topics, data: l.data }))
+          .find((l) => l.args.owner === account);
+
+        expect(deposit?.args.assets).toBe(BigInt(amount * 1e4));
+        expect(response.status).toBe(200);
+      });
+    });
+  });
 });
 
 const authorization = {
@@ -525,16 +793,16 @@ const authorization = {
         currency: "usd",
         localAmount: 900,
         localCurrency: "usd",
-        merchantName: "99999",
-        merchantCity: "buenos aires",
-        merchantCountry: "argentina",
         merchantCategory: "food",
         merchantCategoryCode: "FOOD",
-        userId: "2cf0c886-f7c0-40f3-a8cd-3c4ab3997b66",
-        userFirstName: "David",
-        userLastName: "Mayer",
-        userEmail: "mail@mail.com",
+        merchantCity: "buenos aires",
+        merchantCountry: "argentina",
+        merchantName: "99999",
         status: "pending",
+        userEmail: "mail@mail.com",
+        userFirstName: "David",
+        userId: "2cf0c886-f7c0-40f3-a8cd-3c4ab3997b66",
+        userLastName: "Mayer",
       },
     },
   },
@@ -566,12 +834,16 @@ const callFrame = {
   input: "0x",
 } as const;
 
-function usdcToCollector(purchaseReceipt: TransactionReceipt) {
+function usdcToAddress(purchaseReceipt: TransactionReceipt, address: Address) {
   return purchaseReceipt.logs
     .filter((l) => l.address.toLowerCase() === inject("USDC").toLowerCase())
     .map((l) => decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics: l.topics, data: l.data }))
-    .filter((l) => l.args.to === "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400")
+    .filter((l) => l.args.to === address)
     .reduce((total, l) => total + l.args.value, 0n);
+}
+
+function usdcToCollector(purchaseReceipt: TransactionReceipt) {
+  return usdcToAddress(purchaseReceipt, parse(Address, "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400"));
 }
 
 function execute(calldata: Hex) {

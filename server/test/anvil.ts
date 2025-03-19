@@ -169,16 +169,16 @@ export default async function setup({ provide }: TestProject) {
     const files = await readdir(__dirname, { recursive: true }); // eslint-disable-line unicorn/prefer-module
     for (const testFile of files.filter((file) => file.endsWith(".test.ts"))) {
       const address = privateKeyToAddress(keccak256(toBytes(testFile)));
-      await Promise.all([
-        anvilClient.setBalance({ address, value: 10n ** 24n }),
-        anvilClient.writeContract({
-          address: exaPlugin,
+      await anvilClient.setBalance({ address, value: 10n ** 24n });
+      for (const contract of [exaPlugin, refunder]) {
+        await anvilClient.writeContract({
+          address: contract,
           functionName: "grantRole",
           args: [keccak256(toHex("KEEPER_ROLE")), address],
           abi: exaPluginAbi,
           account: null,
-        }),
-      ]);
+        });
+      }
     }
   }
 
