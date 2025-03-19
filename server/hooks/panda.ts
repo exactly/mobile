@@ -38,7 +38,14 @@ import {
 } from "viem";
 
 import database, { cards, transactions } from "../database/index";
-import { auditorAbi, issuerCheckerAbi, marketAbi, proposalManagerAbi } from "../generated/contracts";
+import {
+  auditorAbi,
+  issuerCheckerAbi,
+  marketAbi,
+  proposalManagerAbi,
+  refunderAbi,
+  refunderAddress,
+} from "../generated/contracts";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
 import { collectors, headerValidator, signIssuerOp } from "../utils/panda";
@@ -134,8 +141,8 @@ export default new Hono().post(
 
     switch (payload.action) {
       case "requested": {
+        if (payload.body.spend.amount < 0) return c.json("refund authorization accepted", 200);
         const { account, amount, call, transaction } = await prepareCollection(payload);
-        if (amount < 0) return c.json("negative amount", 501);
         const authorize = () => {
           try {
             track({
@@ -218,6 +225,108 @@ export default new Hono().post(
         }
       }
       case "updated":
+        if (payload.body.spend.status === "reversed") {
+          try {
+            getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.reverse`);
+            const card = await database.query.cards.findFirst({
+              columns: {},
+              where: eq(cards.id, payload.body.spend.cardId),
+              with: { credential: { columns: { account: true } } },
+            });
+            if (!card) throw new Error("card not found");
+            const account = v.parse(Address, card.credential.account);
+            setUser({ id: account });
+
+            const tx = await database.query.transactions.findFirst({
+              where: and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
+            });
+            if (!tx) throw new Error("spending transaction not found");
+
+            const payloads = v.parse(v.object({ bodies: v.array(Payload) }), tx.payload);
+
+            const totalSpendUsd =
+              payloads.bodies.reduce((accumulator, body) => {
+                if (body.action === "created" && body.body.spend.status === "pending") {
+                  return accumulator + body.body.spend.amount;
+                }
+                if (
+                  body.action === "updated" &&
+                  (body.body.spend.status === "pending" || body.body.spend.status === "reversed")
+                ) {
+                  return accumulator + body.body.spend.authorizationUpdateAmount;
+                }
+                return accumulator;
+              }, 0) / 100;
+            const totalSpend = BigInt(Math.round(totalSpendUsd * 1e6));
+            const reversalAmountUsd = -payload.body.spend.authorizationUpdateAmount / 100;
+            const reversalAmount = BigInt(Math.round(reversalAmountUsd * 1e6));
+            if (reversalAmount > totalSpend) {
+              throw new Error(`reversal higher than spent: ${reversalAmount} > ${totalSpend}`);
+            }
+
+            // TODO use payload timestamp when provided
+            const timestamp = Math.floor(Date.now() / 1000);
+
+            // TODO replace with payload signature
+            const signature = await signIssuerOp({
+              account,
+              amount: -reversalAmount,
+              timestamp,
+            });
+
+            await keeper.exaSend(
+              { name: "exa.reversal", op: "exa.reversal", attributes: { account } },
+              {
+                address: v.parse(Address, refunderAddress),
+                functionName: "refund",
+                args: [account, reversalAmount, timestamp, signature],
+                abi: [
+                  ...auditorAbi,
+                  ...exaPluginAbi,
+                  ...issuerCheckerAbi,
+                  ...marketAbi,
+                  ...refunderAbi,
+                  ...upgradeableModularAccountAbi,
+                ],
+              },
+              {
+                async onHash(hash) {
+                  await database
+                    .update(transactions)
+                    .set({
+                      hashes: [...tx.hashes, hash],
+                      payload: {
+                        ...(tx.payload as object),
+                        bodies: [...parseBodies(tx.payload), { ...jsonBody, createdAt: new Date().toISOString() }],
+                      },
+                    })
+                    .where(
+                      and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
+                    );
+                },
+              },
+            );
+            try {
+              track({
+                userId: account,
+                event: "TransactionRefund",
+                properties: {
+                  id: payload.body.id,
+                  type: "reversed",
+                  usdAmount: reversalAmountUsd,
+                },
+              });
+            } catch (error: unknown) {
+              captureException(error, { level: "error" });
+            }
+            return c.json({});
+          } catch (error: unknown) {
+            captureException(error, { level: "fatal", contexts: {} });
+            return c.json(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
+          }
+        }
+      // falls through
+
       case "created": {
         if (payload.body.spend.status !== "pending") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.clearing`);

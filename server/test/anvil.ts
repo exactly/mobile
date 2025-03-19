@@ -10,6 +10,7 @@ import { foundry } from "viem/chains";
 import type { TestProject } from "vitest/node";
 
 import anvilClient from "./anvilClient";
+import { refunderAbi } from "../generated/contracts";
 
 export default async function setup({ provide }: TestProject) {
   const instance = anvil({ codeSizeLimit: 69_000, blockBaseFeePerGas: 1n });
@@ -179,6 +180,13 @@ export default async function setup({ provide }: TestProject) {
           account: null,
         }),
       ]);
+      await anvilClient.writeContract({
+        address: refunder.contractAddress,
+        functionName: "grantRole",
+        args: [keccak256(toHex("KEEPER_ROLE")), address],
+        abi: refunderAbi,
+        account: null,
+      });
     }
   }
 
