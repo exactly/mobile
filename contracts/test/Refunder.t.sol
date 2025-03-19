@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { ForkTest } from "./Fork.t.sol";
 
+import { IAccessControl } from "openzeppelin-contracts/contracts/access/IAccessControl.sol";
 import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 
 import { Expired, IMarket, Replay, Timelocked, Unauthorized } from "../src/IExaAccount.sol";
@@ -115,6 +116,18 @@ contract RefunderTest is ForkTest {
     vm.expectRevert(Replay.selector);
     refunder.refund(bob, amount, timestamp, _issuerOp(bob, amount, timestamp));
     assertEq(exaUSDC.balanceOf(bob), amount);
+  }
+
+  function test_withdraw_withdraws() external {
+    refunder.withdraw(address(usdc), address(0x666), 100e6);
+    assertEq(usdc.balanceOf(address(0x666)), 100e6);
+  }
+
+  function test_withdraw_reverts_whenNotAdmin() external {
+    address notAdmin = address(0x123);
+    vm.expectRevert(abi.encodeWithSelector(IAccessControl.AccessControlUnauthorizedAccount.selector, notAdmin, 0));
+    vm.prank(notAdmin);
+    refunder.withdraw(address(usdc), address(this), 100e6);
   }
 
   // solhint-enable func-name-mixedcase
