@@ -12,9 +12,11 @@ import chain, {
   exaPluginAbi,
   upgradeableModularAccountAbi,
 } from "@exactly/common/generated/chain";
+import { Address } from "@exactly/common/validation";
 import * as sentry from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
+import { parse } from "valibot";
 import {
   BaseError,
   createWalletClient,
@@ -34,7 +36,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import database, { cards, credentials, transactions } from "../../database";
-import { auditorAbi, issuerCheckerAbi, marketAbi } from "../../generated/contracts";
+import { auditorAbi, issuerCheckerAbi, marketAbi, refunderAddress } from "../../generated/contracts";
 import app from "../../hooks/panda";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
@@ -151,6 +153,22 @@ describe("card operations", () => {
             body: {
               ...authorization.json.body,
               spend: { ...authorization.json.body.spend, cardId: "card", amount: 0 },
+            },
+          },
+        });
+
+        expect(response.status).toBe(200);
+      });
+
+      it("authorizes negative amount", async () => {
+        const response = await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: {
+              ...authorization.json.body,
+              spend: { ...authorization.json.body.spend, cardId: "card", amount: -100 },
             },
           },
         });
@@ -319,9 +337,9 @@ describe("card operations", () => {
               id: operation,
               spend: {
                 ...authorization.json.body.spend,
-                cardId,
-                authorizationUpdateAmount: update,
                 amount: amount + update,
+                authorizationUpdateAmount: update,
+                cardId,
                 localAmount: amount + update,
               },
             },
@@ -525,6 +543,145 @@ describe("card operations", () => {
       });
     });
   });
+
+  describe("refunds", () => {
+    describe("with collateral", () => {
+      beforeAll(async () => {
+        await keeper.writeContract({
+          address: inject("USDC"),
+          abi: [
+            {
+              type: "function",
+              name: "mint",
+              inputs: [{ type: "address" }, { type: "uint256" }],
+              outputs: [],
+              stateMutability: "nonpayable",
+            },
+          ],
+          functionName: "mint",
+          args: [account, 100_000_000n],
+        });
+        await keeper.writeContract({
+          address: inject("USDC"),
+          abi: [
+            {
+              type: "function",
+              name: "mint",
+              inputs: [{ type: "address" }, { type: "uint256" }],
+              outputs: [],
+              stateMutability: "nonpayable",
+            },
+          ],
+          functionName: "mint",
+          args: [parse(Address, refunderAddress), 100_000_000n],
+        });
+        await keeper.writeContract({
+          address: account,
+          abi: exaPluginAbi,
+          functionName: "poke",
+          args: [inject("MarketUSDC")],
+        });
+      });
+
+      it("reversal", async () => {
+        const amount = 2073;
+        const operation = "reversal";
+        const cardId = "card";
+
+        await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
+            },
+          },
+        });
+
+        const response = await appClient.index.$post({
+          ...transactionReversed,
+          header: { signature: "panda-signature" },
+          json: {
+            ...transactionReversed.json,
+            action: "updated",
+            body: {
+              ...transactionReversed.json.body,
+              id: operation,
+              spend: { ...transactionReversed.json.body.spend, cardId, authorizationUpdateAmount: -amount },
+            },
+          },
+        });
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const refundReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[1] as Hex });
+        const deposit = refundReceipt.logs
+          .filter((l) => l.address.toLowerCase() === inject("MarketUSDC").toLowerCase())
+          .map((l) => decodeEventLog({ abi: marketAbi, eventName: "Deposit", topics: l.topics, data: l.data }))
+          .find((l) => l.args.owner === account);
+
+        expect(deposit?.args.assets).toBe(BigInt(amount * 1e4));
+        expect(response.status).toBe(200);
+      });
+
+      it("fails with reversal higher than spent", async () => {
+        const amount = 800;
+        const operation = "high reversal";
+        const cardId = "card";
+
+        const captureException = vi.spyOn(sentry, "captureException");
+        captureException.mockImplementation(() => "");
+
+        await appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
+            },
+          },
+        });
+
+        await appClient.index.$post({
+          ...transactionReversed,
+          header: { signature: "panda-signature" },
+          json: {
+            ...transactionReversed.json,
+            action: "updated",
+            body: {
+              ...transactionReversed.json.body,
+              id: operation,
+              spend: { ...transactionReversed.json.body.spend, cardId, authorizationUpdateAmount: -400 },
+            },
+          },
+        });
+
+        const response = await appClient.index.$post({
+          ...transactionReversed,
+          header: { signature: "panda-signature" },
+          json: {
+            ...transactionReversed.json,
+            action: "updated",
+            body: {
+              ...transactionReversed.json.body,
+              id: operation,
+              spend: { ...transactionReversed.json.body.spend, cardId, authorizationUpdateAmount: -2 * amount },
+            },
+          },
+        });
+
+        await expect(response.json()).resolves.toBe("reversal higher than spent");
+        expect(response.status).toBe(552);
+      });
+    });
+  });
 });
 
 const authorization = {
@@ -542,18 +699,55 @@ const authorization = {
         currency: "usd",
         localAmount: 900,
         localCurrency: "usd",
-        merchantName: "99999",
-        merchantCity: "buenos aires",
-        merchantCountry: "argentina",
         merchantCategory: "food",
         merchantCategoryCode: "FOOD",
-        userId: "2cf0c886-f7c0-40f3-a8cd-3c4ab3997b66",
-        userFirstName: "David",
-        userLastName: "Mayer",
-        userEmail: "mail@mail.com",
+        merchantCity: "buenos aires",
+        merchantCountry: "argentina",
+        merchantName: "99999",
         status: "pending",
+        userEmail: "mail@mail.com",
+        userFirstName: "David",
+        userId: "2cf0c886-f7c0-40f3-a8cd-3c4ab3997b66",
+        userLastName: "Mayer",
       },
     },
+  },
+} as const;
+
+const transactionReversed = {
+  header: { signature: "056e8b40cbffe5d26487267e00d82ef2d3331d7a6756f05a8effd86d562a02fa" },
+  json: {
+    id: "d22c76f6-1490-403a-930e-899e89328567",
+    body: {
+      id: "5fe48976-3412-40bf-ad98-674380aef9b9",
+      type: "spend",
+      spend: {
+        amount: 0,
+        authorizedAmount: 2073,
+        authorizedAt: new Date().toISOString(),
+        authorizationMethod: "Normal presentment",
+        authorizationUpdateAmount: -2073,
+        cardId: "176e2301-eba9-43e5-8221-3360d3514caa",
+        cardType: "virtual",
+        currency: "usd",
+        enrichedMerchantCategory: "Food - Café, Restaurant, and Bar",
+        enrichedMerchantName: "La Parilla Grill & Wine Bar", // cspell:disable-line
+        localAmount: 0,
+        localCurrency: "ars",
+        merchantCategory: "Miscellaneous Food Stores-Convenience Stores and Specialty Markets",
+        merchantCategoryCode: "5499",
+        merchantCity: "NEUQUEN   ", // cspell:disable-line
+        merchantCountry: "AR",
+        merchantName: "PARRILLA LOS ASADORES", // cspell:disable-line
+        status: "reversed",
+        userEmail: "n@outlook.com",
+        userFirstName: "Marcos",
+        userId: "bf84834a-677b-4f6e-b11a-ad73abc45877",
+        userLastName: "Perez",
+      },
+    },
+    action: "updated",
+    resource: "transaction",
   },
 } as const;
 
@@ -583,12 +777,16 @@ const callFrame = {
   input: "0x",
 } as const;
 
-function usdcToCollector(purchaseReceipt: TransactionReceipt) {
+function usdcToAddress(purchaseReceipt: TransactionReceipt, address: Address) {
   return purchaseReceipt.logs
     .filter((l) => l.address.toLowerCase() === inject("USDC").toLowerCase())
     .map((l) => decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics: l.topics, data: l.data }))
-    .filter((l) => l.args.to === "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400")
+    .filter((l) => l.args.to === address)
     .reduce((total, l) => total + l.args.value, 0n);
+}
+
+function usdcToCollector(purchaseReceipt: TransactionReceipt) {
+  return usdcToAddress(purchaseReceipt, parse(Address, "0xDb90CDB64CfF03f254e4015C4F705C3F3C834400"));
 }
 
 function execute(calldata: Hex) {

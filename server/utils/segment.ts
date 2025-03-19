@@ -19,6 +19,7 @@ export function track(
     | { event: "CardFrozen" }
     | { event: "CardUnfrozen" }
     | { event: "TransactionAuthorized"; properties: { type: "cryptomate" | "panda"; usdAmount: number } }
+    | { event: "TransactionRefund"; properties: { id: string; type: "reversed" | "refunded"; usdAmount: number } }
   >,
 ) {
   analytics.track(action);
