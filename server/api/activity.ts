@@ -39,7 +39,7 @@ import {
 } from "valibot";
 
 import database, { credentials } from "../database";
-import { balancerVaultAddress, marketAbi, previewerAbi } from "../generated/contracts";
+import { marketAbi } from "../generated/contracts";
 import auth from "../middleware/auth";
 import { collectors as cryptomateCollectors } from "../utils/cryptomate";
 import { collectors as pandaCollectors } from "../utils/panda";
@@ -50,8 +50,7 @@ app.use(auth);
 
 const ActivityTypes = picklist(["card", "received", "repay", "sent"]);
 
-const collectorSet = new Set([...cryptomateCollectors, ...pandaCollectors].map((address) => address.toLowerCase()));
-const balancerVault = balancerVaultAddress.toLowerCase();
+const collectors = new Set([...cryptomateCollectors, ...pandaCollectors].map((a) => a.toLowerCase() as Hex));
 
 export default app.get(
   "/",
@@ -78,9 +77,23 @@ export default app.get(
     const account = parse(Address, credential.account);
     setUser({ id: account });
 
-    const markets = await publicClient
-      .readContract({ address: exaPreviewerAddress, functionName: "markets", abi: exaPreviewerAbi })
-      .then((p) => new Map<Hex, (typeof p)[number]>(p.map((m) => [m.market.toLowerCase() as Hex, m])));
+    const [markets, plugins] = await Promise.all([
+      publicClient
+        .readContract({ address: exaPreviewerAddress, functionName: "markets", abi: exaPreviewerAbi })
+        .then((p) => new Map<Hex, (typeof p)[number]>(p.map((m) => [m.market.toLowerCase() as Hex, m]))),
+      !ignore("repay") || !ignore("sent")
+        ? publicClient
+            .getLogs({
+              event: upgradeableModularAccountAbi[25],
+              address: account,
+              toBlock: "latest",
+              fromBlock: 0n,
+              strict: true,
+            })
+            .then((logs) => new Set(logs.map(({ args }) => args.plugin.toLowerCase() as Hex)))
+        : Promise.resolve(new Set<Hex>()),
+    ]);
+
     const market = (address: Hex) => {
       const found = markets.get(address.toLowerCase() as Hex);
       if (!found) throw new Error("market not found");
@@ -109,29 +122,19 @@ export default app.get(
         ? []
         : publicClient
             .getLogs({
-              event: upgradeableModularAccountAbi[25],
-              address: account,
+              event: marketAbi[38],
+              address: [...markets.keys()],
+              args: { caller: [...plugins], borrower: account },
               toBlock: "latest",
               fromBlock: 0n,
               strict: true,
             })
-            .then((plugins) =>
-              publicClient
-                .getLogs({
-                  event: marketAbi[38],
-                  address: [...markets.keys()],
-                  args: { caller: plugins.map(({ args }) => args.plugin), borrower: account },
-                  toBlock: "latest",
-                  fromBlock: 0n,
-                  strict: true,
-                })
-                .then((logs) =>
-                  logs.map((log) =>
-                    parse(RepayActivity, { ...log, market: market(log.address) } satisfies InferInput<
-                      typeof RepayActivity
-                    >),
-                  ),
-                ),
+            .then((logs) =>
+              logs.map((log) =>
+                parse(RepayActivity, { ...log, market: market(log.address) } satisfies InferInput<
+                  typeof RepayActivity
+                >),
+              ),
             ),
       ignore("sent")
         ? []
@@ -147,8 +150,8 @@ export default app.get(
             .then((logs) =>
               logs
                 .filter(({ args }) => {
-                  const receiver = args.receiver.toLowerCase();
-                  return !collectorSet.has(receiver) && receiver !== balancerVault;
+                  const receiver = args.receiver.toLowerCase() as Hex;
+                  return !collectors.has(receiver) && !plugins.has(receiver);
                 })
                 .map((log) =>
                   parse(WithdrawActivity, { ...log, market: market(log.address) } satisfies InferInput<
