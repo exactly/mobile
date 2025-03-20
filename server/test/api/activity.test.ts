@@ -7,13 +7,13 @@ import "../expect";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { safeParse, type InferOutput } from "valibot";
-import { zeroHash, padHex, type Hash, ContractFunctionExecutionError, BaseError, zeroAddress } from "viem";
+import { zeroHash, padHex, type Hash, zeroAddress } from "viem";
 import { privateKeyToAddress } from "viem/accounts";
 import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
 
 import app, { CreditActivity, DebitActivity, InstallmentsActivity, PandaActivity } from "../../api/activity";
 import database, { cards, credentials, transactions } from "../../database";
-import { marketAbi, previewerAbi } from "../../generated/contracts";
+import { marketAbi } from "../../generated/contracts";
 import deriveAddress from "../../utils/deriveAddress";
 import publicClient from "../../utils/publicClient";
 import anvilClient from "../anvilClient";
@@ -183,24 +183,6 @@ describe("authenticated", () => {
             throw new Error("bad test setup");
           }),
       ).then((results) => results.sort((a, b) => b.timestamp.localeCompare(a.timestamp) || b.id.localeCompare(a.id)));
-    });
-
-    it("retries exactly when error and returns the card transaction", async () => {
-      readContract.mockRejectedValueOnce(
-        new ContractFunctionExecutionError(new BaseError("Error"), {
-          abi: previewerAbi,
-          functionName: "exactly",
-          args: [zeroAddress],
-        }),
-      );
-
-      const response = await appClient.index.$get(
-        { query: { include: "card" } },
-        { headers: { "test-credential-id": account } },
-      );
-
-      expect(response.status).toBe(200);
-      await expect(response.json()).resolves.toStrictEqual(activity);
     });
 
     it("returns the card transaction", async () => {

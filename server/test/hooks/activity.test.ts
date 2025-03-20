@@ -11,18 +11,15 @@ import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import { parse } from "valibot";
 import {
+  bytesToHex,
   hexToBigInt,
+  numberToBytes,
   padHex,
   parseEther,
-  zeroHash,
   parseEventLogs,
-  bytesToHex,
-  numberToBytes,
   type PrivateKeyAccount,
   WaitForTransactionReceiptTimeoutError,
-  ContractFunctionExecutionError,
-  BaseError,
-  zeroAddress,
+  zeroHash,
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeEach, describe, expect, inject, it, vi } from "vitest";
@@ -37,40 +34,6 @@ import publicClient from "../../utils/publicClient";
 import anvilClient from "../anvilClient";
 
 const appClient = testClient(app);
-
-const activityPayload = {
-  header: undefined,
-  json: {
-    type: "ADDRESS_ACTIVITY",
-    event: {
-      network: "OPT_SEPOLIA",
-      activity: [
-        {
-          fromAddress: "0x3372cf7cad49a330f7b7403eaa544444d5985877",
-          toAddress: "0x34716d493d69b11fd52d3242cf1eeec8585a1491",
-          hash: "0x9848781a8540d8d724ed86d3565506ab35eb309b332c52fef2cef22195dd184f",
-          value: 0.000_001,
-          asset: "ETH",
-          category: "external",
-          rawContract: {},
-        },
-        {
-          fromAddress: "0xacd03d601e5bb1b275bb94076ff46ed9d753435a",
-          toAddress: "0xbaff9578e9f473ffa1431334d57fdc153e759153",
-          hash: "0x2c459cae2c7cb48394c5272c67dccc71f7f251cff2cbb36b8efb9b3c9f16656b",
-          value: 99.973,
-          asset: "WETH",
-          category: "token",
-          rawContract: {
-            rawValue: "0x0000000000000000000000000000000000000000000000000000000005f57788",
-            address: "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
-            decimals: 18,
-          },
-        },
-      ],
-    },
-  },
-} as const;
 
 const waitForDeposit = async (caller: Address, quantity: number, timeout = 1000) => {
   let counter = quantity;
@@ -176,45 +139,6 @@ describe("address activity", () => {
     expect(response.status).toBe(200);
   });
 
-  it("retries exactly when error and pokes eth", async () => {
-    const deposit = parseEther("5");
-    await anvilClient.setBalance({ address: account, value: deposit });
-
-    vi.spyOn(publicClient, "readContract").mockRejectedValueOnce(
-      new ContractFunctionExecutionError(new BaseError("Error"), {
-        abi: previewerAbi,
-        functionName: "exactly",
-        args: [zeroAddress],
-      }),
-    );
-
-    const response = await appClient.index.$post({
-      ...activityPayload,
-      json: {
-        ...activityPayload.json,
-        event: {
-          ...activityPayload.json.event,
-          activity: [{ ...activityPayload.json.event.activity[0], toAddress: account }],
-        },
-      },
-    });
-
-    await waitForDeposit(account, 1);
-
-    const exactly = await publicClient.readContract({
-      address: previewerAddress,
-      functionName: "exactly",
-      abi: previewerAbi,
-      args: [account],
-    });
-
-    const market = exactly.find((m) => m.asset === wethAddress);
-
-    expect(market?.floatingDepositAssets).toBe(deposit);
-    expect(market?.isCollateral).toBe(true);
-    expect(response.status).toBe(200);
-  });
-
   it("pokes eth", async () => {
     const deposit = parseEther("5");
     await anvilClient.setBalance({ address: account, value: deposit });
@@ -292,3 +216,37 @@ describe("address activity", () => {
     expect(response.status).toBe(200);
   });
 });
+
+const activityPayload = {
+  header: undefined,
+  json: {
+    type: "ADDRESS_ACTIVITY",
+    event: {
+      network: "OPT_SEPOLIA",
+      activity: [
+        {
+          fromAddress: "0x3372cf7cad49a330f7b7403eaa544444d5985877",
+          toAddress: "0x34716d493d69b11fd52d3242cf1eeec8585a1491",
+          hash: "0x9848781a8540d8d724ed86d3565506ab35eb309b332c52fef2cef22195dd184f",
+          value: 0.000_001,
+          asset: "ETH",
+          category: "external",
+          rawContract: {},
+        },
+        {
+          fromAddress: "0xacd03d601e5bb1b275bb94076ff46ed9d753435a",
+          toAddress: "0xbaff9578e9f473ffa1431334d57fdc153e759153",
+          hash: "0x2c459cae2c7cb48394c5272c67dccc71f7f251cff2cbb36b8efb9b3c9f16656b",
+          value: 99.973,
+          asset: "WETH",
+          category: "token",
+          rawContract: {
+            rawValue: "0x0000000000000000000000000000000000000000000000000000000005f57788",
+            address: "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
+            decimals: 18,
+          },
+        },
+      ],
+    },
+  },
+} as const;

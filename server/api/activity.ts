@@ -1,6 +1,7 @@
 import fixedRate from "@exactly/common/fixedRate";
 import chain, {
-  previewerAddress,
+  exaPreviewerAbi,
+  exaPreviewerAddress,
   marketUSDCAddress,
   upgradeableModularAccountAbi,
 } from "@exactly/common/generated/chain";
@@ -36,7 +37,6 @@ import {
   union,
   variant,
 } from "valibot";
-import { withRetry, zeroAddress } from "viem";
 
 import database, { credentials } from "../database";
 import { balancerVaultAddress, marketAbi, previewerAbi } from "../generated/contracts";
@@ -78,18 +78,9 @@ export default app.get(
     const account = parse(Address, credential.account);
     setUser({ id: account });
 
-    const exactly = await withRetry(
-      () =>
-        publicClient.readContract({
-          address: previewerAddress,
-          functionName: "exactly",
-          abi: previewerAbi,
-          args: [zeroAddress],
-        }),
-      { delay: 100, retryCount: 5 },
-    );
-
-    const markets = new Map<Hex, (typeof exactly)[number]>(exactly.map((m) => [m.market.toLowerCase() as Hex, m]));
+    const markets = await publicClient
+      .readContract({ address: exaPreviewerAddress, functionName: "markets", abi: exaPreviewerAbi })
+      .then((p) => new Map<Hex, (typeof p)[number]>(p.map((m) => [m.market.toLowerCase() as Hex, m])));
     const market = (address: Hex) => {
       const found = markets.get(address.toLowerCase() as Hex);
       if (!found) throw new Error("market not found");
@@ -446,7 +437,7 @@ function transformActivity({
   const baseUnit = 10 ** decimals;
   return {
     id: `${chain.id}:${String(blockNumber)}:${transactionIndex}:${logIndex}`,
-    currency: symbol.slice(3),
+    currency: symbol,
     amount: Number(value) / baseUnit,
     usdAmount: Number((value * usdPrice) / WAD) / baseUnit,
     blockNumber,

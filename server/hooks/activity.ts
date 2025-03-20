@@ -1,7 +1,8 @@
 import chain, {
   exaAccountFactoryAbi,
   exaPluginAbi,
-  previewerAddress,
+  exaPreviewerAbi,
+  exaPreviewerAddress,
   upgradeableModularAccountAbi,
   wethAddress,
 } from "@exactly/common/generated/chain";
@@ -19,11 +20,11 @@ import createDebug from "debug";
 import { inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import * as v from "valibot";
-import { bytesToBigInt, zeroAddress, withRetry } from "viem";
+import { bytesToBigInt } from "viem";
 import { optimism } from "viem/chains";
 
 import database, { credentials } from "../database";
-import { auditorAbi, marketAbi, previewerAbi } from "../generated/contracts";
+import { auditorAbi, marketAbi } from "../generated/contracts";
 import { headerValidator, jsonValidator } from "../utils/alchemy";
 import decodePublicKey from "../utils/decodePublicKey";
 import keeper from "../utils/keeper";
@@ -91,19 +92,9 @@ export default app.post(
         ),
       );
 
-    const exactly = await withRetry(
-      () =>
-        publicClient.readContract({
-          address: previewerAddress,
-          functionName: "exactly",
-          abi: previewerAbi,
-          args: [zeroAddress],
-        }),
-      { delay: 100, retryCount: 5 },
-    );
-    const marketsByAsset = new Map<Address, Address>(
-      exactly.map((market) => [v.parse(Address, market.asset), v.parse(Address, market.market)]),
-    );
+    const marketsByAsset = await publicClient
+      .readContract({ address: exaPreviewerAddress, functionName: "assets", abi: exaPreviewerAbi })
+      .then((p) => new Map<Address, Address>(p.map((m) => [v.parse(Address, m.asset), v.parse(Address, m.market)])));
     const pokes = new Map<Address, { publicKey: Uint8Array; factory: Address; assets: Set<Address> }>();
     for (const { toAddress: account, rawContract, value, asset: assetSymbol } of transfers) {
       if (!accounts[account]) continue;
