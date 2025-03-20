@@ -9,7 +9,7 @@ import { Address, Passkey } from "@exactly/common/validation";
 import type { ExaServer } from "@exactly/server";
 import { hc } from "hono/client";
 import { Platform } from "react-native";
-import { get as assert } from "react-native-passkeys";
+import { get as assert, create } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 import { check, number, parse, pipe, safeParse } from "valibot";
 import { zeroAddress } from "viem";
@@ -119,6 +119,13 @@ export async function getPasskey() {
   const response = await client.api.passkey.$get();
   if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
+}
+
+export async function createPasskey() {
+  const options = await registrationOptions();
+  const attestation = await create(options);
+  if (!attestation) throw new Error("bad attestation");
+  return verifyRegistration(attestation);
 }
 
 export async function getActivity(parameters?: NonNullable<Parameters<typeof client.api.activity.$get>[0]>["query"]) {
