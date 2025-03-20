@@ -22,6 +22,7 @@ import {
   ExaPreviewer,
   ICollectableMarket,
   IProposalManager,
+  MarketPreview,
   PendingProposal,
   ProposalType
 } from "../src/ExaPreviewer.sol";
@@ -336,6 +337,26 @@ contract ExaPreviewerTest is ForkTest {
     assertTrue(assets[0].asset == exaEXA.asset());
     assertTrue(assets[1].asset == exaUSDC.asset());
     assertTrue(assets[2].asset == exaWETH.asset());
+  }
+
+  function test_markets_returnsMarkets() external view {
+    MarketPreview[] memory markets = previewer.markets();
+    assertEq(markets.length, 3);
+    assertEq(markets[0].market, address(exaEXA));
+    assertEq(markets[1].market, address(exaUSDC));
+    assertEq(markets[2].market, address(exaWETH));
+    assertEq(markets[0].asset, exaEXA.asset());
+    assertEq(markets[1].asset, exaUSDC.asset());
+    assertEq(markets[2].asset, exaWETH.asset());
+    assertEq(markets[0].decimals, 18);
+    assertEq(markets[1].decimals, 6);
+    assertEq(markets[2].decimals, 18);
+    assertEq(markets[0].usdPrice, 5e18);
+    assertEq(markets[1].usdPrice, 1e18);
+    assertEq(markets[2].usdPrice, 2500e18);
+    assertEq(markets[0].symbol, "EXA");
+    assertEq(markets[1].symbol, "USDC");
+    assertEq(markets[2].symbol, "WETH");
   }
 
   // solhint-enable func-name-mixedcase

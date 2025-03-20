@@ -2,13 +2,24 @@
 pragma solidity ^0.8.0;
 
 import { FixedPointMathLib } from "solady/utils/FixedPointMathLib.sol";
+import { LibString } from "solady/utils/LibString.sol";
 
-import { FixedPool, IAuditor, IExaAccount, IMarket, IProposalManager, Proposal, ProposalType } from "./IExaAccount.sol";
+import {
+  FixedPool,
+  IAuditor,
+  IExaAccount,
+  IMarket,
+  IProposalManager,
+  MarketData,
+  Proposal,
+  ProposalType
+} from "./IExaAccount.sol";
 
 uint256 constant FIXED_INTERVAL = 4 weeks;
 
 contract ExaPreviewer {
   using FixedPointMathLib for uint256;
+  using LibString for string;
 
   IAuditor public immutable AUDITOR;
   ICollectableMarket public immutable EXA_USDC;
@@ -26,6 +37,23 @@ contract ExaPreviewer {
     for (uint256 i = 0; i < allMarkets.length; ++i) {
       // slither-disable-next-line calls-loop
       assets_[i] = Asset({ market: address(allMarkets[i]), asset: allMarkets[i].asset() });
+    }
+  }
+
+  function markets() external view returns (MarketPreview[] memory markets_) {
+    IMarket[] memory allMarkets = AUDITOR.allMarkets();
+    markets_ = new MarketPreview[](allMarkets.length);
+    for (uint256 i = 0; i < allMarkets.length; ++i) {
+      // slither-disable-next-line calls-loop
+      MarketData memory market = AUDITOR.markets(allMarkets[i]);
+      // slither-disable-next-line calls-loop
+      markets_[i] = MarketPreview({
+        market: address(allMarkets[i]),
+        asset: allMarkets[i].asset(),
+        decimals: allMarkets[i].decimals(),
+        usdPrice: AUDITOR.assetPrice(market.priceFeed),
+        symbol: allMarkets[i].symbol().slice(3)
+      });
     }
   }
 
@@ -131,6 +159,14 @@ interface IInterestRateModel {
 struct Asset {
   address market;
   address asset;
+}
+
+struct MarketPreview {
+  address market;
+  address asset;
+  uint8 decimals;
+  uint256 usdPrice;
+  string symbol;
 }
 
 struct Utilizations {
