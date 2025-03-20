@@ -130,11 +130,9 @@ contract ProposalManager is IProposalManager, AccessControl {
       }
       revert Unauthorized();
     }
-    if (target == address(SWAPPER) || allowlist[target]) return;
-    IMarket marketTarget = IMarket(target);
-    if (!_isMarket(marketTarget)) revert Unauthorized();
-
-    return _preExecutionMarketCheck(sender, marketTarget, selector, callData);
+    if (target == address(SWAPPER)) return;
+    if (_isMarket(target)) return _preExecutionMarketCheck(sender, IMarket(target), selector, callData);
+    if (!allowlist[target]) revert Unauthorized();
   }
 
   function _preExecutionMarketCheck(address sender, IMarket target, bytes4 selector, bytes memory callData) internal {
@@ -314,11 +312,11 @@ contract ProposalManager is IProposalManager, AccessControl {
   }
 
   function _checkMarket(IMarket market) internal view {
-    if (!_isMarket(market)) revert NotMarket();
+    if (!_isMarket(address(market))) revert NotMarket();
   }
 
-  function _isMarket(IMarket market) internal view returns (bool) {
-    return AUDITOR.markets(market).isListed;
+  function _isMarket(address market) internal view returns (bool) {
+    return AUDITOR.markets(IMarket(market)).isListed;
   }
 
   function _setDelay(uint256 delay_) internal {

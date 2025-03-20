@@ -1005,6 +1005,7 @@ contract ExaPluginTest is ForkTest {
 
   function test_withdraw_reverts_whenNoProposal() external {
     uint256 amount = 1;
+    proposalManager.allowTarget(address(exaEXA), true);
     vm.prank(keeper);
     account.poke(exaEXA);
 
@@ -1021,6 +1022,7 @@ contract ExaPluginTest is ForkTest {
   }
 
   function test_withdraw_reverts_whenNoProposalKeeper() external {
+    proposalManager.allowTarget(address(exaEXA), true);
     vm.startPrank(keeper);
     account.poke(exaEXA);
     uint256 nonce = proposalManager.nonces(address(account));
@@ -1167,6 +1169,7 @@ contract ExaPluginTest is ForkTest {
   }
 
   function test_withdraw_reverts_whenNoProposalAndReceiverIsProposer() external {
+    proposalManager.allowTarget(address(exaEXA), true);
     vm.startPrank(keeper);
     account.poke(exaEXA);
 
@@ -1183,6 +1186,7 @@ contract ExaPluginTest is ForkTest {
   }
 
   function test_redeem_reverts_whenNoProposalAndReceiverIsProposer() external {
+    proposalManager.allowTarget(address(exaEXA), true);
     vm.startPrank(keeper);
     account.poke(exaEXA);
 
