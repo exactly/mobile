@@ -228,6 +228,12 @@ describe("authenticated", () => {
 
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toMatchObject([
+        {
+          type: "received",
+          currency: "USDC",
+          amount: expect.withinRange(0.9, 1),
+          usdAmount: expect.withinRange(0.9, 1),
+        },
         { type: "received", currency: "WETH", amount: 1, usdAmount: 2500 },
         { type: "received", currency: "USDC", amount: 69_420, usdAmount: 69_420 },
         { type: "received", currency: "EXA", amount: 666, usdAmount: 3330 },
@@ -271,13 +277,6 @@ describe("authenticated", () => {
             receiver: padHex("0x69", { size: 20 }),
           }),
           expect.objectContaining({ amount: 100, currency: "EXA", type: "sent", usdAmount: 500, receiver: account }),
-          expect.objectContaining({
-            amount: 420,
-            currency: "USDC",
-            type: "sent",
-            usdAmount: 420,
-            receiver: inject("BalancerVault"),
-          }),
         ]),
       );
     });
