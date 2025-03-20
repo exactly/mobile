@@ -1,16 +1,23 @@
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
-import { Passkey } from "@exactly/common/validation";
+import { exaAccountFactoryAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
+import latestExaPlugin from "@exactly/common/latestExaPlugin";
+import { Address, Passkey } from "@exactly/common/validation";
 import type { ExaServer } from "@exactly/server";
 import { hc } from "hono/client";
 import { Platform } from "react-native";
-import { get as assert } from "react-native-passkeys";
+import { get as assert, create } from "react-native-passkeys";
 import type { RegistrationResponseJSON } from "react-native-passkeys/build/ReactNativePasskeys.types";
 import { check, number, parse, pipe, safeParse } from "valibot";
+import { zeroAddress } from "viem";
 
+import { accountClient } from "./alchemyConnector";
 import { session } from "./panda";
+import publicClient from "./publicClient";
 import queryClient from "./queryClient";
-import { getTemplateId } from "../utils/persona";
+
+const PANDA_TEMPLATE = "itmpl_1igCJVqgf3xuzqKYD87HrSaDavU2";
+const CRYPTOMATE_TEMPLATE = "itmpl_8uim4FvD5P3kFpKHX37CW817";
 
 queryClient.setQueryDefaults<number | undefined>(["auth"], {
   staleTime: AUTH_EXPIRY,
@@ -112,6 +119,28 @@ export async function getPasskey() {
   const response = await client.api.passkey.$get();
   if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
+}
+
+export async function getTemplateId() {
+  try {
+    const [exaPlugin] = await publicClient.readContract({
+      address: accountClient?.account.address ?? zeroAddress,
+      abi: upgradeableModularAccountAbi,
+      functionName: "getInstalledPlugins",
+    });
+    return exaPlugin === latestExaPlugin ? PANDA_TEMPLATE : CRYPTOMATE_TEMPLATE;
+  } catch {
+    return queryClient.getQueryData<Passkey>(["passkey"])?.factory === parse(Address, exaAccountFactoryAddress)
+      ? PANDA_TEMPLATE
+      : CRYPTOMATE_TEMPLATE;
+  }
+}
+
+export async function createPasskey() {
+  const options = await registrationOptions();
+  const attestation = await create(options);
+  if (!attestation) throw new Error("bad attestation");
+  return verifyRegistration(attestation);
 }
 
 export async function getActivity(parameters?: NonNullable<Parameters<typeof client.api.activity.$get>[0]>["query"]) {
