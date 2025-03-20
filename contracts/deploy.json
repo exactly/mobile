@@ -25,5 +25,5 @@
     }
   },
   "proposalManager": { "delay": 60 },
-  "issuerChecker": { "operationExpiry": 54000, "prevIssuerWindow": 864000 }
+  "issuerChecker": { "operationExpiry": 4838400, "prevIssuerWindow": 4838400 }
 }

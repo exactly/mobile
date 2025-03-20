@@ -1459,7 +1459,7 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
-    skip(1 days);
+    skip(365 days);
     uint256 timestamp = block.timestamp - exaPlugin.ISSUER_CHECKER().operationExpiry() - 1;
     vm.expectRevert(Expired.selector);
     account.collectCredit(FixedLib.INTERVAL, 100e6, timestamp, _issuerOp(100e6, timestamp));
@@ -1615,7 +1615,7 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
-    skip(1 days);
+    skip(365 days);
     uint256 timestamp = block.timestamp - exaPlugin.ISSUER_CHECKER().operationExpiry() - 1;
     vm.expectRevert(Expired.selector);
     account.collectDebit(100e6, timestamp, _issuerOp(100e6, timestamp));
@@ -1799,7 +1799,7 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(keeper);
     account.poke(exaUSDC);
 
-    skip(1 days);
+    skip(365 days);
     uint256 timestamp = block.timestamp - exaPlugin.ISSUER_CHECKER().operationExpiry() - 1;
     uint256[] memory amounts = new uint256[](2);
     amounts[0] = 10e6;
