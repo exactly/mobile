@@ -1,7 +1,7 @@
 import type { Address } from "@exactly/common/validation";
 import { Analytics } from "@segment/analytics-node";
 import { captureException } from "@sentry/node";
-import type { Prettify } from "valibot";
+import type { Prettify } from "viem";
 
 if (!process.env.SEGMENT_WRITE_KEY) throw new Error("missing segment write key");
 
