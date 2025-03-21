@@ -32,7 +32,8 @@ contract DeployProposalManager is BaseScript {
     allowlist.push(protocol("esEXA"));
     allowlist.push(protocol("RewardsController"));
 
-    if (acct("swapper") == 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE) {
+    address swapper = acct("swapper");
+    if (swapper == 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE) {
       vm.pauseTracing();
       (uint256 status, bytes memory data) =
         string.concat("https://li.quest/v1/tokens?chains=", block.chainid.toString()).get();
@@ -56,7 +57,7 @@ contract DeployProposalManager is BaseScript {
       auditor,
       IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
-      acct("swapper"),
+      swapper,
       acct("collector"),
       allowlist,
       deploy.readUint(".proposalManager.delay")

@@ -7,6 +7,7 @@ import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
 import { UpgradeableModularAccount } from "modular-account/src/account/UpgradeableModularAccount.sol";
 
+import { AccessControl } from "openzeppelin-contracts/contracts/access/AccessControl.sol";
 import { ERC20 } from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import { ERC4626 } from "openzeppelin-contracts/contracts/token/ERC20/extensions/ERC4626.sol";
 
@@ -17,9 +18,9 @@ import { MAX_OWNERS } from "webauthn-owner-plugin/IWebauthnOwnerPlugin.sol";
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
-import { DeployScript } from "../script/Deploy.s.sol";
+import { DeployExaAccountFactory } from "../script/ExaAccountFactory.s.sol";
+import { DeployExaPlugin } from "../script/ExaPlugin.s.sol";
 import { ExaAccountFactory, ExaAccountInitialized } from "../src/ExaAccountFactory.sol";
-import { ExaPlugin } from "../src/ExaPlugin.sol";
 
 contract ExaAccountFactoryTest is ForkTest {
   using FixedPointMathLib for uint256;
@@ -27,15 +28,15 @@ contract ExaAccountFactoryTest is ForkTest {
 
   ExaAccountFactory internal factory;
   WebauthnOwnerPlugin internal ownerPlugin;
-  ExaPlugin internal exaPlugin;
+  address internal exaPlugin;
 
   function setUp() external {
     ownerPlugin = new WebauthnOwnerPlugin();
     vm.etch(address(ENTRYPOINT), address(new EntryPoint()).code);
     vm.etch(ACCOUNT_IMPL, address(new UpgradeableModularAccount(ENTRYPOINT)).code);
-    vm.store(address(this), keccak256(abi.encode("deployer")), bytes32(uint256(uint160(address(this)))));
 
-    DeployScript d = new DeployScript();
+    set("admin", address(this));
+    set("deployer", address(this));
     set("Auditor", address(this));
     set("MarketUSDC", address(new MockERC4626(new MockERC20())));
     set("MarketWETH", address(new MockERC4626(new MockERC20())));
@@ -43,20 +44,17 @@ contract ExaAccountFactoryTest is ForkTest {
     set("DebtManager", address(this));
     set("InstallmentsRouter", address(this));
     set("IssuerChecker", address(this));
-    set("ProposalManager", address(this));
+    set("ProposalManager", address(new MockAccessControl()));
     set("WebauthnOwnerPlugin", address(ownerPlugin));
-    d.run();
-    unset("Auditor");
-    unset("MarketUSDC");
-    unset("MarketWETH");
-    unset("BalancerVault");
-    unset("DebtManager");
-    unset("InstallmentsRouter");
-    unset("IssuerChecker");
-    unset("ProposalManager");
-    unset("WebauthnOwnerPlugin");
-    exaPlugin = d.exaPlugin();
-    factory = d.factory();
+
+    DeployExaPlugin p = new DeployExaPlugin();
+    p.run();
+    exaPlugin = address(p.exaPlugin());
+    set("ExaPlugin", exaPlugin);
+
+    DeployExaAccountFactory f = new DeployExaAccountFactory();
+    f.run();
+    factory = f.factory();
   }
 
   // solhint-disable func-name-mixedcase
@@ -99,15 +97,17 @@ contract ExaAccountFactoryTest is ForkTest {
     address[] memory owners = new address[](1);
     owners[0] = address(this);
     address account = factory.createAccount(0, owners.toPublicKeys());
+    bytes memory pluginCode = address(exaPlugin).code;
 
     vm.createSelectFork("optimism", 127_050_624);
 
-    DeployScript d = new DeployScript();
-    set("ProposalManager", address(this));
-    d.run();
-    unset("ProposalManager");
+    set("ProposalManager", address(new MockAccessControl()));
+    unset("WebauthnOwnerPlugin");
+    vm.etch(address(exaPlugin), pluginCode);
+    DeployExaAccountFactory f = new DeployExaAccountFactory();
+    f.run();
 
-    assertEq(address(d.factory()), address(factory), "different factory address");
+    assertEq(address(f.factory()), address(factory), "different factory address");
     assertEq(factory.getAddress(0, owners.toPublicKeys()), account, "different account address");
   }
 
@@ -124,4 +124,10 @@ contract MockERC4626 is ERC4626 {
 
 contract MockERC20 is ERC20 {
   constructor() ERC20("", "") { }
+}
+
+contract MockAccessControl is AccessControl {
+  constructor() {
+    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+  }
 }

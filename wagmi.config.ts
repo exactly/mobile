@@ -13,8 +13,10 @@ const chainId = Number(process.env.CHAIN_ID ?? String(easBuild ? optimism.id : o
 if (easBuild) {
   execSync(
     "export FOUNDRY_DIR=${FOUNDRY_DIR-$HOME/workingdir} && curl -L https://foundry.paradigm.xyz | bash || true && foundryup",
+    { stdio: "inherit" },
   );
 }
+execSync("forge build --root contracts", { stdio: "inherit" });
 
 const auditor = loadDeployment("Auditor");
 const marketUSDC = loadDeployment("MarketUSDC");
@@ -24,13 +26,13 @@ const ratePreviewer = loadDeployment("RatePreviewer");
 const usdc = loadDeployment("USDC");
 const weth = loadDeployment("WETH");
 const balancerVault = loadDeployment("BalancerVault");
-const [exaPlugin, , factory] = loadBroadcast("Deploy").transactions;
+const [exaPlugin] = loadBroadcast("ExaPlugin").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
 const [proposalManager] = loadBroadcast("ProposalManager").transactions;
 const [exaPreviewer] = loadBroadcast("ExaPreviewer").transactions;
 const [, mockSwapper] =
   chainId === optimismSepolia.id ? loadBroadcast("Mocks").transactions : [{}, { contractAddress: zeroAddress }];
-if (!exaPlugin || !factory || !issuerChecker || !proposalManager || !exaPreviewer) throw new Error("missing contracts");
+if (!exaPlugin || !issuerChecker || !proposalManager || !exaPreviewer) throw new Error("missing contracts");
 
 export default defineConfig([
   {
@@ -43,6 +45,7 @@ export default defineConfig([
     ],
     plugins: [
       foundry({
+        forge: { build: false },
         project: "contracts",
         include: [
           "ExaPlugin.sol/ExaPlugin.json",
@@ -58,7 +61,7 @@ export default defineConfig([
     plugins: [
       addresses({
         auditor: auditor.address,
-        exaAccountFactory: factory.contractAddress,
+        exaAccountFactory: zeroAddress,
         exaPlugin: exaPlugin.contractAddress,
         exaPreviewer: exaPreviewer.contractAddress,
         marketUSDC: marketUSDC.address,
@@ -70,6 +73,7 @@ export default defineConfig([
         weth: weth.address,
       }),
       foundry({
+        forge: { build: false },
         project: "contracts",
         include: [
           "ExaAccountFactory.sol/ExaAccountFactory.json",
@@ -96,6 +100,7 @@ export default defineConfig([
         proposalManager: proposalManager.contractAddress,
       }),
       foundry({
+        forge: { build: false },
         project: "contracts",
         include: [
           "IssuerChecker.sol/IssuerChecker.json",
@@ -137,4 +142,11 @@ function loadBroadcast(script: string) {
   return JSON.parse(
     readFileSync(`node_modules/@exactly/plugin/broadcast/${script}.s.sol/${chainId}/run-latest.json`, "utf8"),
   ) as { transactions: { contractAddress: string }[] };
+}
+
+function loadArtifact(contract: string) {
+  return JSON.parse(readFileSync(`node_modules/@exactly/plugin/out/${contract}.sol/${contract}.json`, "utf8")) as {
+    abi: Abi;
+    deployedBytecode: { object: string };
+  };
 }

@@ -51,11 +51,9 @@ contract BobScript is BaseScript {
 
     proposalManager = ProposalManager(broadcast("ProposalManager"));
     issuerChecker = IssuerChecker(broadcast("IssuerChecker"));
-    exaPlugin = ExaPlugin(payable(broadcast("Deploy")));
+    exaPlugin = ExaPlugin(payable(broadcast("ExaPlugin")));
     factory = ExaAccountFactory(
-      payable(
-        CREATE3_FACTORY.getDeployed(acct("deployer"), keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION())))
-      )
+      payable(CREATE3_FACTORY.getDeployed(acct("admin"), keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION()))))
     );
     vm.label(address(exaPlugin), "ExaPlugin");
     vm.label(address(factory), "ExaAccountFactory");

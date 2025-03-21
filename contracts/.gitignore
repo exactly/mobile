@@ -5,9 +5,9 @@ out/
 /broadcast/*
 /broadcast/*/31337/
 /broadcast/**/dry-run/
-!/broadcast/Deploy.s.sol
-/broadcast/Deploy.s.sol/*/*
-!/broadcast/Deploy.s.sol/*/run-latest.json
+!/broadcast/ExaPlugin.s.sol
+/broadcast/ExaPlugin.s.sol/*/*
+!/broadcast/ExaPlugin.s.sol/*/run-latest.json
 !/broadcast/ExaPreviewer.s.sol
 /broadcast/ExaPreviewer.s.sol/*/*
 !/broadcast/ExaPreviewer.s.sol/*/run-latest.json

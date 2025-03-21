@@ -26,11 +26,9 @@ contract BobExecuteScript is BaseScript {
     broadcast("ProposalManager");
 
     skip(10 minutes);
-    exaPlugin = ExaPlugin(payable(broadcast("Deploy")));
+    exaPlugin = ExaPlugin(payable(broadcast("ExaPlugin")));
     factory = ExaAccountFactory(
-      payable(
-        CREATE3_FACTORY.getDeployed(acct("deployer"), keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION())))
-      )
+      payable(CREATE3_FACTORY.getDeployed(acct("admin"), keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION()))))
     );
     address[] memory owners = new address[](1);
     owners[0] = vm.addr(0xb0b);
