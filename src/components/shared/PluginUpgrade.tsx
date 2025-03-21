@@ -1,4 +1,5 @@
 import { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain";
+import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, zeroAddress } from "viem";
@@ -18,11 +19,12 @@ export default function PluginUpgrade() {
   const { address } = useAccount();
   const { data: installedPlugins, refetch: refetchInstalledPlugins } =
     useReadUpgradeableModularAccountGetInstalledPlugins({ address, query: { refetchOnMount: true } });
+  const isLatestPlugin = installedPlugins?.[0] === latestExaPlugin;
   const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
   const { data: uninstallPluginSimulation } = useSimulateUpgradeableModularAccountUninstallPlugin({
     address,
     args: [installedPlugins?.[0] ?? zeroAddress, "0x", "0x"],
-    query: { enabled: !!address && !!installedPlugins },
+    query: { enabled: !!address && !!installedPlugins && !isLatestPlugin },
   });
   const { mutateAsync: updatePlugin, isPending: isUpdating } = useMutation({
     mutationFn: async () => {

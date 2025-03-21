@@ -32,10 +32,12 @@ export default function ContractUtils() {
     address: address ?? zeroAddress,
   });
 
+  const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
+
   const { data: uninstallPluginSimulation } = useSimulateUpgradeableModularAccountUninstallPlugin({
     address,
     args: [installedPlugins?.[0] ?? zeroAddress, "0x", "0x"],
-    query: { enabled: !!address && !!installedPlugins },
+    query: { enabled: !!address && !!installedPlugins && !isLatestPlugin },
   });
 
   const { data: queueNonce } = useReadProposalManagerQueueNonces({
@@ -149,6 +151,7 @@ export default function ContractUtils() {
           </Button>
         )}
       </View>
+
       {proposeUninstallHash && (
         <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
           <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
@@ -180,6 +183,7 @@ export default function ContractUtils() {
           </Button>
         )}
       </View>
+
       {setNonceHash && (
         <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
           <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
