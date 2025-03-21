@@ -1,4 +1,4 @@
-import { exaPluginAbi, exaPluginAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
+import { upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
 import latestExaPlugin from "@exactly/common/latestExaPlugin";
 import { ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
@@ -18,54 +18,41 @@ import View from "../shared/View";
 export default function HomeActions() {
   const fontScale = PixelRatio.getFontScale();
   const { address: account } = useAccount();
-
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
   });
   const isLatestPlugin = installedPlugins?.[0] === latestExaPlugin;
-  const { refetch: refetchProposals, isFetching: isFetchingProposals } = useReadContract(
-    isLatestPlugin
-      ? {
-          functionName: "proposals",
-          abi: [...upgradeableModularAccountAbi, ...exaPluginAbi],
-          address: exaPluginAddress,
-          args: [account ?? zeroAddress],
-          query: { enabled: !!account },
-        }
-      : {
-          functionName: "proposals",
-          abi: [
-            ...upgradeableModularAccountAbi,
-            {
-              type: "function",
-              inputs: [{ name: "account", internalType: "address", type: "address" }],
-              name: "proposals",
-              outputs: [
-                { name: "amount", internalType: "uint256", type: "uint256" },
-                { name: "market", internalType: "contract IMarket", type: "address" },
-                { name: "receiver", internalType: "address", type: "address" },
-                { name: "timestamp", internalType: "uint256", type: "uint256" },
-              ],
-              stateMutability: "view",
-            },
-          ],
-          address: installedPlugins?.[0],
-          args: [account ?? zeroAddress],
-          query: { enabled: !!account && !!installedPlugins?.[0] },
-        },
-  );
+  const { refetch: fetchProposals, isFetching } = useReadContract({
+    functionName: "proposals",
+    abi: [
+      ...upgradeableModularAccountAbi,
+      {
+        type: "function",
+        inputs: [{ name: "account", internalType: "address", type: "address" }],
+        name: "proposals",
+        outputs: [
+          { name: "amount", internalType: "uint256", type: "uint256" },
+          { name: "market", internalType: "contract IMarket", type: "address" },
+          { name: "receiver", internalType: "address", type: "address" },
+          { name: "timestamp", internalType: "uint256", type: "uint256" },
+        ],
+        stateMutability: "view",
+      },
+    ],
+    address: installedPlugins?.[0],
+    args: [account ?? zeroAddress],
+    query: { enabled: !!account && !!installedPlugins?.[0] && !isLatestPlugin },
+  });
 
   const handleSend = async () => {
     if (isLatestPlugin) {
       router.push("/send-funds");
-      return;
+    } else {
+      if (isFetching) return;
+      const { data: proposals } = await fetchProposals();
+      const route = proposals && proposals[0] > 0n ? "/send-funds/processing" : "/send-funds";
+      router.push(route);
     }
-
-    if (isFetchingProposals) return;
-    const { data: proposals } = await refetchProposals();
-    const hasActiveProposal = proposals && proposals[0] > 0n;
-    const route = hasActiveProposal ? "/send-funds/processing" : "/send-funds";
-    router.push(route);
   };
   return (
     <View flexDirection="row" display="flex" gap="$s4" justifyContent="center" alignItems="center">
@@ -96,9 +83,9 @@ export default function HomeActions() {
         onPress={() => {
           handleSend().catch(reportError);
         }}
-        disabled={isLatestPlugin ? false : isFetchingProposals}
+        disabled={isLatestPlugin ? false : isFetching}
         iconAfter={
-          isLatestPlugin || !isFetchingProposals ? (
+          isLatestPlugin || !isFetching ? (
             <ArrowUpRight size={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
           ) : (
             <Spinner height={ms(18) * fontScale} width={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
