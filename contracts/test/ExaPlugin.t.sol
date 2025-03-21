@@ -311,6 +311,27 @@ contract ExaPluginTest is ForkTest {
     assertEq(exa.balanceOf(address(account)), exaBalance + balance);
   }
 
+  function testFork_stakeEXA_stakes() external {
+    _setUpForkEnv();
+    IStakedEXA stEXA = IStakedEXA(protocol("stEXA"));
+    exa = MockERC20(protocol("EXA"));
+    deal(address(exa), address(account), 100e18);
+    proposalManager.allowTarget(address(stEXA), true);
+    proposalManager.allowTarget(address(exa), true);
+
+    vm.startPrank(address(account));
+    account.execute(address(exa), 0, abi.encodeCall(IERC20.approve, (address(stEXA), 100e18)));
+    account.execute(address(stEXA), 0, abi.encodeCall(IERC4626.deposit, (100e18, address(account))));
+
+    assertEq(stEXA.balanceOf(address(account)), 100e18);
+    assertEq(exa.balanceOf(address(account)), 0);
+
+    skip(stEXA.refTime());
+    uint256 balance = exaUSDC.balanceOf(address(account));
+    account.execute(address(stEXA), 0, abi.encodeCall(IStakedEXA.claim, (IERC20(address(exaUSDC)))));
+    assertGt(exaUSDC.balanceOf(address(account)), balance);
+  }
+
   function test_swap_reverts_withDisagreement() external {
     uint256 prevUSDC = usdc.balanceOf(address(account));
     uint256 prevEXA = exa.balanceOf(address(account));
@@ -3289,6 +3310,11 @@ interface IEscrowedEXA is IERC20 {
   function vest(uint128 amount, address to, uint256 maxRatio, uint256 maxPeriod) external returns (uint256 streamId);
   function vestingPeriod() external view returns (uint256);
   function withdrawMax(uint256[] memory streamIds) external;
+}
+
+interface IStakedEXA is IERC4626 {
+  function claim(IERC20 reward) external;
+  function refTime() external view returns (uint256);
 }
 
 struct AllClaimable {
