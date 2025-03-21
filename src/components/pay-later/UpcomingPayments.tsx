@@ -50,11 +50,12 @@ export default function UpcomingPayments({ onSelect }: { onSelect: (maturity: bi
             const { proposalType: type, data } = proposal;
             const isRepayProposal =
               type === Number(ProposalType.RepayAtMaturity) || type === Number(ProposalType.CrossRepayAtMaturity);
+            if (!isRepayProposal) return false;
             const decoded =
               type === Number(ProposalType.RepayAtMaturity)
                 ? decodeRepayAtMaturity(data)
                 : decodeCrossRepayAtMaturity(data);
-            return isRepayProposal && decoded.maturity === maturity;
+            return decoded.maturity === maturity;
           });
           return (
             <Pressable
