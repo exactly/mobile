@@ -13,6 +13,7 @@ const chainId = Number(process.env.CHAIN_ID ?? String(easBuild ? optimism.id : o
 if (easBuild) {
   execSync(
     "export FOUNDRY_DIR=${FOUNDRY_DIR-$HOME/workingdir} && curl -L https://foundry.paradigm.xyz | bash || true && foundryup",
+    { stdio: "inherit" },
   );
 }
 
@@ -24,13 +25,15 @@ const ratePreviewer = loadDeployment("RatePreviewer");
 const usdc = loadDeployment("USDC");
 const weth = loadDeployment("WETH");
 const balancerVault = loadDeployment("BalancerVault");
-const [exaPlugin, , factory] = loadBroadcast("Deploy").transactions;
+const [exaPlugin] = loadBroadcast("ExaPlugin").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
 const [proposalManager] = loadBroadcast("ProposalManager").transactions;
 const [exaPreviewer] = loadBroadcast("ExaPreviewer").transactions;
 const [, mockSwapper] =
   chainId === optimismSepolia.id ? loadBroadcast("Mocks").transactions : [{}, { contractAddress: zeroAddress }];
-if (!exaPlugin || !factory || !issuerChecker || !proposalManager || !exaPreviewer) throw new Error("missing contracts");
+if (!exaPlugin || !issuerChecker || !proposalManager || !exaPreviewer) throw new Error("missing contracts");
+
+execSync("forge build", { cwd: "contracts", stdio: "inherit" });
 
 export default defineConfig([
   {
@@ -43,6 +46,7 @@ export default defineConfig([
     ],
     plugins: [
       foundry({
+        forge: { build: false },
         project: "contracts",
         include: [
           "ExaPlugin.sol/ExaPlugin.json",
@@ -56,20 +60,23 @@ export default defineConfig([
   {
     out: "common/generated/chain.ts",
     plugins: [
-      addresses({
-        auditor: auditor.address,
-        exaAccountFactory: factory.contractAddress,
-        exaPlugin: exaPlugin.contractAddress,
-        exaPreviewer: exaPreviewer.contractAddress,
-        marketUSDC: marketUSDC.address,
-        marketWETH: marketWETH.address,
-        mockSwapper: mockSwapper.contractAddress,
-        previewer: previewer.address,
-        ratePreviewer: ratePreviewer.address,
-        usdc: usdc.address,
-        weth: weth.address,
-      }),
+      addresses(
+        {
+          auditor: auditor.address,
+          exaPlugin: exaPlugin.contractAddress,
+          exaPreviewer: exaPreviewer.contractAddress,
+          marketUSDC: marketUSDC.address,
+          marketWETH: marketWETH.address,
+          mockSwapper: mockSwapper.contractAddress,
+          previewer: previewer.address,
+          ratePreviewer: ratePreviewer.address,
+          usdc: usdc.address,
+          weth: weth.address,
+        },
+        { exaAccountFactory: "ExaAccountFactory" },
+      ),
       foundry({
+        forge: { build: false },
         project: "contracts",
         include: [
           "ExaAccountFactory.sol/ExaAccountFactory.json",
@@ -96,6 +103,7 @@ export default defineConfig([
         proposalManager: proposalManager.contractAddress,
       }),
       foundry({
+        forge: { build: false },
         project: "contracts",
         include: [
           "IssuerChecker.sol/IssuerChecker.json",
@@ -107,14 +115,27 @@ export default defineConfig([
   },
 ]);
 
-function addresses(contracts: Record<string, string>): Plugin {
+function addresses(contracts: Record<string, string>, scripts?: Record<string, string>): Plugin {
   return {
     name: "Addresses",
-    run: () => ({
-      content: `${Object.entries(contracts)
-        .map(([key, value]) => `export const ${key}Address = "${getAddress(value)}" as const`)
-        .join("\n")}\n`,
-    }),
+    run() {
+      if (scripts) {
+        for (const [key, script] of Object.entries(scripts)) {
+          const output = execSync(
+            `forge script -s 'getAddress()' script/${script}.s.sol --chain ${chainId} --etherscan-api-key x`,
+            { cwd: "contracts", encoding: "utf8" },
+          );
+          const address = new RegExp(/== return ==\n0: address (0x[\da-f]{40})/i).exec(output)?.[1];
+          if (!address) throw new Error(output);
+          contracts[key] = address;
+        }
+      }
+      return {
+        content: `${Object.entries(contracts)
+          .map(([key, value]) => `export const ${key}Address = "${getAddress(value)}" as const`)
+          .join("\n")}\n`,
+      };
+    },
   };
 }
 

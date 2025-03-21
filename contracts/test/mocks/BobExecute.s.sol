@@ -26,11 +26,11 @@ contract BobExecuteScript is BaseScript {
     broadcast("ProposalManager");
 
     skip(10 minutes);
-    exaPlugin = ExaPlugin(payable(broadcast("Deploy")));
+    exaPlugin = ExaPlugin(payable(broadcast("ExaPlugin")));
     factory = ExaAccountFactory(
       payable(
         CREATE3_FACTORY.getDeployed(
-          acct("deployer"), keccak256(abi.encode(exaPlugin.pluginMetadata().name, exaPlugin.pluginMetadata().version))
+          acct("admin"), keccak256(abi.encode(exaPlugin.pluginMetadata().name, exaPlugin.pluginMetadata().version))
         )
       )
     );

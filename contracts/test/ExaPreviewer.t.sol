@@ -9,7 +9,8 @@ import { MockERC20 } from "solmate/src/test/utils/mocks/MockERC20.sol";
 import { OwnersLib } from "webauthn-owner-plugin/OwnersLib.sol";
 import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
-import { DeployScript } from "../script/Deploy.s.sol";
+import { DeployExaAccountFactory } from "../script/ExaAccountFactory.s.sol";
+import { DeployExaPlugin } from "../script/ExaPlugin.s.sol";
 import { DeployExaPreviewer } from "../script/ExaPreviewer.s.sol";
 import { DeployIssuerChecker } from "../script/IssuerChecker.s.sol";
 import { DeployProposalManager } from "../script/ProposalManager.s.sol";
@@ -71,13 +72,20 @@ contract ExaPreviewerTest is ForkTest {
     owners[0] = owner;
     (issuer, issuerKey) = makeAddrAndKey("issuer");
 
-    ownerPlugin = new WebauthnOwnerPlugin();
+    set("admin", address(this));
+    set("deployer", address(this));
+    set("keeper", address(this));
+    set("collector", collector);
+    set("issuer", issuer);
+    set("esEXA", address(0x666));
+    set("RewardsController", address(0x666));
 
-    vm.store(address(this), keccak256(abi.encode("admin")), bytes32(uint256(uint160(address(this)))));
-    vm.store(address(this), keccak256(abi.encode("deployer")), bytes32(uint256(uint160(address(this)))));
-    vm.store(address(this), keccak256(abi.encode("keeper")), bytes32(uint256(uint160(address(this)))));
-    vm.store(address(this), keccak256(abi.encode("collector")), bytes32(uint256(uint160(address(collector)))));
-    new DeployAccount().run();
+    ownerPlugin = new WebauthnOwnerPlugin();
+    set("WebauthnOwnerPlugin", address(ownerPlugin));
+
+    DeployAccount a = new DeployAccount();
+    a.run();
+
     DeployProtocol p = new DeployProtocol();
     p.run();
     auditor = p.auditor();
@@ -86,78 +94,44 @@ contract ExaPreviewerTest is ForkTest {
     exaWETH = ICollectableMarket(address(p.exaWETH()));
     exa = p.exa();
     usdc = p.usdc();
-
-    DeployIssuerChecker ic = new DeployIssuerChecker();
-    set("issuer", issuer);
-    ic.run();
-    unset("issuer");
-    issuerChecker = ic.issuerChecker();
-
-    DeployMocks m = new DeployMocks();
-    set("Auditor", address(auditor));
     set("USDC", address(usdc));
-    m.run();
-    unset("Auditor");
-    unset("USDC");
-
-    DeployRefunder r = new DeployRefunder();
-    set("MarketUSDC", address(exaUSDC));
-    set("IssuerChecker", address(issuerChecker));
-    r.run();
-    unset("MarketUSDC");
-    unset("IssuerChecker");
-    refunder = r.refunder();
-
-    DeployProposalManager pm = new DeployProposalManager();
     set("Auditor", address(auditor));
-    set("DebtManager", address(p.debtManager()));
-    set("InstallmentsRouter", address(p.installmentsRouter()));
-    set("swapper", address(m.swapper()));
-    set("esEXA", address(0x666));
-    set("RewardsController", address(0x666));
-    pm.run();
-    unset("Auditor");
-    unset("DebtManager");
-    unset("InstallmentsRouter");
-    unset("swapper");
-    unset("esEXA");
-    unset("RewardsController");
-    proposalManager = pm.proposalManager();
-
-    DeployScript d = new DeployScript();
-    set("Auditor", address(p.auditor()));
     set("MarketUSDC", address(exaUSDC));
     set("MarketWETH", address(exaWETH));
     set("BalancerVault", address(p.balancer()));
     set("DebtManager", address(p.debtManager()));
     set("InstallmentsRouter", address(p.installmentsRouter()));
+
+    DeployIssuerChecker ic = new DeployIssuerChecker();
+    ic.run();
+    issuerChecker = ic.issuerChecker();
     set("IssuerChecker", address(issuerChecker));
-    set("ProposalManager", address(proposalManager));
-    set("WebauthnOwnerPlugin", address(ownerPlugin));
+
+    DeployMocks m = new DeployMocks();
+    m.run();
     set("swapper", address(m.swapper()));
-    d.run();
-    unset("Auditor");
-    unset("MarketUSDC");
-    unset("MarketWETH");
-    unset("BalancerVault");
-    unset("DebtManager");
-    unset("InstallmentsRouter");
-    unset("IssuerChecker");
-    unset("ProposalManager");
-    unset("WebauthnOwnerPlugin");
-    unset("swapper");
-    exaPlugin = d.exaPlugin();
-    factory = d.factory();
+
+    DeployRefunder r = new DeployRefunder();
+    r.run();
+    refunder = r.refunder();
+
+    DeployProposalManager pm = new DeployProposalManager();
+    pm.run();
+    proposalManager = pm.proposalManager();
+    set("ProposalManager", address(proposalManager));
+
+    DeployExaPlugin pl = new DeployExaPlugin();
+    pl.run();
+    exaPlugin = pl.exaPlugin();
+    set("ExaPlugin", address(exaPlugin));
+
+    DeployExaAccountFactory f = new DeployExaAccountFactory();
+    f.run();
+    factory = f.factory();
     domainSeparator = issuerChecker.DOMAIN_SEPARATOR();
 
     DeployExaPreviewer ep = new DeployExaPreviewer();
-    set("Auditor", address(p.auditor()));
-    set("MarketUSDC", address(exaUSDC));
-    set("ProposalManager", address(proposalManager));
     ep.run();
-    unset("Auditor");
-    unset("MarketUSDC");
-    unset("ProposalManager");
     previewer = ep.previewer();
 
     account = IExaAccount(payable(factory.createAccount(0, owners.toPublicKeys())));
