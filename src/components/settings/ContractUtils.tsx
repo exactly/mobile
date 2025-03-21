@@ -159,7 +159,7 @@ export default function ContractUtils() {
             updatePlugin().catch(handleError);
           }}
           padding={ms(10)}
-          disabled={!uninstallPluginSimulation || exaPluginAddress === installedPlugins?.[0]}
+          disabled={!uninstallPluginSimulation}
           flex={1}
         >
           Upgrade Plugin
