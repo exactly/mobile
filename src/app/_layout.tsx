@@ -24,12 +24,12 @@ import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
 import AppIcon from "../assets/icon.png";
 import { OnboardingProvider } from "../components/context/OnboardingProvider";
 import ThemeProvider from "../components/context/ThemeProvider";
-import handleError from "../utils/handleError";
 import publicClient from "../utils/publicClient";
 import queryClient, { persister } from "../utils/queryClient";
+import reportError from "../utils/reportError";
 import wagmiConfig from "../utils/wagmi";
 
-SplashScreen.preventAutoHideAsync().catch(handleError);
+SplashScreen.preventAutoHideAsync().catch(reportError);
 
 export { ErrorBoundary } from "expo-router";
 const routingInstrumentation = reactNavigationIntegration();

@@ -13,8 +13,8 @@ import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { formatUnits, parseUnits, zeroAddress } from "viem";
 
 import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import type { getCard } from "../../utils/server";
 import { setCardMode } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
@@ -73,7 +73,7 @@ export default function SimulatePurchase() {
       if (context?.previous) {
         queryClient.setQueryData(["card", "details"], context.previous);
       }
-      handleError(error);
+      reportError(error);
     },
     onSettled: async (data) => {
       back();
@@ -89,7 +89,7 @@ export default function SimulatePurchase() {
   }, [input]);
   useEffect(() => {
     if (!isInstallmentsFetching) return;
-    refetchBorrowPreview().catch(handleError);
+    refetchBorrowPreview().catch(reportError);
   }, [isInstallmentsFetching, refetchBorrowPreview]);
   return (
     <SafeView fullScreen backgroundColor="$backgroundMild" paddingBottom={0}>
@@ -106,7 +106,7 @@ export default function SimulatePurchase() {
             </Text>
             <Pressable
               onPress={() => {
-                presentArticle("8971590").catch(handleError);
+                presentArticle("8971590").catch(reportError);
               }}
             >
               <Info color="$uiNeutralPrimary" />
@@ -264,7 +264,7 @@ export default function SimulatePurchase() {
             <Button
               flexBasis={ms(60)}
               onPress={() => {
-                mutateMode(installments ?? 1).catch(handleError);
+                mutateMode(installments ?? 1).catch(reportError);
               }}
               contained
               disabled={isLoading}

@@ -4,7 +4,7 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { View, Text } from "tamagui";
 
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import useIntercom from "../../utils/useIntercom";
 
 export default function LiquidationAlert() {
@@ -38,7 +38,7 @@ export default function LiquidationAlert() {
         </Text>
         <Pressable
           onPress={() => {
-            presentArticle("9975910").catch(handleError);
+            presentArticle("9975910").catch(reportError);
           }}
         >
           <View flexDirection="row" gap={ms(2)} alignItems="center">

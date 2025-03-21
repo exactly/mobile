@@ -12,8 +12,8 @@ import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
 import OptimismImage from "../../../assets/images/optimism.svg";
-import handleError from "../../../utils/handleError";
 import type { ActivityItem } from "../../../utils/queryClient";
+import reportError from "../../../utils/reportError";
 import Text from "../../shared/Text";
 
 export default function TransactionDetails({
@@ -61,7 +61,7 @@ export default function TransactionDetails({
               alignItems="center"
               gap="$s3"
               onPress={() => {
-                setStringAsync(item.receiver).catch(handleError);
+                setStringAsync(item.receiver).catch(reportError);
                 toast.show("Address copied!", {
                   native: true,
                   duration: 1000,
@@ -105,7 +105,7 @@ export default function TransactionDetails({
               alignItems="center"
               gap="$s3"
               onPress={() => {
-                openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${item.transactionHash}`).catch(handleError);
+                openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${item.transactionHash}`).catch(reportError);
               }}
             >
               <Text textDecorationLine="underline" callout color="$uiNeutralPrimary">

@@ -23,14 +23,14 @@ import {
   useSimulateUpgradeableModularAccountUninstallPlugin,
 } from "../../generated/contracts";
 import { accountClient } from "../../utils/alchemyConnector";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import Button from "../shared/Button";
 import Input from "../shared/Input";
 import Text from "../shared/Text";
 
 function copyHash(hash: string | undefined) {
   if (!hash) return;
-  setStringAsync(hash).catch(handleError);
+  setStringAsync(hash).catch(reportError);
 }
 
 export default function ContractUtils() {
@@ -121,7 +121,7 @@ export default function ContractUtils() {
         <Button
           contained
           onPress={() => {
-            updatePlugin().catch(handleError);
+            updatePlugin().catch(reportError);
           }}
           padding={ms(10)}
           disabled={!uninstallPluginSimulation}

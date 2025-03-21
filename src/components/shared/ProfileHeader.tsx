@@ -16,8 +16,8 @@ import AddressDialog from "./AddressDialog";
 import StatusIndicator from "./StatusIndicator";
 import { useReadExaPreviewerPendingProposals } from "../../generated/contracts";
 import alchemyConnector from "../../utils/alchemyConnector";
-import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
@@ -46,7 +46,7 @@ export default function ProfileHeader() {
   }
   function copy() {
     if (!address) return;
-    setStringAsync(address).catch(handleError);
+    setStringAsync(address).catch(reportError);
     toast.show("Account address copied!", {
       native: true,
       duration: 1000,

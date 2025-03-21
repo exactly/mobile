@@ -8,9 +8,9 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, XStack, YStack } from "tamagui";
 
 import Step from "./Step";
-import handleError from "../../utils/handleError";
 import { createInquiry, resumeInquiry } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import { APIError, getKYCStatus } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
 import { OnboardingContext } from "../context/OnboardingProvider";
@@ -96,7 +96,7 @@ export default function GettingStarted() {
                 icon={<IdCard size={20} strokeWidth={2} color="$uiBrandSecondary" />}
                 completed={steps.find(({ id }) => id === "verify-identity")?.completed ?? false}
                 onPress={() => {
-                  presentArticle("9448693").catch(handleError);
+                  presentArticle("9448693").catch(reportError);
                 }}
               />
 
@@ -107,7 +107,7 @@ export default function GettingStarted() {
                 icon={<ArrowDownToLine size={20} strokeWidth={2} color="$uiBrandSecondary" />}
                 completed={steps.find(({ id }) => id === "add-funds")?.completed ?? false}
                 onPress={() => {
-                  presentArticle("8950805").catch(handleError);
+                  presentArticle("8950805").catch(reportError);
                 }}
               />
             </YStack>
@@ -128,10 +128,10 @@ function CurrentStep() {
       try {
         const result = await getKYCStatus();
         if (result === "ok") return;
-        resumeInquiry(result.inquiryId, result.sessionToken).catch(handleError);
+        resumeInquiry(result.inquiryId, result.sessionToken).catch(reportError);
       } catch (error) {
         if (!(error instanceof APIError)) {
-          handleError(error);
+          reportError(error);
           return;
         }
         const { code, text } = error;
@@ -140,9 +140,9 @@ function CurrentStep() {
           (code === 404 && text === "kyc not found") ||
           (code === 400 && text === "kyc not started")
         ) {
-          createInquiry(passkey).catch(handleError);
+          createInquiry(passkey).catch(reportError);
         }
-        handleError(error);
+        reportError(error);
       }
     },
     onSettled: async () => {
@@ -155,7 +155,7 @@ function CurrentStep() {
         router.push("/add-funds/add-crypto");
         break;
       case "verify-identity":
-        startKYC().catch(handleError);
+        startKYC().catch(reportError);
         break;
     }
   }

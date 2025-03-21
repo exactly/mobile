@@ -10,8 +10,8 @@ import InstallmentsSelector from "./InstallmentsSelector";
 import PaymentSheet from "./PaymentSheet";
 import UpcomingPayments from "./UpcomingPayments";
 import { useReadPreviewerExactly } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import useAsset from "../../utils/useAsset";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -36,8 +36,8 @@ export default function PayLater() {
               style={style}
               refreshing={isPending}
               onRefresh={() => {
-                refetch().catch(handleError);
-                queryClient.refetchQueries({ queryKey: ["activity"] }).catch(handleError);
+                refetch().catch(reportError);
+                queryClient.refetchQueries({ queryKey: ["activity"] }).catch(reportError);
               }}
             />
           }

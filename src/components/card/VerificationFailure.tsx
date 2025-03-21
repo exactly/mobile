@@ -5,7 +5,7 @@ import { ms } from "react-native-size-matters";
 import { ScrollView, Sheet, YStack } from "tamagui";
 
 import VerifyIdentity from "../../assets/images/verify-identity.svg";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import useIntercom from "../../utils/useIntercom";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -61,7 +61,7 @@ export default function VerificationFailure({ open, onClose }: { open: boolean; 
                   <Button
                     flexBasis={ms(60)}
                     onPress={() => {
-                      present().catch(handleError);
+                      present().catch(reportError);
                     }}
                     contained
                     main

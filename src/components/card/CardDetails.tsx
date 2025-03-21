@@ -13,9 +13,9 @@ import ExaLogoDark from "../../assets/images/exa-logo-dark.svg";
 import ExaLogoLight from "../../assets/images/exa-logo-light.svg";
 import VisaLogoDark from "../../assets/images/visa-logo-dark.svg";
 import VisaLogoLight from "../../assets/images/visa-logo-light.svg";
-import handleError from "../../utils/handleError";
 import { decrypt } from "../../utils/panda";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import { getCard } from "../../utils/server";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -35,7 +35,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
         .then(([pan, cvc]) => {
           setDetails({ pan, cvc });
         })
-        .catch(handleError);
+        .catch(reportError);
     }
   }, [card]);
   return (
@@ -100,7 +100,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                           color="$uiNeutralInversePrimary"
                           strokeWidth={2.5}
                           onPress={() => {
-                            setStringAsync(details.pan).catch(handleError);
+                            setStringAsync(details.pan).catch(reportError);
                             toast.show("Copied to clipboard!");
                           }}
                         />

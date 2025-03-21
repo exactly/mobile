@@ -29,8 +29,8 @@ import exaCard from "../../assets/images/exa-card.svg";
 import qrCodeBlob from "../../assets/images/qr-code-blob.svg";
 import qrCode from "../../assets/images/qr-code.svg";
 import alchemyConnector from "../../utils/alchemyConnector";
-import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import { APIError, getPasskey } from "../../utils/server";
 import ActionButton from "../shared/ActionButton";
 import Text from "../shared/Text";
@@ -130,7 +130,7 @@ export default function Carousel() {
         });
         return;
       }
-      handleError(error);
+      reportError(error);
     },
     onSuccess(passkey) {
       queryClient.setQueryData<Passkey>(["passkey"], parse(Passkey, passkey));

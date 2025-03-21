@@ -3,7 +3,7 @@ import type * as IntercomWeb from "@intercom/messenger-js-sdk";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 
-import handleError from "./handleError";
+import reportError from "./reportError";
 
 const appId = process.env.EXPO_PUBLIC_INTERCOM_APP_ID;
 
@@ -47,7 +47,7 @@ export default function useIntercom(userId?: string) {
   const [loggedIn, setLoggedIn] = useState(false);
   useEffect(() => {
     if (!userId || loggedIn) return;
-    login(userId).then(setLoggedIn).catch(handleError);
+    login(userId).then(setLoggedIn).catch(reportError);
   }, [userId, loggedIn]);
   return { loggedIn, present, presentArticle };
 }

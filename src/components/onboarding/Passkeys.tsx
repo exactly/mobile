@@ -11,7 +11,7 @@ import { useConnect } from "wagmi";
 import PasskeysBlob from "../../assets/images/passkeys-blob.svg";
 import PasskeysImage from "../../assets/images/passkeys.svg";
 import alchemyConnector from "../../utils/alchemyConnector";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import { APIError, createPasskey } from "../../utils/server";
 import ActionButton from "../shared/ActionButton";
 import SafeView from "../shared/SafeView";
@@ -60,7 +60,7 @@ export default function Passkeys() {
         });
         return;
       }
-      handleError(error);
+      reportError(error);
     },
     onSuccess(passkey) {
       queryClient.setQueryData<Passkey>(["passkey"], passkey);

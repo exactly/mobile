@@ -6,14 +6,14 @@ import type { Address } from "viem";
 import { deserialize, serialize } from "wagmi";
 import { structuralSharing } from "wagmi/query";
 
-import handleError from "./handleError";
+import reportError from "./reportError";
 import type { getActivity } from "./server";
 
 export const persister = createAsyncStoragePersister({ serialize, deserialize, storage: AsyncStorage });
 const queryClient = new QueryClient({ defaultOptions: { queries: { structuralSharing } } });
 
 if (typeof window !== "undefined") {
-  persistQueryClientRestore({ queryClient, persister, maxAge: Infinity }).catch(handleError);
+  persistQueryClientRestore({ queryClient, persister, maxAge: Infinity }).catch(reportError);
   persistQueryClientSubscribe({ queryClient, persister });
 }
 

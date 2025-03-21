@@ -6,8 +6,8 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Separator, Switch, XStack, YStack } from "tamagui";
 
-import handleError from "../../utils/handleError";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import { getCard, setCardMode } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
 import Text from "../shared/Text";
@@ -39,7 +39,7 @@ export default function Header() {
       if (context?.previous) {
         queryClient.setQueryData(["card", "details"], context.previous);
       }
-      handleError(error);
+      reportError(error);
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
@@ -48,7 +48,7 @@ export default function Header() {
 
   function togglePayLater() {
     if (!cardDetails) return;
-    mutateMode(cardDetails.mode === 0 ? (lastInstallments ?? 1) : 0).catch(handleError);
+    mutateMode(cardDetails.mode === 0 ? (lastInstallments ?? 1) : 0).catch(reportError);
   }
   return (
     <YStack backgroundColor="$backgroundSoft" paddingTop="$s8" paddingBottom="$s3" gap="$s4_5">
@@ -84,7 +84,7 @@ export default function Header() {
       <Separator height={1} borderColor="$borderNeutralSoft" paddingVertical="$s2" />
       <Pressable
         onPress={() => {
-          presentArticle("9465994").catch(handleError);
+          presentArticle("9465994").catch(reportError);
         }}
       >
         <XStack justifyContent="space-between" alignItems="center">

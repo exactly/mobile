@@ -6,9 +6,9 @@ import { type Chain, SwitchChainError, type Transport, getAddress } from "viem";
 import { ChainNotConfiguredError, createConnector } from "wagmi";
 
 import createAccountClient from "./accountClient";
-import handleError from "./handleError";
 import publicClient from "./publicClient";
 import queryClient from "./queryClient";
+import reportError from "./reportError";
 
 export let accountClient:
   | SmartAccountClient<Transport, Chain, SmartContractAccount<"WebauthnAccount", "0.6.0">>
@@ -35,7 +35,7 @@ export default createConnector<SmartAccountClient | ClientWithAlchemyMethods>(({
       if (!passkey) throw new Error("missing passkey");
       accountClient ??= await createAccountClient(passkey);
     } catch (error: unknown) {
-      handleError(error);
+      reportError(error);
       throw error;
     }
     return { accounts: [accountClient.account.address], chainId: chain.id };
@@ -59,7 +59,7 @@ export default createConnector<SmartAccountClient | ClientWithAlchemyMethods>(({
   onDisconnect(error) {
     emitter.emit("disconnect");
     accountClient = undefined;
-    if (error) handleError(error);
+    if (error) reportError(error);
   },
   getProvider({ chainId } = {}) {
     if (chainId && chainId !== chain.id) throw new SwitchChainError(new ChainNotConfiguredError());

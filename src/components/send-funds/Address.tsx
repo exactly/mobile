@@ -12,8 +12,8 @@ import { parse, safeParse } from "valibot";
 
 import Contacts from "./Contacts";
 import RecentContacts from "./RecentContacts";
-import handleError from "../../utils/handleError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import Button from "../shared/Button";
 import Input from "../shared/Input";
 import SafeView from "../shared/SafeView";
@@ -49,7 +49,7 @@ export default function AddressSelection() {
 
   if (success) {
     form.setFieldValue("receiver", output);
-    form.validateAllFields("change").catch(handleError);
+    form.validateAllFields("change").catch(reportError);
   }
 
   return (
@@ -118,7 +118,7 @@ export default function AddressSelection() {
                   <RecentContacts
                     onContactPress={(address) => {
                       form.setFieldValue("receiver", address);
-                      form.validateAllFields("change").catch(handleError);
+                      form.validateAllFields("change").catch(reportError);
                     }}
                   />
                 )}
@@ -131,7 +131,7 @@ export default function AddressSelection() {
                   <Contacts
                     onContactPress={(address) => {
                       form.setFieldValue("receiver", address);
-                      form.validateAllFields("change").catch(handleError);
+                      form.validateAllFields("change").catch(reportError);
                     }}
                   />
                 )}
@@ -159,7 +159,7 @@ export default function AddressSelection() {
                       <ArrowRight color={canSubmit ? "$interactiveOnBaseBrandDefault" : "$interactiveOnDisabled"} />
                     }
                     onPress={() => {
-                      form.handleSubmit().catch(handleError);
+                      form.handleSubmit().catch(reportError);
                     }}
                   >
                     Next

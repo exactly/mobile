@@ -7,7 +7,7 @@ import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, XStack } from "tamagui";
 
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import useIntercom from "../../utils/useIntercom";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -17,7 +17,7 @@ export default function Settings() {
   const { canGoBack } = useRouter();
   const { present } = useIntercom();
   function handleSupport() {
-    present().catch(handleError);
+    present().catch(reportError);
   }
   return (
     <SafeView fullScreen tab>
@@ -56,7 +56,7 @@ export default function Settings() {
             <Pressable
               hitSlop={ms(20)}
               onPress={() => {
-                setStringAsync(release).catch(handleError);
+                setStringAsync(release).catch(reportError);
                 Alert.alert("Copied", "App version has been copied to the clipboard.");
               }}
             >

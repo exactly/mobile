@@ -12,7 +12,7 @@ import {
   useSimulateUpgradeableModularAccountUninstallPlugin,
 } from "../../generated/contracts";
 import { accountClient } from "../../utils/alchemyConnector";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 
 export default function PluginUpgrade() {
   const { address } = useAccount();
@@ -67,7 +67,7 @@ export default function PluginUpgrade() {
       actionText="Upgrade account now"
       loading={isUpdating}
       onPress={() => {
-        updatePlugin().catch(handleError);
+        updatePlugin().catch(reportError);
       }}
     />
   );

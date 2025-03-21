@@ -34,7 +34,7 @@ import View from "../../components/shared/View";
 import { auditorAbi, marketAbi, useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import { accountClient } from "../../utils/alchemyConnector";
 import assetLogos from "../../utils/assetLogos";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import { getRoute } from "../../utils/lifi";
 import queryClient from "../../utils/queryClient";
 import useAccountAssets from "../../utils/useAccountAssets";
@@ -84,7 +84,7 @@ export default function Pay() {
   } = useWriteContract({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: assetQueryKey }).catch(handleError);
+        queryClient.invalidateQueries({ queryKey: assetQueryKey }).catch(reportError);
       },
     },
   });
@@ -96,7 +96,7 @@ export default function Pay() {
   } = useWriteContract({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: assetQueryKey }).catch(handleError);
+        queryClient.invalidateQueries({ queryKey: assetQueryKey }).catch(reportError);
       },
     },
   });
@@ -639,7 +639,7 @@ export default function Pay() {
                 <Button
                   flexBasis={ms(60)}
                   onPress={() => {
-                    repayWithExternalAsset().catch(handleError);
+                    repayWithExternalAsset().catch(reportError);
                   }}
                   contained
                   disabled={isRepayingWithExternalAsset || route.fromAmount > externalAssetAvailable}

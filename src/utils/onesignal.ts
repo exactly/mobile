@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import type * as OneSignalNative from "react-native-onesignal";
 import type * as OneSignalWeb from "react-onesignal";
 
-import handleError from "./handleError";
+import reportError from "./reportError";
 
 const { enablePrompt, login, logout } = (
   Platform.OS === "web"
@@ -41,18 +41,18 @@ const { enablePrompt, login, logout } = (
                       };
                     }),
                 },
-              }).catch(handleError)
+              }).catch(reportError)
             : undefined;
         let displayPrompt: (() => void) | undefined;
         return {
           enablePrompt: () => {
-            init?.then(() => displayPrompt?.()).catch(handleError);
+            init?.then(() => displayPrompt?.()).catch(reportError);
           },
           login: (userId: string) => {
-            init?.then(() => OneSignal.login(userId)).catch(handleError);
+            init?.then(() => OneSignal.login(userId)).catch(reportError);
           },
           logout: () => {
-            init?.then(() => OneSignal.logout()).catch(handleError);
+            init?.then(() => OneSignal.logout()).catch(reportError);
           },
         };
       }

@@ -10,7 +10,7 @@ import { Alert } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
-import handleError from "../../../utils/handleError";
+import reportError from "../../../utils/reportError";
 import Text from "../../shared/Text";
 
 export default function OperationDetails({ item }: { item: CreditActivity | DebitActivity | InstallmentsActivity }) {
@@ -31,7 +31,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
             callout
             color="$uiNeutralPrimary"
             onPress={() => {
-              setStringAsync(item.id).catch(handleError);
+              setStringAsync(item.id).catch(reportError);
               Alert.alert("Copied!", "The operation ID has been copied to the clipboard.");
             }}
             hitSlop={ms(15)}
@@ -124,7 +124,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
             alignItems="center"
             gap="$s3"
             onPress={() => {
-              openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${item.transactionHash}`).catch(handleError);
+              openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${item.transactionHash}`).catch(reportError);
             }}
           >
             <Text textDecorationLine="underline" callout color="$uiNeutralPrimary">

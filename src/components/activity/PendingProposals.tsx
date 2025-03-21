@@ -24,7 +24,7 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadExaPreviewerPendingProposals } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
 import SafeView from "../shared/SafeView";
@@ -119,7 +119,7 @@ export default function PendingProposals() {
           </View>
           <Pressable
             onPress={() => {
-              presentArticle("10752721").catch(handleError);
+              presentArticle("10752721").catch(reportError);
             }}
           >
             <CircleHelp color="$uiNeutralPrimary" />
@@ -131,7 +131,7 @@ export default function PendingProposals() {
             <RefreshControl
               refreshing={isLoading}
               onRefresh={() => {
-                refetchPendingProposals().catch(handleError);
+                refetchPendingProposals().catch(reportError);
               }}
             />
           }

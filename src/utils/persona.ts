@@ -3,8 +3,8 @@ import { router } from "expo-router";
 import { Platform } from "react-native";
 import { Environment, Inquiry } from "react-native-persona";
 
-import handleError from "./handleError";
 import queryClient from "./queryClient";
+import reportError from "./reportError";
 import { getKYCLink, getTemplateId } from "./server";
 
 export const environment = __DEV__ ? Environment.SANDBOX : Environment.PRODUCTION;
@@ -20,14 +20,14 @@ export async function createInquiry(passkey: Passkey) {
     .environment(environment)
     .referenceId(passkey.credentialId)
     .onCanceled(() => {
-      queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
+      queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(reportError);
       router.replace("/(app)/(home)");
     })
     .onComplete(() => {
-      queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
+      queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(reportError);
       router.replace("/(app)/(home)");
     })
-    .onError(handleError)
+    .onError(reportError)
     .build()
     .start();
 }
@@ -42,11 +42,11 @@ export async function resumeInquiry(inquiryId: string, sessionToken: string) {
   Inquiry.fromInquiry(inquiryId)
     .sessionToken(sessionToken)
     .onCanceled(() => {
-      queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
+      queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(reportError);
       router.replace("/(app)/(home)");
     })
     .onComplete(() => {
-      queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(handleError);
+      queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(reportError);
       router.replace("/(app)/(home)");
     })
     .build()
