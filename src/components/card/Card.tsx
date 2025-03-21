@@ -19,7 +19,7 @@ import {
   useReadPreviewerExactly,
   useReadUpgradeableModularAccountGetInstalledPlugins,
 } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import { createInquiry, resumeInquiry } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
 import { APIError, getActivity, getCard, createCard, getKYCStatus, setCardStatus } from "../../utils/server";
@@ -112,11 +112,11 @@ export default function Card() {
         if (result === "ok") {
           setDisclaimerShown(true);
         } else {
-          resumeInquiry(result.inquiryId, result.sessionToken).catch(handleError);
+          resumeInquiry(result.inquiryId, result.sessionToken).catch(reportError);
         }
       } catch (error) {
         if (!(error instanceof APIError)) {
-          handleError(error);
+          reportError(error);
           return;
         }
         const { code, text } = error;
@@ -129,9 +129,9 @@ export default function Card() {
           (code === 404 && text === "kyc not found") ||
           (code === 400 && text === "kyc not started")
         ) {
-          createInquiry(passkey).catch(handleError);
+          createInquiry(passkey).catch(reportError);
         }
-        handleError(error);
+        reportError(error);
       }
     },
   });
@@ -157,7 +157,7 @@ export default function Card() {
         const { data: card } = await refetchCard();
         if (card) setCardDetailsOpen(true);
       } catch (error) {
-        handleError(error);
+        reportError(error);
       }
     },
   });
@@ -177,12 +177,12 @@ export default function Card() {
               style={style}
               refreshing={isPending}
               onRefresh={() => {
-                refetchCard().catch(handleError);
-                refetchPurchases().catch(handleError);
-                refetchMarkets().catch(handleError);
-                refetchKYCStatus().catch(handleError);
-                refetchInstalledPlugins().catch(handleError);
-                queryClient.refetchQueries({ queryKey }).catch(handleError);
+                refetchCard().catch(reportError);
+                refetchPurchases().catch(reportError);
+                refetchMarkets().catch(reportError);
+                refetchKYCStatus().catch(reportError);
+                refetchInstalledPlugins().catch(reportError);
+                queryClient.refetchQueries({ queryKey }).catch(reportError);
               }}
             />
           }
@@ -204,7 +204,7 @@ export default function Card() {
                     </Pressable>
                     <Pressable
                       onPress={() => {
-                        presentArticle("9994746").catch(handleError);
+                        presentArticle("9994746").catch(reportError);
                       }}
                       hitSlop={ms(15)}
                     >
@@ -227,7 +227,7 @@ export default function Card() {
                   frozen={cardDetails?.status === "FROZEN"}
                   onPress={() => {
                     if (isRevealing || isGeneratingCard) return;
-                    revealCard().catch(handleError);
+                    revealCard().catch(reportError);
                   }}
                 />
                 <YStack
@@ -246,7 +246,7 @@ export default function Card() {
                           alignItems="center"
                           onPress={() => {
                             if (isFetchingCard || isSettingCardStatus) return;
-                            changeCardStatus(cardDetails.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(handleError);
+                            changeCardStatus(cardDetails.status === "FROZEN" ? "ACTIVE" : "FROZEN").catch(reportError);
                           }}
                         >
                           <XStack alignItems="center" gap="$s3">
@@ -286,7 +286,7 @@ export default function Card() {
                   )}
                   <Pressable
                     onPress={() => {
-                      revealCard().catch(handleError);
+                      revealCard().catch(reportError);
                     }}
                   >
                     <XStack alignItems="center" paddingVertical="$s4" justifyContent="space-between">
@@ -368,7 +368,7 @@ export default function Card() {
           open={disclaimerShown}
           onActionPress={() => {
             setDisclaimerShown(false);
-            generateCard().catch(handleError);
+            generateCard().catch(reportError);
           }}
           onClose={() => {
             setDisclaimerShown(false);

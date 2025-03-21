@@ -15,7 +15,7 @@ import CardStatus from "./CardStatus";
 import GettingStarted from "./GettingStarted";
 import HomeActions from "./HomeActions";
 import { useReadExaPreviewerPendingProposals, useReadPreviewerExactly } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import { getActivity, getKYCStatus } from "../../utils/server";
 import PaymentSheet from "../pay-later/PaymentSheet";
 import UpcomingPayments from "../pay-later/UpcomingPayments";
@@ -77,10 +77,10 @@ export default function Home() {
               style={style}
               refreshing={isPending}
               onRefresh={() => {
-                refetchActivity().catch(handleError);
-                refetchMarkets().catch(handleError);
-                refetchKYCStatus().catch(handleError);
-                refetchPendingProposals().catch(handleError);
+                refetchActivity().catch(reportError);
+                refetchMarkets().catch(reportError);
+                refetchKYCStatus().catch(reportError);
+                refetchPendingProposals().catch(reportError);
               }}
             />
           }

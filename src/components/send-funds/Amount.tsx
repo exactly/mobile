@@ -15,7 +15,7 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import queryClient, { type Withdraw } from "../../utils/queryClient";
 import useAsset from "../../utils/useAsset";
 import AmountSelector from "../shared/AmountSelector";
@@ -208,7 +208,7 @@ export default function Amount() {
                       />
                     }
                     onPress={() => {
-                      form.handleSubmit().catch(handleError);
+                      form.handleSubmit().catch(reportError);
                     }}
                   >
                     Next

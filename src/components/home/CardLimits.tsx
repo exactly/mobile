@@ -10,7 +10,7 @@ import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
 import { useReadPreviewerExactly } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import { getCard } from "../../utils/server";
 import useIntercom from "../../utils/useIntercom";
 import Text from "../shared/Text";
@@ -29,7 +29,7 @@ export default function CardLimits() {
         </Text>
         <Pressable
           onPress={() => {
-            presentArticle(isCredit ? "9467331" : "9922633").catch(handleError);
+            presentArticle(isCredit ? "9467331" : "9922633").catch(reportError);
           }}
           hitSlop={ms(15)}
         >

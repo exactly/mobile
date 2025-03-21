@@ -12,7 +12,7 @@ import { useAccount } from "wagmi";
 
 import OptimismImage from "../../assets/images/optimism.svg";
 import assetLogos from "../../utils/assetLogos";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import AddressDialog from "../shared/AddressDialog";
 import AssetLogo from "../shared/AssetLogo";
 import SafeView from "../shared/SafeView";
@@ -32,7 +32,7 @@ export default function AddCrypto() {
 
   const copy = useCallback(() => {
     if (!address) return;
-    setStringAsync(address).catch(handleError);
+    setStringAsync(address).catch(reportError);
     toast.show("Account address copied!", {
       native: true,
       duration: 1000,
@@ -110,7 +110,7 @@ export default function AddCrypto() {
                   </Pressable>
                   <Pressable
                     onPress={() => {
-                      share().catch(handleError);
+                      share().catch(reportError);
                     }}
                     hitSlop={ms(15)}
                   >

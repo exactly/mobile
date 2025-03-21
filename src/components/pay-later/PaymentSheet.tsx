@@ -11,7 +11,7 @@ import { Sheet, XStack } from "tamagui";
 import { titleCase } from "title-case";
 import { nonEmpty, pipe, safeParse, string } from "valibot";
 
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
 import Button from "../shared/Button";
@@ -83,7 +83,7 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
                   </Text>
                   <Pressable
                     onPress={() => {
-                      presentArticle("10245778").catch(handleError);
+                      presentArticle("10245778").catch(reportError);
                     }}
                     hitSlop={ms(15)}
                   >

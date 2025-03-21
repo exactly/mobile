@@ -11,7 +11,7 @@ import CardActivity from "./CardActivity";
 import ReceivedActivity from "./ReceivedActivity";
 import RepayActivity from "./RepayActivity";
 import SentActivity from "./SentActivity";
-import handleError from "../../../utils/handleError";
+import reportError from "../../../utils/reportError";
 import type { ActivityItem } from "../../../utils/queryClient";
 import useIntercom from "../../../utils/useIntercom";
 import ActionButton from "../../shared/ActionButton";
@@ -78,7 +78,7 @@ export default function ActivityDetails() {
                   marginTop="$s4"
                   marginBottom="$s5"
                   onPress={() => {
-                    present().catch(handleError);
+                    present().catch(reportError);
                   }}
                   backgroundColor="transparent"
                   borderWidth={1}

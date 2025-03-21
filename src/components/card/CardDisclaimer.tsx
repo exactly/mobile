@@ -6,7 +6,7 @@ import { ScrollView, Sheet, YStack } from "tamagui";
 
 import Blob from "../../assets/images/exa-card-blob.svg";
 import ExaCard from "../../assets/images/exa-card.svg";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import useIntercom from "../../utils/useIntercom";
 import Button from "../shared/Button";
 import SafeView from "../shared/SafeView";
@@ -70,7 +70,7 @@ export default function CardDisclaimer({
                   <YStack gap="$s4">
                     <Pressable
                       onPress={() => {
-                        presentArticle("10707672").catch(handleError);
+                        presentArticle("10707672").catch(reportError);
                       }}
                     >
                       <Text color="$uiNeutralPlaceholder" footnote textAlign="center">

@@ -6,7 +6,7 @@ import React from "react";
 import { Alert } from "react-native";
 import { XStack } from "tamagui";
 
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
@@ -28,7 +28,7 @@ export default function Contact({
         onContactPress(address);
       }}
       onLongPress={() => {
-        setStringAsync(address).catch(handleError);
+        setStringAsync(address).catch(reportError);
         Alert.alert("Address copied", "The contact's address has been copied to the clipboard.");
       }}
     >

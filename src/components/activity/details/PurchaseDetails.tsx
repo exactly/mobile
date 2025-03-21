@@ -9,7 +9,7 @@ import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
-import handleError from "../../../utils/handleError";
+import reportError from "../../../utils/reportError";
 import Text from "../../shared/Text";
 
 export default function PurchaseDetails({ item }: { item: CreditActivity | DebitActivity | InstallmentsActivity }) {
@@ -38,7 +38,7 @@ export default function PurchaseDetails({ item }: { item: CreditActivity | Debit
           </Text>
           <Pressable
             onPress={() => {
-              setStringAsync(item.id).catch(handleError);
+              setStringAsync(item.id).catch(reportError);
               toast.show("Operation ID copied!", {
                 native: true,
                 duration: 1000,

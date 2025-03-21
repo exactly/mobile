@@ -10,7 +10,7 @@ import { Alert, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack, Avatar } from "tamagui";
 
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import type { Withdraw } from "../../utils/queryClient";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
@@ -59,7 +59,7 @@ export default function Details({
             justifyContent="space-between"
             alignItems="center"
             onPress={() => {
-              setStringAsync(hash).catch(handleError);
+              setStringAsync(hash).catch(reportError);
               Alert.alert("Copied", "The transaction hash has been copied to the clipboard.");
             }}
           >
@@ -75,7 +75,7 @@ export default function Details({
           </XStack>
           <Button
             onPress={() => {
-              openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${hash}`).catch(handleError);
+              openBrowserAsync(`${chain.blockExplorers?.default.url}/tx/${hash}`).catch(reportError);
             }}
             contained
             main

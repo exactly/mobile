@@ -10,7 +10,7 @@ import { zeroAddress } from "viem";
 import { useAccount, useReadContract } from "wagmi";
 
 import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -94,7 +94,7 @@ export default function HomeActions() {
         main
         spaced
         onPress={() => {
-          handleSend().catch(handleError);
+          handleSend().catch(reportError);
         }}
         disabled={isLatestPlugin ? false : isFetchingProposals}
         iconAfter={

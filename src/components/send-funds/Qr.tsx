@@ -8,7 +8,7 @@ import { ms } from "react-native-size-matters";
 import { useWindowDimensions, XStack, YStack } from "tamagui";
 import { safeParse } from "valibot";
 
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import Button from "../shared/Button";
 import Text from "../shared/Text";
 import View from "../shared/View";
@@ -52,7 +52,7 @@ export default function Qr() {
               <Button
                 alignSelf="center"
                 onPress={() => {
-                  Linking.openSettings().catch(handleError);
+                  Linking.openSettings().catch(reportError);
                 }}
               >
                 Go to Settings
@@ -93,7 +93,7 @@ export default function Qr() {
               alignSelf="center"
               onPress={() => {
                 requestPermission().catch((error: unknown) => {
-                  handleError(error);
+                  reportError(error);
                   router.back();
                 });
               }}

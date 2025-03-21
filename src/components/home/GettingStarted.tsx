@@ -7,7 +7,7 @@ import { PixelRatio, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import { createInquiry, resumeInquiry } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
 import { APIError, getKYCStatus } from "../../utils/server";
@@ -25,10 +25,10 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
       try {
         const result = await getKYCStatus();
         if (result === "ok") return;
-        resumeInquiry(result.inquiryId, result.sessionToken).catch(handleError);
+        resumeInquiry(result.inquiryId, result.sessionToken).catch(reportError);
       } catch (error) {
         if (!(error instanceof APIError)) {
-          handleError(error);
+          reportError(error);
           return;
         }
         const { code, text } = error;
@@ -37,9 +37,9 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
           (code === 404 && text === "kyc not found") ||
           (code === 400 && text === "kyc not started")
         ) {
-          createInquiry(passkey).catch(handleError);
+          createInquiry(passkey).catch(reportError);
         }
-        handleError(error);
+        reportError(error);
       }
     },
     onSettled: async () => {
@@ -52,7 +52,7 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
         router.push("/add-funds/add-crypto");
         break;
       case "verify-identity":
-        startKYC().catch(handleError);
+        startKYC().catch(reportError);
         break;
     }
   }

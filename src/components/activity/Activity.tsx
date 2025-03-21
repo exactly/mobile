@@ -7,7 +7,7 @@ import { styled, useTheme } from "tamagui";
 
 import ActivityItem from "./ActivityItem";
 import Empty from "./Empty";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import queryClient from "../../utils/queryClient";
 import { getActivity } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
@@ -48,8 +48,8 @@ export default function Activity() {
               style={style}
               refreshing={isPending}
               onRefresh={() => {
-                refetch().catch(handleError);
-                queryClient.refetchQueries({ queryKey }).catch(handleError);
+                refetch().catch(reportError);
+                queryClient.refetchQueries({ queryKey }).catch(reportError);
               }}
             />
           }

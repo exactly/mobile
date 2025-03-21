@@ -12,7 +12,7 @@ import { XStack, YStack } from "tamagui";
 import { parseUnits, zeroAddress } from "viem";
 
 import { useReadPreviewerPreviewBorrowAtMaturity } from "../../generated/contracts";
-import handleError from "../../utils/handleError";
+import reportError from "../../utils/reportError";
 import queryClient from "../../utils/queryClient";
 import { getCard, setCardMode } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
@@ -46,7 +46,7 @@ function InstallmentsSelector() {
       if (context?.previous) {
         queryClient.setQueryData(["card", "details"], context.previous);
       }
-      handleError(error);
+      reportError(error);
     },
     onSettled: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["card", "details"] });
@@ -58,7 +58,7 @@ function InstallmentsSelector() {
 
   function setInstallments(installments: number) {
     if (!card) return;
-    mutateMode(installments).catch(handleError);
+    mutateMode(installments).catch(reportError);
   }
   return (
     <YStack gap="$s4_5" backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4">
