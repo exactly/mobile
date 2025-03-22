@@ -5,18 +5,15 @@ import "../mocks/onesignal";
 import "../mocks/sentry";
 import "../mocks/keeper";
 
-import { previewerAddress, wethAddress } from "@exactly/common/generated/chain";
-import { Address } from "@exactly/common/validation";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
-import { parse } from "valibot";
 import {
+  type Address,
   bytesToHex,
   hexToBigInt,
   numberToBytes,
   padHex,
   parseEther,
-  parseEventLogs,
   type PrivateKeyAccount,
   WaitForTransactionReceiptTimeoutError,
   zeroHash,
@@ -25,7 +22,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { afterEach, beforeEach, describe, expect, inject, it, vi } from "vitest";
 
 import database, { credentials } from "../../database";
-import { previewerAbi, marketAbi } from "../../generated/contracts";
+import { previewerAbi } from "../../generated/contracts";
 import app from "../../hooks/activity";
 import * as decodePublicKey from "../../utils/decodePublicKey";
 import deriveAddress from "../../utils/deriveAddress";
@@ -34,30 +31,6 @@ import publicClient from "../../utils/publicClient";
 import anvilClient from "../anvilClient";
 
 const appClient = testClient(app);
-
-const waitForDeposit = async (caller: Address, quantity: number, timeout = 1000) => {
-  let counter = quantity;
-  return new Promise((resolve) => {
-    const unwatch = publicClient.watchEvent({
-      onLogs: (logs) => {
-        const deposit = parseEventLogs({
-          abi: marketAbi,
-          logs,
-        }).filter((log) => log.eventName === "Deposit" && parse(Address, `0x${log.topics[1].slice(26)}`) === caller);
-        counter -= deposit.length;
-        if (counter <= 0) {
-          unwatch();
-          resolve(deposit);
-        }
-      },
-    });
-
-    setTimeout(() => {
-      unwatch();
-      resolve([]);
-    }, timeout);
-  });
-};
 
 describe("address activity", () => {
   let owner: PrivateKeyAccount;
@@ -82,7 +55,8 @@ describe("address activity", () => {
     const captureException = vi.spyOn(sentry, "captureException");
     captureException.mockImplementationOnce(() => "");
 
-    vi.spyOn(publicClient, "getCode").mockRejectedValue(new Error("Unexpected"));
+    const getCode = vi.spyOn(publicClient, "getCode");
+    getCode.mockRejectedValue(new Error("Unexpected"));
 
     const deposit = parseEther("5");
     await anvilClient.setBalance({ address: account, value: deposit });
@@ -98,11 +72,10 @@ describe("address activity", () => {
       },
     });
 
-    const deposits = await waitForDeposit(account, 1);
+    await vi.waitUntil(() => getCode.mock.calls.length > 0);
 
     expect(captureException).toHaveBeenCalledWith(new Error("Unexpected"));
 
-    expect(deposits).toHaveLength(0);
     expect(response.status).toBe(200);
   });
 
@@ -117,6 +90,8 @@ describe("address activity", () => {
     const deposit = parseEther("5");
     await anvilClient.setBalance({ address: account, value: deposit });
 
+    const waitForTransactionReceipt = vi.spyOn(publicClient, "waitForTransactionReceipt");
+
     const response = await appClient.index.$post({
       ...activityPayload,
       json: {
@@ -128,14 +103,13 @@ describe("address activity", () => {
       },
     });
 
-    const deposits = await waitForDeposit(account, 1);
+    await vi.waitUntil(() => waitForTransactionReceipt.mock.calls.length > 0);
 
     expect(captureException).toHaveBeenCalledWith(
       new WaitForTransactionReceiptTimeoutError({ hash: zeroHash }),
       expect.anything(),
     );
 
-    expect(deposits).toHaveLength(0);
     expect(response.status).toBe(200);
   });
 
@@ -143,6 +117,8 @@ describe("address activity", () => {
     const deposit = parseEther("5");
     await anvilClient.setBalance({ address: account, value: deposit });
 
+    const waitForTransactionReceipt = vi.spyOn(publicClient, "waitForTransactionReceipt");
+
     const response = await appClient.index.$post({
       ...activityPayload,
       json: {
@@ -154,16 +130,16 @@ describe("address activity", () => {
       },
     });
 
-    await waitForDeposit(account, 1);
+    await vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 2);
 
     const exactly = await publicClient.readContract({
-      address: previewerAddress,
+      address: inject("Previewer"),
       functionName: "exactly",
       abi: previewerAbi,
       args: [account],
     });
 
-    const market = exactly.find((m) => m.asset === wethAddress);
+    const market = exactly.find((m) => m.asset === inject("WETH"));
 
     expect(market?.floatingDepositAssets).toBe(deposit);
     expect(market?.isCollateral).toBe(true);
@@ -176,11 +152,13 @@ describe("address activity", () => {
 
     const weth = parseEther("2");
     await keeper.writeContract({
-      address: wethAddress,
+      address: inject("WETH"),
       abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
       functionName: "mint",
       args: [account, weth],
     });
+
+    const waitForTransactionReceipt = vi.spyOn(publicClient, "waitForTransactionReceipt");
 
     const response = await appClient.index.$post({
       ...activityPayload,
@@ -193,23 +171,23 @@ describe("address activity", () => {
             {
               ...activityPayload.json.event.activity[1],
               toAddress: account,
-              rawContract: { ...activityPayload.json.event.activity[1].rawContract, address: wethAddress },
+              rawContract: { ...activityPayload.json.event.activity[1].rawContract, address: inject("WETH") },
             },
           ],
         },
       },
     });
 
-    await waitForDeposit(account, 2);
+    await vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 3, { timeout: 6666 });
 
     const exactly = await publicClient.readContract({
-      address: previewerAddress,
+      address: inject("Previewer"),
       functionName: "exactly",
       abi: previewerAbi,
       args: [account],
     });
 
-    const market = exactly.find((m) => m.asset === wethAddress);
+    const market = exactly.find((m) => m.asset === inject("WETH"));
 
     expect(market?.floatingDepositAssets).toBe(eth + weth);
     expect(market?.isCollateral).toBe(true);

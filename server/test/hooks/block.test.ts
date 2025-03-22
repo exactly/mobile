@@ -5,7 +5,7 @@ import "../mocks/sentry";
 import "../mocks/deployments";
 
 import ProposalType from "@exactly/common/ProposalType";
-import chain, { exaPluginAbi, marketUSDCAddress, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
+import chain, { exaPluginAbi, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
 import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import {
@@ -66,7 +66,7 @@ describe("proposal", () => {
               abi: exaPluginAbi,
               functionName: "propose",
               args: [
-                marketUSDCAddress,
+                inject("MarketUSDC"),
                 amount,
                 ProposalType.Withdraw,
                 encodeAbiParameters([{ type: "address" }], [padHex("0x69", { size: 20 })]),
@@ -256,7 +256,12 @@ function proposeWithdraw(amount: bigint, receiver: Address) {
     encodeFunctionData({
       abi: exaPluginAbi,
       functionName: "propose",
-      args: [marketUSDCAddress, amount, ProposalType.Withdraw, encodeAbiParameters([{ type: "address" }], [receiver])],
+      args: [
+        inject("MarketUSDC"),
+        amount,
+        ProposalType.Withdraw,
+        encodeAbiParameters([{ type: "address" }], [receiver]),
+      ],
     }),
   );
 }
