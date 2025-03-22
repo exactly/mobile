@@ -5,7 +5,7 @@
   "scripts": {
     "build": "forge build",
     "snapshot": "FOUNDRY_PROFILE=snapshot forge snapshot --force",
-    "test": "pnpm run --aggregate-output --workspace-concurrency 1 /test:/",
+    "test": "pnpm run --aggregate-output --reporter-hide-prefix --workspace-concurrency 1 /test:/",
     "test:fmt": "forge fmt --check",
     "test:gas": "FOUNDRY_PROFILE=snapshot forge snapshot --force --check",
     "test:solhint": "solhint --max-warnings 0 '**/*.sol'",

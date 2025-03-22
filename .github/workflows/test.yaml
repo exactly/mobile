@@ -32,9 +32,9 @@ jobs:
       - run: pip install -r contracts/requirements.txt
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --recursive --aggregate-output --no-bail run build
-      - run: pnpm --recursive --aggregate-output --no-bail run sourcemaps
-      - run: pnpm --recursive --aggregate-output --no-bail test
+      - run: pnpm --recursive --aggregate-output --no-bail --reporter-hide-prefix run build
+      - run: pnpm --recursive --aggregate-output --no-bail --reporter-hide-prefix run sourcemaps
+      - run: pnpm --recursive --aggregate-output --no-bail --reporter-hide-prefix test
 
       - uses: codecov/codecov-action@v4
         if: ${{ !cancelled() }}

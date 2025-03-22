@@ -6,7 +6,7 @@
     "build": "pkgroll --sourcemap --src .",
     "sourcemaps": "sentry-cli sourcemaps inject -o exactly -p mobile dist && sentry-cli sourcemaps upload -o exactly -p mobile dist",
     "db:push": "drizzle-kit push",
-    "test": "pnpm run --aggregate-output /test:/",
+    "test": "pnpm run --aggregate-output --reporter-hide-prefix /test:/",
     "test:ts": "tsc",
     "test:vi": "vitest run",
     "dev": "tsx --watch --env-file=.env --require=./instrument.cjs index.ts"
