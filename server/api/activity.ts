@@ -83,8 +83,9 @@ export default app.get(
         .then((p) => new Map<Hex, (typeof p)[number]>(p.map((m) => [m.market.toLowerCase() as Hex, m]))),
       !ignore("repay") || !ignore("sent")
         ? publicClient
-            .getLogs({
-              event: upgradeableModularAccountAbi[25],
+            .getContractEvents({
+              abi: upgradeableModularAccountAbi,
+              eventName: "PluginInstalled",
               address: account,
               toBlock: "latest",
               fromBlock: 0n,
@@ -103,8 +104,9 @@ export default app.get(
       ignore("received")
         ? []
         : publicClient
-            .getLogs({
-              event: marketAbi[24],
+            .getContractEvents({
+              abi: marketAbi,
+              eventName: "Deposit",
               address: [...markets.keys()],
               args: { caller: account, owner: account },
               toBlock: "latest",
@@ -121,8 +123,9 @@ export default app.get(
       ignore("repay")
         ? []
         : publicClient
-            .getLogs({
-              event: marketAbi[38],
+            .getContractEvents({
+              abi: marketAbi,
+              eventName: "RepayAtMaturity",
               address: [...markets.keys()],
               args: { caller: [...plugins], borrower: account },
               toBlock: "latest",
@@ -139,8 +142,9 @@ export default app.get(
       ignore("sent")
         ? []
         : publicClient
-            .getLogs({
-              event: marketAbi[49],
+            .getContractEvents({
+              abi: marketAbi,
+              eventName: "Withdraw",
               address: [...markets.keys()],
               args: { caller: account, owner: account },
               toBlock: "latest",
@@ -162,8 +166,9 @@ export default app.get(
       ignore("card")
         ? undefined
         : publicClient
-            .getLogs({
-              event: marketAbi[22],
+            .getContractEvents({
+              abi: marketAbi,
+              eventName: "BorrowAtMaturity",
               address: marketUSDCAddress,
               args: { borrower: account },
               toBlock: "latest",

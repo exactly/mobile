@@ -76,16 +76,18 @@ describe("authenticated", () => {
     beforeAll(async () => {
       await database.insert(cards).values([{ id: "activity", credentialId: account, lastFour: "1234" }]);
       const logs = [
-        ...(await anvilClient.getLogs({
-          event: marketAbi[22],
+        ...(await anvilClient.getContractEvents({
+          abi: marketAbi,
+          eventName: "BorrowAtMaturity",
           address: [inject("MarketEXA"), inject("MarketUSDC"), inject("MarketWETH")],
           args: { borrower: account },
           toBlock: "latest",
           fromBlock: 0n,
           strict: true,
         })),
-        ...(await anvilClient.getLogs({
-          event: marketAbi[49],
+        ...(await anvilClient.getContractEvents({
+          abi: marketAbi,
+          eventName: "Withdraw",
           address: [inject("MarketEXA"), inject("MarketUSDC"), inject("MarketWETH")],
           args: { owner: account },
           toBlock: "latest",
