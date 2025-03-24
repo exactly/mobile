@@ -5,7 +5,7 @@
   "scripts": {
     "build": "forge build",
     "snapshot": "FOUNDRY_PROFILE=snapshot forge snapshot --force",
-    "test": "pnpm run --aggregate-output --reporter-hide-prefix --workspace-concurrency 1 /test:/",
+    "test": "bash -c 'if [[ -z \"$GITHUB_ACTIONS\" ]]; then pnpm run --workspace-concurrency 1 /test:/; else set -o pipefail && pnpm run --workspace-concurrency 1 --aggregate-output --reporter-hide-prefix /test:/ 2>&1 | perl -pe \"s|(?<![a-zA-Z0-9/\\.@])([a-zA-Z][^\\s:\\\"]*?/[^\\s:\\\"]+)|contracts/\\1|g\"; fi'",
     "test:fmt": "forge fmt --check",
     "test:gas": "FOUNDRY_PROFILE=snapshot forge snapshot --force --check",
     "test:solhint": "solhint --max-warnings 0 '**/*.sol'",
