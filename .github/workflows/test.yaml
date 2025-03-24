@@ -30,6 +30,7 @@ jobs:
           cache: pip
           cache-dependency-path: contracts/requirements.txt
       - run: pip install -r contracts/requirements.txt
+      - run: echo ::add-matcher::.github/matcher.json
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm --recursive --aggregate-output --no-bail --reporter-hide-prefix run build

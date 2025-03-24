@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/task.json",
+  "problemMatcher": [
+    {
+      "owner": "cspell",
+      "severity": "warning",
+      "pattern": [{ "regexp": "^(.*):(\\d+):(\\d+) - (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }]
+    },
+    {
+      "owner": "forge-fmt",
+      "pattern": [{ "regexp": "^(Diff in (.+)):$", "file": 2, "message": 1 }]
+    },
+    {
+      "owner": "forge-snapshot",
+      "pattern": [{ "regexp": "^(Diff in \"(.+?)\":\\s+.*)$", "file": 2, "message": 1 }]
+    },
+    {
+      "owner": "slither",
+      "pattern": [
+        {
+          "regexp": "^(?!\\s)(.*\\(([^#]+\\/[^#]+)#(\\d+)(?:-[0-9]+)?\\).*)$",
+          "file": 2,
+          "line": 3,
+          "message": 1
+        }
+      ]
+    }
+  ]
+}
