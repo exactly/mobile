@@ -33,36 +33,28 @@ queryClient.setQueryDefaults(["settings", "sensitive"], {
   retry: false,
   staleTime: Infinity,
   gcTime: Infinity,
-  queryFn: () => {
-    throw new Error("don't refetch");
-  },
+  queryFn: () => queryClient.getQueryData(["settings", "sensitive"]),
 });
 queryClient.setQueryDefaults(["settings", "alertShown"], {
   initialData: true,
   retry: false,
   staleTime: Infinity,
   gcTime: Infinity,
-  queryFn: () => {
-    throw new Error("don't refetch");
-  },
+  queryFn: () => queryClient.getQueryData(["settings", "alertShown"]),
 });
 queryClient.setQueryDefaults(["settings", "installments"], {
   initialData: 1,
   retry: false,
   staleTime: Infinity,
   gcTime: Infinity,
-  queryFn: () => {
-    throw new Error("don't refetch");
-  },
+  queryFn: () => queryClient.getQueryData(["settings", "installments"]),
 });
 queryClient.setQueryDefaults(["simulate-purchase", "installments"], {
   initialData: 1,
   retry: false,
   staleTime: Infinity,
   gcTime: Infinity,
-  queryFn: () => {
-    throw new Error("don't refetch");
-  },
+  queryFn: () => queryClient.getQueryData(["simulate-purchase", "installments"]),
 });
 queryClient.setQueryDefaults(["contacts", "saved"], {
   initialData: undefined,
