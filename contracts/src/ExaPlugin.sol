@@ -71,20 +71,21 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   using LibBytes for bytes;
   using ECDSA for bytes32;
 
-  string public constant NAME = "Exa Plugin";
-  string public constant VERSION = "0.0.5";
-  string public constant AUTHOR = "Exactly";
+  string private constant NAME = "Exa Plugin";
+  string private constant VERSION = "0.0.5";
+  string private constant AUTHOR = "Exactly";
 
-  bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
+  bytes32 private constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
 
-  IERC20 public immutable USDC;
-  IWETH public immutable WETH;
   IAuditor public immutable AUDITOR;
   IMarket public immutable EXA_USDC;
   IMarket public immutable EXA_WETH;
   IDebtManager public immutable DEBT_MANAGER;
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
   IssuerChecker public immutable ISSUER_CHECKER;
+
+  IERC20 private immutable USDC;
+  IWETH private immutable WETH;
 
   IFlashLoaner public flashLoaner;
   IProposalManager public proposalManager;

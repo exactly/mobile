@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { ACCOUNT_IMPL, ENTRYPOINT } from "webauthn-owner-plugin/../script/Factory.s.sol";
-import { WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
+import { PluginMetadata, WebauthnOwnerPlugin } from "webauthn-owner-plugin/WebauthnOwnerPlugin.sol";
 
 import { ExaAccountFactory } from "../src/ExaAccountFactory.sol";
 import {
@@ -45,11 +45,11 @@ contract DeployScript is BaseScript {
         firstKeeper: acct("keeper")
       })
     );
-
+    PluginMetadata memory metadata = exaPlugin.pluginMetadata();
     factory = ExaAccountFactory(
       payable(
         CREATE3_FACTORY.deploy(
-          keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION())),
+          keccak256(abi.encode(metadata.name, metadata.version)),
           abi.encodePacked(
             vm.getCode("ExaAccountFactory.sol:ExaAccountFactory"),
             abi.encode(

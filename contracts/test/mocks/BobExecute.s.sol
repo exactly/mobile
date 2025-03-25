@@ -29,7 +29,9 @@ contract BobExecuteScript is BaseScript {
     exaPlugin = ExaPlugin(payable(broadcast("Deploy")));
     factory = ExaAccountFactory(
       payable(
-        CREATE3_FACTORY.getDeployed(acct("deployer"), keccak256(abi.encode(exaPlugin.NAME(), exaPlugin.VERSION())))
+        CREATE3_FACTORY.getDeployed(
+          acct("deployer"), keccak256(abi.encode(exaPlugin.pluginMetadata().name, exaPlugin.pluginMetadata().version))
+        )
       )
     );
     address[] memory owners = new address[](1);

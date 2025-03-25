@@ -2756,9 +2756,8 @@ contract ExaPluginTest is ForkTest {
 
   function test_pluginMetadata() external view {
     PluginMetadata memory pluginMetadata = exaPlugin.pluginMetadata();
-    assertEq(pluginMetadata.name, exaPlugin.NAME());
-    assertEq(pluginMetadata.version, exaPlugin.VERSION());
-    assertEq(pluginMetadata.author, exaPlugin.AUTHOR());
+    assertEq(pluginMetadata.name, "Exa Plugin");
+    assertEq(pluginMetadata.author, "Exactly");
   }
 
   // refunder
