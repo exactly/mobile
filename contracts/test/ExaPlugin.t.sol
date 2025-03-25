@@ -493,7 +493,7 @@ contract ExaPluginTest is ForkTest {
     assertEq(position.principal, 100e6);
     uint256 positionAssets = position.principal + position.fee;
 
-    account.propose(
+    account.proposeRepay(
       exaUSDC,
       positionAssets / 2,
       ProposalType.REPAY_AT_MATURITY,
@@ -517,7 +517,7 @@ contract ExaPluginTest is ForkTest {
     uint256 positionAssets = exaUSDC.fixedBorrowPositions(maturity, address(account)).principal
       + exaUSDC.fixedBorrowPositions(maturity, address(account)).fee;
 
-    account.propose(
+    account.proposeRepay(
       exaUSDC,
       positionAssets,
       ProposalType.REPAY_AT_MATURITY,
@@ -578,6 +578,7 @@ contract ExaPluginTest is ForkTest {
     account.poke(exaEXA);
 
     uint256 maturity = FixedLib.INTERVAL;
+    vm.startPrank(address(account));
     account.propose(
       exaUSDC,
       100e6,
@@ -675,18 +676,23 @@ contract ExaPluginTest is ForkTest {
     assertGt(prevPrincipal, 0);
 
     uint256 amountIn = 111e18;
-    bytes memory route = abi.encodeCall(
-      MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(account))
-    );
-    account.propose(
+    account.proposeRepay(
       exaEXA,
       amountIn,
       ProposalType.CROSS_REPAY_AT_MATURITY,
-      abi.encode(CrossRepayData({ maturity: maturity, positionAssets: 110e6, maxRepay: 110e6, route: route }))
+      abi.encode(
+        CrossRepayData({
+          maturity: maturity,
+          positionAssets: 110e6,
+          maxRepay: 110e6,
+          route: abi.encodeCall(
+            MockSwapper.swapExactAmountOut, (address(exaEXA.asset()), amountIn, address(usdc), 110e6, address(account))
+          )
+        })
+      )
     );
 
     skip(proposalManager.delay());
-    vm.startPrank(keeper);
     account.executeProposal(proposalManager.nonces(address(account)));
 
     assertEq(usdc.balanceOf(address(exaPlugin)), 0, "usdc dust");
@@ -812,7 +818,7 @@ contract ExaPluginTest is ForkTest {
     uint256 maxAssets = 110e6;
     account.collectCredit(FixedLib.INTERVAL, assets, maxAssets, block.timestamp, _issuerOp(assets, block.timestamp));
 
-    account.propose(
+    account.proposeRepay(
       exaUSDC,
       maxAssets,
       ProposalType.ROLL_DEBT,
@@ -859,19 +865,21 @@ contract ExaPluginTest is ForkTest {
     assertEq(exa.balanceOf(receiver), amount, "receiver balance doesn't match");
   }
 
-  function test_withdraw_transfersAsset_asKeeper() external {
+  function test_proposeWithdraw_reverts_whenKeeper() external {
     uint256 amount = 100 ether;
     address receiver = address(0x420);
     vm.startPrank(keeper);
     account.poke(exaEXA);
 
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        UpgradeableModularAccount.RuntimeValidationFunctionReverted.selector,
+        exaPlugin,
+        FunctionId.RUNTIME_VALIDATION_SELF,
+        abi.encodeWithSelector(Unauthorized.selector)
+      )
+    );
     account.propose(exaEXA, amount, ProposalType.WITHDRAW, abi.encode(receiver));
-
-    skip(proposalManager.delay());
-
-    assertEq(exa.balanceOf(receiver), 0);
-    account.executeProposal(proposalManager.nonces(address(account)));
-    assertEq(exa.balanceOf(receiver), amount);
   }
 
   function test_withdraw_withdrawsProposed() external {
@@ -1248,6 +1256,7 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(keeper);
     account.poke(exaEXA);
 
+    vm.startPrank(address(account));
     account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
     skip(proposalManager.delay());
 
@@ -1264,7 +1273,7 @@ contract ExaPluginTest is ForkTest {
   }
 
   function test_setProposalNonce_emitsEvent() external {
-    vm.startPrank(keeper);
+    vm.startPrank(address(account));
 
     account.propose(exaEXA, 100e6, ProposalType.WITHDRAW, abi.encode(address(0x420)));
     uint256 nonce;
@@ -2165,10 +2174,12 @@ contract ExaPluginTest is ForkTest {
 
     uint256 usdcBalance = exaUSDC.maxWithdraw(address(account));
 
+    vm.startPrank(address(account));
     for (uint256 i = 0; i < 4; ++i) {
       account.propose(exaUSDC, usdcBalance / 4, ProposalType.WITHDRAW, abi.encode(address(0x420)));
     }
 
+    vm.startPrank(keeper);
     account.collectDebit(1, block.timestamp, _issuerOp(1, block.timestamp));
     account.collectDebit(usdcBalance / 4, block.timestamp, _issuerOp(usdcBalance / 4, block.timestamp));
   }
@@ -2183,6 +2194,7 @@ contract ExaPluginTest is ForkTest {
     uint256 maxDebt = adjustedCollateral.mulWad(adjustFactor);
 
     // propose borrow at maturity 3 times with maxAssets = maxDebt / 3
+    vm.startPrank(address(account));
     for (uint256 i = 0; i < 3; ++i) {
       account.propose(
         exaUSDC,
@@ -2194,6 +2206,7 @@ contract ExaPluginTest is ForkTest {
       );
     }
 
+    vm.startPrank(keeper);
     account.collectDebit(10, block.timestamp, _issuerOp(10, block.timestamp));
 
     account.collectCredit(
@@ -3073,6 +3086,13 @@ contract ExaPluginTest is ForkTest {
     vm.startPrank(address(exaPlugin));
     vm.expectRevert(ZeroAmount.selector);
     proposalManager.propose(address(account), exaEXA, 0, ProposalType.WITHDRAW, "");
+  }
+
+  function test_proposeRepay_reverts_whenWrongType() external {
+    vm.startPrank(keeper);
+
+    vm.expectRevert(Unauthorized.selector);
+    account.proposeRepay(exaUSDC, 0, ProposalType.WITHDRAW, "");
   }
 
   function test_transferShares_reverts_whenNoRightProposal() external {

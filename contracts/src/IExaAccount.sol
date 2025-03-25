@@ -10,6 +10,7 @@ interface IExaAccount {
     returns (uint256 amountIn, uint256 amountOut);
   function executeProposal(uint256 nonce) external;
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external;
+  function proposeRepay(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external;
   function setProposalNonce(uint256 nonce) external;
   function collectCollateral(
     uint256 amount,

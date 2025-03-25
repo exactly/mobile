@@ -159,11 +159,19 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
   }
 
   function propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
-    proposalManager.propose(msg.sender, market, amount, proposalType, data);
+    _propose(market, amount, proposalType, data);
   }
 
   function setProposalNonce(uint256 nonce) external {
     proposalManager.setNonce(msg.sender, nonce);
+  }
+
+  function proposeRepay(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) external {
+    if (
+      proposalType != ProposalType.CROSS_REPAY_AT_MATURITY && proposalType != ProposalType.REPAY_AT_MATURITY
+        && proposalType != ProposalType.ROLL_DEBT
+    ) revert Unauthorized();
+    _propose(market, amount, proposalType, data);
   }
 
   function collectCollateral(
@@ -326,18 +334,19 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
 
   /// @inheritdoc BasePlugin
   function pluginManifest() external pure override returns (PluginManifest memory manifest) {
-    bytes4[] memory executionFunctions = new bytes4[](11);
+    bytes4[] memory executionFunctions = new bytes4[](12);
     executionFunctions[0] = this.swap.selector;
-    executionFunctions[1] = this.executeProposal.selector;
-    executionFunctions[2] = this.propose.selector;
+    executionFunctions[1] = this.propose.selector;
+    executionFunctions[2] = this.executeProposal.selector;
     executionFunctions[3] = this.setProposalNonce.selector;
-    executionFunctions[4] = this.collectCollateral.selector;
-    executionFunctions[5] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
-    executionFunctions[6] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
-    executionFunctions[7] = this.collectDebit.selector;
-    executionFunctions[8] = this.collectInstallments.selector;
-    executionFunctions[9] = this.poke.selector;
-    executionFunctions[10] = this.pokeETH.selector;
+    executionFunctions[4] = this.proposeRepay.selector;
+    executionFunctions[5] = this.collectCollateral.selector;
+    executionFunctions[6] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)"));
+    executionFunctions[7] = bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)"));
+    executionFunctions[8] = this.collectDebit.selector;
+    executionFunctions[9] = this.collectInstallments.selector;
+    executionFunctions[10] = this.poke.selector;
+    executionFunctions[11] = this.pokeETH.selector;
     manifest.executionFunctions = executionFunctions;
 
     ManifestFunction memory selfRuntimeValidationFunction = ManifestFunction({
@@ -356,17 +365,17 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       dependencyIndex: 0
     });
 
-    ManifestAssociatedFunction[] memory runtimeValidationFunctions = new ManifestAssociatedFunction[](11);
+    ManifestAssociatedFunction[] memory runtimeValidationFunctions = new ManifestAssociatedFunction[](12);
     runtimeValidationFunctions[0] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.swap.selector,
       associatedFunction: selfRuntimeValidationFunction
     });
     runtimeValidationFunctions[1] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.executeProposal.selector,
-      associatedFunction: keeperOrSelfRuntimeValidationFunction
+      executionSelector: IExaAccount.propose.selector,
+      associatedFunction: selfRuntimeValidationFunction
     });
     runtimeValidationFunctions[2] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.propose.selector,
+      executionSelector: IExaAccount.executeProposal.selector,
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     runtimeValidationFunctions[3] = ManifestAssociatedFunction({
@@ -374,30 +383,34 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       associatedFunction: keeperOrSelfRuntimeValidationFunction
     });
     runtimeValidationFunctions[4] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectCollateral.selector,
+      executionSelector: IExaAccount.proposeRepay.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     runtimeValidationFunctions[5] = ManifestAssociatedFunction({
-      executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)")),
+      executionSelector: IExaAccount.collectCollateral.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     runtimeValidationFunctions[6] = ManifestAssociatedFunction({
-      executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)")),
+      executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
     runtimeValidationFunctions[7] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectDebit.selector,
+      executionSelector: bytes4(keccak256("collectCredit(uint256,uint256,uint256,uint256,bytes)")),
       associatedFunction: keeperRuntimeValidationFunction
     });
     runtimeValidationFunctions[8] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.collectInstallments.selector,
+      executionSelector: IExaAccount.collectDebit.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     runtimeValidationFunctions[9] = ManifestAssociatedFunction({
-      executionSelector: IExaAccount.poke.selector,
+      executionSelector: IExaAccount.collectInstallments.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
     runtimeValidationFunctions[10] = ManifestAssociatedFunction({
+      executionSelector: IExaAccount.poke.selector,
+      associatedFunction: keeperRuntimeValidationFunction
+    });
+    runtimeValidationFunctions[11] = ManifestAssociatedFunction({
       executionSelector: IExaAccount.pokeETH.selector,
       associatedFunction: keeperRuntimeValidationFunction
     });
@@ -658,6 +671,10 @@ contract ExaPlugin is AccessControl, BasePlugin, IExaAccount, ReentrancyGuard {
       address(market), market.asset(), balance, abi.encodeCall(IERC4626.deposit, (balance, msg.sender))
     );
     _executeFromSender(address(AUDITOR), 0, abi.encodeCall(IAuditor.enterMarket, (market)));
+  }
+
+  function _propose(IMarket market, uint256 amount, ProposalType proposalType, bytes memory data) internal {
+    proposalManager.propose(msg.sender, market, amount, proposalType, data);
   }
 
   function _repay(Proposal memory proposal) internal {

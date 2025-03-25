@@ -235,6 +235,7 @@ contract ExaPreviewerTest is ForkTest {
     uint256 adjustedCollateral = exaUSDC.maxWithdraw(address(account)).mulWad(adjustFactor);
     uint256 maxDebt = adjustedCollateral.mulWad(adjustFactor);
 
+    vm.startPrank(address(account));
     // propose borrow at maturity 3 times with maxAssets = maxDebt / 3
     for (uint256 i = 0; i < 3; ++i) {
       account.propose(
@@ -247,7 +248,6 @@ contract ExaPreviewerTest is ForkTest {
       );
     }
 
-    vm.startPrank(address(account));
     vm.expectRevert(InsufficientLiquidity.selector);
     previewer.collectDebit(10, block.timestamp, _issuerOp(10, block.timestamp));
 
