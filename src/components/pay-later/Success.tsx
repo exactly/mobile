@@ -38,6 +38,7 @@ export default function Success({
   const { address } = useAccount();
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
+    query: { enabled: !!address },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
   return (

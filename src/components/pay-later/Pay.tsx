@@ -34,9 +34,9 @@ import View from "../../components/shared/View";
 import { auditorAbi, marketAbi, useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import { accountClient } from "../../utils/alchemyConnector";
 import assetLogos from "../../utils/assetLogos";
-import reportError from "../../utils/reportError";
 import { getRoute } from "../../utils/lifi";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import useAccountAssets from "../../utils/useAccountAssets";
 import useAsset from "../../utils/useAsset";
 import AssetLogo from "../shared/AssetLogo";
@@ -64,6 +64,7 @@ export default function Pay() {
   });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
+    query: { enabled: !!account },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 

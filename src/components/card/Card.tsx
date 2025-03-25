@@ -19,9 +19,9 @@ import {
   useReadPreviewerExactly,
   useReadUpgradeableModularAccountGetInstalledPlugins,
 } from "../../generated/contracts";
-import reportError from "../../utils/reportError";
 import { createInquiry, resumeInquiry } from "../../utils/persona";
 import queryClient from "../../utils/queryClient";
+import reportError from "../../utils/reportError";
 import { APIError, getActivity, getCard, createCard, getKYCStatus, setCardStatus } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
@@ -60,6 +60,7 @@ export default function Card() {
   });
   const { refetch: refetchInstalledPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
+    query: { enabled: !!address },
   });
 
   const { data: markets, refetch: refetchMarkets } = useReadPreviewerExactly({

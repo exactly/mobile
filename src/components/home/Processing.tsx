@@ -27,6 +27,7 @@ export default function Processing() {
 
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
+    query: { enabled: !!account },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 

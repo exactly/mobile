@@ -32,6 +32,7 @@ export default function Withdraw() {
   const { market, externalAsset } = useAsset(withdraw?.market);
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
+    query: { enabled: !!address },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 

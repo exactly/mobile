@@ -28,6 +28,7 @@ export default function ContractUtils() {
   const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
+    query: { enabled: !!address },
   });
 
   const { data: uninstallPluginSimulation } = useSimulateUpgradeableModularAccountUninstallPlugin({

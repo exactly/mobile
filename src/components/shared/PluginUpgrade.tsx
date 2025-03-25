@@ -17,7 +17,10 @@ import reportError from "../../utils/reportError";
 export default function PluginUpgrade() {
   const { address } = useAccount();
   const { data: installedPlugins, refetch: refetchInstalledPlugins } =
-    useReadUpgradeableModularAccountGetInstalledPlugins({ address, query: { refetchOnMount: true } });
+    useReadUpgradeableModularAccountGetInstalledPlugins({
+      address,
+      query: { refetchOnMount: true, enabled: !!address },
+    });
   const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
   const { data: uninstallPluginSimulation } = useSimulateUpgradeableModularAccountUninstallPlugin({
     address,
