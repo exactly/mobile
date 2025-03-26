@@ -38,6 +38,7 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
           (code === 400 && text === "kyc not started")
         ) {
           createInquiry(passkey).catch(reportError);
+          return;
         }
         reportError(error);
       }

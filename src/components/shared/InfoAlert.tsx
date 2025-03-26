@@ -1,4 +1,4 @@
-import { ChevronRight, AlertTriangle } from "@tamagui/lucide-icons";
+import { ChevronRight, Info } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -35,7 +35,7 @@ export default function InfoAlert({
         width="20%"
         height="100%"
       >
-        <AlertTriangle size={ms(32)} color="$interactiveOnBaseInformationDefault" />
+        <Info size={ms(32)} color="$interactiveOnBaseInformationDefault" />
       </View>
       <View gap={ms(10)} padding={ms(25)} flex={1}>
         <Text fontSize={ms(15)} color="$interactiveOnBaseInformationSoft">

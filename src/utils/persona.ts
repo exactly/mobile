@@ -25,6 +25,7 @@ export async function createInquiry(passkey: Passkey) {
     })
     .onComplete(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(reportError);
+      queryClient.setQueryData(["card-upgrade"], 1);
       router.replace("/(app)/(home)");
     })
     .onError(reportError)
@@ -47,6 +48,7 @@ export async function resumeInquiry(inquiryId: string, sessionToken: string) {
     })
     .onComplete(() => {
       queryClient.invalidateQueries({ queryKey: ["kyc", "status"] }).catch(reportError);
+      queryClient.setQueryData(["card-upgrade"], 1);
       router.replace("/(app)/(home)");
     })
     .build()

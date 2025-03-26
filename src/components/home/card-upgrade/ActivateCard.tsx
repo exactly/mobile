@@ -1,0 +1,149 @@
+import { ArrowRight, CreditCard } from "@tamagui/lucide-icons";
+import { useToastController } from "@tamagui/toast";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
+import React from "react";
+import { Pressable } from "react-native";
+import { ms } from "react-native-size-matters";
+import { YStack } from "tamagui";
+
+import Progression from "./Progression";
+import queryClient from "../../../utils/queryClient";
+import reportError from "../../../utils/reportError";
+import { APIError, createCard } from "../../../utils/server";
+import useIntercom from "../../../utils/useIntercom";
+import Button from "../../shared/Button";
+import Spinner from "../../shared/Spinner";
+import Text from "../../shared/Text";
+import View from "../../shared/View";
+
+export default function ActivateCard() {
+  const toast = useToastController();
+  const { data: step } = useQuery<number | undefined>({ queryKey: ["card-upgrade"] });
+  const { presentArticle } = useIntercom();
+  const { mutateAsync: activateCard, isPending: isActivating } = useMutation({
+    mutationFn: async () => {
+      await createCard();
+    },
+    onSuccess: async () => {
+      toast.show("Card activated!", {
+        native: true,
+        duration: 1000,
+        burntOptions: { haptic: "success" },
+      });
+      await queryClient.refetchQueries({ queryKey: ["card", "details"] });
+      await queryClient.setQueryData(["card-upgrade-open"], false);
+      await queryClient.resetQueries({ queryKey: ["card-upgrade"] });
+      router.replace("/(app)/(home)/card");
+      queryClient.setQueryData(["card-details-open"], true);
+    },
+    onError: async (error: Error) => {
+      if (!(error instanceof APIError)) {
+        reportError(error);
+        toast.show("Error activating card", {
+          native: true,
+          duration: 1000,
+          burntOptions: { haptic: "error", preset: "error" },
+        });
+        return;
+      }
+      const { code, text } = error;
+      if (code === 400 && text.includes("card already exists")) {
+        await queryClient.setQueryData(["card-upgrade-open"], false);
+        await queryClient.resetQueries({ queryKey: ["card-upgrade"] });
+        router.replace("/(app)/(home)/card");
+        queryClient.setQueryData(["card-details-open"], true);
+        return;
+      }
+      reportError(error);
+      toast.show("Error activating card", {
+        native: true,
+        duration: 1000,
+        burntOptions: { haptic: "error", preset: "error" },
+      });
+    },
+  });
+  return (
+    <View fullScreen flex={1} gap="$s6" paddingHorizontal="$s5" paddingTop="$s5">
+      {isActivating ? (
+        <>
+          <YStack gap="$s6" justifyContent="center" alignItems="center">
+            <Spinner color="$uiNeutralPrimary" backgroundColor="$backgroundMild" containerSize={ms(52)} size={ms(32)} />
+            <YStack gap="$s2" justifyContent="center" alignItems="center">
+              <Text emphasized title3 color="$uiNeutralSecondary">
+                Activating your new Exa Card
+              </Text>
+              <Text color="$uiNeutralSecondary" footnote>
+                STEP {(step ?? 0) + 1} OF 3
+              </Text>
+            </YStack>
+            <Text color="$uiNeutralSecondary" subHeadline alignSelf="center" textAlign="center">
+              This may take a moment. Please wait.
+            </Text>
+          </YStack>
+        </>
+      ) : (
+        <>
+          <YStack gap="$s4">
+            <CreditCard size={ms(32)} color="$uiBrandSecondary" />
+            <Text emphasized title3 color="$uiBrandSecondary">
+              Activate your new Exa Card
+            </Text>
+          </YStack>
+          <YStack>
+            <Text color="$uiNeutralSecondary" subHeadline>
+              Almost there! Activate your Exa Card to start spending your onchain assets instantly.
+            </Text>
+          </YStack>
+          <Progression />
+        </>
+      )}
+      <YStack paddingBottom="$s7">
+        <YStack gap="$s4" paddingBottom={isActivating ? 0 : "$s7"}>
+          {!isActivating && (
+            <Pressable
+              onPress={() => {
+                presentArticle("10707672").catch(reportError);
+              }}
+            >
+              <Text color="$uiNeutralPlaceholder" footnote textAlign="center">
+                By continuing, you agree to both, the disclaimer below and the Exa Card&nbsp;
+                <Text color="$interactiveTextBrandDefault" footnote>
+                  Terms & Conditions.
+                </Text>
+              </Text>
+            </Pressable>
+          )}
+          <Button
+            onPress={() => {
+              activateCard().catch(reportError);
+            }}
+            flexBasis={ms(60)}
+            contained
+            main
+            spaced
+            fullwidth
+            backgroundColor={isActivating ? "$interactiveDisabled" : "$interactiveBaseBrandDefault"}
+            color={isActivating ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandDefault"}
+            iconAfter={
+              <ArrowRight
+                strokeWidth={2.5}
+                color={isActivating ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandDefault"}
+              />
+            }
+          >
+            Accept and activate Exa Card
+          </Button>
+        </YStack>
+        {!isActivating && (
+          <Text color="$interactiveOnDisabled" caption textAlign="justify">
+            *The Exa Card is issued by Third National pursuant to a license from Visa. Any credit issued by Exactly
+            Protocol subject to its separate terms and conditions. Third National is not a party to any agreement with
+            Exactly Protocol and is not responsible for any loan or credit arrangement between user and Exactly
+            Protocol.
+          </Text>
+        )}
+      </YStack>
+    </View>
+  );
+}

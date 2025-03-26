@@ -84,6 +84,22 @@ queryClient.setQueryDefaults(["activity", "details"], {
     throw new Error("don't refetch");
   },
 });
+queryClient.setQueryDefaults(["card-upgrade"], {
+  initialData: undefined,
+  retry: false,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  queryFn: () => {
+    throw new Error("don't refetch");
+  },
+});
+queryClient.setQueryDefaults(["card-details-open"], {
+  initialData: false,
+  retry: false,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  queryFn: () => queryClient.getQueryData(["card-details-open"]),
+});
 
 export type ActivityItem = Awaited<ReturnType<typeof getActivity>>[number];
 export interface Withdraw {

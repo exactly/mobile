@@ -36,7 +36,7 @@ export default function Card() {
   const { presentArticle } = useIntercom();
   const [disclaimerShown, setDisclaimerShown] = useState(false);
   const [verificationFailureShown, setVerificationFailureShown] = useState(false);
-  const [cardDetailsOpen, setCardDetailsOpen] = useState(false);
+  const { data: cardDetailsOpen } = useQuery<boolean>({ queryKey: ["card-details-open"] });
   const [spendingLimitsOpen, setSpendingLimitsOpen] = useState(false);
   const { data: hidden } = useQuery<boolean>({ queryKey: ["settings", "sensitive"] });
   function toggle() {
@@ -105,7 +105,7 @@ export default function Card() {
       try {
         const { isSuccess } = await refetchCard();
         if (isSuccess) {
-          setCardDetailsOpen(true);
+          queryClient.setQueryData(["card-details-open"], true);
           return;
         }
         const result = await getKYCStatus();
@@ -155,7 +155,7 @@ export default function Card() {
       try {
         await createCard();
         const { data: card } = await refetchCard();
-        if (card) setCardDetailsOpen(true);
+        if (card) queryClient.setQueryData(["card-details-open"], true);
       } catch (error) {
         reportError(error);
       }
@@ -352,9 +352,9 @@ export default function Card() {
           </View>
         </ScrollView>
         <CardDetails
-          open={cardDetailsOpen}
+          open={cardDetailsOpen ?? false}
           onClose={() => {
-            setCardDetailsOpen(false);
+            queryClient.setQueryData(["card-details-open"], false);
           }}
         />
         <SpendingLimits

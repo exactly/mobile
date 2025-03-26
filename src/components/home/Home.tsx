@@ -14,11 +14,14 @@ import CardLimits from "./CardLimits";
 import CardStatus from "./CardStatus";
 import GettingStarted from "./GettingStarted";
 import HomeActions from "./HomeActions";
+import CardUpgradeSheet from "./card-upgrade/CardUpgradeSheet";
 import { useReadExaPreviewerPendingProposals, useReadPreviewerExactly } from "../../generated/contracts";
+import queryClient from "../../utils/queryClient";
 import reportError from "../../utils/reportError";
-import { getActivity, getKYCStatus } from "../../utils/server";
+import { getActivity, getCard, getKYCStatus } from "../../utils/server";
 import PaymentSheet from "../pay-later/PaymentSheet";
 import UpcomingPayments from "../pay-later/UpcomingPayments";
+import InfoAlert from "../shared/InfoAlert";
 import LatestActivity from "../shared/LatestActivity";
 import LiquidationAlert from "../shared/LiquidationAlert";
 import ProfileHeader from "../shared/ProfileHeader";
@@ -30,6 +33,20 @@ const HEALTH_FACTOR_THRESHOLD = (WAD * 11n) / 10n;
 export default function Home() {
   const { address } = useAccount();
   const [paySheetOpen, setPaySheetOpen] = useState(false);
+  const { data: cardDetails, refetch: refetchCard } = useQuery({
+    queryKey: ["card", "details"],
+    queryFn: getCard,
+    retry: false,
+    gcTime: 0,
+    staleTime: 0,
+  });
+  const { data: cardUpgradeOpen } = useQuery<boolean>({
+    initialData: false,
+    queryKey: ["card-upgrade-open"],
+    queryFn: () => {
+      return false;
+    },
+  });
   const theme = useTheme();
   const { refetch: refetchPendingProposals } = useReadExaPreviewerPendingProposals({
     address: exaPreviewerAddress,
@@ -81,6 +98,7 @@ export default function Home() {
                 refetchMarkets().catch(reportError);
                 refetchKYCStatus().catch(reportError);
                 refetchPendingProposals().catch(reportError);
+                refetchCard().catch(reportError);
               }}
             />
           }
@@ -89,6 +107,17 @@ export default function Home() {
           <View flex={1}>
             <View backgroundColor="$backgroundSoft" padded gap="$s4">
               {markets && healthFactor(markets) < HEALTH_FACTOR_THRESHOLD && <LiquidationAlert />}
+
+              {(KYCStatus !== "ok" || cardDetails?.provider !== "panda") && usdBalance > 0n && (
+                <InfoAlert
+                  title="We’re upgrading all Exa Cards by migrating them to a new and improved card issuer. Existing cards will work until June 21st, 2025, and upgrading will be required after this date."
+                  actionText="Start Exa Card upgrade"
+                  onPress={() => {
+                    queryClient.setQueryData(["card-upgrade-open"], true);
+                  }}
+                />
+              )}
+
               <CardLimits />
               <HomeActions />
               <Balance usdBalance={usdBalance} />
@@ -109,6 +138,12 @@ export default function Home() {
             open={paySheetOpen}
             onClose={() => {
               setPaySheetOpen(false);
+            }}
+          />
+          <CardUpgradeSheet
+            open={cardUpgradeOpen}
+            onClose={() => {
+              queryClient.setQueryData(["card-upgrade-open"], false);
             }}
           />
         </ScrollView>

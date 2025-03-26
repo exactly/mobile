@@ -2,6 +2,7 @@ import { Copy } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
+import { Skeleton } from "moti/skeleton";
 import React, { useEffect, useState } from "react";
 import { Appearance, Pressable, StyleSheet } from "react-native";
 import { ms } from "react-native-size-matters";
@@ -24,7 +25,7 @@ import View from "../shared/View";
 export default function CardDetails({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: alertShown } = useQuery({ queryKey: ["settings", "alertShown"] });
   const toast = useToastController();
-  const { data: card } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
+  const { data: card, isPending } = useQuery({ queryKey: ["card", "details"], queryFn: getCard });
   const [details, setDetails] = useState({ pan: "", cvc: "" });
   useEffect(() => {
     if (card && card.provider === "panda") {
@@ -63,7 +64,9 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
           <ScrollView>
             <View fullScreen flex={1}>
               <View gap="$s5" flex={1} padded>
-                {card ? (
+                {isPending ? (
+                  <Skeleton height={ms(200)} width="100%" colorMode={Appearance.getColorScheme() ?? "light"} />
+                ) : card ? (
                   card.provider === "panda" ? (
                     <YStack
                       borderRadius="$s3"
