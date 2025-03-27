@@ -2396,20 +2396,6 @@ contract ExaPluginTest is ForkTest {
     );
   }
 
-  function test_proposalManagerConstructor_reverts_whenSwapperIsZeroAddress() external {
-    vm.expectRevert(ZeroAddress.selector);
-    new ProposalManager(
-      address(this),
-      IAuditor(address(this)),
-      IDebtManager(address(this)),
-      IInstallmentsRouter(address(this)),
-      address(0),
-      address(this),
-      new address[](0),
-      1 minutes
-    );
-  }
-
   function test_exaPluginConstructor_reverts_whenSwapperIsZeroAddress() external {
     vm.expectRevert(ZeroAddress.selector);
     new ExaPlugin(
@@ -3195,11 +3181,11 @@ contract ExaPluginTest is ForkTest {
       IAuditor(protocol("Auditor")),
       IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
-      0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE,
       acct("collector"),
       targets,
       1 minutes
     );
+    proposalManager.allowTarget(0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE, true); // swapper
     proposalManager.allowTarget(address(exa), true);
 
     exaPlugin = new ExaPlugin(

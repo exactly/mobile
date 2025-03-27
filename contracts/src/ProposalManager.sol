@@ -42,7 +42,6 @@ contract ProposalManager is IProposalManager, AccessControl {
   bytes32 public constant COLLECTOR_ROLE = keccak256("COLLECTOR_ROLE");
   bytes32 public constant PROPOSER_ROLE = keccak256("PROPOSER_ROLE");
 
-  address public immutable SWAPPER;
   IAuditor public immutable AUDITOR;
   IDebtManager public immutable DEBT_MANAGER;
   IInstallmentsRouter public immutable INSTALLMENTS_ROUTER;
@@ -58,7 +57,6 @@ contract ProposalManager is IProposalManager, AccessControl {
     IAuditor auditor,
     IDebtManager debtManager,
     IInstallmentsRouter installmentsRouter,
-    address swapper_,
     address collector_,
     address[] memory targets,
     uint256 delay_
@@ -66,8 +64,6 @@ contract ProposalManager is IProposalManager, AccessControl {
     AUDITOR = auditor;
     DEBT_MANAGER = debtManager;
     INSTALLMENTS_ROUTER = installmentsRouter;
-    if (swapper_ == address(0)) revert ZeroAddress();
-    SWAPPER = swapper_;
 
     _grantRole(COLLECTOR_ROLE, collector_);
     _grantRole(DEFAULT_ADMIN_ROLE, owner);
@@ -130,7 +126,6 @@ contract ProposalManager is IProposalManager, AccessControl {
       }
       revert Unauthorized();
     }
-    if (target == address(SWAPPER)) return;
     if (_isMarket(target)) return _preExecutionMarketCheck(sender, IMarket(target), selector, callData);
     if (!allowlist[target]) revert Unauthorized();
   }

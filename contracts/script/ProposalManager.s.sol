@@ -29,6 +29,7 @@ contract DeployProposalManager is BaseScript {
       protocolAssets[asset] = true;
       protocolAssets[address(markets[i])] = true;
     }
+    allowlist.push(acct("swapper"));
 
     if (acct("swapper") == 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE) {
       vm.pauseTracing();
@@ -54,7 +55,6 @@ contract DeployProposalManager is BaseScript {
       auditor,
       IDebtManager(protocol("DebtManager")),
       IInstallmentsRouter(protocol("InstallmentsRouter")),
-      acct("swapper"),
       acct("collector"),
       allowlist,
       deploy.readUint(".proposalManager.delay")
