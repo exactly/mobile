@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { YStack } from "tamagui";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useBytecode } from "wagmi";
 
 import Progression from "./Progression";
 import {
@@ -25,17 +25,18 @@ import View from "../../shared/View";
 
 export default function UpgradeAccount() {
   const { address } = useAccount();
+  const { data: bytecode } = useBytecode({ address: address ?? zeroAddress, query: { enabled: !!address } });
   const { data: installedPlugins, refetch: refetchInstalledPlugins } =
     useReadUpgradeableModularAccountGetInstalledPlugins({
       address,
-      query: { refetchOnMount: true, enabled: !!address },
+      query: { refetchOnMount: true, enabled: !!address && !!bytecode },
     });
   const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
   const { data: uninstallPluginSimulation } = useSimulateUpgradeableModularAccountUninstallPlugin({
     address,
     args: [installedPlugins?.[0] ?? zeroAddress, "0x", "0x"],
-    query: { enabled: !!address && !!installedPlugins },
+    query: { enabled: !!address && !!installedPlugins && !!bytecode },
   });
   const toast = useToastController();
   const { data: step } = useQuery<number | undefined>({ queryKey: ["card-upgrade"] });

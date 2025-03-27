@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
 import { encodeFunctionData, erc20Abi, parseUnits, zeroAddress, encodeAbiParameters } from "viem";
-import { useAccount, useSimulateContract, useWriteContract } from "wagmi";
+import { useAccount, useBytecode, useSimulateContract, useWriteContract } from "wagmi";
 
 import AssetSelectionSheet from "./AssetSelectionSheet";
 import Failure from "./Failure";
@@ -61,9 +61,10 @@ export default function Pay() {
     amount: 0,
     usdAmount: 0,
   });
+  const { data: bytecode } = useBytecode({ address: account ?? zeroAddress, query: { enabled: !!account } });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
-    query: { enabled: !!account },
+    query: { enabled: !!account && !!bytecode },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 

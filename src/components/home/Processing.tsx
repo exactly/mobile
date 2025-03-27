@@ -8,7 +8,7 @@ import React, { useState } from "react";
 import { Pressable } from "react-native";
 import { Square, styled, useTheme, XStack, YStack } from "tamagui";
 import { formatUnits, zeroAddress } from "viem";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useBytecode, useReadContract } from "wagmi";
 
 import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import assetLogos from "../../utils/assetLogos";
@@ -23,10 +23,10 @@ import View from "../shared/View";
 export default function Processing() {
   const { address: account } = useAccount();
   const [proposalAmount, setProposalAmount] = useState<bigint>();
-
+  const { data: bytecode } = useBytecode({ address: account ?? zeroAddress, query: { enabled: !!account } });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
-    query: { enabled: !!account },
+    query: { enabled: !!account && !!bytecode },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 

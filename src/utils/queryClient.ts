@@ -11,7 +11,24 @@ import type { getActivity } from "./server";
 
 export const persister = createAsyncStoragePersister({ serialize, deserialize, storage: AsyncStorage });
 const queryClient = new QueryClient({
-  queryCache: new QueryCache({ onError: reportError }),
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      if (error instanceof Error && error.message === "don't refetch") return;
+      if (error instanceof APIError) {
+        if (query.queryKey[0] === "card" && query.queryKey[1] === "details") {
+          if (error.code === 404 && error.text === "card not found") return;
+          if (error.code === 403 && error.text === "kyc required") return;
+          if (error.code === 403 && error.text === "kyc not approved") return;
+        }
+        if (query.queryKey[0] === "kyc" && query.queryKey[1] === "status") {
+          if (error.code === 404 && error.text === "kyc not found") return;
+          if (error.code === 400 && error.text === "kyc not started") return;
+          if (error.code === 400 && error.text === "kyc not approved") return;
+        }
+      }
+      reportError(error);
+    },
+  }),
   defaultOptions: { queries: { structuralSharing } },
 });
 
@@ -116,3 +133,14 @@ export interface Withdraw {
 }
 
 export default queryClient;
+
+export class APIError extends Error {
+  code: number;
+  text: string;
+  constructor(code: number, text: string) {
+    super(`${code} ${text}`);
+    this.code = code;
+    this.text = text;
+    this.name = "APIError";
+  }
+}

@@ -8,7 +8,7 @@ import React from "react";
 import { Pressable, Image } from "react-native";
 import { ScrollView, Square, styled, useTheme, XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useBytecode } from "wagmi";
 
 import TransactionDetails from "./TransactionDetails";
 import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
@@ -35,9 +35,10 @@ export default function Success({
   const theme = useTheme();
   const { externalAsset } = useAsset(selectedAsset);
   const { address } = useAccount();
+  const { data: bytecode } = useBytecode({ address: address ?? zeroAddress, query: { enabled: !!address } });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
-    query: { enabled: !!address },
+    query: { enabled: !!address && !!bytecode },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
   return (

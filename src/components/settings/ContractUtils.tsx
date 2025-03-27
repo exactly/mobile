@@ -4,7 +4,7 @@ import { setStringAsync } from "expo-clipboard";
 import React from "react";
 import { View, Spinner } from "tamagui";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useBytecode } from "wagmi";
 
 import {
   upgradeableModularAccountAbi,
@@ -25,15 +25,15 @@ function copyHash(hash: string | undefined) {
 export default function ContractUtils() {
   const { address } = useAccount();
   const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
+  const { data: bytecode } = useBytecode({ address: address ?? zeroAddress, query: { enabled: !!address } });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
-    query: { enabled: !!address },
+    query: { enabled: !!address && !!bytecode },
   });
-
   const { data: uninstallPluginSimulation } = useSimulateUpgradeableModularAccountUninstallPlugin({
     address,
     args: [installedPlugins?.[0] ?? zeroAddress, "0x", "0x"],
-    query: { enabled: !!address && !!installedPlugins },
+    query: { enabled: !!address && !!installedPlugins && !!bytecode },
   });
 
   const {

@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useEffect } from "react";
 import { parse } from "valibot";
 import { encodeAbiParameters, erc20Abi, formatUnits, parseUnits, zeroAddress } from "viem";
-import { useAccount, useSimulateContract, useWriteContract } from "wagmi";
+import { useAccount, useBytecode, useSimulateContract, useWriteContract } from "wagmi";
 
 import Failure from "./Failure";
 import Pending from "./Pending";
@@ -30,9 +30,10 @@ export default function Withdraw() {
   const { address } = useAccount();
   const { data: withdraw } = useQuery<IWithdraw>({ queryKey: ["withdrawal"] });
   const { market, externalAsset } = useAsset(withdraw?.market);
+  const { data: bytecode } = useBytecode({ address: address ?? zeroAddress, query: { enabled: !!address } });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
-    query: { enabled: !!address },
+    query: { enabled: !!address && !!bytecode },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 

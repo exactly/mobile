@@ -7,7 +7,7 @@ import React, { useState } from "react";
 import { Pressable, RefreshControl } from "react-native";
 import { ScrollView, Separator, Spinner, Square, Switch, useTheme, XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useBytecode } from "wagmi";
 
 import CardDetails from "./CardDetails";
 import CardDisclaimer from "./CardDisclaimer";
@@ -57,9 +57,10 @@ export default function Card() {
     queryKey: ["kyc", "status"],
     queryFn: getKYCStatus,
   });
+  const { data: bytecode } = useBytecode({ address: address ?? zeroAddress, query: { enabled: !!address } });
   const { refetch: refetchInstalledPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: address ?? zeroAddress,
-    query: { enabled: !!address },
+    query: { enabled: !!address && !!bytecode },
   });
 
   const { data: markets, refetch: refetchMarkets } = useReadPreviewerExactly({

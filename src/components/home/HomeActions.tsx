@@ -5,7 +5,7 @@ import React from "react";
 import { PixelRatio } from "react-native";
 import { Spinner } from "tamagui";
 import { zeroAddress } from "viem";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useBytecode, useReadContract } from "wagmi";
 
 import { useReadUpgradeableModularAccountGetInstalledPlugins } from "../../generated/contracts";
 import reportError from "../../utils/reportError";
@@ -16,9 +16,10 @@ import View from "../shared/View";
 export default function HomeActions() {
   const fontScale = PixelRatio.getFontScale();
   const { address: account } = useAccount();
+  const { data: bytecode } = useBytecode({ address: account ?? zeroAddress, query: { enabled: !!account } });
   const { data: installedPlugins } = useReadUpgradeableModularAccountGetInstalledPlugins({
     address: account ?? zeroAddress,
-    query: { enabled: !!account },
+    query: { enabled: !!account && !!bytecode },
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
   const { refetch: fetchProposals, isFetching } = useReadContract({

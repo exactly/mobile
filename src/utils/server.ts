@@ -17,7 +17,7 @@ import { zeroAddress } from "viem";
 import { accountClient } from "./alchemyConnector";
 import { session } from "./panda";
 import publicClient from "./publicClient";
-import queryClient from "./queryClient";
+import queryClient, { APIError } from "./queryClient";
 
 queryClient.setQueryDefaults<number | undefined>(["auth"], {
   staleTime: AUTH_EXPIRY,
@@ -171,13 +171,4 @@ const Auth = pipe(
   check((expires) => Date.now() < expires),
 );
 
-export class APIError extends Error {
-  code: number;
-  text: string;
-  constructor(code: number, text: string) {
-    super(`${code} ${text}`);
-    this.code = code;
-    this.text = text;
-    this.name = "APIError";
-  }
-}
+export { APIError } from "./queryClient";

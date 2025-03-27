@@ -2,7 +2,7 @@ import { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain"
 import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, zeroAddress } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useBytecode } from "wagmi";
 
 import InfoAlert from "./InfoAlert";
 import {
@@ -16,16 +16,17 @@ import reportError from "../../utils/reportError";
 
 export default function PluginUpgrade() {
   const { address } = useAccount();
+  const { data: bytecode } = useBytecode({ address: address ?? zeroAddress, query: { enabled: !!address } });
   const { data: installedPlugins, refetch: refetchInstalledPlugins } =
     useReadUpgradeableModularAccountGetInstalledPlugins({
       address,
-      query: { refetchOnMount: true, enabled: !!address },
+      query: { refetchOnMount: true, enabled: !!address && !!bytecode },
     });
   const { data: pluginManifest } = useReadExaPluginPluginManifest({ address: exaPluginAddress });
   const { data: uninstallPluginSimulation } = useSimulateUpgradeableModularAccountUninstallPlugin({
     address,
     args: [installedPlugins?.[0] ?? zeroAddress, "0x", "0x"],
-    query: { enabled: !!address && !!installedPlugins },
+    query: { enabled: !!address && !!installedPlugins && !!bytecode },
   });
   const { mutateAsync: updatePlugin, isPending: isUpdating } = useMutation({
     mutationFn: async () => {
