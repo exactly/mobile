@@ -6,7 +6,20 @@ import { Mutex } from "async-mutex";
 import { eq, inArray, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { parsePhoneNumberWithError } from "libphonenumber-js";
-import { integer, maxValue, minValue, number, parse, picklist, pipe, strictObject, transform, union } from "valibot";
+import {
+  integer,
+  maxValue,
+  minValue,
+  number,
+  parse,
+  picklist,
+  pipe,
+  strictObject,
+  string,
+  transform,
+  union,
+  uuid,
+} from "valibot";
 
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
@@ -100,9 +113,12 @@ export default new Hono()
           let cardCount = credential.cards.length;
           for (const card of credential.cards) {
             try {
-              await getCard(card.id);
+              await getCard(parse(CardUUID, card.id));
             } catch (error) {
-              if (error instanceof Error && (error.message === "invalid card id" || error.message.startsWith("404"))) {
+              if (
+                error instanceof Error &&
+                (error.message.startsWith("Invalid UUID") || error.message.startsWith("404"))
+              ) {
                 await database.update(cards).set({ status: "DELETED" }).where(eq(cards.id, card.id));
                 cardCount--;
                 setContext("cryptomate card deleted", { id: card.id });
@@ -213,3 +229,5 @@ export default new Hono()
         });
     },
   );
+
+const CardUUID = pipe(string(), uuid());

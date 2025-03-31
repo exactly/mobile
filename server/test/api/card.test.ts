@@ -181,6 +181,23 @@ describe("authenticated", () => {
       expect(deleted?.status).toBe("DELETED");
     });
 
+    it("creates a panda card having a cm card with invalid uuid", async () => {
+      await database.insert(cards).values([{ id: "not-uuid", credentialId: account, lastFour: "1234" }]);
+
+      vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
+      vi.spyOn(panda, "createCard").mockResolvedValueOnce({ ...cardTemplate, id: "migration:not-uuid" });
+      vi.spyOn(panda, "isPanda").mockResolvedValueOnce(true);
+
+      const response = await appClient.index.$post({ header: { "test-credential-id": account } });
+
+      const created = await database.query.cards.findFirst({ where: eq(cards.id, "migration:not-uuid") });
+      const deleted = await database.query.cards.findFirst({ where: eq(cards.id, "not-uuid") });
+
+      expect(response.status).toBe(200);
+      expect(created?.status).toBe("ACTIVE");
+      expect(deleted?.status).toBe("DELETED");
+    });
+
     it("creates a cm card if the user doesn't update plugin", async () => {
       vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
       vi.spyOn(cryptomate, "createCard").mockResolvedValueOnce({ ...cryptomateTemplate, id: account }); // cspell:disable-line
