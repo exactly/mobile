@@ -1,7 +1,9 @@
 import domain from "@exactly/common/domain";
 import chain, { exaPluginAddress } from "@exactly/common/generated/chain";
 import { Address, Hash } from "@exactly/common/validation";
+import { proposalManager } from "@exactly/plugin/deploy.json";
 import { vValidator } from "@hono/valibot-validator";
+import { Mutex, withTimeout, type MutexInterface } from "async-mutex";
 import { createHmac } from "node:crypto";
 import removeAccents from "remove-accents";
 import {
@@ -204,4 +206,14 @@ export function signIssuerOp({ account, amount, timestamp }: { account: Address;
     primaryType: amount < 0n ? "Refund" : "Collection",
     message: { account, amount: amount < 0n ? -amount : amount, timestamp },
   });
+}
+
+const mutexes = new Map<Address, MutexInterface>();
+export function createMutex(address: Address) {
+  const mutex = withTimeout(new Mutex(), proposalManager.delay * 1000);
+  mutexes.set(address, mutex);
+  return mutex;
+}
+export function getMutex(address: Address) {
+  return mutexes.get(address);
 }

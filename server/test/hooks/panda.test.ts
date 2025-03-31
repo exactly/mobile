@@ -10,9 +10,12 @@ import ProposalType from "@exactly/common/ProposalType";
 import chain, {
   exaAccountFactoryAbi,
   exaPluginAbi,
+  marketUSDCAddress,
   upgradeableModularAccountAbi,
+  usdcAddress,
 } from "@exactly/common/generated/chain";
 import { Address } from "@exactly/common/validation";
+import { proposalManager } from "@exactly/plugin/deploy.json";
 import { captureException } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
@@ -31,15 +34,17 @@ import {
   zeroHash,
   type Hex,
   type TransactionReceipt,
+  type WalletClient,
 } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { afterEach, beforeAll, describe, expect, inject, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, inject, it, vi } from "vitest";
 
 import database, { cards, credentials, transactions } from "../../database";
 import { auditorAbi, issuerCheckerAbi, marketAbi } from "../../generated/contracts";
 import app from "../../hooks/panda";
 import deriveAddress from "../../utils/deriveAddress";
 import keeper from "../../utils/keeper";
+import * as pandaUtils from "../../utils/panda";
 import publicClient from "../../utils/publicClient";
 import traceClient from "../../utils/traceClient";
 import anvilClient from "../anvilClient";
@@ -79,15 +84,7 @@ describe("card operations", () => {
       beforeAll(async () => {
         await keeper.writeContract({
           address: inject("USDC"),
-          abi: [
-            {
-              type: "function",
-              name: "mint",
-              inputs: [{ type: "address" }, { type: "uint256" }],
-              outputs: [],
-              stateMutability: "nonpayable",
-            },
-          ],
+          abi: fakeTokenAbi,
           functionName: "mint",
           args: [account, 420_000_000n],
         });
@@ -97,6 +94,10 @@ describe("card operations", () => {
           functionName: "poke",
           args: [inject("MarketUSDC")],
         });
+      });
+
+      afterEach(() => {
+        pandaUtils.getMutex(account)?.release();
       });
 
       it("authorizes credit", async () => {
@@ -232,7 +233,7 @@ describe("card operations", () => {
       beforeAll(async () => {
         await keeper.writeContract({
           address: inject("USDC"),
-          abi: [{ type: "function", name: "mint", inputs: [{ type: "address" }, { type: "uint256" }] }],
+          abi: fakeTokenAbi,
           functionName: "mint",
           args: [account, 420e6],
         });
@@ -265,7 +266,6 @@ describe("card operations", () => {
         const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(authorization.json.body.spend.amount * 1e4));
-
         expect(response.status).toBe(200);
       });
 
@@ -534,15 +534,7 @@ describe("card operations", () => {
           [account, inject("Refunder")].map((receiver) =>
             keeper.writeContract({
               address: inject("USDC"),
-              abi: [
-                {
-                  type: "function",
-                  name: "mint",
-                  inputs: [{ type: "address" }, { type: "uint256" }],
-                  outputs: [],
-                  stateMutability: "nonpayable",
-                },
-              ],
+              abi: fakeTokenAbi,
               functionName: "mint",
               args: [receiver, 100_000_000n],
             }),
@@ -778,6 +770,202 @@ describe("card operations", () => {
   });
 });
 
+describe("concurrency", () => {
+  let concurrentWallet: WalletClient;
+  let concurrentAccount: Address;
+
+  beforeEach(async () => {
+    concurrentWallet = createWalletClient({
+      chain,
+      transport: http(),
+      account: privateKeyToAccount(generatePrivateKey()),
+    });
+    concurrentAccount = deriveAddress(inject("ExaAccountFactory"), {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      x: padHex(concurrentWallet.account!.address),
+      y: zeroHash,
+    });
+    await database
+      .insert(credentials)
+      .values([
+        { id: concurrentAccount, publicKey: new Uint8Array(), account: concurrentAccount, factory: zeroAddress },
+      ]);
+    await database
+      .insert(cards)
+      .values([{ id: `${concurrentAccount}-card`, credentialId: concurrentAccount, lastFour: "1234", mode: 0 }]);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await anvilClient.setBalance({ address: concurrentWallet.account!.address, value: 10n ** 24n });
+    await keeper.writeContract({
+      address: inject("ExaAccountFactory"),
+      abi: exaAccountFactoryAbi,
+      functionName: "createAccount",
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      args: [0n, [{ x: hexToBigInt(concurrentWallet.account!.address), y: 0n }]],
+    });
+    await keeper.writeContract({
+      address: usdcAddress,
+      abi: fakeTokenAbi,
+      functionName: "mint",
+      args: [concurrentAccount, 70_000_000n],
+    });
+    await keeper.writeContract({
+      address: concurrentAccount,
+      abi: exaPluginAbi,
+      functionName: "poke",
+      args: [marketUSDCAddress],
+    });
+  });
+
+  it("handles concurrent authorizations", async () => {
+    const operation = "concurrent";
+    const cardId = `${concurrentAccount}-card`;
+    const spendAuthorization = appClient.index.$post({
+      ...authorization,
+      header: { signature: "panda-signature" },
+      json: {
+        ...authorization.json,
+        body: {
+          ...authorization.json.body,
+          id: operation,
+          spend: { ...authorization.json.body.spend, amount: 5000, cardId },
+        },
+      },
+    });
+
+    const anotherSpendAuthorization = appClient.index.$post({
+      ...authorization,
+      header: { signature: "panda-signature" },
+      json: {
+        ...authorization.json,
+        body: {
+          ...authorization.json.body,
+          id: operation + "2",
+          spend: { ...authorization.json.body.spend, amount: 4000, cardId },
+        },
+      },
+    });
+
+    const collectSpendAuthorization = await appClient.index.$post({
+      ...authorization,
+      header: { signature: "panda-signature" },
+      json: {
+        ...authorization.json,
+        action: "created",
+        body: {
+          ...authorization.json.body,
+          id: operation,
+          spend: { ...authorization.json.body.spend, amount: 5000, cardId },
+        },
+      },
+    });
+
+    await expect(spendAuthorization).resolves.toMatchObject({ status: 200 });
+    await expect(anotherSpendAuthorization).resolves.toMatchObject({ status: 550 });
+    expect(collectSpendAuthorization.status).toBe(200);
+  });
+
+  it("releases mutex when authorization is declined", async () => {
+    const getMutex = vi.spyOn(pandaUtils, "getMutex");
+
+    const operation = "auth-declined";
+    const cardId = `${concurrentAccount}-card`;
+    const spendAuthorization = await appClient.index.$post({
+      ...authorization,
+      header: { signature: "panda-signature" },
+      json: {
+        ...authorization.json,
+        body: {
+          ...authorization.json.body,
+          id: operation,
+          spend: { ...authorization.json.body.spend, amount: 800, cardId },
+        },
+      },
+    });
+
+    const collectSpendAuthorization = await appClient.index.$post({
+      ...authorization,
+      header: { signature: "panda-signature" },
+      json: {
+        ...authorization.json,
+        action: "created",
+        body: {
+          ...authorization.json.body,
+          id: operation,
+          spend: { ...authorization.json.body.spend, amount: 800, cardId, status: "declined" },
+        },
+      },
+    });
+    const lastCall = getMutex.mock.results.at(-1);
+    const mutex = lastCall?.type === "return" ? lastCall.value : undefined;
+
+    expect(mutex).toBeDefined();
+    expect(mutex?.isLocked()).toBe(false);
+    expect(spendAuthorization.status).toBe(200);
+    expect(collectSpendAuthorization.status).toBe(200);
+  });
+
+  describe("with fake timers", () => {
+    beforeEach(() => vi.useFakeTimers());
+
+    afterEach(() => vi.useRealTimers());
+
+    it("mutex timeout", async () => {
+      const getMutex = vi.spyOn(pandaUtils, "getMutex");
+      const operation = "mutex-timeout";
+      const cardId = `${concurrentAccount}-card`;
+      const spendAuthorization = appClient.index.$post({
+        ...authorization,
+        header: { signature: "panda-signature" },
+        json: {
+          ...authorization.json,
+          body: {
+            ...authorization.json.body,
+            id: operation,
+            spend: { ...authorization.json.body.spend, amount: 1000, cardId },
+          },
+        },
+      });
+
+      const anotherSpendAuthorization = appClient.index.$post({
+        ...authorization,
+        header: { signature: "panda-signature" },
+        json: {
+          ...authorization.json,
+          body: {
+            ...authorization.json.body,
+            id: `${operation}-2`,
+            spend: { ...authorization.json.body.spend, amount: 1200, cardId },
+          },
+        },
+      });
+
+      const anotherSpendAuthorization2 = appClient.index.$post({
+        ...authorization,
+        header: { signature: "panda-signature" },
+        json: {
+          ...authorization.json,
+          body: {
+            ...authorization.json.body,
+            id: `${operation}-3`,
+            spend: { ...authorization.json.body.spend, amount: 1300, cardId },
+          },
+        },
+      });
+
+      await vi.waitUntil(() => getMutex.mock.calls.length > 2);
+      vi.advanceTimersByTime(proposalManager.delay * 1000);
+
+      const lastCall = getMutex.mock.results.at(-1);
+      const mutex = lastCall?.type === "return" ? lastCall.value : undefined;
+
+      await expect(spendAuthorization).resolves.toMatchObject({ status: 200 });
+      await expect(anotherSpendAuthorization).resolves.toMatchObject({ status: 554 });
+      await expect(anotherSpendAuthorization2).resolves.toMatchObject({ status: 554 });
+      expect(mutex?.isLocked()).toBe(true);
+    });
+  });
+});
+
 const authorization = {
   header: { signature: "056e8b40cbffe5d26487267e00d82ef2d3331d7a6756f05a8effd86d562a02fa" },
   json: {
@@ -854,6 +1042,16 @@ function execute(calldata: Hex) {
     abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
   });
 }
+
+const fakeTokenAbi = [
+  {
+    type: "function",
+    name: "mint",
+    inputs: [{ type: "address" }, { type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+];
 
 vi.mock("@sentry/node", { spy: true });
 

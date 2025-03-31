@@ -19,6 +19,7 @@ import {
   setUser,
   startSpan,
 } from "@sentry/node";
+import { E_TIMEOUT } from "async-mutex";
 import createDebug from "debug";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
@@ -48,7 +49,7 @@ import {
 } from "../generated/contracts";
 import keeper from "../utils/keeper";
 import { sendPushNotification } from "../utils/onesignal";
-import { collectors, headerValidator, signIssuerOp } from "../utils/panda";
+import { collectors, createMutex, getMutex, headerValidator, signIssuerOp } from "../utils/panda";
 import publicClient from "../utils/publicClient";
 import { track } from "../utils/segment";
 import traceClient, { type CallFrame } from "../utils/traceClient";
@@ -106,12 +107,6 @@ const Payload = v.intersect([
   v.object({ resource: v.literal("transaction"), body: BaseTransaction }),
 ]);
 
-function parseBodies(raw: unknown) {
-  const payload = v.safeParse(v.object({ bodies: v.array(v.looseObject({})) }), raw);
-  if (!payload.success) throw new Error("invalid transaction payload");
-  return payload.output.bodies;
-}
-
 export default new Hono().post(
   "/",
   headerValidator(),
@@ -137,85 +132,108 @@ export default new Hono().post(
     switch (payload.action) {
       case "requested": {
         if (payload.body.spend.amount < 0) return c.json({});
-        const { account, amount, call, transaction } = await prepareCollection(payload);
-        const authorize = () => {
-          try {
-            track({
-              userId: account,
-              event: "TransactionAuthorized",
-              properties: { type: "panda", usdAmount: payload.body.spend.amount / 100 },
-            });
-          } catch (error: unknown) {
-            captureException(error, { level: "error" });
-          }
-          return c.json({});
-        };
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "panda.authorization");
-        if (!transaction) return authorize();
+        const card = await findCardById(payload.body.spend.cardId);
+        const account = v.parse(Address, card.credential.account);
+        setUser({ id: account });
+        const mutex = getMutex(account) ?? createMutex(account);
         try {
-          const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
-            traceClient.traceCall({
-              from: account,
-              to: exaPreviewerAddress,
-              data: transaction.data,
-              stateOverride: [
-                {
-                  address: exaPluginAddress,
-                  stateDiff: [
-                    {
-                      slot: keccak256(
-                        encodeAbiParameters(
-                          [{ type: "address" }, { type: "bytes32" }],
-                          [
-                            exaPreviewerAddress,
-                            keccak256(
-                              encodeAbiParameters(
-                                [{ type: "bytes32" }, { type: "uint256" }],
-                                [keccak256(toBytes("KEEPER_ROLE")), 0n],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      value: encodeAbiParameters([{ type: "uint256" }], [1n]),
-                    },
-                  ],
-                },
-              ],
-            }),
-          );
-          if (trace.output) {
-            let error: string = trace.output;
-            try {
-              error = decodeErrorResult({
-                data: trace.output,
-                abi: [
-                  ...exaPluginAbi,
-                  ...issuerCheckerAbi,
-                  ...proposalManagerAbi,
-                  ...upgradeableModularAccountAbi,
-                  ...auditorAbi,
-                  ...marketAbi,
-                ],
-              }).errorName;
-            } catch {} // eslint-disable-line no-empty
-            captureException(new Error(error), { contexts: { tx: { call, trace } } });
-            return c.json("tx reverted", 550 as UnofficialStatusCode);
-          }
-          if (
-            usdcTransfersToCollectors(trace).reduce(
-              (total, { topics, data }) =>
-                total + decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data }).args.value,
-              0n,
-            ) !== amount
-          ) {
-            debug(`${payload.action}:${payload.body.spend.status}`, payload.body.id, "bad collection");
-            captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { call, trace } } });
-            return c.json("bad collection", 551 as UnofficialStatusCode);
-          }
-          return authorize();
+          await mutex.acquire();
         } catch (error: unknown) {
-          captureException(error, { contexts: { tx: { call } } });
+          if (error === E_TIMEOUT) {
+            captureException(error, { level: "fatal" });
+            return c.json({}, 554 as UnofficialStatusCode);
+          }
+          throw error;
+        }
+        setContext("mutex", { locked: mutex.isLocked() });
+        try {
+          const { amount, call, transaction } = await prepareCollection(card, payload);
+          const authorize = () => {
+            try {
+              track({
+                userId: account,
+                event: "TransactionAuthorized",
+                properties: { type: "panda", usdAmount: payload.body.spend.amount / 100 },
+              });
+            } catch (error: unknown) {
+              captureException(error, { level: "error" });
+            }
+            return c.json({});
+          };
+          if (!transaction) return authorize();
+          try {
+            const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
+              traceClient.traceCall({
+                from: account,
+                to: exaPreviewerAddress,
+                data: transaction.data,
+                stateOverride: [
+                  {
+                    address: exaPluginAddress,
+                    stateDiff: [
+                      {
+                        slot: keccak256(
+                          encodeAbiParameters(
+                            [{ type: "address" }, { type: "bytes32" }],
+                            [
+                              exaPreviewerAddress,
+                              keccak256(
+                                encodeAbiParameters(
+                                  [{ type: "bytes32" }, { type: "uint256" }],
+                                  [keccak256(toBytes("KEEPER_ROLE")), 0n],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        value: encodeAbiParameters([{ type: "uint256" }], [1n]),
+                      },
+                    ],
+                  },
+                ],
+              }),
+            );
+            if (trace.output) {
+              let error: string = trace.output;
+              try {
+                error = decodeErrorResult({
+                  data: trace.output,
+                  abi: [
+                    ...exaPluginAbi,
+                    ...issuerCheckerAbi,
+                    ...proposalManagerAbi,
+                    ...upgradeableModularAccountAbi,
+                    ...auditorAbi,
+                    ...marketAbi,
+                  ],
+                }).errorName;
+              } catch {} // eslint-disable-line no-empty
+              captureException(new Error(error), { contexts: { tx: { call, trace } } });
+              throw new PandaError("tx reverted", 550);
+            }
+            if (
+              usdcTransfersToCollectors(trace).reduce(
+                (total, { topics, data }) =>
+                  total + decodeEventLog({ abi: erc20Abi, eventName: "Transfer", topics, data }).args.value,
+                0n,
+              ) !== amount
+            ) {
+              debug(`${payload.action}:${payload.body.spend.status}`, payload.body.id, "bad collection");
+              captureException(new Error("bad collection"), { level: "warning", contexts: { tx: { call, trace } } });
+              throw new PandaError("bad collection", 551);
+            }
+            return authorize();
+          } catch (error: unknown) {
+            if (error instanceof PandaError) throw error;
+            captureException(error, { contexts: { tx: { call } } });
+            throw new PandaError("unexpected error", 569);
+          }
+        } catch (error: unknown) {
+          mutex.release();
+          setContext("mutex", { locked: mutex.isLocked() });
+          if (error instanceof PandaError) return c.json(error.message, error.statusCode as UnofficialStatusCode);
+          captureException(error);
           return c.json({}, 569 as UnofficialStatusCode);
         }
       }
@@ -335,70 +353,97 @@ export default new Hono().post(
         }
       // falls through
       case "created": {
-        if (payload.body.spend.status !== "pending") return c.json({});
         if (payload.body.spend.amount < 0) return c.json({});
+
+        const card = await findCardById(payload.body.spend.cardId);
+        const account = v.parse(Address, card.credential.account);
+        setUser({ id: account });
+
+        if (payload.body.spend.status === "declined") {
+          getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.declined`);
+          const mutex = getMutex(account);
+          mutex?.release();
+          setContext("mutex", { locked: mutex?.isLocked() });
+          return c.json({});
+        }
+        if (payload.body.spend.status !== "pending") return c.json({});
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, `panda.${payload.action}.clearing`);
-        const { account, call, mode } = await prepareCollection(payload);
-        if (!call) return c.json({});
         try {
-          await keeper.exaSend(
-            { name: "collect credit", op: "exa.collect", attributes: { account } },
-            {
-              address: account,
-              abi: [...exaPluginAbi, ...issuerCheckerAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
-              ...call,
-            },
-            {
-              async onHash(hash) {
-                const tx = await database.query.transactions.findFirst({
-                  where: and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
-                });
-                await (tx
-                  ? database
-                      .update(transactions)
-                      .set({
-                        hashes: [...tx.hashes, hash],
-                        payload: {
-                          ...(tx.payload as object),
-                          bodies: [...parseBodies(tx.payload), { ...jsonBody, createdAt: new Date().toISOString() }],
-                        },
-                      })
-                      .where(
-                        and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
-                      )
-                  : database.insert(transactions).values([
-                      {
-                        id: payload.body.id,
-                        cardId: payload.body.spend.cardId,
-                        hashes: [hash],
-                        payload: {
-                          bodies: [{ ...jsonBody, createdAt: new Date().toISOString() }],
-                          type: "panda",
-                          merchant: {
-                            name: payload.body.spend.merchantName,
-                            city: payload.body.spend.merchantCity,
-                            country: payload.body.spend.merchantCountry,
+          const { call } = await prepareCollection(card, payload);
+          if (!call) return c.json({});
+          try {
+            await keeper.exaSend(
+              { name: "collect credit", op: "exa.collect", attributes: { account } },
+              {
+                address: account,
+                abi: [
+                  ...exaPluginAbi,
+                  ...issuerCheckerAbi,
+                  ...upgradeableModularAccountAbi,
+                  ...auditorAbi,
+                  ...marketAbi,
+                ],
+                ...call,
+              },
+              {
+                async onHash(hash) {
+                  const tx = await database.query.transactions.findFirst({
+                    where: and(
+                      eq(transactions.id, payload.body.id),
+                      eq(transactions.cardId, payload.body.spend.cardId),
+                    ),
+                  });
+                  await (tx
+                    ? database
+                        .update(transactions)
+                        .set({
+                          hashes: [...tx.hashes, hash],
+                          payload: {
+                            ...(tx.payload as object),
+                            bodies: [...parseBodies(tx.payload), { ...jsonBody, createdAt: new Date().toISOString() }],
+                          },
+                        })
+                        .where(
+                          and(eq(transactions.id, payload.body.id), eq(transactions.cardId, payload.body.spend.cardId)),
+                        )
+                    : database.insert(transactions).values([
+                        {
+                          id: payload.body.id,
+                          cardId: payload.body.spend.cardId,
+                          hashes: [hash],
+                          payload: {
+                            bodies: [{ ...jsonBody, createdAt: new Date().toISOString() }],
+                            type: "panda",
+                            merchant: {
+                              name: payload.body.spend.merchantName,
+                              city: payload.body.spend.merchantCity,
+                              country: payload.body.spend.merchantCountry,
+                            },
                           },
                         },
-                      },
-                    ]));
+                      ]));
+                },
               },
-            },
-          );
-          sendPushNotification({
-            userId: account,
-            headings: { en: "Exa Card Purchase" },
-            contents: {
-              en: `${(payload.body.spend.localAmount / 100).toLocaleString(undefined, {
-                style: "currency",
-                currency: payload.body.spend.localCurrency,
-              })} at ${payload.body.spend.merchantName.trim()}, paid in ${{ 0: "debit", 1: "credit" }[mode] ?? `${mode} installments`} with USDC`,
-            },
-          }).catch((error: unknown) => captureException(error, { level: "error" }));
-          return c.json({});
-        } catch (error: unknown) {
-          captureException(error, { level: "fatal", contexts: { tx: { call } } });
-          return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
+            );
+            sendPushNotification({
+              userId: account,
+              headings: { en: "Exa Card Purchase" },
+              contents: {
+                en: `${(payload.body.spend.localAmount / 100).toLocaleString(undefined, {
+                  style: "currency",
+                  currency: payload.body.spend.localCurrency,
+                })} at ${payload.body.spend.merchantName.trim()}, paid in ${{ 0: "debit", 1: "credit" }[card.mode] ?? `${card.mode} installments`} with USDC`,
+              },
+            }).catch((error: unknown) => captureException(error, { level: "error" }));
+            return c.json({});
+          } catch (error: unknown) {
+            captureException(error, { level: "fatal", contexts: { tx: { call } } });
+            return c.text(error instanceof Error ? error.message : String(error), 569 as UnofficialStatusCode);
+          }
+        } finally {
+          const mutex = getMutex(account);
+          mutex?.release();
+          setContext("mutex", { locked: mutex?.isLocked() });
         }
       }
       default:
@@ -407,20 +452,16 @@ export default new Hono().post(
   },
 );
 
-async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
-  const card = await database.query.cards.findFirst({
-    columns: { mode: true },
-    where: and(eq(cards.id, payload.body.spend.cardId), eq(cards.status, "ACTIVE")),
-    with: { credential: { columns: { account: true } } },
-  });
-  if (!card) throw new Error("card not found");
+async function prepareCollection(
+  card: { mode: number; credential: { account: string } },
+  payload: v.InferOutput<typeof Payload>,
+) {
   const account = v.parse(Address, card.credential.account);
-  setUser({ id: account });
   setTag("exa.mode", card.mode);
   const usdAmount =
     (payload.action === "updated" ? payload.body.spend.authorizationUpdateAmount : payload.body.spend.amount) / 100;
   const amount = BigInt(Math.round(usdAmount * 1e6));
-  if (amount === 0n) return { account, amount, call: null, transaction: null };
+  if (amount === 0n) return { amount, call: null, transaction: null };
   const call = await (async () => {
     const timestamp = Math.floor(Date.now() / 1000);
     const signature = await signIssuerOp({ account, amount, timestamp }); // TODO replace with payload signature
@@ -474,10 +515,8 @@ async function prepareCollection(payload: v.InferOutput<typeof Payload>) {
   })();
   setContext("tx", { call });
   return {
-    account,
     amount,
     call,
-    mode: card.mode,
     transaction: {
       from: keeper.account.address,
       to: account,
@@ -507,4 +546,35 @@ interface TransferLog {
   topics: [Hash, Hash, Hash];
   data: Hex;
   position: Hex;
+}
+
+class PandaError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+  ) {
+    super(message);
+    this.name = "PandaError";
+  }
+}
+
+function parseBodies(raw: unknown) {
+  const payload = v.safeParse(
+    v.object({
+      bodies: v.array(v.looseObject({})),
+    }),
+    raw,
+  );
+  if (!payload.success) throw new Error("invalid transaction payload");
+  return payload.output.bodies;
+}
+
+async function findCardById(cardId: string) {
+  const card = await database.query.cards.findFirst({
+    columns: { mode: true },
+    where: and(eq(cards.id, cardId), eq(cards.status, "ACTIVE")),
+    with: { credential: { columns: { account: true } } },
+  });
+  if (!card) throw new Error("card not found");
+  return card;
 }
