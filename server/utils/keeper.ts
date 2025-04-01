@@ -46,6 +46,11 @@ export function extender(keeper: ReturnType<typeof createWalletClient>) {
       withScope((scope) =>
         startSpan({ forceTransaction: true, ...spanOptions }, async (span) => {
           try {
+            span.setAttributes({
+              "tx.call": `${call.functionName}(${call.args?.map(String).join(", ") ?? ""})`,
+              "tx.from": keeper.account?.address,
+              "tx.to": call.address,
+            });
             const { request: writeRequest } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
               publicClient.simulateContract({
                 account: keeper.account,
@@ -66,11 +71,13 @@ export function extender(keeper: ReturnType<typeof createWalletClient>) {
             const hash = await startSpan({ name: "send transaction", op: "tx.send" }, () =>
               keeper.writeContract(writeRequest),
             );
+            span.setAttribute("tx.hash", hash);
             scope.setContext("tx", { hash, request });
             await options?.onHash?.(hash);
             const receipt = await startSpan({ name: "wait for receipt", op: "tx.wait" }, () =>
               publicClient.waitForTransactionReceipt({ hash }),
             );
+            span.setStatus({ code: receipt.status === "success" ? 1 : 2, message: receipt.status });
             scope.setContext("tx", { hash, request, receipt });
             const trace = await traceClient.traceTransaction(hash);
             scope.setContext("tx", { hash, request, receipt, trace });
@@ -95,6 +102,7 @@ export function extender(keeper: ReturnType<typeof createWalletClient>) {
                 if (ignore) return ignore;
               } else if (options.ignore.includes(reason)) return null;
             }
+            span.setStatus({ code: 2, message: error instanceof Error ? error.message : String(error) });
             captureException(error, { level: "error" });
             throw error;
           }
