@@ -1,12 +1,13 @@
+const dsn = require("@exactly/common/sentryDSN");
 const { extraErrorDataIntegration, init } = require("@sentry/node");
 const { nodeProfilingIntegration } = require("@sentry/profiling-node");
 
 init({
+  dsn,
   release: require("@exactly/common/generated/release"),
-  dsn: require("@exactly/common/sentryDSN"),
   environment: process.env.NODE_ENV === "production" ? "production" : "development",
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
-  profilesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0.01,
+  tracesSampleRate: process.env.NODE_ENV === "production" || !dsn ? 1 : 0,
+  profilesSampleRate: process.env.NODE_ENV === "production" || !dsn ? 1 : 0,
   attachStacktrace: true,
   maxValueLength: 8192,
   normalizeDepth: 69,
