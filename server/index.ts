@@ -1,6 +1,5 @@
 import type { Base64URL } from "@exactly/common/validation";
 import { serve } from "@hono/node-server";
-import { sentry } from "@hono/sentry";
 import { captureException, close } from "@sentry/node";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -22,7 +21,6 @@ import appOrigin from "./utils/appOrigin";
 import { closeAndFlush } from "./utils/segment";
 
 const app = new Hono();
-app.use(sentry());
 app.use(trimTrailingSlash());
 app.use("/api/*", cors({ origin: appOrigin, credentials: true }));
 
