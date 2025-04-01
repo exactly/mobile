@@ -44,7 +44,7 @@ export function extender(keeper: ReturnType<typeof createWalletClient>) {
       },
     ) =>
       withScope((scope) =>
-        startSpan(spanOptions, async (span) => {
+        startSpan({ forceTransaction: true, ...spanOptions }, async (span) => {
           try {
             const { request: writeRequest } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
               publicClient.simulateContract({
