@@ -213,7 +213,7 @@ function scheduleMessage(message: string) {
       await mutex
         .runExclusive(() =>
           continueTrace({ sentryTrace, baggage: sentryBaggage }, () =>
-            startSpan({ name: "exa.execute", op: "exa.execute" }, (parent) =>
+            startSpan({ name: "exa.execute", op: "exa.execute", forceTransaction: true }, (parent) =>
               startSpan(
                 {
                   name: "execute proposal",
@@ -338,7 +338,7 @@ function scheduleWithdraw(message: string) {
   setTimeout((Number(unlock) + 10) * 1000 - Date.now())
     .then(() =>
       continueTrace({ sentryTrace, baggage: sentryBaggage }, () =>
-        startSpan({ name: "exa.withdraw", op: "exa.withdraw" }, (parent) =>
+        startSpan({ name: "exa.withdraw", op: "exa.withdraw", forceTransaction: true }, (parent) =>
           startSpan(
             {
               name: "process withdraw",
