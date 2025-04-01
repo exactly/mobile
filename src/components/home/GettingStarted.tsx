@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import React, { useContext, useEffect } from "react";
 import { PixelRatio, Pressable } from "react-native";
 import { ms } from "react-native-size-matters";
-import { XStack, YStack } from "tamagui";
+import { Spinner, XStack, YStack } from "tamagui";
 
 import handleError from "../../utils/handleError";
 import { createInquiry, resumeInquiry } from "../../utils/persona";
@@ -18,7 +18,7 @@ import View from "../shared/View";
 export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean; hasKYC: boolean }) {
   const { steps, currentStep, completedSteps, setSteps } = useContext(OnboardingContext);
   const { data: passkey } = useQuery<Passkey>({ queryKey: ["passkey"] });
-  const { mutateAsync: startKYC } = useMutation({
+  const { mutateAsync: startKYC, isPending } = useMutation({
     mutationKey: ["kyc"],
     mutationFn: async () => {
       if (!passkey) throw new Error("missing passkey");
@@ -47,6 +47,7 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
     },
   });
   function handleStepPress() {
+    if (isPending) return;
     switch (currentStep?.id) {
       case "add-funds":
         router.push("/add-funds/add-crypto");
@@ -125,7 +126,11 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
             justifyContent="center"
             alignItems="center"
           >
-            <ArrowRight size={ms(24) * PixelRatio.getFontScale()} color="$interactiveOnBaseBrandDefault" />
+            {isPending ? (
+              <Spinner color="$interactiveOnBaseBrandDefault" size="small" />
+            ) : (
+              <ArrowRight size={ms(24) * PixelRatio.getFontScale()} color="$interactiveOnBaseBrandDefault" />
+            )}
           </View>
         </Pressable>
       </XStack>
