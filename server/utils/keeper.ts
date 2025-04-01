@@ -1,7 +1,7 @@
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/generated/chain";
 import { Hash } from "@exactly/common/validation";
-import { captureException, setContext, startSpan } from "@sentry/node";
+import { captureException, startSpan, withScope } from "@sentry/node";
 import { parse } from "valibot";
 import {
   BaseError,
@@ -43,60 +43,62 @@ export function extender(keeper: ReturnType<typeof createWalletClient>) {
         ignore?: string[] | ((reason: string) => Promise<TransactionReceipt | boolean | undefined>);
       },
     ) =>
-      startSpan(spanOptions, async () => {
-        try {
-          const { request: writeRequest } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-            publicClient.simulateContract({
-              account: keeper.account,
-              type: "eip1559",
-              maxFeePerGas: 1_000_000_000n,
-              maxPriorityFeePerGas: 1_000_000n,
-              gas: 5_000_000n,
-              ...call,
-            }),
-          );
-          const {
-            abi: _,
-            account: __,
-            address: ___,
-            ...request
-          } = { from: writeRequest.account.address, to: writeRequest.address, ...writeRequest };
-          setContext("tx", { request });
-          const hash = await startSpan({ name: "deploy account", op: "tx.send" }, () =>
-            keeper.writeContract(writeRequest),
-          );
-          setContext("tx", { hash, request });
-          await options?.onHash?.(hash);
-          const receipt = await startSpan({ name: "tx.wait", op: "tx.wait" }, () =>
-            publicClient.waitForTransactionReceipt({ hash }),
-          );
-          setContext("tx", { hash, request, receipt });
-          const trace = await traceClient.traceTransaction(hash);
-          setContext("tx", { hash, request, receipt, trace });
-          if (receipt.status !== "success") {
-            // eslint-disable-next-line @typescript-eslint/only-throw-error -- returns error
-            throw getContractError(new RawContractError({ data: trace.output }), { ...call, args: call.args ?? [] });
+      withScope((scope) =>
+        startSpan(spanOptions, async (span) => {
+          try {
+            const { request: writeRequest } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
+              publicClient.simulateContract({
+                account: keeper.account,
+                type: "eip1559",
+                maxFeePerGas: 1_000_000_000n,
+                maxPriorityFeePerGas: 1_000_000n,
+                gas: 5_000_000n,
+                ...call,
+              }),
+            );
+            const {
+              abi: _,
+              account: __,
+              address: ___,
+              ...request
+            } = { from: writeRequest.account.address, to: writeRequest.address, ...writeRequest };
+            scope.setContext("tx", { request });
+            const hash = await startSpan({ name: "send transaction", op: "tx.send" }, () =>
+              keeper.writeContract(writeRequest),
+            );
+            scope.setContext("tx", { hash, request });
+            await options?.onHash?.(hash);
+            const receipt = await startSpan({ name: "wait for receipt", op: "tx.wait" }, () =>
+              publicClient.waitForTransactionReceipt({ hash }),
+            );
+            scope.setContext("tx", { hash, request, receipt });
+            const trace = await traceClient.traceTransaction(hash);
+            scope.setContext("tx", { hash, request, receipt, trace });
+            if (receipt.status !== "success") {
+              // eslint-disable-next-line @typescript-eslint/only-throw-error -- returns error
+              throw getContractError(new RawContractError({ data: trace.output }), { ...call, args: call.args ?? [] });
+            }
+            return receipt;
+          } catch (error: unknown) {
+            if (options?.ignore) {
+              const reason =
+                error instanceof BaseError &&
+                error.cause instanceof ContractFunctionRevertedError &&
+                error.cause.data?.errorName
+                  ? `${error.cause.data.errorName}(${error.cause.data.args?.map(String).join(",") ?? ""})`
+                  : error instanceof Error
+                    ? error.message
+                    : String(error);
+              if (typeof options.ignore === "function") {
+                const ignore = await options.ignore(reason);
+                if (ignore === true) return null;
+                if (ignore) return ignore;
+              } else if (options.ignore.includes(reason)) return null;
+            }
+            captureException(error, { level: "error" });
+            throw error;
           }
-          return receipt;
-        } catch (error: unknown) {
-          if (options?.ignore) {
-            const reason =
-              error instanceof BaseError &&
-              error.cause instanceof ContractFunctionRevertedError &&
-              error.cause.data?.errorName
-                ? `${error.cause.data.errorName}(${error.cause.data.args?.map(String).join(",") ?? ""})`
-                : error instanceof Error
-                  ? error.message
-                  : String(error);
-            if (typeof options.ignore === "function") {
-              const ignore = await options.ignore(reason);
-              if (ignore === true) return null;
-              if (ignore) return ignore;
-            } else if (options.ignore.includes(reason)) return null;
-          }
-          captureException(error, { level: "error" });
-          throw error;
-        }
-      }),
+        }),
+      ),
   };
 }
