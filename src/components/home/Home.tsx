@@ -9,11 +9,11 @@ import { ScrollView, useTheme } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
 
-import Balance from "./Balance";
 import CardLimits from "./CardLimits";
 import CardStatus from "./CardStatus";
 import GettingStarted from "./GettingStarted";
 import HomeActions from "./HomeActions";
+import PortfolioSummary from "./PortfolioSummary";
 import CardUpgradeSheet from "./card-upgrade/CardUpgradeSheet";
 import { useReadExaPreviewerPendingProposals, useReadPreviewerExactly } from "../../generated/contracts";
 import queryClient from "../../utils/queryClient";
@@ -120,7 +120,7 @@ export default function Home() {
 
               <CardLimits />
               <HomeActions />
-              <Balance usdBalance={usdBalance} />
+              <PortfolioSummary usdBalance={usdBalance} />
             </View>
             <View padded gap="$s5">
               <CardStatus />

@@ -191,6 +191,7 @@ const tokens = createTokens({
     true: 0,
     s1: 2,
     s2: 4,
+    s2_5: 6,
     s3: 8,
     s3_5: 12,
     s4: 16,
