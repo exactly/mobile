@@ -19,7 +19,7 @@ import anvilClient from "../anvilClient";
 
 const appClient = testClient(app);
 
-describe("validation", () => {
+describe.concurrent("validation", () => {
   beforeAll(async () => {
     await database
       .insert(credentials)
@@ -50,7 +50,7 @@ describe("validation", () => {
   });
 });
 
-describe("authenticated", () => {
+describe.concurrent("authenticated", () => {
   const bob = privateKeyToAddress(padHex("0xb0b"));
   const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
 
@@ -60,7 +60,7 @@ describe("authenticated", () => {
       .values([{ id: account, publicKey: new Uint8Array(), account, factory: zeroAddress }]);
   });
 
-  describe("card", () => {
+  describe.sequential("card", () => {
     let activity: InferOutput<
       typeof DebitActivity | typeof CreditActivity | typeof InstallmentsActivity | typeof PandaActivity
     >[];
@@ -273,6 +273,22 @@ describe("authenticated", () => {
         ]),
       );
     });
+  });
+
+  it("returns everything", async () => {
+    const response = await appClient.index.$get({}, { headers: { "test-credential-id": account } });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      expect.arrayContaining([
+        expect.objectContaining({ type: "received" }),
+        expect.objectContaining({ type: "sent" }),
+        expect.objectContaining({ type: "repay" }),
+        expect.objectContaining({ type: "card" }),
+        expect.objectContaining({ type: "panda" }),
+      ]),
+    );
   });
 });
 
