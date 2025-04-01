@@ -1,11 +1,11 @@
+import "../mocks/sentry";
 import "../mocks/alchemy";
 import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/onesignal";
-import "../mocks/sentry";
 import "../mocks/keeper";
 
-import * as sentry from "@sentry/node";
+import { captureException } from "@sentry/node";
 import { testClient } from "hono/testing";
 import {
   type Address,
@@ -49,12 +49,7 @@ describe("address activity", () => {
       .values([{ id: account, publicKey: new Uint8Array(), account, factory: inject("ExaAccountFactory") }]);
   });
 
-  afterEach(() => vi.restoreAllMocks());
-
   it("fails with unexpected error", async () => {
-    const captureException = vi.spyOn(sentry, "captureException");
-    captureException.mockImplementationOnce(() => "");
-
     const getCode = vi.spyOn(publicClient, "getCode");
     getCode.mockRejectedValue(new Error("Unexpected"));
 
@@ -80,9 +75,6 @@ describe("address activity", () => {
   });
 
   it("fails with transaction timeout", async () => {
-    const captureException = vi.spyOn(sentry, "captureException");
-    captureException.mockImplementation(() => "");
-
     vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(
       new WaitForTransactionReceiptTimeoutError({ hash: zeroHash }),
     );
@@ -228,3 +220,7 @@ const activityPayload = {
     },
   },
 } as const;
+
+vi.mock("@sentry/node", { spy: true });
+
+afterEach(() => vi.resetAllMocks());

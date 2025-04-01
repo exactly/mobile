@@ -1,12 +1,12 @@
+import "../mocks/sentry";
 import "../mocks/database";
 import "../mocks/deployments";
 import "../mocks/onesignal";
 import "../mocks/redis";
-import "../mocks/sentry";
 import "../mocks/keeper";
 
 import { exaAccountFactoryAbi, exaPluginAbi } from "@exactly/common/generated/chain";
-import * as sentry from "@sentry/node";
+import { captureException } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
 import {
@@ -61,7 +61,6 @@ describe("validation", () => {
   });
 
   it("accepts valid request", async () => {
-    vi.spyOn(sentry, "captureException").mockImplementationOnce(() => "");
     const response = await appClient.index.$post(authorization);
 
     expect(response.status).toBe(200);
@@ -95,8 +94,6 @@ describe("card operations", () => {
           args: [inject("MarketUSDC")],
         });
       });
-
-      afterEach(() => vi.restoreAllMocks());
 
       it("authorizes credit", async () => {
         const response = await appClient.index.$post({
@@ -147,9 +144,6 @@ describe("card operations", () => {
       });
 
       it("fails when tracing", async () => {
-        const captureException = vi.spyOn(sentry, "captureException");
-        captureException.mockImplementation(() => "");
-
         const trace = vi.spyOn(traceClient, "traceCall").mockResolvedValue({ ...callFrame, output: "0x" });
 
         await database.insert(cards).values([{ id: "failed_trace", credentialId: "cred", lastFour: "2222", mode: 4 }]);
@@ -185,8 +179,6 @@ describe("card operations", () => {
           args: [inject("MarketUSDC")],
         });
       });
-
-      afterEach(() => vi.restoreAllMocks());
 
       it("clears debit", async () => {
         const amount = 35;
@@ -251,9 +243,6 @@ describe("card operations", () => {
       });
 
       it("handles duplicated clearing", async () => {
-        const captureException = vi.spyOn(sentry, "captureException");
-        captureException.mockImplementation(() => "");
-
         vi.spyOn(publicClient, "simulateContract").mockRejectedValue(
           new BaseError("Error", {
             cause: new ContractFunctionRevertedError({
@@ -290,9 +279,6 @@ describe("card operations", () => {
       });
 
       it("fails with transaction timeout", async () => {
-        const captureException = vi.spyOn(sentry, "captureException");
-        captureException.mockImplementation(() => "");
-
         vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("timeout"));
 
         const operation = "timeout";
@@ -330,9 +316,6 @@ describe("card operations", () => {
       });
 
       it("fails with transaction revert", async () => {
-        const captureException = vi.spyOn(sentry, "captureException");
-        captureException.mockImplementation(() => "");
-
         vi.spyOn(publicClient, "waitForTransactionReceipt").mockResolvedValue({
           ...receipt,
           status: "reverted",
@@ -368,9 +351,6 @@ describe("card operations", () => {
       });
 
       it("fails with unexpected error", async () => {
-        const captureException = vi.spyOn(sentry, "captureException");
-        captureException.mockImplementation(() => "");
-
         vi.spyOn(publicClient, "simulateContract").mockRejectedValue(new Error("Unexpected Error"));
 
         const cardId = "unexpected";
@@ -458,3 +438,7 @@ vi.mock("../../utils/cryptomate", async (importOriginal) => {
   const { signIssuerOp } = await import("../../utils/panda");
   return { ...original, signIssuerOp };
 });
+
+vi.mock("@sentry/node", { spy: true });
+
+afterEach(() => vi.resetAllMocks());

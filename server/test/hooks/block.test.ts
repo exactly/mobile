@@ -1,12 +1,11 @@
+import "../mocks/sentry";
 import "../mocks/alchemy";
 import "../mocks/onesignal";
 import "../mocks/redis";
-import "../mocks/sentry";
 import "../mocks/deployments";
 
 import ProposalType from "@exactly/common/ProposalType";
 import chain, { exaPluginAbi, upgradeableModularAccountAbi } from "@exactly/common/generated/chain";
-import * as sentry from "@sentry/node";
 import { testClient } from "hono/testing";
 import {
   createWalletClient,
@@ -88,32 +87,30 @@ describe("proposal", () => {
       const anotherWithdraw = proposals[1]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
 
       const waitForTransactionReceipt = vi.spyOn(publicClient, "waitForTransactionReceipt");
-      const captureException = vi.spyOn(sentry, "captureException");
-      captureException.mockImplementation(() => "");
 
       await Promise.all([
         appClient.index.$post({
-        ...withdrawProposal,
-        json: {
-          ...withdrawProposal.json,
-          event: {
-            ...withdrawProposal.json.event,
-            data: {
-              ...withdrawProposal.json.event.data,
-              block: {
-                ...withdrawProposal.json.event.data.block,
-                logs: [
+          ...withdrawProposal,
+          json: {
+            ...withdrawProposal.json,
+            event: {
+              ...withdrawProposal.json.event,
+              data: {
+                ...withdrawProposal.json.event.data,
+                block: {
+                  ...withdrawProposal.json.event.data.block,
+                  logs: [
                     { topics: withdraw.topics, data: withdraw.data, account: { address: withdraw.address } },
-                  {
-                    topics: anotherWithdraw.topics,
-                    data: anotherWithdraw.data,
-                    account: { address: anotherWithdraw.address },
-                  },
-                ],
+                    {
+                      topics: anotherWithdraw.topics,
+                      data: anotherWithdraw.data,
+                      account: { address: anotherWithdraw.address },
+                    },
+                  ],
+                },
               },
             },
           },
-        },
         }),
         vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 2),
       ]);
@@ -158,8 +155,6 @@ describe("proposal", () => {
       const revert = proposals[0]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
 
       const waitForTransactionReceipt = vi.spyOn(publicClient, "waitForTransactionReceipt");
-      const captureException = vi.spyOn(sentry, "captureException");
-      captureException.mockImplementation(() => "");
 
       await appClient.index.$post({
         ...withdrawProposal,
@@ -229,8 +224,6 @@ describe("proposal", () => {
       const another = proposals[4]!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
 
       const waitForTransactionReceipt = vi.spyOn(publicClient, "waitForTransactionReceipt");
-      const captureException = vi.spyOn(sentry, "captureException");
-      captureException.mockImplementation(() => "");
 
       await Promise.all([
         appClient.index.$post({

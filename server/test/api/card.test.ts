@@ -1,9 +1,8 @@
+import "../mocks/sentry";
 import "../mocks/auth";
 import "../mocks/database";
 import "../mocks/deployments";
-import "../mocks/sentry";
 
-import * as sentry from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { testClient } from "hono/testing";
 import { zeroHash, padHex, zeroAddress } from "viem";
@@ -52,7 +51,6 @@ const appClient = testClient(app);
 describe("authenticated", () => {
   const bob = privateKeyToAddress(padHex("0xb0b"));
   const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
-  vi.spyOn(sentry, "captureException");
 
   beforeAll(async () => {
     await database.insert(credentials).values([

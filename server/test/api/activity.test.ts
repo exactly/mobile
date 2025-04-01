@@ -1,10 +1,10 @@
+import "../mocks/sentry";
 import "../mocks/auth";
 import "../mocks/database";
 import "../mocks/deployments";
-import "../mocks/sentry";
 import "../expect";
 
-import * as sentry from "@sentry/node";
+import { captureException } from "@sentry/node";
 import { testClient } from "hono/testing";
 import { safeParse, type InferOutput } from "valibot";
 import { zeroHash, padHex, type Hash, zeroAddress } from "viem";
@@ -15,7 +15,6 @@ import app, { CreditActivity, DebitActivity, InstallmentsActivity, PandaActivity
 import database, { cards, credentials, transactions } from "../../database";
 import { marketAbi } from "../../generated/contracts";
 import deriveAddress from "../../utils/deriveAddress";
-import publicClient from "../../utils/publicClient";
 import anvilClient from "../anvilClient";
 
 const appClient = testClient(app);
@@ -54,18 +53,11 @@ describe("validation", () => {
 describe("authenticated", () => {
   const bob = privateKeyToAddress(padHex("0xb0b"));
   const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob), y: zeroHash });
-  const captureException = vi.spyOn(sentry, "captureException");
-  const readContract = vi.spyOn(publicClient, "readContract");
 
   beforeAll(async () => {
     await database
       .insert(credentials)
       .values([{ id: account, publicKey: new Uint8Array(), account, factory: zeroAddress }]);
-  });
-
-  afterEach(() => {
-    captureException.mockClear();
-    readContract.mockClear();
   });
 
   describe("card", () => {
@@ -199,7 +191,6 @@ describe("authenticated", () => {
 
     it("reports bad transaction", async () => {
       await database.insert(transactions).values([{ id: "69", cardId: "activity", hashes: ["0x1"], payload: {} }]);
-      captureException.mockImplementationOnce(() => "");
       const response = await appClient.index.$get(
         { query: { include: "card" } },
         { headers: { "test-credential-id": account } },
@@ -284,3 +275,7 @@ describe("authenticated", () => {
     });
   });
 });
+
+vi.mock("@sentry/node", { spy: true });
+
+afterEach(() => vi.resetAllMocks());

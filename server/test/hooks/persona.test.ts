@@ -1,5 +1,5 @@
-import "../mocks/database";
 import "../mocks/sentry";
+import "../mocks/database";
 import "../mocks/persona";
 
 import { eq } from "drizzle-orm";

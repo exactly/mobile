@@ -1,22 +1,36 @@
-import { inspect } from "node:util";
-import { beforeEach, vi } from "vitest";
+import { close, getSpanStatusFromHttpCode, startSpan } from "@sentry/node";
+import type * as hono from "hono";
+import { createMiddleware } from "hono/factory";
+import path from "node:path";
+import { afterAll, beforeEach, expect, vi } from "vitest";
 
 const contexts = new Map<string, unknown>();
 
-vi.mock("@sentry/node", async (importOriginal) => ({
-  ...(await importOriginal()),
-  captureException(exception: unknown, hint?: { level?: string; contexts?: Record<string, unknown> }) {
-    const { contexts: localContexts, ...rest } = hint ?? {};
-    if (localContexts) for (const [key, value] of Object.entries(localContexts)) contexts.set(key, value);
-    for (const [key, value] of contexts) {
-      console.log(key, inspect(value, false, null, true)); // eslint-disable-line no-console
-    }
-    for (const [key, value] of Object.entries(rest)) console.log(key, inspect(value, false, null, true)); // eslint-disable-line no-console
-    console.log(exception instanceof Error ? exception.stack : exception); // eslint-disable-line no-console
-  },
-  setContext: (key: string, value: unknown) => contexts.set(key, value),
-}));
+vi.mock("hono", async (importOriginal) => {
+  await import("../../instrument.cjs");
+  const { Hono, ...original } = await importOriginal<typeof hono>();
+  return {
+    ...original,
+    Hono: class extends Hono {
+      constructor(...arguments_: ConstructorParameters<typeof Hono>) {
+        super(...arguments_);
+        this.use(middleware);
+      }
+    },
+  };
+});
+
+const middleware = createMiddleware(async (c, next) => {
+  const testFile = path.relative(path.resolve(__dirname, ".."), expect.getState().testPath ?? ""); // eslint-disable-line unicorn/prefer-module
+  const name = `${c.req.method} /${testFile.replace(/\.test\.ts$/, "")}`;
+  return startSpan({ name, op: "http.server", forceTransaction: true }, async (span) => {
+    await next();
+    span.setStatus(getSpanStatusFromHttpCode(c.res.status));
+  });
+});
 
 beforeEach(() => {
   contexts.clear();
 });
+
+afterAll(() => close());
