@@ -91,7 +91,8 @@ describe("proposal", () => {
       const captureException = vi.spyOn(sentry, "captureException");
       captureException.mockImplementation(() => "");
 
-      await appClient.index.$post({
+      await Promise.all([
+        appClient.index.$post({
         ...withdrawProposal,
         json: {
           ...withdrawProposal.json,
@@ -102,11 +103,7 @@ describe("proposal", () => {
               block: {
                 ...withdrawProposal.json.event.data.block,
                 logs: [
-                  {
-                    topics: withdraw.topics,
-                    data: withdraw.data,
-                    account: { address: withdraw.address },
-                  },
+                    { topics: withdraw.topics, data: withdraw.data, account: { address: withdraw.address } },
                   {
                     topics: anotherWithdraw.topics,
                     data: anotherWithdraw.data,
@@ -117,9 +114,9 @@ describe("proposal", () => {
             },
           },
         },
-      });
-
-      await vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 2);
+        }),
+        vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 2),
+      ]);
 
       const [withdrawReceipt, anotherWithdrawReceipt] = waitForTransactionReceipt.mock.settledResults;
 

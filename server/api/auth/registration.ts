@@ -28,9 +28,7 @@ import { identify } from "../../utils/segment";
 if (!process.env.ALCHEMY_ACTIVITY_ID) throw new Error("missing alchemy activity id");
 const webhookId = process.env.ALCHEMY_ACTIVITY_ID;
 
-const app = new Hono();
-
-export default app
+export default new Hono()
   .get("/", async (c) => {
     const timeout = 5 * 60_000;
     const userName = new Date().toISOString().slice(0, 16);

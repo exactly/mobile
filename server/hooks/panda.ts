@@ -100,12 +100,7 @@ const Payload = v.intersect([
 ]);
 
 function parseBodies(raw: unknown) {
-  const payload = v.safeParse(
-    v.object({
-      bodies: v.array(v.looseObject({})),
-    }),
-    raw,
-  );
+  const payload = v.safeParse(v.object({ bodies: v.array(v.looseObject({})) }), raw);
   if (!payload.success) throw new Error("invalid transaction payload");
   return payload.output.bodies;
 }

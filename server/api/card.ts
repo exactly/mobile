@@ -22,10 +22,8 @@ function createMutex(credentialId: string) {
   return mutex;
 }
 
-const app = new Hono();
-app.use(auth);
-
-export default app
+export default new Hono()
+  .use(auth)
   .get("/", async (c) => {
     const credentialId = c.get("credentialId");
     const credential = await database.query.credentials.findFirst({

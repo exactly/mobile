@@ -60,42 +60,6 @@ function createMutex(address: Address) {
   return mutex;
 }
 
-const Proposal = v.pipe(
-  v.object({
-    account: Address,
-    amount: v.bigint(),
-    data: Hex,
-    market: Address,
-    nonce: v.bigint(),
-    proposalType: v.enum(ProposalType),
-    sentryBaggage: v.optional(v.string()),
-    sentryTrace: v.optional(v.string()),
-    timestamp: v.optional(v.number()),
-    unlock: v.bigint(),
-  }),
-  v.transform((proposal) => ({
-    id: `${proposal.account}:${proposal.market}:${proposal.timestamp ?? Math.floor(Date.now() / 1000)}`,
-    ...proposal,
-  })),
-);
-
-const Withdraw = v.pipe(
-  v.object({
-    account: Address,
-    market: Address,
-    receiver: Address,
-    amount: v.bigint(),
-    unlock: v.bigint(),
-    timestamp: v.optional(v.number()),
-    sentryTrace: v.optional(v.string()),
-    sentryBaggage: v.optional(v.string()),
-  }),
-  v.transform((withdraw) => ({
-    id: `${withdraw.account}:${withdraw.market}:${withdraw.timestamp ?? Math.floor(Date.now() / 1000)}`,
-    ...withdraw,
-  })),
-);
-
 redis
   .zrange("withdraw", 0, Infinity, "BYSCORE")
   .then((messages) => {
@@ -110,9 +74,7 @@ redis
   })
   .catch((error: unknown) => captureException(error));
 
-const app = new Hono();
-
-export default app.post(
+export default new Hono().post(
   "/",
   headerValidator(() => signingKeys),
   jsonValidator(
@@ -249,7 +211,7 @@ function scheduleMessage(message: string) {
     .then(async () => {
       const mutex = mutexes.get(account) ?? createMutex(account);
       await mutex
-        .runExclusive(async () =>
+        .runExclusive(() =>
           continueTrace({ sentryTrace, baggage: sentryBaggage }, () =>
             startSpan({ name: "exa.execute", op: "exa.execute" }, (parent) =>
               startSpan(
@@ -553,6 +515,42 @@ fetch("https://dashboard.alchemy.com/api/team-webhooks", alchemyInit)
     signingKeys.delete(currentHook.signing_key);
   })
   .catch((error: unknown) => captureException(error));
+
+const Proposal = v.pipe(
+  v.object({
+    account: Address,
+    amount: v.bigint(),
+    data: Hex,
+    market: Address,
+    nonce: v.bigint(),
+    proposalType: v.enum(ProposalType),
+    sentryBaggage: v.optional(v.string()),
+    sentryTrace: v.optional(v.string()),
+    timestamp: v.optional(v.number()),
+    unlock: v.bigint(),
+  }),
+  v.transform((proposal) => ({
+    id: `${proposal.account}:${proposal.market}:${proposal.timestamp ?? Math.floor(Date.now() / 1000)}`,
+    ...proposal,
+  })),
+);
+
+const Withdraw = v.pipe(
+  v.object({
+    account: Address,
+    market: Address,
+    receiver: Address,
+    amount: v.bigint(),
+    unlock: v.bigint(),
+    timestamp: v.optional(v.number()),
+    sentryTrace: v.optional(v.string()),
+    sentryBaggage: v.optional(v.string()),
+  }),
+  v.transform((withdraw) => ({
+    id: `${withdraw.account}:${withdraw.market}:${withdraw.timestamp ?? Math.floor(Date.now() / 1000)}`,
+    ...withdraw,
+  })),
+);
 
 const legacyExaPluginAbi = [
   { type: "function", name: "withdraw", inputs: [], outputs: [], stateMutability: "nonpayable" },

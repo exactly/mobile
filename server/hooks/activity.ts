@@ -39,9 +39,7 @@ const ETH = v.parse(Address, "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 const debug = createDebug("exa:activity");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
-const app = new Hono();
-
-export default app.post(
+export default new Hono().post(
   "/",
   headerValidator(new Set([signingKey])),
   jsonValidator(

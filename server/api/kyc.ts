@@ -13,10 +13,8 @@ import { createInquiry, generateOTL, getInquiry, resumeInquiry, templates } from
 const debug = createDebug("exa:kyc");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
 
-const app = new Hono();
-app.use(auth);
-
-export default app
+export default new Hono()
+  .use(auth)
   .get("/", async (c) => {
     const templateId = c.req.query("templateId") ?? templates.cryptomate;
     if (!Object.values(templates).includes(templateId)) return c.json("invalid persona template", 400);

@@ -8,10 +8,7 @@ import database, { credentials } from "../database";
 import auth from "../middleware/auth";
 import decodePublicKey from "../utils/decodePublicKey";
 
-const app = new Hono();
-app.use(auth);
-
-export default app.get("/", async (c) => {
+export default new Hono().use(auth).get("/", async (c) => {
   const credentialId = c.get("credentialId");
   const credential = await database.query.credentials.findFirst({
     where: eq(credentials.id, credentialId),

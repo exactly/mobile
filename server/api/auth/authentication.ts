@@ -20,9 +20,7 @@ import appOrigin from "../../utils/appOrigin";
 import authSecret from "../../utils/authSecret";
 import redis from "../../utils/redis";
 
-const app = new Hono();
-
-export default app
+export default new Hono()
   .get(
     "/",
     vValidator("query", object({ credentialId: optional(Base64URL) }), ({ success }, c) => {
