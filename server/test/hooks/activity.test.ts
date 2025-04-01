@@ -5,13 +5,14 @@ import "../mocks/deployments";
 import "../mocks/onesignal";
 import "../mocks/keeper";
 
+import { exaAccountFactoryAbi } from "@exactly/common/generated/chain";
 import { captureException } from "@sentry/node";
 import { testClient } from "hono/testing";
 import {
   type Address,
   bytesToHex,
   hexToBigInt,
-  numberToBytes,
+  hexToBytes,
   padHex,
   parseEther,
   type PrivateKeyAccount,
@@ -39,14 +40,11 @@ describe("address activity", () => {
   beforeEach(async () => {
     owner = privateKeyToAccount(generatePrivateKey());
     account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.address), y: zeroHash });
-
-    const x = numberToBytes(hexToBigInt(owner.address));
-    const y = numberToBytes(0n);
-    vi.spyOn(decodePublicKey, "default").mockReturnValue({ x: bytesToHex(x), y: bytesToHex(y) });
+    vi.spyOn(decodePublicKey, "default").mockImplementation((bytes) => ({ x: padHex(bytesToHex(bytes)), y: zeroHash }));
 
     await database
       .insert(credentials)
-      .values([{ id: account, publicKey: new Uint8Array(), account, factory: inject("ExaAccountFactory") }]);
+      .values([{ id: account, publicKey: hexToBytes(owner.address), account, factory: inject("ExaAccountFactory") }]);
   });
 
   it("fails with unexpected error", async () => {
@@ -183,6 +181,50 @@ describe("address activity", () => {
 
     expect(market?.floatingDepositAssets).toBe(eth + weth);
     expect(market?.isCollateral).toBe(true);
+    expect(response.status).toBe(200);
+  });
+
+  it("pokes multiple accounts", async () => {
+    const owners = [
+      owner,
+      privateKeyToAccount(generatePrivateKey()),
+      privateKeyToAccount(generatePrivateKey()),
+    ] as const;
+    const accounts = owners.map(({ address }) =>
+      deriveAddress(inject("ExaAccountFactory"), { x: padHex(address), y: zeroHash }),
+    );
+    await Promise.all([
+      ...accounts
+        .slice(1)
+        .map((id) =>
+          database
+            .insert(credentials)
+            .values({ id, publicKey: hexToBytes(id), account: id, factory: inject("ExaAccountFactory") }),
+        ),
+      ...accounts.map((address) => anvilClient.setBalance({ address, value: parseEther("5") })),
+      keeper.writeContract({
+        address: inject("ExaAccountFactory"),
+        abi: exaAccountFactoryAbi,
+        functionName: "createAccount",
+        args: [0n, [{ x: hexToBigInt(owners[0].address), y: 0n }]],
+      }),
+    ]);
+
+    const waitForTransactionReceipt = vi.spyOn(publicClient, "waitForTransactionReceipt");
+    const [response] = await Promise.all([
+      appClient.index.$post({
+        ...activityPayload,
+        json: {
+          ...activityPayload.json,
+          event: {
+            ...activityPayload.json.event,
+            activity: accounts.map((toAddress) => ({ ...activityPayload.json.event.activity[0], toAddress })),
+          },
+        },
+      }),
+      vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 5, { timeout: 6666 }),
+    ]);
+
     expect(response.status).toBe(200);
   });
 });

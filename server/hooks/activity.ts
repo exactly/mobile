@@ -15,6 +15,7 @@ import {
   SEMANTIC_ATTRIBUTE_SENTRY_OP,
   setContext,
   startSpan,
+  withScope,
 } from "@sentry/node";
 import createDebug from "debug";
 import { inArray } from "drizzle-orm";
@@ -116,44 +117,50 @@ export default new Hono().post(
     Promise.allSettled(
       [...pokes.entries()].map(([account, { publicKey, factory, assets }]) =>
         continueTrace({ sentryTrace, baggage }, () =>
-          startSpan(
-            { name: "account activity", op: "exa.activity", attributes: { account }, parentSpan: null },
-            async () => {
-              if (
-                !(await publicClient.getCode({ address: account })) &&
-                !(await keeper
-                  .exaSend(
-                    { name: "create account", op: "exa.account", attributes: { account } },
-                    {
-                      address: factory,
-                      functionName: "createAccount",
-                      args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
-                      abi: exaAccountFactoryAbi,
-                    },
-                  )
-                  .catch(() => null))
-              ) {
-                return;
-              }
-              await Promise.allSettled(
-                [...assets].map(async (asset) =>
-                  keeper.exaSend(
-                    { name: "poke account", op: "exa.poke", attributes: { account, asset } },
-                    {
-                      address: account,
-                      abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
-                      ...(asset === ETH
-                        ? { functionName: "pokeETH" }
-                        : {
-                            functionName: "poke",
-                            args: [marketsByAsset.get(asset)!], // eslint-disable-line @typescript-eslint/no-non-null-assertion
-                          }),
-                    },
-                    { ignore: ["NoBalance()"] },
+          withScope((scope) =>
+            startSpan(
+              { name: "account activity", op: "exa.activity", attributes: { account }, forceTransaction: true },
+              async () => {
+                scope.setUser({ id: account });
+                scope.setTag("exa.account", account);
+                const isDeployed = !!(await publicClient.getCode({ address: account }));
+                scope.setTag("exa.new", !isDeployed);
+                if (
+                  !isDeployed &&
+                  !(await keeper
+                    .exaSend(
+                      { name: "create account", op: "exa.account", attributes: { account } },
+                      {
+                        address: factory,
+                        functionName: "createAccount",
+                        args: [0n, [decodePublicKey(publicKey, bytesToBigInt)]],
+                        abi: exaAccountFactoryAbi,
+                      },
+                    )
+                    .catch(() => null))
+                ) {
+                  return;
+                }
+                await Promise.allSettled(
+                  [...assets].map(async (asset) =>
+                    keeper.exaSend(
+                      { name: "poke account", op: "exa.poke", attributes: { account, asset } },
+                      {
+                        address: account,
+                        abi: [...exaPluginAbi, ...upgradeableModularAccountAbi, ...auditorAbi, ...marketAbi],
+                        ...(asset === ETH
+                          ? { functionName: "pokeETH" }
+                          : {
+                              functionName: "poke",
+                              args: [marketsByAsset.get(asset)!], // eslint-disable-line @typescript-eslint/no-non-null-assertion
+                            }),
+                      },
+                      { ignore: ["NoBalance()"] },
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),
