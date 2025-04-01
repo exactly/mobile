@@ -1,5 +1,6 @@
 import { optimism } from "@alchemy/aa-core";
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
+import domain from "@exactly/common/domain";
 import chain from "@exactly/common/generated/chain";
 import release from "@exactly/common/generated/release";
 import sentryDSN from "@exactly/common/sentryDSN";
@@ -79,6 +80,7 @@ init({
   attachStacktrace: true,
   attachViewHierarchy: true,
   autoSessionTracking: true,
+  tracePropagationTargets: [domain],
   enableNativeFramesTracking: !isRunningInExpoGo(),
   enableUserInteractionTracing: true,
   integrations: [routingInstrumentation, ...(__DEV__ ? [] : [mobileReplayIntegration()]), userFeedback],
