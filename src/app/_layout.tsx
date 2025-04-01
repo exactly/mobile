@@ -32,7 +32,7 @@ import wagmiConfig from "../utils/wagmi";
 SplashScreen.preventAutoHideAsync().catch(reportError);
 
 export { ErrorBoundary } from "expo-router";
-const routingInstrumentation = reactNavigationIntegration();
+const routingInstrumentation = reactNavigationIntegration({ enableTimeToInitialDisplay: !isRunningInExpoGo() });
 init({
   release,
   dsn: sentryDSN,
