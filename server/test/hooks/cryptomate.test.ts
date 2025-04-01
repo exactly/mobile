@@ -453,8 +453,8 @@ const callFrame = {
   input: "0x",
 } as const;
 
-vi.mock("../../utils/cryptomate", async () => {
-  const { signIssuerOp: _, ...original } = await import("../../utils/cryptomate");
+vi.mock("../../utils/cryptomate", async (importOriginal) => {
+  const { signIssuerOp: _, ...original } = await importOriginal<typeof import("../../utils/cryptomate")>(); // eslint-disable-line @typescript-eslint/consistent-type-imports
   const { signIssuerOp } = await import("../../utils/panda");
   return { ...original, signIssuerOp };
 });
