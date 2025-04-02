@@ -25,7 +25,7 @@ import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
 import { createCard, getPAN } from "../utils/cryptomate";
 import { createCard as createPandaCard, displayName, getCard, getSecrets, isPanda, pandaIssuing } from "../utils/panda";
-import { getInquiry, templates } from "../utils/persona";
+import { CRYPTOMATE_TEMPLATE, getInquiry, PANDA_TEMPLATE } from "../utils/persona";
 import { track } from "../utils/segment";
 
 const mutexes = new Map<string, Mutex>();
@@ -56,7 +56,7 @@ export default new Hono()
     if (credential.cards.length > 0 && credential.cards[0]) {
       const { id, lastFour, status, mode } = credential.cards[0];
       if (await isPanda(account)) {
-        const inquiry = await getInquiry(credentialId, templates.panda);
+        const inquiry = await getInquiry(credentialId, PANDA_TEMPLATE);
         if (!inquiry) return c.json("kyc required", 403);
         if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
         if (!credential.pandaId) return c.json("panda id not found", 400);
@@ -81,7 +81,7 @@ export default new Hono()
           200,
         );
       }
-      const inquiry = await getInquiry(credentialId, templates.cryptomate);
+      const inquiry = await getInquiry(credentialId, CRYPTOMATE_TEMPLATE);
       if (!inquiry) return c.json("kyc required", 403);
       if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
       return c.json({ provider: "cryptomate" as const, url: await getPAN(id), lastFour, status, mode }, 200);
@@ -106,7 +106,7 @@ export default new Hono()
         setUser({ id: account });
 
         if (pandaIssuing && (await isPanda(account))) {
-          const inquiry = await getInquiry(credentialId, templates.panda);
+          const inquiry = await getInquiry(credentialId, PANDA_TEMPLATE);
           if (!inquiry) return c.json("kyc not found", 404);
           if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
           if (!credential.pandaId) return c.json("panda id not found", 400);
@@ -139,7 +139,7 @@ export default new Hono()
           await database.insert(cards).values([{ id: card.id, credentialId, lastFour: card.last4 }]);
           return c.json({ lastFour: card.last4, status: card.status }, 200);
         }
-        const inquiry = await getInquiry(credentialId, templates.cryptomate);
+        const inquiry = await getInquiry(credentialId, CRYPTOMATE_TEMPLATE);
         if (!inquiry) return c.json("kyc not found", 404);
         if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
         if (credential.cards.length > 0) return c.json("card already exists", 400);

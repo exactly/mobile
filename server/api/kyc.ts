@@ -8,7 +8,14 @@ import { object, optional, parse, string } from "valibot";
 
 import database, { credentials } from "../database/index";
 import auth from "../middleware/auth";
-import { createInquiry, generateOTL, getInquiry, resumeInquiry, templates } from "../utils/persona";
+import {
+  createInquiry,
+  CRYPTOMATE_TEMPLATE,
+  generateOTL,
+  getInquiry,
+  PANDA_TEMPLATE,
+  resumeInquiry,
+} from "../utils/persona";
 
 const debug = createDebug("exa:kyc");
 Object.assign(debug, { inspectOpts: { depth: undefined } });
@@ -16,8 +23,10 @@ Object.assign(debug, { inspectOpts: { depth: undefined } });
 export default new Hono()
   .use(auth)
   .get("/", async (c) => {
-    const templateId = c.req.query("templateId") ?? templates.cryptomate;
-    if (!Object.values(templates).includes(templateId)) return c.json("invalid persona template", 400);
+    const templateId = c.req.query("templateId") ?? CRYPTOMATE_TEMPLATE;
+    if (templateId !== CRYPTOMATE_TEMPLATE && templateId !== PANDA_TEMPLATE) {
+      return c.json("invalid persona template", 400);
+    }
     const credentialId = c.get("credentialId");
     const credential = await database.query.credentials.findFirst({
       columns: { id: true, account: true },
@@ -54,7 +63,7 @@ export default new Hono()
     async (c) => {
       const payload = c.req.valid("json");
       const credentialId = c.get("credentialId");
-      const templateId = payload.templateId ?? templates.cryptomate;
+      const templateId = payload.templateId ?? CRYPTOMATE_TEMPLATE;
       const credential = await database.query.credentials.findFirst({
         columns: { id: true, account: true },
         where: eq(credentials.id, credentialId),

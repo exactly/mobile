@@ -48,7 +48,7 @@ describe("authenticated", () => {
   });
 
   it("resumes inquiry with template", async () => {
-    const templateId = persona.templates.panda;
+    const templateId = persona.PANDA_TEMPLATE;
     const getInquiry = vi.spyOn(persona, "getInquiry").mockResolvedValueOnce({
       ...personaTemplate,
       attributes: { ...personaTemplate.attributes, status: "pending" },
@@ -84,7 +84,7 @@ describe("authenticated", () => {
       { headers: { "test-credential-id": account, SessionID: "fakeSession" } },
     );
 
-    expect(getInquiry).toHaveBeenCalledWith(account, persona.templates.cryptomate);
+    expect(getInquiry).toHaveBeenCalledWith(account, persona.CRYPTOMATE_TEMPLATE);
     expect(createInquiry).toHaveBeenCalledWith(account);
     expect(generateOTL).toHaveBeenCalledWith(resumeTemplate.data.id);
     await expect(response.json()).resolves.toBe(link);
