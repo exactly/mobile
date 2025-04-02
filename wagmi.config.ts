@@ -23,6 +23,7 @@ const previewer = loadDeployment("Previewer");
 const ratePreviewer = loadDeployment("RatePreviewer");
 const usdc = loadDeployment("USDC");
 const weth = loadDeployment("WETH");
+const balancerVault = loadDeployment("BalancerVault");
 const [exaPlugin, , factory] = loadBroadcast("Deploy").transactions;
 const [issuerChecker] = loadBroadcast("IssuerChecker").transactions;
 const [proposalManager] = loadBroadcast("ProposalManager").transactions;
@@ -85,7 +86,11 @@ export default defineConfig([
       { name: "Previewer", abi: previewer.abi },
     ],
     plugins: [
-      addresses({ issuerChecker: issuerChecker.contractAddress, proposalManager: proposalManager.contractAddress }),
+      addresses({
+        balancerVault: balancerVault.address,
+        issuerChecker: issuerChecker.contractAddress,
+        proposalManager: proposalManager.contractAddress,
+      }),
       foundry({
         project: "contracts",
         include: [
