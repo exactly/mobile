@@ -26,7 +26,7 @@ export default function Amount() {
 
   const { market, externalAsset, available, isFetching } = useAsset(withdraw?.market);
 
-  const { Field, Subscribe, handleSubmit } = useForm<{ amount: bigint }>({
+  const form = useForm({
     defaultValues: { amount: withdraw?.amount ?? 0n },
     onSubmit: ({ value: { amount } }) => {
       queryClient.setQueryData<Withdraw>(["withdrawal"], (old) => (old ? { ...old, amount } : { amount }));
@@ -162,7 +162,7 @@ export default function Amount() {
               </>
             </View>
 
-            <Field
+            <form.Field
               name="amount"
               validators={{
                 onChange: pipe(
@@ -181,14 +181,14 @@ export default function Amount() {
                   <AmountSelector onChange={handleChange} />
                   {meta.errors.length > 0 ? (
                     <Text padding="$s3" footnote color="$uiNeutralSecondary">
-                      {meta.errors[0]?.toString().split(",")[0]}
+                      {meta.errors[0]?.message.split(",")[0]}
                     </Text>
                   ) : undefined}
                 </>
               )}
-            </Field>
+            </form.Field>
 
-            <Subscribe selector={({ isValid, isTouched }) => [isValid, isTouched]}>
+            <form.Subscribe selector={({ isValid, isTouched }) => [isValid, isTouched]}>
               {([isValid, isTouched]) => {
                 return (
                   <Button
@@ -202,14 +202,14 @@ export default function Amount() {
                       />
                     }
                     onPress={() => {
-                      handleSubmit().catch(handleError);
+                      form.handleSubmit().catch(handleError);
                     }}
                   >
                     Next
                   </Button>
                 );
               }}
-            </Subscribe>
+            </form.Subscribe>
           </View>
         </ScrollView>
       </View>

@@ -38,7 +38,7 @@ queryClient.setQueryDefaults<number | undefined>(["auth"], {
           error.message === "The operation couldn’t be completed. Device must be unlocked to perform request." ||
           error.message === "UserCancelled")
       ) {
-        return;
+        return parse(Auth, queryClient.getQueryData(["auth"]));
       }
       throw error;
     }

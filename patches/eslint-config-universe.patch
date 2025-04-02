@@ -15,7 +15,7 @@ index 79438b7a92be138777df20ab9db21a08d6178be4..3a1fdc32905ac53ffc56cd20c8d9d4fd
    },
  };
 diff --git a/shared/core.js b/shared/core.js
-index 5447d89c943dfc42ab4e23d5984bc60f84a4c2bb..74028ad02abfc8b089c50d064f2bcee6bfdfc0c7 100644
+index f3e09f926b287f8dea3f2a73bd1f2f9dd9d7fd85..d417e43437d3f2e9c1a81d4afcccc6a8e88c08c3 100644
 --- a/shared/core.js
 +++ b/shared/core.js
 @@ -14,7 +14,7 @@ module.exports = {
@@ -38,27 +38,3 @@ index 5447d89c943dfc42ab4e23d5984bc60f84a4c2bb..74028ad02abfc8b089c50d064f2bcee6
    },
    settings: {
      'import/extensions': jsExtensions,
-diff --git a/shared/typescript.js b/shared/typescript.js
-index 4d6b08d2abcdcd19cd79ce73dbda16214789ae24..1c7ce73defe957ecf0757a105c64f923d25f77b2 100644
---- a/shared/typescript.js
-+++ b/shared/typescript.js
-@@ -24,7 +24,10 @@ module.exports = {
-       plugins: ['@typescript-eslint'],
-       rules: {
-         '@typescript-eslint/array-type': ['warn', { default: 'array' }],
--        '@typescript-eslint/ban-types': [
-+        '@typescript-eslint/no-empty-object-type': 'error',
-+        '@typescript-eslint/no-unsafe-function-type': 'error',
-+        '@typescript-eslint/no-wrapper-object-types': 'error',
-+        '@typescript-eslint/no-restricted-types': [
-           'error',
-           {
-             types: {
-@@ -53,7 +56,6 @@ module.exports = {
-                 fixWith: 'object',
-               },
-             },
--            extendDefaults: false,
-           },
-         ],
-         '@typescript-eslint/consistent-type-assertions': [
