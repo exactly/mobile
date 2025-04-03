@@ -48,6 +48,7 @@ export default function ActivateCard() {
       }
       const { code, text } = error;
       if (code === 400 && text.includes("card already exists")) {
+        await queryClient.refetchQueries({ queryKey: ["card", "details"] });
         await queryClient.setQueryData(["card-upgrade-open"], false);
         await queryClient.resetQueries({ queryKey: ["card-upgrade"] });
         router.replace("/(app)/(home)/card");
