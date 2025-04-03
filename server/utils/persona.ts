@@ -27,6 +27,14 @@ const authorization = `Bearer ${process.env.PERSONA_API_KEY}`;
 const baseURL = process.env.PERSONA_URL;
 const webhookSecret = process.env.PERSONA_WEBHOOK_SECRET;
 
+export async function getAccount(referenceId: string) {
+  const { data: accounts } = await request(
+    GetAccountsResponse,
+    `/accounts?page[size]=1&filter[reference-id]=${referenceId}`,
+  );
+  return accounts[0];
+}
+
 export async function getInquiry(referenceId: string, templateId: string) {
   const { data: approvedInquiries } = await request(
     GetInquiriesResponse,
@@ -71,6 +79,16 @@ async function request<TInput, TOutput, TIssue extends BaseIssue<unknown>>(
   if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
   return parse(schema, await response.json());
 }
+
+const GetAccountsResponse = object({
+  data: array(
+    object({
+      id: string(),
+      type: literal("account"),
+      attributes: object({ "country-code": string() }),
+    }),
+  ),
+});
 
 const GetInquiriesResponse = object({
   data: array(

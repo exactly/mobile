@@ -12,6 +12,7 @@ import {
   createInquiry,
   CRYPTOMATE_TEMPLATE,
   generateOTL,
+  getAccount,
   getInquiry,
   PANDA_TEMPLATE,
   resumeInquiry,
@@ -44,6 +45,8 @@ export default new Hono()
       return c.json(result, 200);
     }
     if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 400);
+    const account = await getAccount(credentialId);
+    if (account) c.header("User-Country", account.attributes["country-code"]);
     return c.json("ok", 200);
   })
   .post(

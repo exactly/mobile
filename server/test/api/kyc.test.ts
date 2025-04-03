@@ -37,13 +37,21 @@ describe("authenticated", () => {
 
   it("returns ok kyc approved without template", async () => {
     const getInquiry = vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
+    const getAccount = vi.spyOn(persona, "getAccount").mockResolvedValueOnce({
+      ...personaTemplate,
+      type: "account",
+      attributes: { "country-code": "AR" },
+    });
+
     const response = await appClient.index.$get(
       { query: {} },
       { headers: { "test-credential-id": account, SessionID: "fakeSession" } },
     );
 
     expect(getInquiry).toHaveBeenCalledWith(account, "itmpl_8uim4FvD5P3kFpKHX37CW817"); //cspell:disable-line
+    expect(getAccount).toHaveBeenCalledOnce();
     await expect(response.json()).resolves.toBe("ok");
+    expect(response.headers.get("User-Country")).toBe("AR");
     expect(response.status).toBe(200);
   });
 
