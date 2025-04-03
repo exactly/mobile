@@ -1,3 +1,4 @@
+import { TimeToFullDisplay } from "@sentry/react-native";
 import React from "react";
 
 import Carousel from "./Carousel";
@@ -7,6 +8,7 @@ export default function Onboarding() {
   return (
     <SafeView fullScreen backgroundColor="$backgroundSoft">
       <Carousel />
+      <TimeToFullDisplay record />
     </SafeView>
   );
 }
