@@ -4,7 +4,14 @@ import chain from "@exactly/common/generated/chain";
 import release from "@exactly/common/generated/release";
 import sentryDSN from "@exactly/common/sentryDSN";
 import { createConfig, EVM } from "@lifi/sdk";
-import { ErrorBoundary, init, mobileReplayIntegration, reactNavigationIntegration, wrap } from "@sentry/react-native";
+import {
+  ErrorBoundary,
+  feedbackIntegration,
+  init,
+  mobileReplayIntegration,
+  reactNavigationIntegration,
+  wrap,
+} from "@sentry/react-native";
 import { ToastProvider } from "@tamagui/toast";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -24,6 +31,7 @@ import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
 import AppIcon from "../assets/icon.png";
 import { OnboardingProvider } from "../components/context/OnboardingProvider";
 import ThemeProvider from "../components/context/ThemeProvider";
+import Error from "../components/shared/Error";
 import publicClient from "../utils/publicClient";
 import queryClient, { persister } from "../utils/queryClient";
 import reportError from "../utils/reportError";
@@ -33,6 +41,38 @@ SplashScreen.preventAutoHideAsync().catch(reportError);
 
 export { ErrorBoundary } from "expo-router";
 const routingInstrumentation = reactNavigationIntegration({ enableTimeToInitialDisplay: !isRunningInExpoGo() });
+const userFeedback = feedbackIntegration({
+  showName: false,
+  showEmail: false,
+  showBranding: false,
+  formTitle: "Send report error",
+  messageLabel: "Describe the issue",
+  messagePlaceholder: "",
+  submitButtonLabel: "Send report",
+  cancelButtonLabel: "Cancel",
+  styles: {
+    container: { gap: 12, padding: 16 },
+    label: { fontWeight: 600 },
+    textArea: { minHeight: 150, borderWidth: 1, borderColor: "#CCCCCC", borderRadius: 5 },
+    input: { borderWidth: 1, borderRadius: 5, padding: 5, color: "#000000" },
+    submitButton: {
+      height: 50,
+      borderRadius: 5,
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#12A594",
+    },
+    cancelButton: {
+      height: 50,
+      borderRadius: 5,
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "transparent",
+    },
+  },
+});
 init({
   release,
   dsn: sentryDSN,
@@ -43,7 +83,7 @@ init({
   autoSessionTracking: true,
   enableNativeFramesTracking: !isRunningInExpoGo(),
   enableUserInteractionTracing: true,
-  integrations: [routingInstrumentation, ...(__DEV__ ? [] : [mobileReplayIntegration()])],
+  integrations: [routingInstrumentation, ...(__DEV__ ? [] : [mobileReplayIntegration()]), userFeedback],
   _experiments: __DEV__ ? undefined : { replaysOnErrorSampleRate: 1, replaysSessionSampleRate: 0.01 },
   spotlight: __DEV__,
 });
@@ -81,7 +121,15 @@ export default wrap(function RootLayout() {
           <SafeAreaProvider>
             <ThemeProvider>
               <OnboardingProvider>
-                <ErrorBoundary>
+                <ErrorBoundary
+                  fallback={(data) => (
+                    <Error
+                      resetError={() => {
+                        data.resetError();
+                      }}
+                    />
+                  )}
+                >
                   <Stack initialRouteName="(app)" screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="(app)" />
                     <Stack.Screen name="onboarding" />

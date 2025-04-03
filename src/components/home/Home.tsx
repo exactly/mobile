@@ -117,7 +117,6 @@ export default function Home() {
                   }}
                 />
               )}
-
               <CardLimits />
               <HomeActions />
               <PortfolioSummary usdBalance={usdBalance} />
