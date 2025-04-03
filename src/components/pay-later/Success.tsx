@@ -119,12 +119,7 @@ export default function Success({
                         &nbsp;{currency}&nbsp;
                       </Text>
                       {externalAsset ? (
-                        <Image
-                          source={{ uri: externalAsset.logoURI }}
-                          width={16}
-                          height={16}
-                          style={{ borderRadius: 20 }}
-                        />
+                        <Image source={{ uri: externalAsset.logoURI }} width={16} height={16} borderRadius={20} />
                       ) : (
                         <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={16} height={16} />
                       )}

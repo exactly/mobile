@@ -19,9 +19,7 @@ export default function Values({ amount, assetName, usdValue }: WithdrawDetails)
       <View alignItems="center" gap="$s3_5">
         <XStack alignItems="center" gap="$s3">
           {market && <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={32} height={32} />}
-          {externalAsset && (
-            <Image source={{ uri: externalAsset.logoURI }} width={40} height={40} style={{ borderRadius: 20 }} />
-          )}
+          {externalAsset && <Image source={{ uri: externalAsset.logoURI }} width={40} height={40} borderRadius={20} />}
           <Text title color="$uiNeutralPrimary">
             {amount} {assetName}
           </Text>

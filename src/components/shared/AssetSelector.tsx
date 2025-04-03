@@ -76,7 +76,7 @@ export default function AssetSelector({
                   borderRadius="$r3"
                 >
                   <View flexDirection="row" gap={10} alignItems="center" maxWidth="50%">
-                    <Image source={{ uri: logoURI }} width={32} height={32} style={{ borderRadius: 16 }} />
+                    <Image source={{ uri: logoURI }} width={32} height={32} borderRadius={16} />
                     <View gap="$s2" alignItems="flex-start" flexShrink={1}>
                       <Text fontSize={15} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
                         {symbol}

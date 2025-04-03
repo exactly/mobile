@@ -46,7 +46,7 @@ export default function Review({
               {market ? (
                 <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={40} height={40} />
               ) : externalAsset ? (
-                <Image source={{ uri: externalAsset.logoURI }} width={40} height={40} style={{ borderRadius: 20 }} />
+                <Image source={{ uri: externalAsset.logoURI }} width={40} height={40} borderRadius={20} />
               ) : null}
 
               <YStack flex={1}>

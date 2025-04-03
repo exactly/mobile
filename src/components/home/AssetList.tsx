@@ -115,7 +115,7 @@ export default function AssetList() {
             >
               <View flexDirection="row" paddingVertical={vs(10)} flex={1}>
                 <View flexDirection="row" gap={10} flex={1} alignItems="center">
-                  <Image source={{ uri: logoURI }} width={32} height={32} style={{ borderRadius: 16 }} />
+                  <Image source={{ uri: logoURI }} width={32} height={32} borderRadius={16} />
                   <View gap="$s2" alignItems="flex-start" flexShrink={1}>
                     <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
                       {symbol}
