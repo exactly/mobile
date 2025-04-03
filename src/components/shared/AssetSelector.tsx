@@ -4,7 +4,7 @@ import { withdrawLimit } from "@exactly/lib";
 import { Skeleton } from "moti/skeleton";
 import React, { useState } from "react";
 import { Appearance, Image } from "react-native";
-import { ms, vs } from "react-native-size-matters";
+import { vs } from "react-native-size-matters";
 import { ToggleGroup, YStack } from "tamagui";
 import { safeParse } from "valibot";
 import { zeroAddress } from "viem";
@@ -75,20 +75,20 @@ export default function AssetSelector({
                   paddingHorizontal="$s4"
                   borderRadius="$r3"
                 >
-                  <View flexDirection="row" gap={ms(10)} alignItems="center" maxWidth="50%">
-                    <Image source={{ uri: logoURI }} width={ms(32)} height={ms(32)} style={{ borderRadius: ms(16) }} />
+                  <View flexDirection="row" gap={10} alignItems="center" maxWidth="50%">
+                    <Image source={{ uri: logoURI }} width={32} height={32} style={{ borderRadius: 16 }} />
                     <View gap="$s2" alignItems="flex-start" flexShrink={1}>
-                      <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
+                      <Text fontSize={15} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
                         {symbol}
                       </Text>
-                      <Text fontSize={ms(12)} color="$uiNeutralSecondary" numberOfLines={1}>
+                      <Text fontSize={12} color="$uiNeutralSecondary" numberOfLines={1}>
                         {name}
                       </Text>
                     </View>
                   </View>
                   <View gap="$s2" flex={1}>
                     <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                      <Text fontSize={ms(15)} fontWeight="bold" textAlign="right" color="$uiNeutralPrimary">
+                      <Text fontSize={15} fontWeight="bold" textAlign="right" color="$uiNeutralPrimary">
                         {usdValue.toLocaleString(undefined, {
                           style: "currency",
                           currency: "USD",
@@ -96,7 +96,7 @@ export default function AssetSelector({
                         })}
                       </Text>
                     </View>
-                    <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                    <Text fontSize={12} color="$uiNeutralSecondary" textAlign="right">
                       {`${(Number(amount ?? 0n) / 10 ** decimals).toLocaleString(undefined, {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: Math.min(
@@ -124,26 +124,26 @@ export default function AssetSelector({
                   paddingHorizontal="$s4"
                   borderRadius="$r3"
                 >
-                  <View flexDirection="row" gap={ms(10)} alignItems="center" maxWidth="50%">
+                  <View flexDirection="row" gap={10} alignItems="center" maxWidth="50%">
                     <AssetLogo
                       uri={
                         assetLogos[symbol.slice(3) === "WETH" ? "ETH" : (symbol.slice(3) as keyof typeof assetLogos)]
                       }
-                      width={ms(32)}
-                      height={ms(32)}
+                      width={32}
+                      height={32}
                     />
                     <View gap="$s2" alignItems="flex-start" flexShrink={1}>
-                      <Text fontSize={ms(15)} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
+                      <Text fontSize={15} fontWeight="bold" color="$uiNeutralPrimary" numberOfLines={1}>
                         {symbol.slice(3) === "WETH" ? "ETH" : symbol.slice(3)}
                       </Text>
-                      <Text fontSize={ms(12)} color="$uiNeutralSecondary" numberOfLines={1}>
+                      <Text fontSize={12} color="$uiNeutralSecondary" numberOfLines={1}>
                         {assetName === "Wrapped Ether" ? "Ether" : assetName}
                       </Text>
                     </View>
                   </View>
                   <View gap="$s2" flex={1}>
                     <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                      <Text fontSize={ms(15)} fontWeight="bold" textAlign="right" color="$uiNeutralPrimary">
+                      <Text fontSize={15} fontWeight="bold" textAlign="right" color="$uiNeutralPrimary">
                         {usdValue.toLocaleString(undefined, {
                           style: "currency",
                           currency: "USD",
@@ -151,7 +151,7 @@ export default function AssetSelector({
                         })}
                       </Text>
                     </View>
-                    <Text fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                    <Text fontSize={12} color="$uiNeutralSecondary" textAlign="right">
                       {`${(Number(markets ? withdrawLimit(markets, market) : 0n) / 10 ** decimals).toLocaleString(
                         undefined,
                         {
@@ -172,7 +172,7 @@ export default function AssetSelector({
         })}
         {isAccountAssetsPending && (
           <View flexDirection="row" alignItems="center" width="100%">
-            <Skeleton height={ms(50)} width="100%" colorMode={Appearance.getColorScheme() ?? "light"} />
+            <Skeleton height={50} width="100%" colorMode={Appearance.getColorScheme() ?? "light"} />
           </View>
         )}
       </ToggleGroup>

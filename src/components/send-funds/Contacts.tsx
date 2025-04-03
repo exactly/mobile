@@ -2,7 +2,6 @@ import type { Address } from "@exactly/common/validation";
 import { BookUser } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 
 import Contact from "./Contact";
@@ -16,7 +15,7 @@ export default function Contacts({ onContactPress }: { onContactPress: (address:
   return (
     <YStack gap="$s5">
       <XStack gap="$s2" alignItems="center">
-        <BookUser size={ms(20)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+        <BookUser size={20} color="$interactiveBaseBrandDefault" fontWeight="bold" />
         <Text emphasized footnote color="$uiNeutralSecondary">
           Contacts
         </Text>

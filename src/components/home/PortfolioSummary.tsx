@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import { Skeleton } from "moti/skeleton";
 import React from "react";
 import { Appearance } from "react-native";
-import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -70,26 +69,21 @@ export default function PortfolioSummary({ usdBalance }: { usdBalance: bigint })
               })}
             </Text>
           ) : (
-            <Skeleton height={ms(20)} width={ms(100)} colorMode={Appearance.getColorScheme() ?? "light"} />
+            <Skeleton height={20} width={100} colorMode={Appearance.getColorScheme() ?? "light"} />
           )}
           <View flexDirection="row">
             {symbols ? (
               symbols.map((symbol, index) => (
-                <View key={symbol} marginRight={index < symbols.length - 1 ? ms(-8) : 0} zIndex={index}>
-                  <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(16)} height={ms(16)} />
+                <View key={symbol} marginRight={index < symbols.length - 1 ? -8 : 0} zIndex={index}>
+                  <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={16} height={16} />
                 </View>
               ))
             ) : (
-              <Skeleton
-                radius="round"
-                colorMode={Appearance.getColorScheme() ?? "light"}
-                height={ms(16)}
-                width={ms(16)}
-              />
+              <Skeleton radius="round" colorMode={Appearance.getColorScheme() ?? "light"} height={16} width={16} />
             )}
           </View>
 
-          <ChevronRight size={ms(24)} color="$interactiveTextBrandDefault" />
+          <ChevronRight size={24} color="$interactiveTextBrandDefault" />
         </View>
       </View>
     </View>

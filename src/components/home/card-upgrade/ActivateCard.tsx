@@ -4,7 +4,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { YStack } from "tamagui";
 
 import Progression from "./Progression";
@@ -68,7 +67,7 @@ export default function ActivateCard() {
       {isActivating ? (
         <>
           <YStack gap="$s6" justifyContent="center" alignItems="center">
-            <Spinner color="$uiNeutralPrimary" backgroundColor="$backgroundMild" containerSize={ms(52)} size={ms(32)} />
+            <Spinner color="$uiNeutralPrimary" backgroundColor="$backgroundMild" containerSize={52} size={32} />
             <YStack gap="$s2" justifyContent="center" alignItems="center">
               <Text emphasized title3 color="$uiNeutralSecondary">
                 Activating your new Exa Card
@@ -85,7 +84,7 @@ export default function ActivateCard() {
       ) : (
         <>
           <YStack gap="$s4">
-            <CreditCard size={ms(32)} color="$uiBrandSecondary" />
+            <CreditCard size={32} color="$uiBrandSecondary" />
             <Text emphasized title3 color="$uiBrandSecondary">
               Activate your new Exa Card
             </Text>
@@ -118,7 +117,7 @@ export default function ActivateCard() {
             onPress={() => {
               activateCard().catch(reportError);
             }}
-            flexBasis={ms(60)}
+            flexBasis={60}
             contained
             main
             spaced

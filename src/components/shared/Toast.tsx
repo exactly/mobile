@@ -1,7 +1,6 @@
 import { Info as InfoIcon } from "@tamagui/lucide-icons";
 import { Toast, useToastState } from "@tamagui/toast";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { XStack } from "tamagui";
 
 import Text from "./Text";
@@ -44,7 +43,7 @@ export default function NotificationToast() {
           borderBottomLeftRadius="$s3"
         >
           <InfoIcon
-            size={ms(24)}
+            size={24}
             color={
               type === "success" ? "$uiSuccessSecondary" : type === "error" ? "$uiErrorSecondary" : "$uiInfoSecondary"
             }

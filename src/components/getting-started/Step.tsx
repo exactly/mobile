@@ -1,7 +1,6 @@
 import { Check } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 
 import Text from "../shared/Text";
@@ -73,7 +72,7 @@ export default function Step({
             {description}
           </Text>
         </YStack>
-        <Pressable hitSlop={ms(15)} onPress={onPress}>
+        <Pressable hitSlop={15} onPress={onPress}>
           <Text emphasized footnote color="$interactiveBaseBrandDefault">
             {action}
           </Text>

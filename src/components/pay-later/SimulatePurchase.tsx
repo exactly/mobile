@@ -8,7 +8,6 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { formatUnits, parseUnits, zeroAddress } from "viem";
 
@@ -95,10 +94,10 @@ export default function SimulatePurchase() {
     <SafeView fullScreen backgroundColor="$backgroundMild" paddingBottom={0}>
       <View fullScreen>
         <View padded>
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+          <View flexDirection="row" gap={10} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
               <Pressable onPress={back}>
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft size={24} color="$uiNeutralPrimary" />
               </Pressable>
             )}
             <Text emphasized subHeadline>
@@ -164,9 +163,9 @@ export default function SimulatePurchase() {
                       numberOfLines={1}
                       inputMode="decimal"
                       textAlign="right"
-                      fontSize={ms(20)}
-                      lineHeight={ms(25)}
-                      letterSpacing={ms(-0.2)}
+                      fontSize={20}
+                      lineHeight={25}
+                      letterSpacing={-0.2}
                       value={input}
                       onChangeText={(text) => {
                         setInput(text);
@@ -262,7 +261,7 @@ export default function SimulatePurchase() {
               </YStack>
             </XStack>
             <Button
-              flexBasis={ms(60)}
+              flexBasis={60}
               onPress={() => {
                 mutateMode(installments ?? 1).catch(reportError);
               }}
@@ -327,8 +326,8 @@ function InstallmentButton({
     >
       <View
         key={installment}
-        height={ms(93)}
-        maxHeight={ms(93)}
+        height={93}
+        maxHeight={93}
         borderWidth={1}
         backgroundColor={selected ? "$interactiveBaseBrandDefault" : "transparent"}
         borderColor={enabled ? "$borderBrandSoft" : "$interactiveDisabled"}

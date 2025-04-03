@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { Pressable, StyleSheet } from "react-native";
-import { ms } from "react-native-size-matters";
 import { useConnect } from "wagmi";
 
 import PasskeysBlob from "../../assets/images/passkeys-blob.svg";
@@ -83,7 +82,7 @@ export default function Passkeys() {
       <View fullScreen padded>
         <View position="absolute" right="$s5" zIndex={1}>
           <Pressable onPress={close}>
-            <X size={ms(25)} color="$uiNeutralSecondary" />
+            <X size={25} color="$uiNeutralSecondary" />
           </Pressable>
         </View>
         <View justifyContent="center" alignItems="center" flexGrow={1} flexShrink={1}>
@@ -99,7 +98,7 @@ export default function Passkeys() {
             <Text emphasized title brand centered>
               A secure and easy way to access your account
             </Text>
-            <Text fontSize={ms(13)} color="$uiNeutralSecondary" textAlign="center">
+            <Text fontSize={13} color="$uiNeutralSecondary" textAlign="center">
               To keep your account secure, Exa App uses passkeys, a passwordless authentication method protected by your
               device biometric verification.
             </Text>
@@ -107,10 +106,10 @@ export default function Passkeys() {
         </View>
         <View alignItems="stretch" alignSelf="stretch">
           <View flexDirection="row" alignSelf="stretch" justifyContent="center">
-            <Text fontSize={ms(11)} color="$uiNeutralPlaceholder">
+            <Text fontSize={11} color="$uiNeutralPlaceholder">
               {`By continuing, I accept the `}
             </Text>
-            <Text fontSize={ms(11)} color="$interactiveBaseBrandDefault">
+            <Text fontSize={11} color="$interactiveBaseBrandDefault">
               Terms & Conditions
             </Text>
           </View>
@@ -124,7 +123,7 @@ export default function Passkeys() {
                 loadingContent="Creating account..."
                 iconAfter={
                   <Key
-                    size={ms(20)}
+                    size={20}
                     color={isPending ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandDefault"}
                     fontWeight="bold"
                   />
@@ -139,7 +138,7 @@ export default function Passkeys() {
             </View>
             <View flexDirection="row" justifyContent="center">
               <Pressable onPress={learnMore}>
-                <Text textAlign="center" fontSize={ms(13)} fontWeight="bold" color="$interactiveBaseBrandDefault">
+                <Text textAlign="center" fontSize={13} fontWeight="bold" color="$interactiveBaseBrandDefault">
                   Learn more about passkeys
                 </Text>
               </Pressable>

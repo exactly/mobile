@@ -13,7 +13,6 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
-import { ms } from "react-native-size-matters";
 import type { SvgProps } from "react-native-svg";
 import { parse } from "valibot";
 import { useConnect } from "wagmi";
@@ -189,7 +188,7 @@ export default function Carousel() {
             <Text emphasized title brand centered>
               {title}
             </Text>
-            <View height={ms(20)}>
+            <View height={20}>
               {disabled && (
                 <Text
                   pill
@@ -221,13 +220,13 @@ export default function Carousel() {
             </View>
             <View flexDirection="row" justifyContent="center">
               <Pressable
-                hitSlop={ms(15)}
+                hitSlop={15}
                 onPress={() => {
                   if (isPending) return;
                   recoverAccount();
                 }}
               >
-                <Text fontSize={ms(13)} textAlign="center" color="$uiNeutralSecondary">
+                <Text fontSize={13} textAlign="center" color="$uiNeutralSecondary">
                   Already have an account?&nbsp;
                   <Text emphasized color="$interactiveBaseBrandDefault">
                     Log in

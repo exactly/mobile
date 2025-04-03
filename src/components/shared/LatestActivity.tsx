@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { YStack } from "tamagui";
 
 import queryClient from "../../utils/queryClient";
@@ -27,7 +26,7 @@ export default function LatestActivity({
       renderAction={
         activity?.length ? (
           <Pressable
-            hitSlop={ms(15)}
+            hitSlop={15}
             onPress={() => {
               router.push("/activity");
             }}
@@ -36,7 +35,7 @@ export default function LatestActivity({
               <Text color="$interactiveTextBrandDefault" emphasized footnote fontWeight="bold">
                 View all
               </Text>
-              <ChevronRight size={ms(14)} color="$interactiveTextBrandDefault" fontWeight="bold" />
+              <ChevronRight size={14} color="$interactiveTextBrandDefault" fontWeight="bold" />
             </View>
           </Pressable>
         ) : null
@@ -70,8 +69,8 @@ export default function LatestActivity({
             }}
           >
             <View
-              width={ms(40)}
-              height={ms(40)}
+              width={40}
+              height={40}
               backgroundColor="$backgroundStrong"
               borderRadius="$r3"
               justifyContent="center"
@@ -99,7 +98,7 @@ export default function LatestActivity({
                 </View>
                 <View gap="$s2">
                   <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                    <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
+                    <Text sensitive fontSize={15} fontWeight="bold" textAlign="right">
                       {usdAmount > 0.01
                         ? usdAmount.toLocaleString(undefined, {
                             style: "currency",
@@ -115,7 +114,7 @@ export default function LatestActivity({
                           })}`}
                     </Text>
                   </View>
-                  <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+                  <Text sensitive fontSize={12} color="$uiNeutralSecondary" textAlign="right">
                     {Number(amount).toLocaleString(undefined, {
                       maximumFractionDigits: 8,
                       minimumFractionDigits: 0,

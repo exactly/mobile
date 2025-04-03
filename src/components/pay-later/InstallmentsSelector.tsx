@@ -7,7 +7,6 @@ import { format } from "date-fns";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet } from "react-native";
-import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 import { parseUnits, zeroAddress } from "viem";
 
@@ -91,12 +90,12 @@ function InstallmentsSelector() {
         onPress={() => {
           router.push("/(app)/simulate-purchase");
         }}
-        iconAfter={<ArrowRight size={ms(20)} color="$interactiveOnBaseBrandSoft" />}
+        iconAfter={<ArrowRight size={20} color="$interactiveOnBaseBrandSoft" />}
         backgroundColor="$interactiveBaseBrandSoftDefault"
         color="$interactiveOnBaseBrandSoft"
         {...outlined}
       >
-        <Text fontSize={ms(15)} emphasized numberOfLines={1} adjustsFontSizeToFit color="$interactiveOnBaseBrandSoft">
+        <Text fontSize={15} emphasized numberOfLines={1} adjustsFontSizeToFit color="$interactiveOnBaseBrandSoft">
           Estimate your payments
         </Text>
       </Button>
@@ -143,8 +142,8 @@ function InstallmentButton({
     >
       <View
         key={installment}
-        height={ms(93)}
-        maxHeight={ms(93)}
+        height={93}
+        maxHeight={93}
         borderWidth={1}
         backgroundColor={selected ? "$interactiveBaseBrandDefault" : "transparent"}
         borderColor={enabled ? "$borderBrandSoft" : "$interactiveDisabled"}

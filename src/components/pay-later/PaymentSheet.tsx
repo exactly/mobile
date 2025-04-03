@@ -6,7 +6,6 @@ import { format, formatDistance, isAfter } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Sheet, XStack } from "tamagui";
 import { titleCase } from "title-case";
 import { nonEmpty, pipe, safeParse, string } from "valibot";
@@ -85,7 +84,7 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
                     onPress={() => {
                       presentArticle("10245778").catch(reportError);
                     }}
-                    hitSlop={ms(15)}
+                    hitSlop={15}
                   >
                     <Info size={16} color="$uiNeutralPrimary" />
                   </Pressable>
@@ -95,7 +94,7 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
                     sensitive
                     textAlign="center"
                     fontFamily="$mono"
-                    fontSize={ms(40)}
+                    fontSize={40}
                     fontWeight="bold"
                     overflow="hidden"
                     color={
@@ -139,10 +138,10 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
                 <View
                   flexDirection="row"
                   display="flex"
-                  gap={ms(10)}
+                  gap={10}
                   justifyContent="center"
                   alignItems="center"
-                  paddingVertical={ms(10)}
+                  paddingVertical={10}
                 >
                   <Button
                     onPress={() => {

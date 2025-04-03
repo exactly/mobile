@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { router } from "expo-router";
 import { getName, registerLocale, type LocaleData } from "i18n-iso-countries/index";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { titleCase } from "title-case";
 
 import type { ActivityItem as Item } from "../../utils/queryClient";
@@ -31,8 +30,8 @@ export default function ActivityItem({ item, isLast }: { item: Item; isLast: boo
       onPress={handlePress}
     >
       <View
-        width={ms(40)}
-        height={ms(40)}
+        width={40}
+        height={40}
         backgroundColor="$backgroundStrong"
         borderRadius="$r3"
         justifyContent="center"
@@ -71,7 +70,7 @@ export default function ActivityItem({ item, isLast }: { item: Item; isLast: boo
           </View>
           <View gap="$s2">
             <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-              <Text sensitive fontSize={ms(15)} fontWeight="bold" textAlign="right">
+              <Text sensitive fontSize={15} fontWeight="bold" textAlign="right">
                 {usdAmount > 0.01
                   ? usdAmount.toLocaleString(undefined, {
                       style: "currency",
@@ -87,7 +86,7 @@ export default function ActivityItem({ item, isLast }: { item: Item; isLast: boo
                     })}`}
               </Text>
             </View>
-            <Text sensitive fontSize={ms(12)} color="$uiNeutralSecondary" textAlign="right">
+            <Text sensitive fontSize={12} color="$uiNeutralSecondary" textAlign="right">
               {Number(amount).toLocaleString(undefined, {
                 maximumFractionDigits: 8,
                 minimumFractionDigits: 0,

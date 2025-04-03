@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useRef, useState } from "react";
 import type { TextInput } from "react-native";
 import { StyleSheet } from "react-native";
-import { ms } from "react-native-size-matters";
 import { styled, YStack } from "tamagui";
 import { nonEmpty, pipe, string } from "valibot";
 import { formatUnits, parseUnits } from "viem";
@@ -142,13 +141,13 @@ export default function AmountSelector({ onChange }: { onChange: (value: bigint)
                 display={overlayShown ? "flex" : "none"}
                 backgroundColor="$backgroundSoft"
                 borderRadius="$r2"
-                height={ms(60)}
+                height={60}
                 borderWidth={0}
                 alignItems="center"
                 justifyContent="center"
                 flex={1}
               >
-                <Text emphasized textAlign="center" fontSize={ms(24)}>
+                <Text emphasized textAlign="center" fontSize={24}>
                   {Number(value.replaceAll(/\D/g, ".").replaceAll(/\.(?=.*\.)/g, "")).toLocaleString(undefined, {
                     style: "currency",
                     currency: "USD",
@@ -170,9 +169,9 @@ const AmountInput = styled(Input, {
   focusStyle: { borderColor: "$borderBrandStrong", borderWidth: 1 },
   backgroundColor: "$backgroundSoft",
   borderRadius: "$r2",
-  height: ms(60),
+  height: 60,
   textAlign: "center",
-  fontSize: ms(24),
+  fontSize: 24,
   borderWidth: 0,
   flex: 1,
 });

@@ -1,7 +1,6 @@
 import { X } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
 import Button from "../shared/Button";
@@ -26,8 +25,8 @@ export default function PasskeysAbout() {
       >
         <View
           position="relative"
-          height={ms(4)}
-          width={ms(40)}
+          height={4}
+          width={40}
           borderRadius="$r_0"
           marginTop="$s3"
           backgroundColor="$backgroundMild"
@@ -37,7 +36,7 @@ export default function PasskeysAbout() {
             <ScrollView flex={1} showsVerticalScrollIndicator={false}>
               <View flex={1} gap="$s8">
                 <View gap="$s5">
-                  <Text fontSize={ms(17)} fontWeight={700} textAlign="left">
+                  <Text fontSize={17} fontWeight={700} textAlign="left">
                     How passkeys work
                   </Text>
                   <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
@@ -46,7 +45,7 @@ export default function PasskeysAbout() {
                   </Text>
                 </View>
                 <View gap="$s5">
-                  <Text fontSize={ms(17)} fontWeight={700} textAlign="left">
+                  <Text fontSize={17} fontWeight={700} textAlign="left">
                     Passkeys advantages
                   </Text>
                   <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">

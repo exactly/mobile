@@ -3,7 +3,6 @@ import { ArrowUpToLine } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { YStack } from "tamagui";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -98,7 +97,7 @@ export default function UpgradeAccount() {
       {isUpgrading ? (
         <>
           <YStack gap="$s6" justifyContent="center" alignItems="center">
-            <Spinner color="$uiNeutralPrimary" backgroundColor="$backgroundMild" containerSize={ms(52)} size={ms(32)} />
+            <Spinner color="$uiNeutralPrimary" backgroundColor="$backgroundMild" containerSize={52} size={32} />
             <YStack gap="$s2" justifyContent="center" alignItems="center">
               <Text emphasized title3 color="$uiNeutralSecondary">
                 Updating your account
@@ -115,7 +114,7 @@ export default function UpgradeAccount() {
       ) : (
         <>
           <YStack gap="$s4">
-            <ArrowUpToLine size={ms(32)} color="$uiBrandSecondary" />
+            <ArrowUpToLine size={32} color="$uiBrandSecondary" />
             <Text emphasized title3 color="$uiBrandSecondary">
               Upgrade your account
             </Text>
@@ -135,7 +134,7 @@ export default function UpgradeAccount() {
           onPress={() => {
             upgradeAccount().catch(reportError);
           }}
-          flexBasis={ms(60)}
+          flexBasis={60}
           contained
           main
           spaced

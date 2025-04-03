@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { type ComponentPropsWithoutRef } from "react";
-import { ms } from "react-native-size-matters";
 import { Text as TamaguiText, styled } from "tamagui";
 
 const StyledText = styled(TamaguiText, {
@@ -9,19 +8,19 @@ const StyledText = styled(TamaguiText, {
     emphasized: { true: { fontWeight: "bold" } },
     primary: { true: { color: "$uiNeutralPrimary" } },
     secondary: { true: { color: "$uiNeutralSecondary" } },
-    title: { true: { fontSize: ms(28), lineHeight: ms(34), letterSpacing: ms(-0.2) } },
-    title2: { true: { fontSize: ms(22), lineHeight: ms(28), letterSpacing: ms(-0.2) } },
-    title3: { true: { fontSize: ms(20), lineHeight: ms(25), letterSpacing: ms(-0.2) } },
-    headline: { true: { fontSize: ms(17), lineHeight: ms(23), letterSpacing: ms(-0.2) } },
-    body: { true: { fontSize: ms(17), lineHeight: ms(23), letterSpacing: ms(-0.2) } },
-    callout: { true: { fontSize: ms(16), lineHeight: ms(21), letterSpacing: ms(-0.2) } },
-    subHeadline: { true: { fontSize: ms(15), lineHeight: ms(21), letterSpacing: ms(-0.2) } },
-    footnote: { true: { fontSize: ms(13), lineHeight: ms(18), letterSpacing: ms(-0.2) } },
-    caption: { true: { fontSize: ms(12), lineHeight: ms(16), letterSpacing: ms(-0.2) } },
-    caption2: { true: { fontSize: ms(11), lineHeight: ms(14), letterSpacing: ms(-0.2) } },
+    title: { true: { fontSize: 28, lineHeight: 34, letterSpacing: -0.2 } },
+    title2: { true: { fontSize: 22, lineHeight: 28, letterSpacing: -0.2 } },
+    title3: { true: { fontSize: 20, lineHeight: 25, letterSpacing: -0.2 } },
+    headline: { true: { fontSize: 17, lineHeight: 23, letterSpacing: -0.2 } },
+    body: { true: { fontSize: 17, lineHeight: 23, letterSpacing: -0.2 } },
+    callout: { true: { fontSize: 16, lineHeight: 21, letterSpacing: -0.2 } },
+    subHeadline: { true: { fontSize: 15, lineHeight: 21, letterSpacing: -0.2 } },
+    footnote: { true: { fontSize: 13, lineHeight: 18, letterSpacing: -0.2 } },
+    caption: { true: { fontSize: 12, lineHeight: 16, letterSpacing: -0.2 } },
+    caption2: { true: { fontSize: 11, lineHeight: 14, letterSpacing: -0.2 } },
     brand: { true: { color: "$interactiveBaseBrandDefault" } },
     centered: { true: { textAlign: "center" } },
-    pill: { true: { fontWeight: "bold", paddingHorizontal: ms(4), paddingVertical: ms(2), borderRadius: "$r2" } },
+    pill: { true: { fontWeight: "bold", paddingHorizontal: 4, paddingVertical: 2, borderRadius: "$r2" } },
     strikeThrough: { true: { textDecorationLine: "line-through" } },
   } as const,
 });

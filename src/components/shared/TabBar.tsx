@@ -2,7 +2,6 @@ import { exaPreviewerAddress } from "@exactly/common/generated/chain";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import type { NavigationRoute } from "@sentry/react-native/dist/js/tracing/reactnavigation";
 import React, { useCallback } from "react";
-import { ms } from "react-native-size-matters";
 import { ToggleGroup } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -66,7 +65,7 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
                   <StatusIndicator type="notification" />
                 )}
                 {typeof icon === "function" &&
-                  icon({ size: ms(24), focused, color: focused ? "$uiBrandSecondary" : "$uiNeutralSecondary" })}
+                  icon({ size: 24, focused, color: focused ? "$uiBrandSecondary" : "$uiNeutralSecondary" })}
               </View>
               <Text textAlign="center" color={focused ? "$uiBrandSecondary" : "$uiNeutralSecondary"}>
                 {label}

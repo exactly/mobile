@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, Image } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, XStack, YStack, Image as TamaguiImage } from "tamagui";
 
 import type { WithdrawDetails } from "./Withdraw";
@@ -45,14 +44,9 @@ export default function Review({
             </Text>
             <XStack alignItems="center" gap="$s3">
               {market ? (
-                <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(40)} height={ms(40)} />
+                <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={40} height={40} />
               ) : externalAsset ? (
-                <Image
-                  source={{ uri: externalAsset.logoURI }}
-                  width={ms(40)}
-                  height={ms(40)}
-                  style={{ borderRadius: ms(20) }}
-                />
+                <Image source={{ uri: externalAsset.logoURI }} width={40} height={40} style={{ borderRadius: 20 }} />
               ) : null}
 
               <YStack flex={1}>
@@ -75,7 +69,7 @@ export default function Review({
               To
             </Text>
             <XStack alignItems="center" gap="$s3">
-              <TamaguiImage backgroundColor="$backgroundBrand" width={ms(40)} height={ms(40)} borderRadius="$r_0" />
+              <TamaguiImage backgroundColor="$backgroundBrand" width={40} height={40} borderRadius="$r_0" />
               <YStack>
                 <Text title color="$uiNeutralPrimary" fontFamily="$mono">
                   {shortenHex(withdraw?.receiver ?? "")}

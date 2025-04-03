@@ -5,7 +5,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, RefreshControl } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, Square, Switch, useTheme, XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -190,12 +189,12 @@ export default function Card() {
           <View fullScreen>
             <View flex={1}>
               <View alignItems="center" gap="$s4" width="100%" backgroundColor="$backgroundSoft" padded>
-                <XStack gap={ms(10)} justifyContent="space-between" alignItems="center" width="100%">
-                  <Text fontSize={ms(20)} fontWeight="bold">
+                <XStack gap={10} justifyContent="space-between" alignItems="center" width="100%">
+                  <Text fontSize={20} fontWeight="bold">
                     My Exa Card*
                   </Text>
                   <View display="flex" flexDirection="row" alignItems="center" gap={16}>
-                    <Pressable onPress={toggle} hitSlop={ms(15)}>
+                    <Pressable onPress={toggle} hitSlop={15}>
                       {hidden ? (
                         <EyeOff size={24} color="$uiNeutralPrimary" />
                       ) : (
@@ -206,7 +205,7 @@ export default function Card() {
                       onPress={() => {
                         presentArticle("9994746").catch(reportError);
                       }}
-                      hitSlop={ms(15)}
+                      hitSlop={15}
                     >
                       <CircleHelp size={24} color="$uiNeutralPrimary" />
                     </Pressable>
@@ -249,11 +248,11 @@ export default function Card() {
                           }}
                         >
                           <XStack alignItems="center" gap="$s3">
-                            <Square size={ms(24)}>
+                            <Square size={24}>
                               {isSettingCardStatus ? (
-                                <Spinner width={ms(24)} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
+                                <Spinner width={24} color="$interactiveBaseBrandDefault" alignSelf="flex-start" />
                               ) : (
-                                <Snowflake size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                                <Snowflake size={24} color="$interactiveBaseBrandDefault" fontWeight="bold" />
                               )}
                             </Square>
                             <Text subHeadline color="$uiNeutralPrimary">
@@ -290,12 +289,12 @@ export default function Card() {
                   >
                     <XStack alignItems="center" paddingVertical="$s4" justifyContent="space-between">
                       <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
-                        <CreditCard size={ms(24)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+                        <CreditCard size={24} color="$interactiveBaseBrandDefault" fontWeight="bold" />
                         <Text subHeadline color="$uiNeutralPrimary">
                           Card details
                         </Text>
                       </XStack>
-                      <ChevronRight color="$iconSecondary" size={ms(24)} />
+                      <ChevronRight color="$iconSecondary" size={24} />
                     </XStack>
                   </Pressable>
 
@@ -308,12 +307,12 @@ export default function Card() {
                   >
                     <XStack alignItems="center" paddingVertical="$s4" justifyContent="space-between">
                       <XStack gap="$s3" justifyContent="flex-start" alignItems="center">
-                        <DollarSign size={ms(24)} color="$backgroundBrand" />
+                        <DollarSign size={24} color="$backgroundBrand" />
                         <Text subHeadline color="$uiNeutralPrimary">
                           Spending limits
                         </Text>
                       </XStack>
-                      <ChevronRight color="$iconSecondary" size={ms(24)} />
+                      <ChevronRight color="$iconSecondary" size={24} />
                     </XStack>
                   </Pressable>
                 </YStack>

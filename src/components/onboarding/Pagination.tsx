@@ -2,7 +2,6 @@ import React, { memo } from "react";
 import { StyleSheet } from "react-native";
 import type { SharedValue } from "react-native-reanimated";
 import { Extrapolation, interpolate, useAnimatedStyle } from "react-native-reanimated";
-import { ms } from "react-native-size-matters";
 import { useTheme, useWindowDimensions, View } from "tamagui";
 
 import AnimatedView from "../shared/AnimatedView";
@@ -19,7 +18,7 @@ function PaginationComponent({
   activeColor: string;
 }) {
   const { width } = useWindowDimensions();
-  const itemWidth = width - ms(40);
+  const itemWidth = width - 40;
 
   const rPaginatorStyle = useAnimatedStyle(() => {
     const interpolatedWidth = interpolate(

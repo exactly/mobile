@@ -1,7 +1,6 @@
 import { Info, X } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { XStack } from "tamagui";
 
 import Text from "../shared/Text";
@@ -24,10 +23,10 @@ export default function DismissableAlert({ text, onDismiss }: { text: string; on
         borderBottomLeftRadius="$r3"
         flex={1}
       >
-        <Info size={ms(24)} color="$interactiveOnBaseInformationSoft" />
+        <Info size={24} color="$interactiveOnBaseInformationSoft" />
       </View>
       <View flex={6} padding="$s4">
-        <Text fontSize={ms(15)} color="$interactiveOnBaseInformationDefault" paddingRight="$s4">
+        <Text fontSize={15} color="$interactiveOnBaseInformationDefault" paddingRight="$s4">
           {text}
         </Text>
         <View
@@ -36,13 +35,13 @@ export default function DismissableAlert({ text, onDismiss }: { text: string; on
           top="$s3"
           backgroundColor="$interactiveBaseInformationSoftDefault"
           borderRadius="$r_0"
-          width={ms(24)}
-          height={ms(24)}
+          width={24}
+          height={24}
           alignItems="center"
           justifyContent="center"
         >
-          <Pressable hitSlop={ms(10)} onPress={onDismiss}>
-            <X size={ms(18)} color="$interactiveOnBaseInformationSoft" />
+          <Pressable hitSlop={10} onPress={onDismiss}>
+            <X size={18} color="$interactiveOnBaseInformationSoft" />
           </Pressable>
         </View>
       </View>

@@ -1,4 +1,3 @@
-import { ms } from "react-native-size-matters";
 import { Button, styled } from "tamagui";
 
 export default styled(Button, {
@@ -50,13 +49,13 @@ export default styled(Button, {
       true: {
         flex: 1,
         borderColor: "transparent",
-        fontSize: ms(15),
+        fontSize: 15,
         fontWeight: 700,
-        height: ms(68),
+        height: 68,
         padding: "$s4_5",
         borderRadius: "$r4",
         scaleIcon: 1.5,
-        maxHeight: ms(68),
+        maxHeight: 68,
       },
     },
     spaced: { true: { spaceFlex: true, alignItems: "center" } },

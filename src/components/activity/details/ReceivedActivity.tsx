@@ -1,7 +1,6 @@
 import type { DepositActivity } from "@exactly/server/api/activity";
 import { ArrowDownToLine } from "@tamagui/lucide-icons";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { Square, XStack, YStack } from "tamagui";
 
 import TransactionDetails from "./TransactionDetails";
@@ -16,8 +15,8 @@ export default function ReceivedActivity({ item }: { item: Omit<DepositActivity,
     <>
       <YStack gap="$s7" paddingBottom="$s9">
         <XStack justifyContent="center" alignItems="center">
-          <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={ms(80)}>
-            <ArrowDownToLine size={ms(48)} color="$interactiveOnBaseSuccessSoft" strokeWidth={2} />
+          <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={80}>
+            <ArrowDownToLine size={48} color="$interactiveOnBaseSuccessSoft" strokeWidth={2} />
           </Square>
         </XStack>
         <YStack gap="$s4_5" justifyContent="center" alignItems="center">
@@ -37,7 +36,7 @@ export default function ReceivedActivity({ item }: { item: Omit<DepositActivity,
               &nbsp;
               {currency}
             </Text>
-            <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={ms(16)} height={ms(16)} />
+            <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={16} height={16} />
           </XStack>
         </YStack>
       </YStack>

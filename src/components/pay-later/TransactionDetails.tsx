@@ -1,7 +1,6 @@
 import chain from "@exactly/common/generated/chain";
 import { format } from "date-fns";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
 import OptimismImage from "../../assets/images/optimism.svg";
@@ -33,7 +32,7 @@ export default function TransactionDetails() {
             <Text callout color="$uiNeutralPrimary" alignContent="center">
               {chain.name}
             </Text>
-            <OptimismImage height={ms(20)} width={ms(20)} />
+            <OptimismImage height={20} width={20} />
           </XStack>
         </XStack>
         <XStack justifyContent="space-between">

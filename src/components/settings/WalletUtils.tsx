@@ -1,5 +1,4 @@
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 import { useAccount, useConnect } from "wagmi";
 
@@ -12,18 +11,18 @@ export default function WalletUtils() {
   const { isConnected } = useAccount();
   if (isConnected) return;
   return (
-    <View gap={ms(10)}>
-      <Text fontSize={ms(16)} fontWeight="bold">
+    <View gap={10}>
+      <Text fontSize={16} fontWeight="bold">
         Connector
       </Text>
 
-      <View flexDirection="row" gap={ms(10)}>
+      <View flexDirection="row" gap={10}>
         <Button
           contained
           onPress={() => {
             connect({ connector: alchemyConnector });
           }}
-          padding={ms(10)}
+          padding={10}
           flex={1}
         >
           Connect

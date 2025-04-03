@@ -1,7 +1,6 @@
 import { Loader } from "@tamagui/lucide-icons";
 import React from "react";
 import { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
-import { ms } from "react-native-size-matters";
 
 import AnimatedView from "./AnimatedView";
 
@@ -25,15 +24,15 @@ export default function Spinner({
   return (
     <AnimatedView
       backgroundColor={backgroundColor}
-      width={ms(containerSize)}
-      height={ms(containerSize)}
+      width={containerSize}
+      height={containerSize}
       justifyContent="center"
       alignItems="center"
       borderRadius="$r_0"
       padding="$5"
       style={rStyle}
     >
-      <Loader size={ms(size)} color={color} />
+      <Loader size={size} color={color} />
     </AnimatedView>
   );
 }

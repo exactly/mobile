@@ -2,7 +2,6 @@ import type { Address } from "@exactly/common/validation";
 import { TimerReset } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 
 import Contact from "./Contact";
@@ -16,7 +15,7 @@ export default function RecentContacts({ onContactPress }: { onContactPress: (ad
   return (
     <YStack gap="$s5">
       <XStack gap="$s2" alignItems="center">
-        <TimerReset size={ms(20)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+        <TimerReset size={20} color="$interactiveBaseBrandDefault" fontWeight="bold" />
         <Text emphasized footnote color="$uiNeutralSecondary">
           Recent
         </Text>

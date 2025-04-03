@@ -3,7 +3,7 @@ import { floatingDepositRates } from "@exactly/lib";
 import { Skeleton } from "moti/skeleton";
 import React from "react";
 import { Appearance, Image } from "react-native";
-import { ms, vs } from "react-native-size-matters";
+import { vs } from "react-native-size-matters";
 import { YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -41,8 +41,8 @@ export default function AssetList() {
           return (
             <View key={index} flexDirection="row" alignItems="center" borderColor="$borderNeutralSoft">
               <View flexDirection="row" alignItems="center" paddingVertical={vs(10)} gap="$s2">
-                <View flexDirection="row" gap={ms(10)} alignItems="center" flex={1}>
-                  <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
+                <View flexDirection="row" gap={10} alignItems="center" flex={1}>
+                  <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={32} height={32} />
                   <View gap="$s2" alignItems="flex-start">
                     <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1} adjustsFontSizeToFit>
                       {symbol}
@@ -52,7 +52,7 @@ export default function AssetList() {
                     </Text>
                   </View>
                 </View>
-                <View gap={ms(5)} flex={1.5}>
+                <View gap={5} flex={1.5}>
                   <View flexDirection="row" alignItems="center" justifyContent="flex-end">
                     <Text emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit>
                       {(Number(usdPrice) / 1e18).toLocaleString(undefined, {
@@ -64,7 +64,7 @@ export default function AssetList() {
                     </Text>
                   </View>
                   {rate === undefined ? (
-                    <Skeleton height={ms(20)} width={ms(50)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                    <Skeleton height={20} width={50} colorMode={Appearance.getColorScheme() ?? "light"} />
                   ) : (
                     <Text caption textAlign="right">
                       {(Number(rate) / 1e18).toLocaleString(undefined, {
@@ -75,7 +75,7 @@ export default function AssetList() {
                     </Text>
                   )}
                 </View>
-                <View gap={ms(5)} flex={1}>
+                <View gap={5} flex={1}>
                   <Text sensitive emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit textAlign="right">
                     {(Number(usdValue) / 1e18).toLocaleString(undefined, {
                       style: "currency",
@@ -114,8 +114,8 @@ export default function AssetList() {
               borderColor="$borderNeutralSoft"
             >
               <View flexDirection="row" paddingVertical={vs(10)} flex={1}>
-                <View flexDirection="row" gap={ms(10)} flex={1} alignItems="center">
-                  <Image source={{ uri: logoURI }} width={ms(32)} height={ms(32)} style={{ borderRadius: ms(16) }} />
+                <View flexDirection="row" gap={10} flex={1} alignItems="center">
+                  <Image source={{ uri: logoURI }} width={32} height={32} style={{ borderRadius: 16 }} />
                   <View gap="$s2" alignItems="flex-start" flexShrink={1}>
                     <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
                       {symbol}
@@ -125,7 +125,7 @@ export default function AssetList() {
                     </Text>
                   </View>
                 </View>
-                <View gap={ms(5)} flex={1.5}>
+                <View gap={5} flex={1.5}>
                   <View flexDirection="row" alignItems="center" justifyContent="flex-end">
                     <Text emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit>
                       {Number(priceUSD).toLocaleString(undefined, {
@@ -137,7 +137,7 @@ export default function AssetList() {
                     </Text>
                   </View>
                 </View>
-                <View gap={ms(5)} flex={1}>
+                <View gap={5} flex={1}>
                   <View flexDirection="row" alignItems="flex-start" justifyContent="flex-end">
                     <Text sensitive emphasized subHeadline textAlign="right">
                       {Number(usdValue).toLocaleString(undefined, {

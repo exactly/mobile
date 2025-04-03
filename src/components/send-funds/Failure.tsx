@@ -2,7 +2,6 @@ import { XCircle } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
 import Details from "./Details";
@@ -27,14 +26,14 @@ export default function Failure({
             <View gap="$s4" alignItems="center">
               <View
                 backgroundColor="$interactiveBaseErrorSoftDefault"
-                width={ms(88)}
-                height={ms(88)}
+                width={88}
+                height={88}
                 justifyContent="center"
                 alignItems="center"
                 borderRadius="$r_0"
                 padding="$5"
               >
-                <XCircle size={ms(56)} color="$interactiveOnBaseErrorSoft" />
+                <XCircle size={56} color="$interactiveOnBaseErrorSoft" />
               </View>
               <Text title3 color="$uiErrorSecondary">
                 Transaction failed

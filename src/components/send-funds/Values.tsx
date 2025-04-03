@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Image } from "react-native";
-import { ms } from "react-native-size-matters";
 import { XStack } from "tamagui";
 
 import type { WithdrawDetails } from "./Withdraw";
@@ -19,16 +18,9 @@ export default function Values({ amount, assetName, usdValue }: WithdrawDetails)
     <View alignItems="center" justifyContent="center">
       <View alignItems="center" gap="$s3_5">
         <XStack alignItems="center" gap="$s3">
-          {market && (
-            <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(32)} height={ms(32)} />
-          )}
+          {market && <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={32} height={32} />}
           {externalAsset && (
-            <Image
-              source={{ uri: externalAsset.logoURI }}
-              width={ms(40)}
-              height={ms(40)}
-              style={{ borderRadius: ms(20) }}
-            />
+            <Image source={{ uri: externalAsset.logoURI }} width={40} height={40} style={{ borderRadius: 20 }} />
           )}
           <Text title color="$uiNeutralPrimary">
             {amount} {assetName}

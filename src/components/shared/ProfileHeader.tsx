@@ -7,7 +7,6 @@ import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Image } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount, useConnect } from "wagmi";
@@ -68,8 +67,8 @@ export default function ProfileHeader() {
             <Image
               source={{ uri: "https://avatars.githubusercontent.com/u/83888950?s=200&v=4" }}
               alt="Profile picture"
-              width={ms(32)}
-              height={ms(32)}
+              width={32}
+              height={32}
               borderRadius="$r_0"
             />
           </View>
@@ -78,10 +77,10 @@ export default function ProfileHeader() {
               onPress={() => {
                 setAlertShown(true);
               }}
-              hitSlop={ms(15)}
+              hitSlop={15}
             >
               <View display="flex" flexDirection="row" alignItems="flex-start">
-                <Text fontSize={ms(17)} lineHeight={ms(23)} fontFamily="$mono">
+                <Text fontSize={17} lineHeight={23} fontFamily="$mono">
                   {hidden ? "0x..." : shortenHex(address).toLowerCase()}
                 </Text>
               </View>
@@ -96,7 +95,7 @@ export default function ProfileHeader() {
           />
         </View>
         <View display="flex" flexDirection="row" alignItems="center" gap={16}>
-          <Pressable onPress={toggle} hitSlop={ms(15)}>
+          <Pressable onPress={toggle} hitSlop={15}>
             {hidden ? <EyeOff color="$uiNeutralPrimary" /> : <Eye color="$uiNeutralPrimary" />}
           </Pressable>
           {pendingProposals && pendingProposals.length > 0 && (
@@ -105,13 +104,13 @@ export default function ProfileHeader() {
               onPress={() => {
                 router.push("/pending-proposals");
               }}
-              hitSlop={ms(15)}
+              hitSlop={15}
             >
               <StatusIndicator type="notification" />
               <ClockArrowUp color="$uiNeutralPrimary" />
             </Pressable>
           )}
-          <Pressable onPress={settings} hitSlop={ms(15)}>
+          <Pressable onPress={settings} hitSlop={15}>
             <Settings color="$uiNeutralPrimary" />
           </Pressable>
         </View>

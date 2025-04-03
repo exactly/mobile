@@ -3,7 +3,6 @@ import { IdCard } from "@tamagui/lucide-icons";
 import { useToastController } from "@tamagui/toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { Spinner, YStack } from "tamagui";
 
 import Progression from "./Progression";
@@ -60,7 +59,7 @@ export default function VerifyIdentity() {
   return (
     <View fullScreen flex={1} gap="$s6" paddingHorizontal="$s5" paddingTop="$s5">
       <YStack gap="$s4">
-        <IdCard size={ms(32)} color="$uiBrandSecondary" />
+        <IdCard size={32} color="$uiBrandSecondary" />
         <Text emphasized title3 color="$uiBrandSecondary">
           Verify your identity
         </Text>
@@ -78,7 +77,7 @@ export default function VerifyIdentity() {
           onPress={() => {
             startKYC().catch(reportError);
           }}
-          flexBasis={ms(60)}
+          flexBasis={60}
           contained
           main
           spaced

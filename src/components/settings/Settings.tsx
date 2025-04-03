@@ -4,7 +4,6 @@ import { setStringAsync } from "expo-clipboard";
 import { router, useRouter } from "expo-router";
 import React from "react";
 import { Alert, Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, XStack } from "tamagui";
 
 import reportError from "../../utils/reportError";
@@ -30,7 +29,7 @@ export default function Settings() {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft size={24} color="$uiNeutralPrimary" />
               </Pressable>
             )}
           </View>
@@ -54,7 +53,7 @@ export default function Settings() {
               </Pressable>
             </View>
             <Pressable
-              hitSlop={ms(20)}
+              hitSlop={20}
               onPress={() => {
                 setStringAsync(release).catch(reportError);
                 Alert.alert("Copied", "App version has been copied to the clipboard.");

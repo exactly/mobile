@@ -6,7 +6,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, Image } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Square, styled, useTheme, XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -80,12 +79,12 @@ export default function Success({
                       backgroundColor={
                         isLatestPlugin ? "$interactiveBaseInformationSoftDefault" : "$interactiveBaseSuccessSoftDefault"
                       }
-                      size={ms(80)}
+                      size={80}
                     >
                       {isLatestPlugin ? (
-                        <Loader size={ms(48)} color="$uiInfoSecondary" strokeWidth={2} />
+                        <Loader size={48} color="$uiInfoSecondary" strokeWidth={2} />
                       ) : (
-                        <Check size={ms(48)} color="$uiSuccessSecondary" strokeWidth={2} />
+                        <Check size={48} color="$uiSuccessSecondary" strokeWidth={2} />
                       )}
                     </Square>
                   </XStack>
@@ -122,16 +121,12 @@ export default function Success({
                       {externalAsset ? (
                         <Image
                           source={{ uri: externalAsset.logoURI }}
-                          width={ms(16)}
-                          height={ms(16)}
-                          style={{ borderRadius: ms(20) }}
+                          width={16}
+                          height={16}
+                          style={{ borderRadius: 20 }}
                         />
                       ) : (
-                        <AssetLogo
-                          uri={assetLogos[currency as keyof typeof assetLogos]}
-                          width={ms(16)}
-                          height={ms(16)}
-                        />
+                        <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={16} height={16} />
                       )}
                     </XStack>
                   </YStack>

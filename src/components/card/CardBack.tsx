@@ -1,7 +1,6 @@
 import { captureException } from "@sentry/react-native";
 import React, { useState } from "react";
 import { Platform } from "react-native";
-import { ms } from "react-native-size-matters";
 import { WebView } from "react-native-webview";
 import { Spinner } from "tamagui";
 
@@ -20,7 +19,7 @@ export default function CardBack({ uri }: { uri: string }) {
     transition: "opacity 0.3s ease-in-out",
   };
   return (
-    <View aspectRatio={ISO7810_ASPECT_RATIO} width="100%" maxWidth={ms(350)} overflow="hidden" borderRadius="$r3">
+    <View aspectRatio={ISO7810_ASPECT_RATIO} width="100%" maxWidth={350} overflow="hidden" borderRadius="$r3">
       <View backfaceVisibility="hidden" zIndex={2} position="absolute" top={0} left={0} right={0} bottom={0}>
         <View width="100%" height="100%" backgroundColor="transparent">
           {Platform.OS === "web" ? (

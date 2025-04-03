@@ -3,7 +3,6 @@ import { ArrowRight } from "@tamagui/lucide-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Separator, Switch, XStack, YStack } from "tamagui";
 
 import queryClient from "../../utils/queryClient";
@@ -52,8 +51,8 @@ export default function Header() {
   }
   return (
     <YStack backgroundColor="$backgroundSoft" paddingTop="$s8" paddingBottom="$s3" gap="$s4_5">
-      <XStack gap={ms(10)} justifyContent="space-between" alignItems="center">
-        <Text fontSize={ms(20)} fontWeight="bold">
+      <XStack gap={10} justifyContent="space-between" alignItems="center">
+        <Text fontSize={20} fontWeight="bold">
           Pay Later
         </Text>
         <XStack alignItems="center" gap={16}>
@@ -91,7 +90,7 @@ export default function Header() {
           <Text color="$uiBrandSecondary" footnote>
             Learn more about Pay Later and how it works
           </Text>
-          <ArrowRight size={ms(16)} strokeWidth={2.5} color="$uiBrandSecondary" />
+          <ArrowRight size={16} strokeWidth={2.5} color="$uiBrandSecondary" />
         </XStack>
       </Pressable>
     </YStack>

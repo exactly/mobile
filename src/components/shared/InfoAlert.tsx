@@ -1,7 +1,6 @@
 import { ChevronRight, Info } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { View, Text, Spinner, XStack } from "tamagui";
 
 export default function InfoAlert({
@@ -22,11 +21,11 @@ export default function InfoAlert({
       backgroundColor="$interactiveBaseInformationSoftDefault"
       justifyContent="space-between"
       alignItems="center"
-      gap={ms(10)}
+      gap={10}
       flex={1}
     >
       <View
-        padding={ms(25)}
+        padding={25}
         backgroundColor="$interactiveBaseInformationDefault"
         justifyContent="center"
         alignItems="center"
@@ -35,10 +34,10 @@ export default function InfoAlert({
         width="20%"
         height="100%"
       >
-        <Info size={ms(32)} color="$interactiveOnBaseInformationDefault" />
+        <Info size={32} color="$interactiveOnBaseInformationDefault" />
       </View>
-      <View gap={ms(10)} padding={ms(25)} flex={1}>
-        <Text fontSize={ms(15)} color="$interactiveOnBaseInformationSoft">
+      <View gap={10} padding={25} flex={1}>
+        <Text fontSize={15} color="$interactiveOnBaseInformationSoft">
           {title}
         </Text>
         <Pressable
@@ -46,15 +45,15 @@ export default function InfoAlert({
             onPress?.();
           }}
         >
-          <XStack flexDirection="row" gap={ms(2)} alignItems="center">
-            <Text color="$interactiveOnBaseInformationSoft" fontSize={ms(15)} fontWeight="bold">
+          <XStack flexDirection="row" gap={2} alignItems="center">
+            <Text color="$interactiveOnBaseInformationSoft" fontSize={15} fontWeight="bold">
               {actionText}
             </Text>
             {loading ? (
               <Spinner color="$interactiveOnBaseInformationSoft" />
             ) : (
               <ChevronRight
-                size={ms(16)}
+                size={16}
                 color="$interactiveOnBaseInformationSoft"
                 fontWeight="bold"
                 strokeWidth={3}

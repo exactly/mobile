@@ -4,7 +4,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useContext } from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, XStack, YStack } from "tamagui";
 
 import Step from "./Step";
@@ -25,9 +24,9 @@ export default function GettingStarted() {
   const { canGoBack } = router;
   return (
     <SafeView fullScreen backgroundColor="$backgroundBrandSoft" paddingBottom={0}>
-      <View gap={ms(20)} fullScreen>
-        <View gap={ms(20)} padded paddingBottom={0}>
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
+      <View gap={20} fullScreen>
+        <View gap={20} padded paddingBottom={0}>
+          <View flexDirection="row" gap={10} justifyContent="space-around" alignItems="center">
             <View position="absolute" left={0}>
               {canGoBack() && (
                 <Pressable
@@ -35,11 +34,11 @@ export default function GettingStarted() {
                     router.back();
                   }}
                 >
-                  <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                  <ArrowLeft size={24} color="$uiNeutralPrimary" />
                 </Pressable>
               )}
             </View>
-            <Text color="$uiNeutralPrimary" fontSize={ms(15)} fontWeight="bold">
+            <Text color="$uiNeutralPrimary" fontSize={15} fontWeight="bold">
               Getting started
             </Text>
           </View>
@@ -164,7 +163,7 @@ function CurrentStep() {
     <YStack gap="$s6" borderBottomWidth={1} borderBottomColor="$borderBrandSoft" padding="$s4">
       <YStack gap="$s4">
         <XStack>
-          <ArrowDownToLine size={ms(32)} color="$uiBrandSecondary" />
+          <ArrowDownToLine size={32} color="$uiBrandSecondary" />
         </XStack>
         <Text emphasized title3 color="$uiBrandSecondary">
           {currentStep.id === "add-funds" ? "Add funds to your account" : "Verify your identity"}

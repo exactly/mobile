@@ -4,7 +4,6 @@ import { Info } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { View } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -31,7 +30,7 @@ export default function CardLimits() {
           onPress={() => {
             presentArticle(isCredit ? "9467331" : "9922633").catch(reportError);
           }}
-          hitSlop={ms(15)}
+          hitSlop={15}
         >
           <Info size={16} color="$uiBrandSecondary" />
         </Pressable>
@@ -57,7 +56,7 @@ export default function CardLimits() {
             sensitive
             textAlign="center"
             fontFamily="$mono"
-            fontSize={ms(40)}
+            fontSize={40}
             emphasized
             overflow="hidden"
             maxFontSizeMultiplier={1}
@@ -73,7 +72,7 @@ export default function CardLimits() {
             sensitive
             textAlign="center"
             fontFamily="$mono"
-            fontSize={ms(40)}
+            fontSize={40}
             fontWeight="bold"
             overflow="hidden"
             maxFontSizeMultiplier={1}

@@ -18,7 +18,6 @@ import { format } from "date-fns";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, RefreshControl, ScrollView } from "react-native";
-import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -106,14 +105,14 @@ export default function PendingProposals() {
   return (
     <SafeView fullScreen>
       <View fullScreen padded>
-        <View flexDirection="row" gap={ms(10)} paddingBottom="$s4" justifyContent="space-between" alignItems="center">
+        <View flexDirection="row" gap={10} paddingBottom="$s4" justifyContent="space-between" alignItems="center">
           {canGoBack() && (
             <Pressable onPress={back}>
-              <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+              <ArrowLeft size={24} color="$uiNeutralPrimary" />
             </Pressable>
           )}
           <View flexDirection="row" alignItems="center">
-            <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
+            <Text color="$uiNeutralSecondary" fontSize={15} fontWeight="bold">
               Pending requests
             </Text>
           </View>
@@ -165,8 +164,8 @@ function ProposalItem({ proposal }: { proposal: Proposal }) {
   return (
     <XStack gap="$s4" paddingVertical="$s3">
       <View
-        width={ms(40)}
-        height={ms(40)}
+        width={40}
+        height={40}
         borderRadius="$r3"
         backgroundColor="$interactiveBaseInformationSoftDefault"
         justifyContent="center"

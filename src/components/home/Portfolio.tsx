@@ -3,7 +3,6 @@ import { ArrowLeft, CircleHelp } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, RefreshControl } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, useTheme } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -45,17 +44,10 @@ export default function Portfolio() {
 
   return (
     <SafeView fullScreen backgroundColor="$backgroundSoft">
-      <View
-        padded
-        flexDirection="row"
-        gap={ms(10)}
-        paddingBottom="$s4"
-        justifyContent="space-between"
-        alignItems="center"
-      >
+      <View padded flexDirection="row" gap={10} paddingBottom="$s4" justifyContent="space-between" alignItems="center">
         {canGoBack() && (
           <Pressable onPress={back}>
-            <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+            <ArrowLeft size={24} color="$uiNeutralPrimary" />
           </Pressable>
         )}
         <Pressable
@@ -95,7 +87,7 @@ export default function Portfolio() {
                 sensitive
                 textAlign="center"
                 fontFamily="$mono"
-                fontSize={ms(40)}
+                fontSize={40}
                 overflow="hidden"
                 maxFontSizeMultiplier={1}
               >

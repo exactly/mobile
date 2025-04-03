@@ -4,7 +4,6 @@ import { Loader, LockKeyhole, Snowflake } from "@tamagui/lucide-icons";
 import React from "react";
 import { Platform } from "react-native";
 import { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
-import { ms } from "react-native-size-matters";
 import { AnimatePresence, XStack, YStack } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -48,13 +47,13 @@ export default function CardContents({
         <AnimatePresence exitBeforeEnter>
           <YStack>
             {disabled ? (
-              <LockKeyhole size={ms(40)} strokeWidth={2} color="white" />
+              <LockKeyhole size={40} strokeWidth={2} color="white" />
             ) : revealing ? (
               <AnimatedView style={rStyle}>
-                <Loader size={ms(40)} strokeWidth={2} color="white" />
+                <Loader size={40} strokeWidth={2} color="white" />
               </AnimatedView>
             ) : frozen ? (
-              <Snowflake size={ms(40)} strokeWidth={2} color="white" />
+              <Snowflake size={40} strokeWidth={2} color="white" />
             ) : isCredit ? (
               <View
                 key="credit"

@@ -1,7 +1,6 @@
 import { IdCard, ArrowUpToLine, CreditCard } from "@tamagui/lucide-icons";
 import React from "react";
 import { StyleSheet } from "react-native";
-import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 
 import ExaCard from "../../../assets/images/exa-card.svg";
@@ -53,7 +52,7 @@ export default function Intro({ onPress }: { onPress: () => void }) {
       <YStack paddingHorizontal="$s5" paddingBottom="$s7">
         <Button
           onPress={onPress}
-          flexBasis={ms(60)}
+          flexBasis={60}
           contained
           main
           spaced

@@ -1,7 +1,6 @@
 import { ArrowRight, X } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable, StyleSheet } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Sheet, YStack } from "tamagui";
 
 import Blob from "../../assets/images/exa-card-blob.svg";
@@ -46,8 +45,8 @@ export default function CardDisclaimer({
       <Sheet.Frame>
         <SafeView paddingTop={0} fullScreen borderTopLeftRadius="$r4" borderTopRightRadius="$r4">
           <View position="absolute" top="$s5" right="$s5" zIndex={100_000}>
-            <Pressable onPress={onClose} hitSlop={ms(15)}>
-              <X size={ms(25)} color="$uiNeutralSecondary" />
+            <Pressable onPress={onClose} hitSlop={15}>
+              <X size={25} color="$uiNeutralSecondary" />
             </Pressable>
           </View>
           <ScrollView>
@@ -81,7 +80,7 @@ export default function CardDisclaimer({
                       </Text>
                     </Pressable>
                     <Button
-                      flexBasis={ms(60)}
+                      flexBasis={60}
                       onPress={onActionPress}
                       contained
                       main

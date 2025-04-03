@@ -5,7 +5,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, Image } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Square, styled, useTheme, XStack, YStack } from "tamagui";
 
 import assetLogos from "../../utils/assetLogos";
@@ -60,8 +59,8 @@ export default function Failure({
               <View flex={1}>
                 <YStack gap="$s7" paddingBottom="$s9">
                   <XStack justifyContent="center" alignItems="center">
-                    <Square borderRadius="$r4" backgroundColor="$interactiveBaseErrorSoftDefault" size={ms(80)}>
-                      <X size={ms(48)} color="$uiErrorSecondary" strokeWidth={2} />
+                    <Square borderRadius="$r4" backgroundColor="$interactiveBaseErrorSoftDefault" size={80}>
+                      <X size={48} color="$uiErrorSecondary" strokeWidth={2} />
                     </Square>
                   </XStack>
                   <YStack gap="$s4_5" justifyContent="center" alignItems="center">
@@ -97,16 +96,12 @@ export default function Failure({
                       {externalAsset ? (
                         <Image
                           source={{ uri: externalAsset.logoURI }}
-                          width={ms(16)}
-                          height={ms(16)}
-                          style={{ borderRadius: ms(20) }}
+                          width={16}
+                          height={16}
+                          style={{ borderRadius: 20 }}
                         />
                       ) : (
-                        <AssetLogo
-                          uri={assetLogos[currency as keyof typeof assetLogos]}
-                          width={ms(16)}
-                          height={ms(16)}
-                        />
+                        <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={16} height={16} />
                       )}
                     </XStack>
                   </YStack>

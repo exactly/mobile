@@ -1,7 +1,6 @@
 import type { CreditActivity, DebitActivity, InstallmentsActivity } from "@exactly/server/api/activity";
 import { CalendarClock, CreditCard } from "@tamagui/lucide-icons";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
 import Text from "../../shared/Text";
@@ -25,9 +24,9 @@ export default function PaymentDetails({ item }: { item: CreditActivity | DebitA
               {item.mode > 0 ? "Pay Later" : "Card"}
             </Text>
             {item.mode > 0 ? (
-              <CalendarClock size={ms(20)} color="$uiBrandPrimary" />
+              <CalendarClock size={20} color="$uiBrandPrimary" />
             ) : (
-              <CreditCard size={ms(20)} color="$uiBrandPrimary" />
+              <CreditCard size={20} color="$uiBrandPrimary" />
             )}
           </XStack>
         </XStack>

@@ -6,7 +6,6 @@ import { setStringAsync } from "expo-clipboard";
 import { router } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { Pressable, Share } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 import { useAccount } from "wagmi";
 
@@ -47,23 +46,23 @@ export default function AddCrypto() {
   }, [address]);
   return (
     <SafeView fullScreen>
-      <View gap={ms(20)} fullScreen padded>
-        <View gap={ms(20)}>
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+      <View gap={20} fullScreen padded>
+        <View gap={20}>
+          <View flexDirection="row" gap={10} justifyContent="space-between" alignItems="center">
             {canGoBack() && (
               <Pressable
                 onPress={() => {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft size={24} color="$uiNeutralPrimary" />
               </Pressable>
             )}
             <View flexDirection="row" alignItems="center">
-              <Text color="$uiNeutralSecondary" fontSize={ms(15)} fontWeight="bold">
+              <Text color="$uiNeutralSecondary" fontSize={15} fontWeight="bold">
                 {`Add Funds / `}
               </Text>
-              <Text fontSize={ms(15)} fontWeight="bold">
+              <Text fontSize={15} fontWeight="bold">
                 Cryptocurrency
               </Text>
             </View>
@@ -73,48 +72,42 @@ export default function AddCrypto() {
           </View>
         </View>
         <ScrollView flex={1}>
-          <View gap={ms(20)} flex={1}>
-            <View
-              flex={1}
-              gap={ms(10)}
-              borderBottomWidth={1}
-              borderBottomColor="$borderNeutralSoft"
-              paddingBottom={ms(20)}
-            >
-              <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
+          <View gap={20} flex={1}>
+            <View flex={1} gap={10} borderBottomWidth={1} borderBottomColor="$borderNeutralSoft" paddingBottom={20}>
+              <Text fontSize={15} color="$uiNeutralSecondary" fontWeight="bold">
                 Your {chain.name} address
               </Text>
               <View flexDirection="row" justifyContent="space-between" alignItems="center">
                 <View>
                   <Pressable
-                    hitSlop={ms(15)}
+                    hitSlop={15}
                     onPress={() => {
                       setAlertShown(true);
                     }}
                   >
                     {address && (
-                      <Text fontFamily="$mono" fontSize={ms(18)} color="$uiNeutralPrimary" fontWeight="bold">
+                      <Text fontFamily="$mono" fontSize={18} color="$uiNeutralPrimary" fontWeight="bold">
                         {shortenHex(address)}
                       </Text>
                     )}
                   </Pressable>
                 </View>
-                <View gap={ms(10)} flexDirection="row">
+                <View gap={10} flexDirection="row">
                   <Pressable
                     onPress={() => {
                       setAlertShown(true);
                     }}
-                    hitSlop={ms(15)}
+                    hitSlop={15}
                   >
-                    <Files size={ms(24)} color="$interactiveBaseBrandDefault" />
+                    <Files size={24} color="$interactiveBaseBrandDefault" />
                   </Pressable>
                   <Pressable
                     onPress={() => {
                       share().catch(reportError);
                     }}
-                    hitSlop={ms(15)}
+                    hitSlop={15}
                   >
-                    <ShareIcon size={ms(24)} color="$interactiveBaseBrandDefault" />
+                    <ShareIcon size={24} color="$interactiveBaseBrandDefault" />
                   </Pressable>
                 </View>
               </View>
@@ -126,24 +119,18 @@ export default function AddCrypto() {
                 setAlertShown(false);
               }}
             />
-            <View
-              flex={1}
-              gap="$s4"
-              borderBottomWidth={1}
-              borderBottomColor="$borderNeutralSoft"
-              paddingBottom={ms(20)}
-            >
+            <View flex={1} gap="$s4" borderBottomWidth={1} borderBottomColor="$borderNeutralSoft" paddingBottom={20}>
               <View flexDirection="row" justifyContent="space-between">
-                <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
+                <Text fontSize={15} color="$uiNeutralSecondary" fontWeight="bold">
                   Supported Assets
                 </Text>
               </View>
               {supportedAssets.map((asset, index) => {
                 return (
-                  <View key={index} flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-                    <View flexDirection="row" alignItems="center" gap={ms(10)}>
-                      <AssetLogo uri={asset.image} width={ms(32)} height={ms(32)} />
-                      <Text fontSize={ms(18)} fontWeight="bold">
+                  <View key={index} flexDirection="row" gap={10} justifyContent="space-between" alignItems="center">
+                    <View flexDirection="row" alignItems="center" gap={10}>
+                      <AssetLogo uri={asset.image} width={32} height={32} />
+                      <Text fontSize={18} fontWeight="bold">
                         {asset.symbol}
                       </Text>
                     </View>
@@ -151,32 +138,26 @@ export default function AddCrypto() {
                 );
               })}
             </View>
-            <View flex={1} gap={ms(15)}>
-              <Text fontSize={ms(15)} color="$uiNeutralSecondary" fontWeight="bold">
+            <View flex={1} gap={15}>
+              <Text fontSize={15} color="$uiNeutralSecondary" fontWeight="bold">
                 Network
               </Text>
-              <View
-                flexDirection="row"
-                gap={ms(10)}
-                justifyContent="space-between"
-                alignItems="center"
-                alignSelf="stretch"
-              >
-                <View flexDirection="row" alignItems="center" gap={ms(10)} flexGrow={1} maxHeight={ms(32)}>
-                  <OptimismImage height={ms(32)} width={ms(32)} />
-                  <Text fontSize={ms(18)} fontWeight="bold">
+              <View flexDirection="row" gap={10} justifyContent="space-between" alignItems="center" alignSelf="stretch">
+                <View flexDirection="row" alignItems="center" gap={10} flexGrow={1} maxHeight={32}>
+                  <OptimismImage height={32} width={32} />
+                  <Text fontSize={18} fontWeight="bold">
                     {chain.name}
                   </Text>
                 </View>
               </View>
               <View flex={1}>
-                <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)} textAlign="justify">
+                <Text color="$uiNeutralPlaceholder" fontSize={13} lineHeight={16} textAlign="justify">
                   Exa App runs on the {chain.name} network. Sending assets on other networks may result in irreversible
                   loss of funds.
                   <Text
                     color="$uiBrandSecondary"
-                    fontSize={ms(13)}
-                    lineHeight={ms(16)}
+                    fontSize={13}
+                    lineHeight={16}
                     fontWeight="bold"
                     onPress={() => {
                       router.push("../add-funds/add-crypto-about");

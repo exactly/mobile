@@ -2,7 +2,6 @@ import { exaPluginAbi, exaPluginAddress } from "@exactly/common/generated/chain"
 import { useMutation } from "@tanstack/react-query";
 import { setStringAsync } from "expo-clipboard";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { View, Spinner } from "tamagui";
 import { encodeAbiParameters, encodeFunctionData, getAbiItem, keccak256, zeroAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -77,13 +76,13 @@ export default function ContractUtils() {
 
   return (
     <View gap="$s4">
-      <Text fontSize={ms(16)} subHeadline fontWeight="bold">
+      <Text fontSize={16} subHeadline fontWeight="bold">
         Exactly
       </Text>
       {isUpdating && <Spinner color="$interactiveBaseBrandDefault" />}
       {updatePluginHash && (
-        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={ms(10)}>
-          <Text textAlign="center" fontSize={ms(14)} fontFamily="$mono" width="100%" fontWeight="bold">
+        <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={10}>
+          <Text textAlign="center" fontSize={14} fontFamily="$mono" width="100%" fontWeight="bold">
             {updatePluginHash}
           </Text>
         </View>
@@ -94,7 +93,7 @@ export default function ContractUtils() {
           onPress={() => {
             updatePlugin().catch(reportError);
           }}
-          padding={ms(10)}
+          padding={10}
           disabled={!uninstallPluginSimulation}
           flex={1}
         >
@@ -107,7 +106,7 @@ export default function ContractUtils() {
             onPress={() => {
               copyHash(updatePluginHash);
             }}
-            padding={ms(10)}
+            padding={10}
             flex={1}
           >
             Copy

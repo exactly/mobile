@@ -4,7 +4,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useContext, useEffect } from "react";
 import { PixelRatio, Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Spinner, XStack, YStack } from "tamagui";
 
 import { createInquiry, resumeInquiry } from "../../utils/persona";
@@ -76,10 +75,10 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
         <Text emphasized headline color="$uiBrandSecondary" maxFontSizeMultiplier={1.3}>
           Getting Started
         </Text>
-        <Pressable hitSlop={ms(15)}>
+        <Pressable hitSlop={15}>
           <XStack gap={2} alignItems="center">
             <Pressable
-              hitSlop={ms(15)}
+              hitSlop={15}
               onPress={() => {
                 if (!currentStep) return;
                 router.push("/getting-started");
@@ -89,14 +88,14 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
                 View all steps
               </Text>
             </Pressable>
-            <ChevronRight size={ms(14) * PixelRatio.getFontScale()} color="$interactiveTextBrandDefault" />
+            <ChevronRight size={14 * PixelRatio.getFontScale()} color="$interactiveTextBrandDefault" />
           </XStack>
         </Pressable>
       </XStack>
       <XStack justifyContent="space-between" alignItems="center" padding="$s4">
         <YStack gap="$s3">
           <XStack gap="$s3" alignItems="center">
-            <IdCard size={ms(24) * PixelRatio.getFontScale()} color="$uiBrandSecondary" />
+            <IdCard size={24 * PixelRatio.getFontScale()} color="$uiBrandSecondary" />
             <Text emphasized headline color="$uiBrandSecondary" maxFontSizeMultiplier={1.3}>
               {steps.find(({ completed }) => !completed)?.title}
             </Text>
@@ -107,7 +106,7 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
                 <View
                   key={index}
                   backgroundColor={completedSteps > index ? "$interactiveBaseBrandDefault" : "$uiBrandTertiary"}
-                  width={ms(24)}
+                  width={24}
                   height={8}
                   borderRadius="$r_0"
                 />
@@ -118,10 +117,10 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
             </Text>
           </XStack>
         </YStack>
-        <Pressable hitSlop={ms(15)} onPress={handleStepPress}>
+        <Pressable hitSlop={15} onPress={handleStepPress}>
           <View
-            width={ms(44)}
-            height={ms(44)}
+            width={44}
+            height={44}
             backgroundColor="$interactiveBaseBrandDefault"
             borderRadius="$r3"
             justifyContent="center"
@@ -130,7 +129,7 @@ export default function GettingStarted({ hasFunds, hasKYC }: { hasFunds: boolean
             {isPending ? (
               <Spinner color="$interactiveOnBaseBrandDefault" size="small" />
             ) : (
-              <ArrowRight size={ms(24) * PixelRatio.getFontScale()} color="$interactiveOnBaseBrandDefault" />
+              <ArrowRight size={24 * PixelRatio.getFontScale()} color="$interactiveOnBaseBrandDefault" />
             )}
           </View>
         </Pressable>

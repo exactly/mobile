@@ -7,7 +7,6 @@ import { setStringAsync } from "expo-clipboard";
 import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
 import { Alert } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
 import reportError from "../../../utils/reportError";
@@ -34,7 +33,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
               setStringAsync(item.id).catch(reportError);
               Alert.alert("Copied!", "The operation ID has been copied to the clipboard.");
             }}
-            hitSlop={ms(15)}
+            hitSlop={15}
           >
             {shortenHex(item.id)}
           </Text>
@@ -77,9 +76,9 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
               {item.mode > 0 ? "Pay Later" : "Card"}
             </Text>
             {item.mode > 0 ? (
-              <CalendarClock size={ms(20)} color="$uiBrandPrimary" />
+              <CalendarClock size={20} color="$uiBrandPrimary" />
             ) : (
-              <CreditCard size={ms(20)} color="$uiBrandPrimary" />
+              <CreditCard size={20} color="$uiBrandPrimary" />
             )}
           </XStack>
         </XStack>
@@ -130,7 +129,7 @@ export default function OperationDetails({ item }: { item: CreditActivity | Debi
             <Text textDecorationLine="underline" callout color="$uiNeutralPrimary">
               {shortenHex(item.transactionHash)}
             </Text>
-            <SquareArrowOutUpRight size={ms(20)} color="$uiNeutralSecondary" />
+            <SquareArrowOutUpRight size={20} color="$uiNeutralSecondary" />
           </XStack>
         </XStack>
       </YStack>

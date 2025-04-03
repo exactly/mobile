@@ -3,7 +3,6 @@ import { format, isAfter } from "date-fns";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Image } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Square, styled, useTheme, XStack, YStack } from "tamagui";
 
 import assetLogos from "../../utils/assetLogos";
@@ -55,7 +54,7 @@ export default function Pending({
               <View flex={1}>
                 <YStack gap="$s7" paddingBottom="$s9">
                   <XStack justifyContent="center" alignItems="center">
-                    <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={ms(80)}>
+                    <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={80}>
                       <ExaSpinner backgroundColor="transparent" color="$uiNeutralPrimary" />
                     </Square>
                   </XStack>
@@ -92,16 +91,12 @@ export default function Pending({
                       {externalAsset ? (
                         <Image
                           source={{ uri: externalAsset.logoURI }}
-                          width={ms(16)}
-                          height={ms(16)}
-                          style={{ borderRadius: ms(20) }}
+                          width={16}
+                          height={16}
+                          style={{ borderRadius: 20 }}
                         />
                       ) : (
-                        <AssetLogo
-                          uri={assetLogos[currency as keyof typeof assetLogos]}
-                          width={ms(16)}
-                          height={ms(16)}
-                        />
+                        <AssetLogo uri={assetLogos[currency as keyof typeof assetLogos]} width={16} height={16} />
                       )}
                     </XStack>
                   </YStack>

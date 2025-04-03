@@ -4,7 +4,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, styled, useTheme } from "tamagui";
 
 import CardActivity from "./CardActivity";
@@ -53,14 +52,14 @@ export default function ActivityDetails() {
               stickyHeaderHiddenOnScroll
             >
               <View flex={1}>
-                <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
+                <View flexDirection="row" gap={10} justifyContent="space-between" alignItems="center">
                   {canGoBack() && (
                     <Pressable
                       onPress={() => {
                         router.back();
                       }}
                     >
-                      <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                      <ArrowLeft size={24} color="$uiNeutralPrimary" />
                     </Pressable>
                   )}
                 </View>
@@ -73,7 +72,7 @@ export default function ActivityDetails() {
               <View flex={2} justifyContent="flex-end">
                 <ActionButton
                   width="100%"
-                  maxHeight={ms(60)}
+                  maxHeight={60}
                   alignSelf="flex-end"
                   marginTop="$s4"
                   marginBottom="$s5"

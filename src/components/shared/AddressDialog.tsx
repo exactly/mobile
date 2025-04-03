@@ -1,7 +1,6 @@
 import chain from "@exactly/common/generated/chain";
 import { Copy } from "@tamagui/lucide-icons";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { AlertDialog, XStack, YStack } from "tamagui";
 
 import Button from "./Button";
@@ -54,7 +53,7 @@ export default function AddressDialog({
               <YStack gap="$s5">
                 <XStack gap="$s3" alignItems="center">
                   <View alignItems="center" justifyContent="center">
-                    <OptimismImage height={ms(32)} width={ms(32)} />
+                    <OptimismImage height={32} width={32} />
                   </View>
                   <Text>
                     <Text emphasized title3>

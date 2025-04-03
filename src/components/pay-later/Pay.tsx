@@ -17,7 +17,6 @@ import { Skeleton } from "moti/skeleton";
 import React, { useCallback, useState } from "react";
 import { Pressable, Image, Appearance } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Separator, Spinner, XStack, YStack } from "tamagui";
 import { nonEmpty, parse, pipe, safeParse, string } from "valibot";
 import { encodeFunctionData, erc20Abi, parseUnits, zeroAddress, encodeAbiParameters } from "viem";
@@ -388,14 +387,14 @@ export default function Pay() {
     return (
       <SafeView fullScreen backgroundColor="$backgroundMild" paddingBottom={0}>
         <View fullScreen gap="$s5" paddingTop="$s4_5">
-          <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
+          <View flexDirection="row" gap={10} justifyContent="space-around" alignItems="center">
             <View padded position="absolute" left={0}>
               <Pressable
                 onPress={() => {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft size={24} color="$uiNeutralPrimary" />
               </Pressable>
             </View>
             <Text color="$uiNeutralPrimary" emphasized subHeadline>
@@ -546,19 +545,19 @@ export default function Pay() {
                               : (repayMarket.symbol.slice(3) as keyof typeof assetLogos)
                           ]
                         }
-                        width={ms(16)}
-                        height={ms(16)}
+                        width={16}
+                        height={16}
                       />
                     )}
                     {selectedAsset.isExternalAsset && externalAsset && (
-                      <Image source={{ uri: externalAsset.logoURI }} width={ms(16)} height={ms(16)} borderRadius={50} />
+                      <Image source={{ uri: externalAsset.logoURI }} width={16} height={16} borderRadius={50} />
                     )}
                     <Text primary emphasized headline textAlign="right">
                       {repayMarket?.symbol.slice(3) === "WETH"
                         ? "ETH"
                         : (repayMarket?.symbol.slice(3) ?? externalAsset?.symbol)}
                     </Text>
-                    <ChevronRight size={ms(24)} color="$interactiveBaseBrandDefault" />
+                    <ChevronRight size={24} color="$interactiveBaseBrandDefault" />
                   </XStack>
                 </YStack>
               </XStack>
@@ -569,8 +568,8 @@ export default function Pay() {
                 <YStack gap="$s2">
                   {isFetchingAsset ? (
                     <>
-                      <Skeleton height={ms(20)} width={ms(100)} colorMode={Appearance.getColorScheme() ?? "light"} />
-                      <Skeleton height={ms(20)} width={ms(100)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                      <Skeleton height={20} width={100} colorMode={Appearance.getColorScheme() ?? "light"} />
+                      <Skeleton height={20} width={100} colorMode={Appearance.getColorScheme() ?? "light"} />
                     </>
                   ) : (
                     <>
@@ -638,7 +637,7 @@ export default function Pay() {
               </XStack>
               {selectedAsset.isExternalAsset ? (
                 <Button
-                  flexBasis={ms(60)}
+                  flexBasis={60}
                   onPress={() => {
                     repayWithExternalAsset().catch(reportError);
                   }}
@@ -670,7 +669,7 @@ export default function Pay() {
                 </Button>
               ) : (
                 <Button
-                  flexBasis={ms(60)}
+                  flexBasis={60}
                   onPress={handlePayment}
                   contained
                   disabled={!simulation || isSimulating}

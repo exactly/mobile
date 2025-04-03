@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack } from "tamagui";
 import { parse } from "valibot";
 
@@ -37,8 +36,8 @@ export default function AssetSelection() {
 
   return (
     <SafeView fullScreen>
-      <View gap={ms(20)} fullScreen padded>
-        <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
+      <View gap={20} fullScreen padded>
+        <View flexDirection="row" gap={10} justifyContent="space-around" alignItems="center">
           <View position="absolute" left={0}>
             {canGoBack() && (
               <Pressable
@@ -46,11 +45,11 @@ export default function AssetSelection() {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft size={24} color="$uiNeutralPrimary" />
               </Pressable>
             )}
           </View>
-          <Text emphasized color="$uiNeutralPrimary" fontSize={ms(15)}>
+          <Text emphasized color="$uiNeutralPrimary" fontSize={15}>
             Choose asset
           </Text>
         </View>
@@ -66,8 +65,8 @@ export default function AssetSelection() {
                 paddingHorizontal="$s2"
               >
                 <XStack alignItems="center" gap="$s3" paddingHorizontal="$s1">
-                  <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-                    <User size={ms(20)} color="$interactiveOnBaseBrandDefault" />
+                  <Avatar size={32} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+                    <User size={20} color="$interactiveOnBaseBrandDefault" />
                   </Avatar>
                   <Text emphasized callout color="$uiNeutralSecondary">
                     To:
@@ -101,9 +100,9 @@ export default function AssetSelection() {
                   }}
                 >
                   {hasContact ? (
-                    <UserMinus size={ms(24)} color="$interactiveOnBaseErrorSoft" />
+                    <UserMinus size={24} color="$interactiveOnBaseErrorSoft" />
                   ) : (
-                    <UserPlus size={ms(24)} color="$interactiveOnBaseBrandSoft" />
+                    <UserPlus size={24} color="$interactiveOnBaseBrandSoft" />
                   )}
                 </Button>
               </XStack>

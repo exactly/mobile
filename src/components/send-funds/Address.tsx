@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ButtonIcon, ScrollView, Separator, XStack, YStack } from "tamagui";
 import { parse, safeParse } from "valibot";
 
@@ -54,8 +53,8 @@ export default function AddressSelection() {
 
   return (
     <SafeView fullScreen>
-      <View gap={ms(20)} fullScreen padded>
-        <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
+      <View gap={20} fullScreen padded>
+        <View flexDirection="row" gap={10} justifyContent="space-around" alignItems="center">
           <View position="absolute" left={0}>
             {canGoBack() && (
               <Pressable
@@ -64,11 +63,11 @@ export default function AddressSelection() {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft size={24} color="$uiNeutralPrimary" />
               </Pressable>
             )}
           </View>
-          <Text color="$uiNeutralPrimary" fontSize={ms(15)} fontWeight="bold">
+          <Text color="$uiNeutralPrimary" fontSize={15} fontWeight="bold">
             Send to
           </Text>
         </View>
@@ -100,7 +99,7 @@ export default function AddressSelection() {
                       }}
                     >
                       <ButtonIcon>
-                        <QrCode size={ms(32)} color="$interactiveOnBaseBrandSoft" />
+                        <QrCode size={32} color="$interactiveOnBaseBrandSoft" />
                       </ButtonIcon>
                     </Button>
                   </XStack>
@@ -137,10 +136,10 @@ export default function AddressSelection() {
                 )}
               </ScrollView>
             )}
-            <Text color="$uiNeutralPlaceholder" fontSize={ms(13)} lineHeight={ms(16)} textAlign="justify">
+            <Text color="$uiNeutralPlaceholder" fontSize={13} lineHeight={16} textAlign="justify">
               Make sure that the receiving address is compatible with {chain.name} network. Sending assets on other
               networks may result in irreversible loss of funds.
-              <Text color="$uiBrandSecondary" fontSize={ms(13)} lineHeight={ms(16)} fontWeight="bold">
+              <Text color="$uiBrandSecondary" fontSize={13} lineHeight={16} fontWeight="bold">
                 &nbsp;Learn more about sending funds
               </Text>
             </Text>

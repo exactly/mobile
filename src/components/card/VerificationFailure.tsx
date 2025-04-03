@@ -1,7 +1,6 @@
 import { ArrowRight, X } from "@tamagui/lucide-icons";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Sheet, YStack } from "tamagui";
 
 import VerifyIdentity from "../../assets/images/verify-identity.svg";
@@ -37,8 +36,8 @@ export default function VerificationFailure({ open, onClose }: { open: boolean; 
       <Sheet.Frame>
         <SafeView paddingTop={0} fullScreen borderTopLeftRadius="$r4" borderTopRightRadius="$r4">
           <View position="absolute" top="$s5" right="$s5" zIndex={100_000}>
-            <Pressable onPress={onClose} hitSlop={ms(15)}>
-              <X size={ms(25)} color="$uiNeutralSecondary" />
+            <Pressable onPress={onClose} hitSlop={15}>
+              <X size={25} color="$uiNeutralSecondary" />
             </Pressable>
           </View>
           <ScrollView>
@@ -59,7 +58,7 @@ export default function VerificationFailure({ open, onClose }: { open: boolean; 
                     This may be due to missing or incorrect information. Please contact support to resolve it.
                   </Text>
                   <Button
-                    flexBasis={ms(60)}
+                    flexBasis={60}
                     onPress={() => {
                       present().catch(reportError);
                     }}

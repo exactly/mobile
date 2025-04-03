@@ -3,7 +3,6 @@ import { ArrowDownToLine, ArrowUpRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
 import { PixelRatio } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Spinner } from "tamagui";
 import { zeroAddress } from "viem";
 import { useAccount, useReadContract } from "wagmi";
@@ -62,18 +61,12 @@ export default function HomeActions() {
         onPress={() => {
           router.push("/add-funds/add-crypto");
         }}
-        iconAfter={<ArrowDownToLine size={ms(18) * fontScale} color="$interactiveOnBaseBrandDefault" />}
+        iconAfter={<ArrowDownToLine size={18 * fontScale} color="$interactiveOnBaseBrandDefault" />}
         backgroundColor="$interactiveBaseBrandDefault"
         color="$interactiveOnBaseBrandDefault"
         {...contained}
       >
-        <Text
-          fontSize={ms(15)}
-          emphasized
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          color="$interactiveOnBaseBrandDefault"
-        >
+        <Text fontSize={15} emphasized numberOfLines={1} adjustsFontSizeToFit color="$interactiveOnBaseBrandDefault">
           Add funds
         </Text>
       </Button>
@@ -86,16 +79,16 @@ export default function HomeActions() {
         disabled={isLatestPlugin ? false : isFetching}
         iconAfter={
           isLatestPlugin || !isFetching ? (
-            <ArrowUpRight size={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
+            <ArrowUpRight size={18 * fontScale} color="$interactiveOnBaseBrandSoft" />
           ) : (
-            <Spinner height={ms(18) * fontScale} width={ms(18) * fontScale} color="$interactiveOnBaseBrandSoft" />
+            <Spinner height={18 * fontScale} width={18 * fontScale} color="$interactiveOnBaseBrandSoft" />
           )
         }
         backgroundColor="$interactiveBaseBrandSoftDefault"
         color="$interactiveOnBaseBrandSoft"
         {...outlined}
       >
-        <Text fontSize={ms(15)} emphasized numberOfLines={1} adjustsFontSizeToFit color="$interactiveOnBaseBrandSoft">
+        <Text fontSize={15} emphasized numberOfLines={1} adjustsFontSizeToFit color="$interactiveOnBaseBrandSoft">
           Send
         </Text>
       </Button>

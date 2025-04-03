@@ -8,7 +8,6 @@ import { format } from "date-fns";
 import { setStringAsync } from "expo-clipboard";
 import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
 import OptimismImage from "../../../assets/images/optimism.svg";
@@ -49,7 +48,7 @@ export default function TransactionDetails({
             <Text callout color="$uiNeutralPrimary" alignContent="center">
               {chain.name}
             </Text>
-            <OptimismImage height={ms(20)} width={ms(20)} />
+            <OptimismImage height={20} width={20} />
           </XStack>
         </XStack>
         {item && item.type === "sent" && (
@@ -72,7 +71,7 @@ export default function TransactionDetails({
               <Text callout textDecorationLine="underline">
                 {shortenHex(item.receiver)}
               </Text>
-              <Copy size={ms(20)} color="$uiNeutralSecondary" />
+              <Copy size={20} color="$uiNeutralSecondary" />
             </XStack>
           </XStack>
         )}
@@ -111,7 +110,7 @@ export default function TransactionDetails({
               <Text textDecorationLine="underline" callout color="$uiNeutralPrimary">
                 {shortenHex(item.transactionHash)}
               </Text>
-              <SquareArrowOutUpRight size={ms(20)} color="$uiNeutralSecondary" />
+              <SquareArrowOutUpRight size={20} color="$uiNeutralSecondary" />
             </XStack>
           </XStack>
         )}

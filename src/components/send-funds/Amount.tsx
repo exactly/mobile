@@ -8,7 +8,6 @@ import { router } from "expo-router";
 import { Skeleton } from "moti/skeleton";
 import React from "react";
 import { Appearance, Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Avatar, ScrollView, XStack } from "tamagui";
 import { bigint, check, pipe } from "valibot";
 import { zeroAddress } from "viem";
@@ -42,8 +41,8 @@ export default function Amount() {
 
   return (
     <SafeView fullScreen>
-      <View gap={ms(20)} fullScreen padded>
-        <View flexDirection="row" gap={ms(10)} justifyContent="space-around" alignItems="center">
+      <View gap={20} fullScreen padded>
+        <View flexDirection="row" gap={10} justifyContent="space-around" alignItems="center">
           <View position="absolute" left={0}>
             {canGoBack() && (
               <Pressable
@@ -51,11 +50,11 @@ export default function Amount() {
                   router.back();
                 }}
               >
-                <ArrowLeft size={ms(24)} color="$uiNeutralPrimary" />
+                <ArrowLeft size={24} color="$uiNeutralPrimary" />
               </Pressable>
             )}
           </View>
-          <Text color="$uiNeutralPrimary" fontSize={ms(15)} fontWeight="bold">
+          <Text color="$uiNeutralPrimary" fontSize={15} fontWeight="bold">
             Enter amount
           </Text>
         </View>
@@ -69,8 +68,8 @@ export default function Amount() {
                 justifyContent="space-between"
               >
                 <XStack alignItems="center" gap="$s3" padding="$s3">
-                  <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-                    <User size={ms(20)} color="$interactiveOnBaseBrandDefault" />
+                  <Avatar size={32} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+                    <User size={20} color="$interactiveOnBaseBrandDefault" />
                   </Avatar>
                   <Text emphasized callout color="$uiNeutralSecondary">
                     To:
@@ -89,11 +88,11 @@ export default function Amount() {
                   gap="$s3"
                 >
                   {isFetching ? (
-                    <Skeleton width="100%" height={ms(45)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                    <Skeleton width="100%" height={45} colorMode={Appearance.getColorScheme() ?? "light"} />
                   ) : (
                     <XStack alignItems="center" gap="$s3" padding="$s3">
-                      <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-                        <Coins size={ms(20)} color="$interactiveOnBaseBrandDefault" />
+                      <Avatar size={32} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+                        <Coins size={20} color="$interactiveOnBaseBrandDefault" />
                       </Avatar>
                       <Text callout color="$uiNeutralSecondary">
                         Available:
@@ -128,11 +127,11 @@ export default function Amount() {
                   gap="$s3"
                 >
                   {isFetching ? (
-                    <Skeleton width="100%" height={ms(45)} colorMode={Appearance.getColorScheme() ?? "light"} />
+                    <Skeleton width="100%" height={45} colorMode={Appearance.getColorScheme() ?? "light"} />
                   ) : (
                     <XStack alignItems="center" gap="$s3" padding="$s3">
-                      <Avatar size={ms(32)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-                        <DollarSign size={ms(20)} color="$interactiveOnBaseBrandDefault" />
+                      <Avatar size={32} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+                        <DollarSign size={20} color="$interactiveOnBaseBrandDefault" />
                       </Avatar>
                       <Text callout color="$uiNeutralSecondary">
                         Value:

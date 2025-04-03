@@ -2,7 +2,6 @@ import { X } from "@tamagui/lucide-icons";
 import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Sheet } from "tamagui";
 
 import ActivateCard from "./ActivateCard";
@@ -45,8 +44,8 @@ export default function CardUpgradeSheet({ open, onClose }: { open: boolean; onC
           backgroundColor="$backgroundSoft"
         >
           <View position="absolute" top="$s5" right="$s5" zIndex={100_000}>
-            <Pressable onPress={onClose} hitSlop={ms(15)}>
-              <X size={ms(25)} color="$uiNeutralSecondary" />
+            <Pressable onPress={onClose} hitSlop={15}>
+              <X size={25} color="$uiNeutralSecondary" />
             </Pressable>
           </View>
           <ScrollView>

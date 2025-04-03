@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import React from "react";
 import { Platform, Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { XStack, YStack } from "tamagui";
 
 import MiniCardExa from "../../assets/images/mini-card-exa.svg";
@@ -18,7 +17,7 @@ export default function CardStatus() {
   const isFrozen = card.status === "FROZEN";
   return (
     <Pressable
-      hitSlop={ms(15)}
+      hitSlop={15}
       onPress={() => {
         router.push("/card");
       }}
@@ -84,10 +83,10 @@ export default function CardStatus() {
               </Text>
             </View>
             <View flexDirection="row" gap="$s1" alignItems="center">
-              <Text fontSize={ms(13)} color="$interactiveBaseBrandDefault" emphasized footnote>
+              <Text fontSize={13} color="$interactiveBaseBrandDefault" emphasized footnote>
                 View card
               </Text>
-              <ChevronRight size={ms(16)} color="$interactiveBaseBrandDefault" fontWeight="bold" />
+              <ChevronRight size={16} color="$interactiveBaseBrandDefault" fontWeight="bold" />
             </View>
           </XStack>
         </YStack>

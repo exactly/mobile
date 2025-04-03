@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import React, { useMemo } from "react";
 import { FlatList, RefreshControl } from "react-native";
-import { ms } from "react-native-size-matters";
 import { styled, useTheme } from "tamagui";
 
 import ActivityItem from "./ActivityItem";
@@ -56,8 +55,8 @@ export default function Activity() {
           ListHeaderComponent={
             <>
               <View padded gap="$s5" backgroundColor="$backgroundSoft">
-                <View flexDirection="row" gap={ms(10)} justifyContent="space-between" alignItems="center">
-                  <Text fontSize={ms(20)} fontWeight="bold">
+                <View flexDirection="row" gap={10} justifyContent="space-between" alignItems="center">
+                  <Text fontSize={20} fontWeight="bold">
                     All Activity
                   </Text>
                 </View>

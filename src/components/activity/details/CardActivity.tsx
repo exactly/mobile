@@ -1,7 +1,6 @@
 import type { CreditActivity, DebitActivity, InstallmentsActivity, PandaActivity } from "@exactly/server/api/activity";
 import { ShoppingCart } from "@tamagui/lucide-icons";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { Square, XStack, YStack } from "tamagui";
 
 import PaymentDetails from "./PaymentDetails";
@@ -19,8 +18,8 @@ export default function CardActivity({
     <>
       <YStack gap="$s7" paddingBottom="$s9">
         <XStack justifyContent="center" alignItems="center">
-          <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={ms(80)}>
-            <ShoppingCart size={ms(48)} color="$uiNeutralPrimary" strokeWidth={2} />
+          <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={80}>
+            <ShoppingCart size={48} color="$uiNeutralPrimary" strokeWidth={2} />
           </Square>
         </XStack>
         <YStack gap="$s4_5" justifyContent="center" alignItems="center">

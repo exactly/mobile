@@ -5,7 +5,6 @@ import { setStringAsync } from "expo-clipboard";
 import { Skeleton } from "moti/skeleton";
 import React, { useEffect, useState } from "react";
 import { Appearance, Pressable, StyleSheet } from "react-native";
-import { ms } from "react-native-size-matters";
 import { ScrollView, Sheet, XStack, YStack } from "tamagui";
 
 import CardBack from "./CardBack";
@@ -65,7 +64,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
             <View fullScreen flex={1}>
               <View gap="$s5" flex={1} padded>
                 {isPending ? (
-                  <Skeleton height={ms(200)} width="100%" colorMode={Appearance.getColorScheme() ?? "light"} />
+                  <Skeleton height={200} width="100%" colorMode={Appearance.getColorScheme() ?? "light"} />
                 ) : card ? (
                   card.provider === "panda" ? (
                     <YStack
@@ -81,16 +80,16 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                     >
                       <View position="absolute" top="$s4" left="$s5">
                         {Appearance.getColorScheme() === "light" ? (
-                          <ExaLogoLight height={ms(20)} width={ms(63)} />
+                          <ExaLogoLight height={20} width={63} />
                         ) : (
-                          <ExaLogoDark height={ms(20)} width={ms(63)} />
+                          <ExaLogoDark height={20} width={63} />
                         )}
                       </View>
                       <View position="absolute" bottom="$s4" right="$s5">
                         {Appearance.getColorScheme() === "light" ? (
-                          <VisaLogoLight height={ms(40)} width={ms(72)} />
+                          <VisaLogoLight height={40} width={72} />
                         ) : (
-                          <VisaLogoDark height={ms(40)} width={ms(72)} />
+                          <VisaLogoDark height={40} width={72} />
                         )}
                       </View>
                       <XStack gap="$s4" alignItems="center">
@@ -156,7 +155,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                     }}
                   />
                 )}
-                <Pressable onPress={onClose} style={styles.close} hitSlop={ms(20)}>
+                <Pressable onPress={onClose} style={styles.close} hitSlop={20}>
                   <Text emphasized footnote color="$interactiveTextBrandDefault">
                     Close
                   </Text>

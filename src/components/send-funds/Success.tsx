@@ -1,7 +1,6 @@
 import { CheckCircle2, Loader } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import React from "react";
-import { ms } from "react-native-size-matters";
 import { ScrollView } from "tamagui";
 
 import Details from "./Details";
@@ -28,17 +27,17 @@ export default function Success({
                 backgroundColor={
                   isExternalAsset ? "$interactiveBaseSuccessSoftDefault" : "$interactiveBaseInformationSoftDefault"
                 }
-                width={ms(88)}
-                height={ms(88)}
+                width={88}
+                height={88}
                 justifyContent="center"
                 alignItems="center"
                 borderRadius="$r_0"
                 padding="$5"
               >
                 {isExternalAsset ? (
-                  <CheckCircle2 size={ms(56)} color="$interactiveOnBaseSuccessSoft" />
+                  <CheckCircle2 size={56} color="$interactiveOnBaseSuccessSoft" />
                 ) : (
-                  <Loader size={ms(56)} color="$interactiveOnBaseInformationSoft" />
+                  <Loader size={56} color="$interactiveOnBaseInformationSoft" />
                 )}
               </View>
               <Text title3 color={isExternalAsset ? "$uiSuccessSecondary" : "$uiInfoSecondary"}>

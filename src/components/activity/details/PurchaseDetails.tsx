@@ -6,7 +6,6 @@ import { format } from "date-fns";
 import { setStringAsync } from "expo-clipboard";
 import React from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Separator, XStack, YStack } from "tamagui";
 
 import reportError from "../../../utils/reportError";
@@ -45,13 +44,13 @@ export default function PurchaseDetails({ item }: { item: CreditActivity | Debit
                 burntOptions: { haptic: "success" },
               });
             }}
-            hitSlop={ms(15)}
+            hitSlop={15}
           >
             <XStack gap="$s3">
               <Text callout color="$uiNeutralPrimary">
                 {shortenHex(item.id)}
               </Text>
-              <Copy size={ms(20)} color="$uiNeutralPrimary" />
+              <Copy size={20} color="$uiNeutralPrimary" />
             </XStack>
           </Pressable>
         </XStack>

@@ -7,7 +7,6 @@ import { setStringAsync } from "expo-clipboard";
 import { openBrowserAsync } from "expo-web-browser";
 import React from "react";
 import { Alert, Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { XStack, Avatar } from "tamagui";
 
 import type { Withdraw } from "../../utils/queryClient";
@@ -31,8 +30,8 @@ export default function Details({
       {data?.receiver && (
         <XStack justifyContent="space-between" alignItems="center">
           <XStack alignItems="center" gap="$s3">
-            <Avatar size={ms(20)} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
-              <User size={ms(16)} color="$interactiveOnBaseBrandDefault" />
+            <Avatar size={20} backgroundColor="$interactiveBaseBrandDefault" borderRadius="$r_0">
+              <User size={16} color="$interactiveOnBaseBrandDefault" />
             </Avatar>
             <Text emphasized footnote color="$uiNeutralSecondary">
               To
@@ -45,7 +44,7 @@ export default function Details({
       )}
       <XStack justifyContent="space-between" alignItems="center">
         <XStack alignItems="center" gap="$s3">
-          <Calendar size={ms(20)} color="$uiBrandPrimary" />
+          <Calendar size={20} color="$uiBrandPrimary" />
           <Text emphasized footnote color="$uiNeutralSecondary">
             Date
           </Text>
@@ -55,7 +54,7 @@ export default function Details({
       {hash && isExternalAsset && (
         <>
           <XStack
-            hitSlop={ms(15)}
+            hitSlop={15}
             justifyContent="space-between"
             alignItems="center"
             onPress={() => {
@@ -64,7 +63,7 @@ export default function Details({
             }}
           >
             <XStack alignItems="center" gap="$s3">
-              <Hash size={ms(20)} color="$uiBrandPrimary" />
+              <Hash size={20} color="$uiBrandPrimary" />
               <Text emphasized footnote color="$uiNeutralSecondary">
                 Transaction hash
               </Text>

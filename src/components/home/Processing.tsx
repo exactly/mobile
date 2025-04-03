@@ -6,7 +6,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable } from "react-native";
-import { ms } from "react-native-size-matters";
 import { Square, styled, useTheme, XStack, YStack } from "tamagui";
 import { formatUnits, zeroAddress } from "viem";
 import { useAccount, useReadContract } from "wagmi";
@@ -96,8 +95,8 @@ export default function Processing() {
                 {pending ? (
                   <Spinner />
                 ) : (
-                  <Square borderRadius="$r4" backgroundColor="$interactiveBaseSuccessSoftDefault" size={ms(80)}>
-                    <Check size={ms(56)} color="$interactiveOnBaseSuccessSoft" />
+                  <Square borderRadius="$r4" backgroundColor="$interactiveBaseSuccessSoftDefault" size={80}>
+                    <Check size={56} color="$interactiveOnBaseSuccessSoft" />
                   </Square>
                 )}
               </XStack>
@@ -124,7 +123,7 @@ export default function Processing() {
                     })}
                     &nbsp; {assetName}
                   </Text>
-                  <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={ms(16)} height={ms(16)} />
+                  <AssetLogo uri={assetLogos[assetName as keyof typeof assetLogos]} width={16} height={16} />
                 </XStack>
               </YStack>
               {pending && (
