@@ -52,7 +52,7 @@ export default {
   ios: {
     icon: "src/assets/icon-ios.png",
     bundleIdentifier: "app.exactly",
-    associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "web.exactly.app"}`],
+    associatedDomains: [`webcredentials:${process.env.EXPO_PUBLIC_DOMAIN ?? "sandbox.exactly.app"}`],
     supportsTablet: false,
     buildNumber: String(versionCode),
     infoPlist: {
