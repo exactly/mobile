@@ -11,6 +11,7 @@ import { BaseScript, stdJson } from "./Base.s.sol";
 
 contract DeployProposalManager is BaseScript {
   using LibString for uint256;
+  using LibString for string;
   using stdJson for string;
   using Surl for string;
 
@@ -28,28 +29,25 @@ contract DeployProposalManager is BaseScript {
       allowlist.push(asset);
       protocolAssets[asset] = true;
       protocolAssets[address(markets[i])] = true;
+
+      string memory symbol = markets[i].symbol();
+      vm.label(address(markets[i]), symbol);
+      vm.label(asset, symbol.slice(3));
     }
     allowlist.push(acct("swapper"));
     allowlist.push(protocol("esEXA"));
     allowlist.push(protocol("RewardsController"));
 
-    address swapper = acct("swapper");
-    if (swapper == 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE) {
-      vm.pauseTracing();
-      (uint256 status, bytes memory data) =
-        string.concat("https://li.quest/v1/tokens?chains=", block.chainid.toString()).get();
-      assert(status == 200);
-      for (uint256 i = 0; true; ++i) {
-        try vm.parseJsonAddress(
-          string(data), string.concat(".tokens.", block.chainid.toString(), "[", i.toString(), "].address")
-        ) returns (address asset) {
-          if (asset == address(0) || protocolAssets[asset]) continue;
-          allowlist.push(asset);
-        } catch {
-          break;
-        }
+    string memory chainAllowlist = string.concat(".proposalManager.allowlist.", block.chainid.toString());
+    if (vm.keyExistsJson(deploy, chainAllowlist)) {
+      string[] memory keys = vm.parseJsonKeys(deploy, chainAllowlist);
+      for (uint256 i = 0; i < keys.length; ++i) {
+        address asset = vm.parseAddress(keys[i]);
+        if (asset == address(0) || protocolAssets[asset]) continue;
+        allowlist.push(asset);
+
+        vm.label(asset, deploy.readString(string.concat(chainAllowlist, ".", keys[i])));
       }
-      vm.resumeTracing();
     }
 
     vm.broadcast(acct("deployer"));

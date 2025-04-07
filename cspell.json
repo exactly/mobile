@@ -40,8 +40,10 @@
     "itofarina",
     "IWETH",
     "keccak",
+    "kwenta",
     "libcrypto",
     "lifi",
+    "lusd",
     "mdpi",
     "memester",
     "mipd",
@@ -90,5 +92,8 @@
     "zeppelinos",
     "zrange",
     "zrem"
+  ],
+  "ignoreRegExpList": [
+    "\\baOpt\\w+\\b"
   ]
 }
