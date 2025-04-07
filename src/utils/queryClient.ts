@@ -100,6 +100,13 @@ queryClient.setQueryDefaults(["card-details-open"], {
   gcTime: Infinity,
   queryFn: () => queryClient.getQueryData(["card-details-open"]),
 });
+queryClient.setQueryDefaults(["user", "country"], {
+  initialData: null,
+  retry: false,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  queryFn: () => queryClient.getQueryData(["user", "country"]),
+});
 
 export type ActivityItem = Awaited<ReturnType<typeof getActivity>>[number];
 export interface Withdraw {

@@ -1,12 +1,13 @@
-import { ArrowDownToLine, ArrowUpFromLine, CircleDollarSign, ShoppingCart } from "@tamagui/lucide-icons";
+import { ArrowDownToLine, ArrowUpFromLine, CircleDollarSign, ClockAlert, ShoppingCart } from "@tamagui/lucide-icons";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { router } from "expo-router";
 import { getName, registerLocale, type LocaleData } from "i18n-iso-countries/index";
 import React from "react";
 import { titleCase } from "title-case";
 
-import type { ActivityItem as Item } from "../../utils/queryClient";
-import queryClient from "../../utils/queryClient";
+import isProcessing from "../../utils/isProcessing";
+import queryClient, { type ActivityItem as Item } from "../../utils/queryClient";
 import Text from "../shared/Text";
 import View from "../shared/View";
 
@@ -14,10 +15,12 @@ registerLocale(require("i18n-iso-countries/langs/en.json") as LocaleData); // es
 
 export default function ActivityItem({ item, isLast }: { item: Item; isLast: boolean }) {
   const { amount, id, usdAmount, currency, type, timestamp } = item;
+  const { data: country } = useQuery({ queryKey: ["user", "country"] });
   function handlePress() {
     queryClient.setQueryData(["activity", "details"], item);
     router.push({ pathname: "/activity-details" });
   }
+  const processing = type === "panda" && country === "US" && isProcessing(item.timestamp);
   return (
     <View
       key={id}
@@ -41,7 +44,8 @@ export default function ActivityItem({ item, isLast }: { item: Item; isLast: boo
         {type === "received" && <ArrowDownToLine color="$interactiveOnBaseSuccessSoft" />}
         {type === "sent" && <ArrowUpFromLine color="$interactiveOnBaseErrorSoft" />}
         {type === "repay" && <CircleDollarSign color="$interactiveOnBaseErrorSoft" />}
-        {type === "panda" && <ShoppingCart color="$uiNeutralPrimary" />}
+        {type === "panda" && processing && <ClockAlert color="$interactiveOnBaseWarningSoft" />}
+        {type === "panda" && !processing && <ShoppingCart color="$uiNeutralPrimary" />}
       </View>
       <View flex={1} gap="$s2">
         <View flexDirection="row" justifyContent="space-between" alignItems="center" gap="$s4">
@@ -53,18 +57,24 @@ export default function ActivityItem({ item, isLast }: { item: Item; isLast: boo
               {type === "repay" && "Debt payment"}
               {type === "panda" && item.merchant.name}
             </Text>
-            <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
-              {(type === "card" || type === "panda") &&
-                titleCase(
-                  [
-                    item.merchant.city,
-                    item.merchant.state,
-                    item.merchant.country && getName(item.merchant.country, "en"),
-                  ]
-                    .filter((field) => field && field !== "null")
-                    .join(", ")
-                    .toLowerCase(),
-                )}
+            <Text
+              caption
+              color={processing ? "$interactiveOnBaseWarningSoft" : "$uiNeutralSecondary"}
+              numberOfLines={1}
+            >
+              {processing
+                ? "Processing..."
+                : (type === "card" || type === "panda") &&
+                  titleCase(
+                    [
+                      item.merchant.city,
+                      item.merchant.state,
+                      item.merchant.country && getName(item.merchant.country, "en"),
+                    ]
+                      .filter((field) => field && field !== "null")
+                      .join(", ")
+                      .toLowerCase(),
+                  )}
               {type !== "card" && type !== "panda" && format(timestamp, "yyyy-MM-dd")}
             </Text>
           </View>

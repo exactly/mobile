@@ -10,6 +10,7 @@ import queryClient from "../../utils/queryClient";
 import reportError from "../../utils/reportError";
 import { getActivity } from "../../utils/server";
 import useAsset from "../../utils/useAsset";
+import ProcessingBalanceBanner from "../shared/ProcessingBalanceBanner";
 import ProposalBanner from "../shared/ProposalBanner";
 import SafeView from "../shared/SafeView";
 import Text from "../shared/Text";
@@ -62,6 +63,7 @@ export default function Activity() {
                 </View>
               </View>
               <ProposalBanner />
+              <ProcessingBalanceBanner />
             </>
           }
           ListEmptyComponent={<Empty />}

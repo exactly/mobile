@@ -110,6 +110,7 @@ export async function getKYCLink() {
 export async function getKYCStatus() {
   await auth();
   const response = await client.api.kyc.$get({ query: { templateId: await getTemplateId() } });
+  queryClient.setQueryData(["user", "country"], response.headers.get("User-Country"));
   if (!response.ok) throw new APIError(response.status, await response.json());
   return response.json();
 }

@@ -1,11 +1,13 @@
 import type { CreditActivity, DebitActivity, InstallmentsActivity, PandaActivity } from "@exactly/server/api/activity";
-import { ShoppingCart } from "@tamagui/lucide-icons";
+import { ClockAlert, ShoppingCart } from "@tamagui/lucide-icons";
+import { useQuery } from "@tanstack/react-query";
 import React from "react";
 import { Square, XStack, YStack } from "tamagui";
 
 import PaymentDetails from "./PaymentDetails";
 import PurchaseDetails from "./PurchaseDetails";
 import TransactionDetails from "./TransactionDetails";
+import isProcessing from "../../../utils/isProcessing";
 import Text from "../../shared/Text";
 
 export default function CardActivity({
@@ -13,25 +15,30 @@ export default function CardActivity({
 }: {
   item: CreditActivity | DebitActivity | InstallmentsActivity | PandaActivity;
 }) {
-  const { usdAmount } = item;
+  const { data: country } = useQuery({ queryKey: ["user", "country"] });
+  const processing = item.type === "panda" && country === "US" && isProcessing(item.timestamp);
   return (
     <>
       <YStack gap="$s7" paddingBottom="$s9">
         <XStack justifyContent="center" alignItems="center">
           <Square borderRadius="$r4" backgroundColor="$backgroundStrong" size={80}>
-            <ShoppingCart size={48} color="$uiNeutralPrimary" strokeWidth={2} />
+            {processing ? (
+              <ClockAlert size={48} color="$interactiveOnBaseWarningSoft" strokeWidth={2} />
+            ) : (
+              <ShoppingCart size={48} color="$uiNeutralPrimary" strokeWidth={2} />
+            )}
           </Square>
         </XStack>
         <YStack gap="$s4_5" justifyContent="center" alignItems="center">
-          <Text secondary body>
-            Paid
+          <Text body color={processing ? "$interactiveOnBaseWarningSoft" : "$uiNeutralPrimary"}>
+            {processing ? "Processing..." : "Paid"}
             <Text emphasized primary body $platform-web={{ whiteSpace: "normal" }}>
               &nbsp;
               {item.merchant.name}
             </Text>
           </Text>
           <Text title primary color="$uiNeutralPrimary">
-            {Number(usdAmount).toLocaleString(undefined, {
+            {Number(item.usdAmount).toLocaleString(undefined, {
               style: "currency",
               currency: "USD",
               currencyDisplay: "narrowSymbol",
