@@ -93,7 +93,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                         )}
                       </View>
                       <XStack gap="$s4" alignItems="center">
-                        <Text emphasized headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
+                        <Text headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
                           {details.pan.match(/.{1,4}/g)?.join(" ") ?? ""}
                         </Text>
                         <Copy
@@ -112,13 +112,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                           <Text caption color="$uiNeutralInverseSecondary">
                             Expires
                           </Text>
-                          <Text
-                            emphasized
-                            headline
-                            letterSpacing={2}
-                            fontFamily="$mono"
-                            color="$uiNeutralInversePrimary"
-                          >
+                          <Text headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
                             {`${card.expirationMonth}/${card.expirationYear}`}
                           </Text>
                         </XStack>
@@ -126,13 +120,7 @@ export default function CardDetails({ open, onClose }: { open: boolean; onClose:
                           <Text caption color="$uiNeutralInverseSecondary">
                             CVV&nbsp;
                           </Text>
-                          <Text
-                            emphasized
-                            headline
-                            letterSpacing={2}
-                            fontFamily="$mono"
-                            color="$uiNeutralInversePrimary"
-                          >
+                          <Text headline letterSpacing={2} fontFamily="$mono" color="$uiNeutralInversePrimary">
                             {details.cvc}
                           </Text>
                         </XStack>

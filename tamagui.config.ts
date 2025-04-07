@@ -231,15 +231,10 @@ const tamagui = createTamagui({
     body,
     heading: body,
     mono: createFont({
-      family: "IBMPlexMono-Regular",
-      face: {
-        600: { normal: "IBMPlexMono-SemiBold" },
-        700: { normal: "IBMPlexMono-Bold" },
-        bold: { normal: "IBMPlexMono-Bold" },
-        normal: { normal: "IBMPlexMono-Regular" },
-      },
+      family: "IBMPlexMono-Medm",
+      face: { 500: { normal: "IBMPlexMono-Medm" } },
+      weight: { medium: 500 },
       size: config.fonts.mono.size,
-      weight: { 600: 600, 700: 700 },
     }),
   },
   animations: createAnimations({

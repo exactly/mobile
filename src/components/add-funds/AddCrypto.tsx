@@ -86,7 +86,7 @@ export default function AddCrypto() {
                     }}
                   >
                     {address && (
-                      <Text fontFamily="$mono" fontSize={18} color="$uiNeutralPrimary" fontWeight="bold">
+                      <Text fontFamily="$mono" fontSize={18} color="$uiNeutralPrimary">
                         {shortenHex(address)}
                       </Text>
                     )}

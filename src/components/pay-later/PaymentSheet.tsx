@@ -95,7 +95,6 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
                     textAlign="center"
                     fontFamily="$mono"
                     fontSize={40}
-                    fontWeight="bold"
                     overflow="hidden"
                     color={
                       isAfter(new Date(Number(maturity) * 1000), new Date()) ? "$uiNeutralPrimary" : "$uiErrorSecondary"

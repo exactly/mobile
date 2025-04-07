@@ -48,7 +48,6 @@ export default function PortfolioSummary({ usdBalance }: { usdBalance: bigint })
               sensitive
               textAlign="center"
               fontFamily="$mono"
-              emphasized
               subHeadline
               overflow="hidden"
               maxFontSizeMultiplier={1}

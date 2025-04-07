@@ -74,7 +74,7 @@ export default function Amount() {
                   <Text emphasized callout color="$uiNeutralSecondary">
                     To:
                   </Text>
-                  <Text emphasized callout color="$uiNeutralPrimary" fontFamily="$mono">
+                  <Text callout color="$uiNeutralPrimary" fontFamily="$mono">
                     {withdraw?.receiver ? shortenHex(withdraw.receiver) : "..."}
                   </Text>
                 </XStack>

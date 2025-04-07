@@ -71,7 +71,7 @@ export default function AssetSelection() {
                   <Text emphasized callout color="$uiNeutralSecondary">
                     To:
                   </Text>
-                  <Text emphasized callout color="$uiNeutralPrimary" fontFamily="$mono">
+                  <Text callout color="$uiNeutralPrimary" fontFamily="$mono">
                     {shortenHex(withdraw.receiver)}
                   </Text>
                 </XStack>

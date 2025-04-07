@@ -51,15 +51,7 @@ export default function CardLimits() {
         </View>
       )}
       <View display="flex" justifyContent="center" alignItems="center">
-        <Text
-          sensitive
-          textAlign="center"
-          fontFamily="$mono"
-          fontSize={40}
-          emphasized
-          overflow="hidden"
-          maxFontSizeMultiplier={1}
-        >
+        <Text sensitive textAlign="center" fontFamily="$mono" fontSize={40} overflow="hidden" maxFontSizeMultiplier={1}>
           {(markets
             ? Number(isCredit ? borrowLimit(markets, marketUSDCAddress) : withdrawLimit(markets, marketUSDCAddress)) /
               1e6

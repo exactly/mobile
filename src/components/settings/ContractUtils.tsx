@@ -82,7 +82,7 @@ export default function ContractUtils() {
       {isUpdating && <Spinner color="$interactiveBaseBrandDefault" />}
       {updatePluginHash && (
         <View borderRadius="$r4" borderWidth={2} borderColor="$borderNeutralSoft" padding={10}>
-          <Text textAlign="center" fontSize={14} fontFamily="$mono" width="100%" fontWeight="bold">
+          <Text textAlign="center" fontSize={14} fontFamily="$mono" width="100%">
             {updatePluginHash}
           </Text>
         </View>
