@@ -25,9 +25,6 @@ import { WagmiProvider } from "wagmi";
 
 import BDOGroteskBold from "../assets/fonts/BDOGrotesk-Bold.otf";
 import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
-import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
-import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
-import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
 import IBMPlexMonoMedium from "../assets/fonts/IBMPlexMono-Medm.otf";
 import AppIcon from "../assets/icon.png";
 import { OnboardingProvider } from "../components/context/OnboardingProvider";
@@ -106,9 +103,6 @@ export default wrap(function RootLayout() {
   useServerFonts({
     "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
     "BDOGrotesk-Regular": BDOGroteskRegular as FontSource,
-    "IBMPlexMono-Bold": IBMPlexMonoBold as FontSource,
-    "IBMPlexMono-Regular": IBMPlexMonoRegular as FontSource,
-    "IBMPlexMono-SemiBold": IBMPlexMonoSemiBold as FontSource,
     "IBMPlexMono-Medm": IBMPlexMonoMedium as FontSource,
   });
   useServerAssets([AppIcon]);

@@ -91,9 +91,6 @@ export default {
         fonts: [
           "src/assets/fonts/BDOGrotesk-Bold.otf",
           "src/assets/fonts/BDOGrotesk-Regular.otf",
-          "src/assets/fonts/IBMPlexMono-Bold.otf",
-          "src/assets/fonts/IBMPlexMono-Regular.otf",
-          "src/assets/fonts/IBMPlexMono-SemiBold.otf",
           "src/assets/fonts/IBMPlexMono-Medm.otf",
         ],
       } satisfies FontProps,
