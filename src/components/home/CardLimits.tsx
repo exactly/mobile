@@ -51,39 +51,21 @@ export default function CardLimits() {
         </View>
       )}
       <View display="flex" justifyContent="center" alignItems="center">
-        {isCredit ? (
-          <Text
-            sensitive
-            textAlign="center"
-            fontFamily="$mono"
-            fontSize={40}
-            emphasized
-            overflow="hidden"
-            maxFontSizeMultiplier={1}
-          >
-            {(markets ? Number(borrowLimit(markets, marketUSDCAddress)) / 1e6 : 0).toLocaleString(undefined, {
-              style: "currency",
-              currency: "USD",
-              currencyDisplay: "narrowSymbol",
-            })}
-          </Text>
-        ) : (
-          <Text
-            sensitive
-            textAlign="center"
-            fontFamily="$mono"
-            fontSize={40}
-            fontWeight="bold"
-            overflow="hidden"
-            maxFontSizeMultiplier={1}
-          >
-            {(markets ? Number(withdrawLimit(markets, marketUSDCAddress)) / 1e6 : 0).toLocaleString(undefined, {
-              style: "currency",
-              currency: "USD",
-              currencyDisplay: "narrowSymbol",
-            })}
-          </Text>
-        )}
+        <Text
+          sensitive
+          textAlign="center"
+          fontFamily="$mono"
+          fontSize={40}
+          emphasized
+          overflow="hidden"
+          maxFontSizeMultiplier={1}
+        >
+          {(markets
+            ? Number(isCredit ? borrowLimit(markets, marketUSDCAddress) : withdrawLimit(markets, marketUSDCAddress)) /
+              1e6
+            : 0
+          ).toLocaleString(undefined, { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol" })}
+        </Text>
       </View>
     </View>
   );
