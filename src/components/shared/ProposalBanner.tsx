@@ -18,17 +18,11 @@ const ProposalBanner = () => {
   } = useReadExaPreviewerPendingProposals({
     address: exaPreviewerAddress,
     args: [address ?? zeroAddress],
-    query: {
-      enabled: !!address,
-      gcTime: 0,
-      refetchInterval: 30_000,
-    },
+    query: { enabled: !!address, gcTime: 0, refetchInterval: 30_000 },
   });
-
   if (isLoading || !pendingProposals || pendingProposals.length === 0) {
     return null;
   }
-
   return (
     pendingProposals.length > 0 && (
       <View
