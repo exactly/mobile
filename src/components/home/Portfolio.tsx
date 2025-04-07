@@ -90,6 +90,8 @@ export default function Portfolio() {
                 fontSize={40}
                 overflow="hidden"
                 maxFontSizeMultiplier={1}
+                numberOfLines={1}
+                adjustsFontSizeToFit
               >
                 {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
                   style: "currency",

@@ -38,19 +38,10 @@ export default function PortfolioSummary({ usdBalance }: { usdBalance: bigint })
         router.push("/portfolio");
       }}
     >
-      <View
-        display="flex"
-        flexDirection="row"
-        justifyContent="space-between"
-        alignItems="center"
-        width="100%"
-        gap="$s3_5"
-      >
-        <View>
-          <Text color="$uiNeutralSecondary" emphasized footnote>
-            YOUR PORTFOLIO
-          </Text>
-        </View>
+      <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" width="100%">
+        <Text color="$uiNeutralSecondary" emphasized footnote>
+          YOUR PORTFOLIO
+        </Text>
         <View flexDirection="row" alignItems="center" gap="$s3">
           {symbols ? (
             <Text

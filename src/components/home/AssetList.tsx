@@ -14,155 +14,158 @@ import useAccountAssets from "../../utils/useAccountAssets";
 import AssetLogo from "../shared/AssetLogo";
 import Text from "../shared/Text";
 import View from "../shared/View";
+interface AssetItem {
+  symbol: string;
+  name: string;
+  logoURI?: string;
+  market?: string;
+  assetName?: string;
+  amount: bigint;
+  decimals: number;
+  usdPrice: bigint;
+  usdValue: bigint;
+  rate?: bigint;
+}
+
+function AssetRow({ asset }: { asset: AssetItem }) {
+  const { symbol, name, logoURI, amount, decimals, usdPrice, usdValue, rate } = asset;
+
+  const logoSource = logoURI ?? assetLogos[symbol as keyof typeof assetLogos];
+
+  const displayName = asset.assetName === "Wrapped Ether" ? "Ether" : (asset.assetName ?? name);
+
+  return (
+    <View flexDirection="row" alignItems="center" borderColor="$borderNeutralSoft">
+      <View flexDirection="row" alignItems="center" paddingVertical={vs(10)} gap="$s2">
+        <View flexDirection="row" gap={10} alignItems="center" flex={1}>
+          {logoURI ? (
+            <Image source={{ uri: logoSource }} width={32} height={32} borderRadius={16} />
+          ) : (
+            <AssetLogo uri={logoSource} width={32} height={32} />
+          )}
+          <View gap="$s2" alignItems="flex-start">
+            <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
+              {symbol}
+            </Text>
+            <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
+              {displayName}
+            </Text>
+          </View>
+        </View>
+        <View gap={5} flex={1.5}>
+          <View flexDirection="row" alignItems="center" justifyContent="flex-end">
+            <Text emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit>
+              {(Number(usdPrice) / 1e18).toLocaleString(undefined, {
+                style: "currency",
+                currency: "USD",
+                currencyDisplay: "narrowSymbol",
+              })}
+            </Text>
+          </View>
+          {rate === undefined ? (
+            asset.market ? (
+              <Skeleton height={20} width={50} colorMode={Appearance.getColorScheme() ?? "light"} />
+            ) : (
+              <Text caption textAlign="right" color="transparent">
+                -
+              </Text>
+            )
+          ) : (
+            <Text caption textAlign="right">
+              {(Number(rate) / 1e18).toLocaleString(undefined, {
+                style: "percent",
+              })}
+            </Text>
+          )}
+        </View>
+        <View gap={5} flex={1}>
+          <Text sensitive emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit textAlign="right">
+            {(Number(usdValue) / 1e18).toLocaleString(undefined, {
+              style: "currency",
+              currency: "USD",
+              currencyDisplay: "narrowSymbol",
+            })}
+          </Text>
+          <Text caption color="$uiNeutralSecondary" textAlign="right">
+            {(Number(amount) / 10 ** decimals).toLocaleString(undefined, {
+              minimumFractionDigits: 1,
+              maximumFractionDigits: Math.min(
+                8,
+                Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(usdValue) / 1e18)))),
+              ),
+              useGrouping: false,
+            })}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function AssetSection({ title, assets }: { title: string; assets: AssetItem[] }) {
+  if (assets.length === 0) return null;
+
+  return (
+    <View backgroundColor="$backgroundSoft" borderRadius="$r3" padded gap="$s2_5">
+      <Text emphasized headline color="$uiNeutralPrimary">
+        {title}
+      </Text>
+      {assets.map((asset, index) => (
+        <AssetRow key={index} asset={asset} />
+      ))}
+    </View>
+  );
+}
 
 export default function AssetList() {
   const { address } = useAccount();
-  const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
+  const { data: markets } = useReadPreviewerExactly({
+    address: previewerAddress,
+    args: [address ?? zeroAddress],
+  });
+
   const { externalAssets } = useAccountAssets();
-  const positions = markets
-    ?.map((market) => ({
-      ...market,
-      symbol: market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3),
-      usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
-    }))
-    .filter(({ floatingDepositAssets, symbol }) => (symbol === "USDC.e" ? floatingDepositAssets > 0n : true))
-    .sort((a, b) => Number(b.usdValue) - Number(a.usdValue));
-  const { data: snapshots, dataUpdatedAt } = useReadRatePreviewerSnapshot({ address: ratePreviewerAddress });
+  const { data: snapshots, dataUpdatedAt } = useReadRatePreviewerSnapshot({
+    address: ratePreviewerAddress,
+  });
 
   const rates = snapshots ? floatingDepositRates(snapshots, Math.floor(dataUpdatedAt / 1000)) : [];
+
+  const collateralAssets =
+    markets
+      ?.map((market) => {
+        const symbol = market.symbol.slice(3) === "WETH" ? "ETH" : market.symbol.slice(3);
+        const rate = rates.find((r: { market: string; rate: bigint }) => r.market === market.market)?.rate;
+
+        return {
+          symbol,
+          name: symbol,
+          assetName: market.assetName === "Wrapped Ether" ? "Ether" : market.assetName,
+          market: market.market,
+          amount: market.floatingDepositAssets,
+          decimals: market.decimals,
+          usdPrice: market.usdPrice,
+          usdValue: (market.floatingDepositAssets * market.usdPrice) / BigInt(10 ** market.decimals),
+          rate,
+        };
+      })
+      .filter(({ amount, symbol }) => (symbol === "USDC.e" ? amount > 0n : true))
+      .sort((a, b) => Number(b.usdValue) - Number(a.usdValue)) ?? [];
+
+  const externalAssetItems = externalAssets.map((asset) => ({
+    symbol: asset.symbol,
+    name: asset.name,
+    logoURI: asset.logoURI,
+    amount: asset.amount ?? 0n,
+    decimals: asset.decimals,
+    usdValue: BigInt(Number(asset.usdValue) * 1e18),
+    usdPrice: BigInt(Number(asset.priceUSD) * 1e18),
+  }));
+
   return (
-    <YStack>
-      <View backgroundColor="$backgroundSoft" borderRadius="$r3" padded gap="$s2_5">
-        <Text emphasized headline color="$uiNeutralPrimary">
-          Collateral Assets
-        </Text>
-        {positions?.map(({ symbol, assetName, floatingDepositAssets, decimals, usdValue, usdPrice, market }, index) => {
-          const rate = rates.find((r: { market: string; rate: bigint }) => r.market === market)?.rate;
-          return (
-            <View key={index} flexDirection="row" alignItems="center" borderColor="$borderNeutralSoft">
-              <View flexDirection="row" alignItems="center" paddingVertical={vs(10)} gap="$s2">
-                <View flexDirection="row" gap={10} alignItems="center" flex={1}>
-                  <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={32} height={32} />
-                  <View gap="$s2" alignItems="flex-start">
-                    <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1} adjustsFontSizeToFit>
-                      {symbol}
-                    </Text>
-                    <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
-                      {assetName === "Wrapped Ether" ? "Ether" : assetName}
-                    </Text>
-                  </View>
-                </View>
-                <View gap={5} flex={1.5}>
-                  <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                    <Text emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit>
-                      {(Number(usdPrice) / 1e18).toLocaleString(undefined, {
-                        style: "currency",
-                        currency: "USD",
-                        notation: "compact",
-                        currencyDisplay: "narrowSymbol",
-                      })}
-                    </Text>
-                  </View>
-                  {rate === undefined ? (
-                    <Skeleton height={20} width={50} colorMode={Appearance.getColorScheme() ?? "light"} />
-                  ) : (
-                    <Text caption textAlign="right">
-                      {(Number(rate) / 1e18).toLocaleString(undefined, {
-                        style: "percent",
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </Text>
-                  )}
-                </View>
-                <View gap={5} flex={1}>
-                  <Text sensitive emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit textAlign="right">
-                    {(Number(usdValue) / 1e18).toLocaleString(undefined, {
-                      style: "currency",
-                      currency: "USD",
-                      notation: "compact",
-                      currencyDisplay: "narrowSymbol",
-                    })}
-                  </Text>
-                  <Text caption color="$uiNeutralSecondary" textAlign="right">
-                    {(Number(floatingDepositAssets) / 10 ** decimals).toLocaleString(undefined, {
-                      minimumFractionDigits: 1,
-                      maximumFractionDigits: Math.min(
-                        8,
-                        Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(usdValue) / 1e18)))),
-                      ),
-                      useGrouping: false,
-                    })}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          );
-        })}
-      </View>
-      <View backgroundColor="$backgroundSoft" borderRadius="$r3" padding="$s4" gap="$s2_5">
-        <Text emphasized headline color="$uiNeutralPrimary" numberOfLines={1}>
-          Other Assets
-        </Text>
-        {externalAssets.map(({ name, symbol, logoURI, amount, priceUSD, decimals, usdValue }, index) => {
-          return (
-            <View
-              key={index}
-              flexDirection="row"
-              alignItems="center"
-              justifyContent="space-between"
-              borderColor="$borderNeutralSoft"
-            >
-              <View flexDirection="row" paddingVertical={vs(10)} flex={1}>
-                <View flexDirection="row" gap={10} flex={1} alignItems="center">
-                  <Image source={{ uri: logoURI }} width={32} height={32} borderRadius={16} />
-                  <View gap="$s2" alignItems="flex-start" flexShrink={1}>
-                    <Text subHeadline color="$uiNeutralPrimary" numberOfLines={1}>
-                      {symbol}
-                    </Text>
-                    <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
-                      {name}
-                    </Text>
-                  </View>
-                </View>
-                <View gap={5} flex={1.5}>
-                  <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-                    <Text emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit>
-                      {Number(priceUSD).toLocaleString(undefined, {
-                        style: "currency",
-                        currency: "USD",
-                        notation: "compact",
-                        currencyDisplay: "narrowSymbol",
-                      })}
-                    </Text>
-                  </View>
-                </View>
-                <View gap={5} flex={1}>
-                  <View flexDirection="row" alignItems="flex-start" justifyContent="flex-end">
-                    <Text sensitive emphasized subHeadline textAlign="right">
-                      {Number(usdValue).toLocaleString(undefined, {
-                        style: "currency",
-                        currency: "USD",
-                        currencyDisplay: "narrowSymbol",
-                      })}
-                    </Text>
-                  </View>
-                  <Text caption color="$uiNeutralSecondary" textAlign="right">
-                    {(Number(amount) / 10 ** decimals).toLocaleString(undefined, {
-                      minimumFractionDigits: 1,
-                      maximumFractionDigits: Math.min(
-                        8,
-                        Math.max(0, decimals - Math.ceil(Math.log10(Math.max(1, Number(usdValue) / 1e18)))),
-                      ),
-                      useGrouping: false,
-                    })}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          );
-        })}
-      </View>
+    <YStack gap="$s4">
+      <AssetSection title="Collateral Assets" assets={collateralAssets} />
+      <AssetSection title="Other Assets" assets={externalAssetItems} />
     </YStack>
   );
 }
