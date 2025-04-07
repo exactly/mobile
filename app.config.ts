@@ -94,6 +94,7 @@ export default {
           "src/assets/fonts/IBMPlexMono-Bold.otf",
           "src/assets/fonts/IBMPlexMono-Regular.otf",
           "src/assets/fonts/IBMPlexMono-SemiBold.otf",
+          "src/assets/fonts/IBMPlexMono-Medm.otf",
         ],
       } satisfies FontProps,
     ],

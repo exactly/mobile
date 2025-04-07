@@ -28,6 +28,7 @@ import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoBold from "../assets/fonts/IBMPlexMono-Bold.otf";
 import IBMPlexMonoRegular from "../assets/fonts/IBMPlexMono-Regular.otf";
 import IBMPlexMonoSemiBold from "../assets/fonts/IBMPlexMono-SemiBold.otf";
+import IBMPlexMonoMedium from "../assets/fonts/IBMPlexMono-Medm.otf";
 import AppIcon from "../assets/icon.png";
 import { OnboardingProvider } from "../components/context/OnboardingProvider";
 import ThemeProvider from "../components/context/ThemeProvider";
@@ -108,6 +109,7 @@ export default wrap(function RootLayout() {
     "IBMPlexMono-Bold": IBMPlexMonoBold as FontSource,
     "IBMPlexMono-Regular": IBMPlexMonoRegular as FontSource,
     "IBMPlexMono-SemiBold": IBMPlexMonoSemiBold as FontSource,
+    "IBMPlexMono-Medm": IBMPlexMonoMedium as FontSource,
   });
   useServerAssets([AppIcon]);
   useEffect(() => {
