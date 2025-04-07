@@ -7,6 +7,10 @@
       "pattern": [{ "regexp": "^(.*):(\\d+):(\\d+) - (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }]
     },
     {
+      "owner": "pnpm-audit",
+      "pattern": [{ "regexp": "^│\\s(low|moderate|high|critical)\\s*│\\s(.+?)\\s*│$", "message": 2 }]
+    },
+    {
       "owner": "forge-fmt",
       "pattern": [{ "regexp": "^(Diff in (.+)):$", "file": 2, "message": 1 }]
     },
