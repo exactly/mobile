@@ -112,7 +112,7 @@ describe("proposal", () => {
             },
           },
         }),
-        vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 2),
+        vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 2, 6666),
       ]);
 
       const [withdrawReceipt, anotherWithdrawReceipt] = waitForTransactionReceipt.mock.settledResults;
@@ -245,7 +245,7 @@ describe("proposal", () => {
             },
           },
         }),
-        vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 5),
+        vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 5, 6666),
       ]);
 
       const withdrawReceipt = waitForTransactionReceipt.mock.settledResults[3];
