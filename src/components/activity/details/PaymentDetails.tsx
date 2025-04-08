@@ -77,7 +77,7 @@ export default function PaymentDetails({ item }: { item: CreditActivity | DebitA
               `${Number(
                 (item as InstallmentsActivity).borrow.installments.reduce(
                   (accumulator, installment) => accumulator + installment.fee,
-                  0,
+                  item.usdAmount,
                 ),
               ).toLocaleString(undefined, { maximumFractionDigits: 2 })} USDC`}
           </Text>
