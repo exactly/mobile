@@ -50,7 +50,7 @@ export default styled(Button, {
         flex: 1,
         borderColor: "transparent",
         fontSize: 15,
-        fontWeight: 700,
+        fontWeight: "bold",
         height: 68,
         padding: "$s4_5",
         borderRadius: "$r4",

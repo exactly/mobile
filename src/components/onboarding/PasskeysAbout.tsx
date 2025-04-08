@@ -36,31 +36,31 @@ export default function PasskeysAbout() {
             <ScrollView flex={1} showsVerticalScrollIndicator={false}>
               <View flex={1} gap="$s8">
                 <View gap="$s5">
-                  <Text fontSize={17} fontWeight={700} textAlign="left">
+                  <Text fontSize={17} fontWeight="bold" textAlign="left">
                     How passkeys work
                   </Text>
-                  <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
+                  <Text fontSize={16} color="$uiNeutralSecondary" textAlign="left">
                     Passkeys replace passwords with cryptographic keys. Your private key stays on your device, while the
                     public key is shared with the service. This ensures secure and seamless authentication.
                   </Text>
                 </View>
                 <View gap="$s5">
-                  <Text fontSize={17} fontWeight={700} textAlign="left">
+                  <Text fontSize={17} fontWeight="bold" textAlign="left">
                     Passkeys advantages
                   </Text>
-                  <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
+                  <Text fontSize={16} color="$uiNeutralSecondary" textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
                       {`Strong credentials.   `}
                     </Text>
                     Every passkey is strong. They&apos;re never guessable, reused, or weak.
                   </Text>
-                  <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
+                  <Text fontSize={16} color="$uiNeutralSecondary" textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
                       {`Safe from server leaks.   `}
                     </Text>
                     Because servers only keep public keys, servers are less valuable targets for hackers.
                   </Text>
-                  <Text fontSize={16} fontWeight={400} color="$uiNeutralSecondary" textAlign="left">
+                  <Text fontSize={16} color="$uiNeutralSecondary" textAlign="left">
                     <Text color="$uiNeutralSecondary" fontWeight="bold">
                       {`Safe from phishing.   `}
                     </Text>

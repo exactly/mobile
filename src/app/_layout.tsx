@@ -51,7 +51,7 @@ const userFeedback = feedbackIntegration({
   cancelButtonLabel: "Cancel",
   styles: {
     container: { gap: 12, padding: 16 },
-    label: { fontWeight: 600 },
+    label: { fontWeight: "bold" },
     textArea: { minHeight: 150, borderWidth: 1, borderColor: "#CCCCCC", borderRadius: 5 },
     input: { borderWidth: 1, borderRadius: 5, padding: 5, color: "#000000" },
     submitButton: {

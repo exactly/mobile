@@ -215,13 +215,12 @@ const tokens = createTokens({
 const body = createFont({
   family: "BDOGrotesk-Regular",
   face: {
-    600: { normal: "BDOGrotesk-Bold" },
-    700: { normal: "BDOGrotesk-Bold" },
-    bold: { normal: "BDOGrotesk-Bold" },
-    normal: { normal: "BDOGrotesk-Regular" },
+    400: { normal: "BDOGrotesk-Regular" },
+    600: { normal: "BDOGrotesk-DemiBold" },
+    700: { normal: "BDOGrotesk-DemiBold" },
   },
   size: config.fonts.body.size,
-  weight: { 600: 600, 700: 700 },
+  weight: { regular: 400, semibold: 600 },
 });
 
 const tamagui = createTamagui({
@@ -237,6 +236,7 @@ const tamagui = createTamagui({
       size: config.fonts.mono.size,
     }),
   },
+  defaultFont: "body",
   animations: createAnimations({
     bouncy: { type: "spring", damping: 9, mass: 0.9, stiffness: 150 },
     lazy: { type: "spring", damping: 18, stiffness: 50 },
