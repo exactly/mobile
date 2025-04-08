@@ -23,7 +23,6 @@ import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { WagmiProvider } from "wagmi";
 
-import BDOGroteskBold from "../assets/fonts/BDOGrotesk-Bold.otf";
 import BDOGroteskDemiBold from "../assets/fonts/BDOGrotesk-DemiBold.otf";
 import BDOGroteskRegular from "../assets/fonts/BDOGrotesk-Regular.otf";
 import IBMPlexMonoMedium from "../assets/fonts/IBMPlexMono-Medm.otf";
@@ -102,7 +101,6 @@ export default wrap(function RootLayout() {
   const navigationContainer = useNavigationContainerRef();
 
   useServerFonts({
-    "BDOGrotesk-Bold": BDOGroteskBold as FontSource,
     "BDOGrotesk-DemiBold": BDOGroteskDemiBold as FontSource,
     "BDOGrotesk-Regular": BDOGroteskRegular as FontSource,
     "IBMPlexMono-Medm": IBMPlexMonoMedium as FontSource,
