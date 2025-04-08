@@ -52,7 +52,7 @@ export default function VerificationFailure({ open, onClose }: { open: boolean; 
                 </YStack>
                 <YStack gap="$s4_5">
                   <Text emphasized textAlign="center" color="$interactiveTextBrandDefault" title>
-                    We couldn&apos;t verify your identity{/* cspell:ignore couldn */}
+                    We couldn&apos;t verify your identity{/* cspell:ignoreRegExp \bcouldn&apos;t\b */}
                   </Text>
                   <Text color="$uiNeutralPlaceholder" footnote textAlign="center">
                     This may be due to missing or incorrect information. Please contact support to resolve it.

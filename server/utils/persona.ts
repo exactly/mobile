@@ -20,8 +20,8 @@ if (!process.env.PERSONA_TEMPLATE_ID) throw new Error("missing persona template 
 if (!process.env.PERSONA_URL) throw new Error("missing persona url");
 if (!process.env.PERSONA_WEBHOOK_SECRET) throw new Error("missing persona webhook secret");
 
-export const CRYPTOMATE_TEMPLATE = "itmpl_8uim4FvD5P3kFpKHX37CW817"; // cspell:disable-line
-export const PANDA_TEMPLATE = "itmpl_1igCJVqgf3xuzqKYD87HrSaDavU2"; // cspell:disable-line
+export const CRYPTOMATE_TEMPLATE = "itmpl_8uim4FvD5P3kFpKHX37CW817";
+export const PANDA_TEMPLATE = "itmpl_1igCJVqgf3xuzqKYD87HrSaDavU2";
 
 const authorization = `Bearer ${process.env.PERSONA_API_KEY}`;
 const baseURL = process.env.PERSONA_URL;

@@ -58,19 +58,20 @@ export default async function setup({ provide }: TestProject) {
   const installmentsRouter = protocol[31].contractAddress;
 
   if (initialize) {
+    // cspell:ignoreRegExp [\b_][A-Z]+_ADDRESS\b
     shell.env.PROTOCOL_AUDITOR_ADDRESS = auditor;
     shell.env.PROTOCOL_EXA_ADDRESS = exa;
-    shell.env.PROTOCOL_MARKETEXA_ADDRESS = marketEXA; // cspell:disable-line
+    shell.env.PROTOCOL_MARKETEXA_ADDRESS = marketEXA;
     shell.env.PROTOCOL_USDC_ADDRESS = usdc;
-    shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC; // cspell:disable-line
+    shell.env.PROTOCOL_MARKETUSDC_ADDRESS = marketUSDC;
     shell.env.PROTOCOL_WETH_ADDRESS = weth;
-    shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH; // cspell:disable-line
-    shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer; // cspell:disable-line
-    shell.env.PROTOCOL_DEBTMANAGER_ADDRESS = debtManager; // cspell:disable-line
+    shell.env.PROTOCOL_MARKETWETH_ADDRESS = marketWETH;
+    shell.env.PROTOCOL_BALANCERVAULT_ADDRESS = balancer;
+    shell.env.PROTOCOL_DEBTMANAGER_ADDRESS = debtManager;
     shell.env.PROTOCOL_PREVIEWER_ADDRESS = previewer;
-    shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter; // cspell:disable-line
-    shell.env.PROTOCOL_ESEXA_ADDRESS = padHex("0x666", { size: 20 }); // cspell:disable-line
-    shell.env.PROTOCOL_REWARDSCONTROLLER_ADDRESS = padHex("0x666", { size: 20 }); // cspell:disable-line
+    shell.env.PROTOCOL_INSTALLMENTSROUTER_ADDRESS = installmentsRouter;
+    shell.env.PROTOCOL_ESEXA_ADDRESS = padHex("0x666", { size: 20 });
+    shell.env.PROTOCOL_REWARDSCONTROLLER_ADDRESS = padHex("0x666", { size: 20 });
 
     await $(shell)`forge script test/mocks/Mocks.s.sol
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --skip-simulation`;
@@ -86,7 +87,6 @@ export default async function setup({ provide }: TestProject) {
 
     await $(shell)`forge script node_modules/webauthn-owner-plugin/script/Plugin.s.sol --sender ${deployer}
       --unlocked ${deployer} --rpc-url ${foundry.rpcUrls.default.http[0]} --broadcast --skip-simulation`;
-    // cspell:disable-next-line
     shell.env.BROADCAST_WEBAUTHNOWNERPLUGIN_ADDRESS = parse(
       object({
         transactions: tuple([object({ contractName: literal("WebauthnOwnerPlugin"), contractAddress: Address })]),

@@ -144,8 +144,8 @@ export async function auth() {
   if (!success) await queryClient.fetchQuery<number | undefined>({ queryKey: ["auth"] });
 }
 
-const PANDA_TEMPLATE = "itmpl_1igCJVqgf3xuzqKYD87HrSaDavU2"; // cspell:disable-line
-const CRYPTOMATE_TEMPLATE = "itmpl_8uim4FvD5P3kFpKHX37CW817"; // cspell:disable-line
+const PANDA_TEMPLATE = "itmpl_1igCJVqgf3xuzqKYD87HrSaDavU2";
+const CRYPTOMATE_TEMPLATE = "itmpl_8uim4FvD5P3kFpKHX37CW817";
 
 export async function getTemplateId() {
   try {

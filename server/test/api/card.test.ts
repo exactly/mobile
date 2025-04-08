@@ -200,7 +200,7 @@ describe("authenticated", () => {
 
     it("creates a cm card if the user doesn't update plugin", async () => {
       vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
-      vi.spyOn(cryptomate, "createCard").mockResolvedValueOnce({ ...cryptomateTemplate, id: account }); // cspell:disable-line
+      vi.spyOn(cryptomate, "createCard").mockResolvedValueOnce({ ...cryptomateTemplate, id: account });
       vi.spyOn(cryptomate, "getPAN").mockResolvedValueOnce("https://cm.com");
       vi.spyOn(panda, "isPanda").mockResolvedValueOnce(false);
 

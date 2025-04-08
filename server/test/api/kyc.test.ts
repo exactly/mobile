@@ -48,7 +48,7 @@ describe("authenticated", () => {
       { headers: { "test-credential-id": account, SessionID: "fakeSession" } },
     );
 
-    expect(getInquiry).toHaveBeenCalledWith(account, "itmpl_8uim4FvD5P3kFpKHX37CW817"); //cspell:disable-line
+    expect(getInquiry).toHaveBeenCalledWith(account, "itmpl_8uim4FvD5P3kFpKHX37CW817");
     expect(getAccount).toHaveBeenCalledOnce();
     await expect(response.json()).resolves.toBe("ok");
     expect(response.headers.get("User-Country")).toBe("AR");
