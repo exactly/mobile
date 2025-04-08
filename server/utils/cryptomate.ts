@@ -3,7 +3,7 @@ import { Address, Hash } from "@exactly/common/validation";
 import removeAccents from "remove-accents";
 import * as v from "valibot";
 import { privateKeyToAccount } from "viem/accounts";
-import { optimism } from "viem/chains";
+import { optimism, optimismSepolia } from "viem/chains";
 
 import { track } from "./segment";
 import { issuerCheckerAddress } from "../generated/contracts";
@@ -115,11 +115,19 @@ const CardResponse = v.object({
 
 const PANResponse = v.object({ url: v.pipe(v.string(), v.url()) });
 
+const checker =
+  {
+    [optimism.id]: "0xD3dEA3b447859413D8a055954E4fB9409c7B744E",
+    [optimismSepolia.id]: "0x23b6714abf4a62800d9be1227bfe60142dc62d6b",
+  }[chain.id] ?? issuerCheckerAddress;
+
 // TODO remove code below
-const issuer = privateKeyToAccount(v.parse(Hash, process.env.ISSUER_PRIVATE_KEY, { message: "invalid private key" }));
+const issuer = privateKeyToAccount(
+  v.parse(Hash, process.env.CRYPTOMATE_ISSUER_PRIVATE_KEY, { message: "invalid private key" }),
+);
 export function signIssuerOp({ account, amount, timestamp }: { account: Address; amount: bigint; timestamp: number }) {
   return issuer.signTypedData({
-    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: issuerCheckerAddress },
+    domain: { chainId: chain.id, name: "IssuerChecker", version: "1", verifyingContract: v.parse(Address, checker) },
     types: {
       Operation: [
         { name: "account", type: "address" },

@@ -12,6 +12,7 @@ export default defineConfig({
       AUTH_SECRET: "auth",
       COLLECTOR_ADDRESS: privateKeyToAddress(padHex("0x666")),
       CRYPTOMATE_API_KEY: "cryptomate",
+      CRYPTOMATE_ISSUER_PRIVATE_KEY: padHex("0x420"),
       CRYPTOMATE_URL: "https://cryptomate.test",
       CRYPTOMATE_WEBHOOK_KEY: "cryptomate",
       EXPO_PUBLIC_ALCHEMY_API_KEY: " ",
