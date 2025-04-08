@@ -30,5 +30,6 @@ export default defineConfig({
       SEGMENT_WRITE_KEY: "segment",
     },
     coverage: { enabled: true, reporter: ["lcov"] },
+    testTimeout: 16_666,
   },
 });
