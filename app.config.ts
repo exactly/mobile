@@ -90,6 +90,7 @@ export default {
       {
         fonts: [
           "src/assets/fonts/BDOGrotesk-Bold.otf",
+          "src/assets/fonts/BDOGrotesk-DemiBold.otf",
           "src/assets/fonts/BDOGrotesk-Regular.otf",
           "src/assets/fonts/IBMPlexMono-Medm.otf",
         ],
