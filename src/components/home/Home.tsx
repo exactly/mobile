@@ -110,7 +110,7 @@ export default function Home() {
 
               {(KYCStatus !== "ok" || cardDetails?.provider !== "panda") && usdBalance > 0n && (
                 <InfoAlert
-                  title="We’re upgrading all Exa Cards by migrating them to a new and improved card issuer. Existing cards will work until June 21st, 2025, and upgrading will be required after this date."
+                  title="We’re upgrading all Exa Cards by migrating them to a new and improved card issuer. Existing cards will work until May 18th, 2025, and upgrading will be required after this date."
                   actionText="Start Exa Card upgrade"
                   onPress={() => {
                     queryClient.setQueryData(["card-upgrade-open"], true);
