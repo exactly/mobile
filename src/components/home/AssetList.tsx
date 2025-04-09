@@ -16,7 +16,6 @@ import Text from "../shared/Text";
 import View from "../shared/View";
 interface AssetItem {
   symbol: string;
-  name: string;
   logoURI?: string;
   market?: string;
   assetName?: string;
@@ -28,11 +27,9 @@ interface AssetItem {
 }
 
 function AssetRow({ asset }: { asset: AssetItem }) {
-  const { symbol, name, logoURI, amount, decimals, usdPrice, usdValue, rate } = asset;
+  const { symbol, logoURI, amount, decimals, usdPrice, usdValue, rate } = asset;
 
   const logoSource = logoURI ?? assetLogos[symbol as keyof typeof assetLogos];
-
-  const displayName = asset.assetName === "Wrapped Ether" ? "Ether" : (asset.assetName ?? name);
 
   return (
     <View flexDirection="row" alignItems="center" borderColor="$borderNeutralSoft">
@@ -48,13 +45,6 @@ function AssetRow({ asset }: { asset: AssetItem }) {
               {symbol}
             </Text>
             <Text caption color="$uiNeutralSecondary" numberOfLines={1}>
-              {displayName}
-            </Text>
-          </View>
-        </View>
-        <View gap={5} flex={1.5}>
-          <View flexDirection="row" alignItems="center" justifyContent="flex-end">
-            <Text emphasized subHeadline numberOfLines={1} adjustsFontSizeToFit>
               {(Number(usdPrice) / 1e18).toLocaleString(undefined, {
                 style: "currency",
                 currency: "USD",
@@ -62,20 +52,32 @@ function AssetRow({ asset }: { asset: AssetItem }) {
               })}
             </Text>
           </View>
+        </View>
+        <View gap={5} flex={1} alignItems="flex-end">
           {rate === undefined ? (
             asset.market ? (
-              <Skeleton height={20} width={50} colorMode={Appearance.getColorScheme() ?? "light"} />
+              <>
+                <Skeleton height={15} width={50} colorMode={Appearance.getColorScheme() ?? "light"} />
+                <Skeleton height={12} width={50} colorMode={Appearance.getColorScheme() ?? "light"} />
+              </>
             ) : (
               <Text caption textAlign="right" color="transparent">
                 -
               </Text>
             )
           ) : (
-            <Text caption textAlign="right">
-              {(Number(rate) / 1e18).toLocaleString(undefined, {
-                style: "percent",
-              })}
-            </Text>
+            <>
+              <Text subHeadline emphasized textAlign="right" color="$interactiveTextSuccessDefault">
+                {(Number(rate) / 1e18).toLocaleString(undefined, {
+                  style: "percent",
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+              <Text caption color="$uiNeutralSecondary" textAlign="right">
+                Yield
+              </Text>
+            </>
           )}
         </View>
         <View gap={5} flex={1}>

@@ -38,43 +38,50 @@ export default function PortfolioSummary({ usdBalance }: { usdBalance: bigint })
         router.push("/portfolio");
       }}
     >
-      <View display="flex" flexDirection="row" justifyContent="space-between" alignItems="center" width="100%">
+      <View
+        display="flex"
+        flexDirection="row"
+        justifyContent="space-between"
+        alignItems="center"
+        width="100%"
+        gap="$s2"
+      >
         <Text color="$uiNeutralSecondary" emphasized footnote>
           YOUR PORTFOLIO
         </Text>
-        <View flexDirection="row" alignItems="center" gap="$s3">
+        {symbols ? (
+          <Text
+            sensitive
+            textAlign="center"
+            subHeadline
+            emphasized
+            overflow="hidden"
+            maxFontSizeMultiplier={1}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
+              style: "currency",
+              currency: "USD",
+              currencyDisplay: "narrowSymbol",
+            })}
+          </Text>
+        ) : (
+          <Skeleton height={20} width={90} colorMode={Appearance.getColorScheme() ?? "light"} />
+        )}
+        <View flexDirection="row">
           {symbols ? (
-            <Text
-              sensitive
-              textAlign="center"
-              fontFamily="$mono"
-              subHeadline
-              overflow="hidden"
-              maxFontSizeMultiplier={1}
-            >
-              {(Number(usdBalance) / 1e18).toLocaleString(undefined, {
-                style: "currency",
-                currency: "USD",
-                currencyDisplay: "narrowSymbol",
-              })}
-            </Text>
+            symbols.map((symbol, index) => (
+              <View key={symbol} marginRight={index < symbols.length - 1 ? -8 : 0} zIndex={index}>
+                <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={16} height={16} />
+              </View>
+            ))
           ) : (
-            <Skeleton height={20} width={100} colorMode={Appearance.getColorScheme() ?? "light"} />
+            <Skeleton radius="round" colorMode={Appearance.getColorScheme() ?? "light"} height={16} width={16} />
           )}
-          <View flexDirection="row">
-            {symbols ? (
-              symbols.map((symbol, index) => (
-                <View key={symbol} marginRight={index < symbols.length - 1 ? -8 : 0} zIndex={index}>
-                  <AssetLogo uri={assetLogos[symbol as keyof typeof assetLogos]} width={16} height={16} />
-                </View>
-              ))
-            ) : (
-              <Skeleton radius="round" colorMode={Appearance.getColorScheme() ?? "light"} height={16} width={16} />
-            )}
-          </View>
-
-          <ChevronRight size={24} color="$interactiveTextBrandDefault" />
         </View>
+
+        <ChevronRight size={24} color="$interactiveTextBrandDefault" />
       </View>
     </View>
   );
