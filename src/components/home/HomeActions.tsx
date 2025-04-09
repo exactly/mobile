@@ -65,7 +65,7 @@ export default function HomeActions() {
         iconAfter={<ArrowDownToLine size={18 * fontScale} color="$interactiveOnBaseBrandDefault" />}
         backgroundColor="$interactiveBaseBrandDefault"
         color="$interactiveOnBaseBrandDefault"
-        {...contained}
+        contained
       >
         <Text fontSize={15} emphasized numberOfLines={1} adjustsFontSizeToFit color="$interactiveOnBaseBrandDefault">
           Add funds
@@ -87,7 +87,7 @@ export default function HomeActions() {
         }
         backgroundColor="$interactiveBaseBrandSoftDefault"
         color="$interactiveOnBaseBrandSoft"
-        {...outlined}
+        outlined
       >
         <Text fontSize={15} emphasized numberOfLines={1} adjustsFontSizeToFit color="$interactiveOnBaseBrandSoft">
           Send
@@ -96,16 +96,3 @@ export default function HomeActions() {
     </View>
   );
 }
-
-const contained = {
-  hoverStyle: { backgroundColor: "$interactiveBaseBrandHover" },
-  pressStyle: { backgroundColor: "$interactiveBaseBrandPressed" },
-};
-
-const outlined = {
-  hoverStyle: { backgroundColor: "$interactiveBaseBrandSoftHover" },
-  pressStyle: {
-    backgroundColor: "$interactiveBaseBrandSoftPressed",
-    color: "$interactiveOnBaseBrandSoft",
-  },
-};
