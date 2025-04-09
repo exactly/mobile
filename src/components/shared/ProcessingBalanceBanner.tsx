@@ -9,7 +9,7 @@ import { getActivity } from "../../utils/server";
 const ProcessingBalanceBanner = () => {
   const { data: country } = useQuery({ queryKey: ["user", "country"] });
   const { data: processingBalance } = useQuery({
-    queryKey: ["activity"],
+    queryKey: ["processing-balance"],
     queryFn: () => getActivity(),
     select: (activity) =>
       activity.reduce(
