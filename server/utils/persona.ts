@@ -85,7 +85,7 @@ const GetAccountsResponse = object({
     object({
       id: string(),
       type: literal("account"),
-      attributes: object({ "country-code": string() }),
+      attributes: object({ "country-code": nullable(string(), "unknown") }),
     }),
   ),
 });
