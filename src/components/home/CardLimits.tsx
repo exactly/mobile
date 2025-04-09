@@ -28,7 +28,7 @@ export default function CardLimits() {
         </Text>
         <Pressable
           onPress={() => {
-            presentArticle(isCredit ? "9467331" : "9922633").catch(reportError);
+            presentArticle("9922633").catch(reportError);
           }}
           hitSlop={15}
         >

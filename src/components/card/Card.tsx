@@ -204,7 +204,7 @@ export default function Card() {
                     </Pressable>
                     <Pressable
                       onPress={() => {
-                        presentArticle("9994746").catch(reportError);
+                        presentArticle("10022626").catch(reportError);
                       }}
                       hitSlop={15}
                     >
