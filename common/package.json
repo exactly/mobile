@@ -1,6 +1,6 @@
 {
   "name": "@exactly/common",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "engines": {
     "node": ">=22.14.0"
