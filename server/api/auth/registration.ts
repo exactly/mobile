@@ -1,6 +1,6 @@
 import AUTH_EXPIRY from "@exactly/common/AUTH_EXPIRY";
 import domain from "@exactly/common/domain";
-import { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
+import chain, { exaAccountFactoryAddress } from "@exactly/common/generated/chain";
 import { Address, Base64URL } from "@exactly/common/validation";
 import { vValidator } from "@hono/valibot-validator";
 import { captureException, setUser } from "@sentry/node";
@@ -14,6 +14,7 @@ import { Hono } from "hono";
 import { setCookie, setSignedCookie } from "hono/cookie";
 import { any, array, check, literal, nullish, object, optional, parse, pipe, string, transform } from "valibot";
 import type { Hex } from "viem";
+import { optimism } from "viem/chains";
 
 import database, { credentials } from "../../database";
 import { webhooksKey } from "../../utils/alchemy";
@@ -27,6 +28,9 @@ import { identify } from "../../utils/segment";
 
 if (!process.env.ALCHEMY_ACTIVITY_ID) throw new Error("missing alchemy activity id");
 const webhookId = process.env.ALCHEMY_ACTIVITY_ID;
+
+const factory =
+  { [optimism.id]: "0xcbeaAF42Cc39c17e84cBeFe85160995B515A9668" as const }[chain.id] ?? exaAccountFactoryAddress;
 
 export default new Hono()
   .get("/", async (c) => {
@@ -121,7 +125,7 @@ export default new Hono()
       }
 
       const expires = new Date(Date.now() + AUTH_EXPIRY);
-      const account = deriveAddress(parse(Address, exaAccountFactoryAddress), { x, y });
+      const account = deriveAddress(parse(Address, factory), { x, y });
       setUser({ id: account });
       await Promise.all([
         setSignedCookie(c, "credential_id", credential.id, authSecret, { domain, expires, httpOnly: true }),
@@ -130,7 +134,7 @@ export default new Hono()
             account,
             id: credential.id,
             publicKey: credential.publicKey,
-            factory: exaAccountFactoryAddress,
+            factory,
             transports: attestation.response.transports,
             counter: credential.counter,
           },
@@ -147,9 +151,6 @@ export default new Hono()
       ]);
       identify({ userId: account });
 
-      return c.json(
-        { credentialId: credential.id, factory: exaAccountFactoryAddress, x, y, auth: expires.getTime() },
-        200,
-      );
+      return c.json({ credentialId: credential.id, factory, x, y, auth: expires.getTime() }, 200);
     },
   );
