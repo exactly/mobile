@@ -41,7 +41,7 @@ const ProposalBanner = () => {
           emphasized
           footnote
           color="$interactiveOnBaseInformationSoft"
-        >{`Processing ${pendingProposals.length} request${pendingProposals.length > 1 ? "s" : ""}`}</Text>
+        >{`Pending requests → ${pendingProposals.length}`}</Text>
         <ChevronRight size={16} color="$interactiveOnBaseInformationSoft" />
       </View>
     )
