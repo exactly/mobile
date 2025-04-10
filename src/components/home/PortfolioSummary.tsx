@@ -2,7 +2,7 @@ import { previewerAddress } from "@exactly/common/generated/chain";
 import { ChevronRight } from "@tamagui/lucide-icons";
 import { router } from "expo-router";
 import { Skeleton } from "moti/skeleton";
-import React from "react";
+import React, { useRef } from "react";
 import { Appearance } from "react-native";
 import { View } from "tamagui";
 import { zeroAddress } from "viem";
@@ -16,6 +16,7 @@ import Text from "../shared/Text";
 export default function PortfolioSummary({ usdBalance }: { usdBalance: bigint }) {
   const { address } = useAccount();
   const { data: markets } = useReadPreviewerExactly({ address: previewerAddress, args: [address ?? zeroAddress] });
+  const lastNavigationTime = useRef(0);
   const symbols = markets
     ?.map(({ symbol, floatingDepositAssets }) => ({
       floatingDepositAssets,
@@ -23,6 +24,15 @@ export default function PortfolioSummary({ usdBalance }: { usdBalance: bigint })
     }))
     .filter(({ floatingDepositAssets }) => floatingDepositAssets > 0)
     .map(({ symbol }) => symbol);
+
+  const handleNavigation = () => {
+    const now = Date.now();
+    if (now - lastNavigationTime.current < 500) {
+      return;
+    }
+    lastNavigationTime.current = now;
+    router.push("/portfolio");
+  };
 
   return (
     <View
@@ -34,9 +44,7 @@ export default function PortfolioSummary({ usdBalance }: { usdBalance: bigint })
       borderRadius="$r3"
       paddingVertical="$s3_5"
       paddingHorizontal="$s2_5"
-      onPress={() => {
-        router.push("/portfolio");
-      }}
+      onPress={handleNavigation}
     >
       <View
         display="flex"
