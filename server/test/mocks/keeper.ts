@@ -7,6 +7,11 @@ import { expect, vi } from "vitest";
 
 import type * as keeper from "../../utils/keeper";
 
+// eslint-disable-next-line import/prefer-default-export
+export let keeperClient: ReturnType<
+  typeof createWalletClient<ReturnType<typeof http>, typeof chain, ReturnType<typeof privateKeyToAccount>>
+>;
+
 vi.mock("../../utils/keeper", async (importOriginal) => {
   const original = await importOriginal<typeof keeper>();
   return {
@@ -18,6 +23,9 @@ vi.mock("../../utils/keeper", async (importOriginal) => {
         keccak256(toBytes(path.relative(path.resolve(__dirname, ".."), expect.getState().testPath ?? ""))), // eslint-disable-line unicorn/prefer-module
         { nonceManager },
       ),
-    }).extend(original.extender),
+    }).extend((closureClient) => {
+      keeperClient = closureClient;
+      return original.extender(closureClient);
+    }),
   };
 });
