@@ -23,8 +23,8 @@ import {
 
 import database, { cards, credentials } from "../database";
 import auth from "../middleware/auth";
-import { createCard, getPAN } from "../utils/cryptomate";
-import { createCard as createPandaCard, displayName, getCard, getSecrets, isPanda, pandaIssuing } from "../utils/panda";
+import { createCard as createCryptomateCard, getPAN } from "../utils/cryptomate";
+import { createCard, displayName, getCard, getSecrets, isPanda } from "../utils/panda";
 import { CRYPTOMATE_TEMPLATE, getInquiry, PANDA_TEMPLATE } from "../utils/persona";
 import { track } from "../utils/segment";
 
@@ -105,7 +105,7 @@ export default new Hono()
         const account = parse(Address, credential.account);
         setUser({ id: account });
 
-        if (pandaIssuing && (await isPanda(account))) {
+        if (await isPanda(account)) {
           const inquiry = await getInquiry(credentialId, PANDA_TEMPLATE);
           if (!inquiry) return c.json("kyc not found", 404);
           if (inquiry.attributes.status !== "approved") return c.json("kyc not approved", 403);
@@ -128,7 +128,7 @@ export default new Hono()
             }
           }
           if (cardCount > 0) return c.json(`card already exists: ${cardCount}`, 400);
-          const card = await createPandaCard({
+          const card = await createCard({
             userId: credential.pandaId,
             name: {
               first: inquiry.attributes["name-first"],
@@ -157,7 +157,7 @@ export default new Hono()
           number: phone.nationalNumber,
         });
 
-        const card = await createCard({
+        const card = await createCryptomateCard({
           account,
           email: inquiry.attributes["email-address"],
           name: {

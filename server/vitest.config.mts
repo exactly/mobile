@@ -21,7 +21,6 @@ export default defineConfig({
       KEEPER_PRIVATE_KEY: padHex("0x69"),
       PANDA_API_KEY: "panda",
       PANDA_API_URL: "https://panda.test",
-      PANDA_ISSUING: "true",
       PERSONA_API_KEY: "persona",
       PERSONA_TEMPLATE_ID: "template",
       PERSONA_URL: "https://persona.test",

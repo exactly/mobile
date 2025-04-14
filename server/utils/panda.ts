@@ -30,8 +30,6 @@ import publicClient from "../utils/publicClient";
 
 const plugin = exaPluginAddress.toLowerCase();
 
-export const pandaIssuing = !!JSON.parse(process.env.PANDA_ISSUING ?? "false");
-
 if (!process.env.PANDA_API_URL) throw new Error("missing panda api url");
 const baseURL = process.env.PANDA_API_URL;
 
