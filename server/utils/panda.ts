@@ -1,9 +1,10 @@
 import domain from "@exactly/common/domain";
-import chain, { exaPluginAddress } from "@exactly/common/generated/chain";
+import chain, { exaAccountFactoryAddress, exaPluginAddress } from "@exactly/common/generated/chain";
 import { Address, Hash } from "@exactly/common/validation";
 import { proposalManager } from "@exactly/plugin/deploy.json";
 import { vValidator } from "@hono/valibot-validator";
 import { Mutex, withTimeout, type MutexInterface } from "async-mutex";
+import { eq } from "drizzle-orm";
 import { createHmac } from "node:crypto";
 import removeAccents from "remove-accents";
 import {
@@ -23,6 +24,7 @@ import { BaseError, ContractFunctionZeroDataError } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { optimism } from "viem/chains";
 
+import database, { credentials } from "../database";
 import { issuerCheckerAddress, upgradeableModularAccountAbi } from "../generated/contracts";
 import publicClient from "../utils/publicClient";
 
@@ -163,7 +165,14 @@ export async function isPanda(account: Address) {
     });
     return installedPlugins.some((addr) => plugin === addr.toLowerCase());
   } catch (error) {
-    if (error instanceof BaseError && error.cause instanceof ContractFunctionZeroDataError) return true;
+    if (error instanceof BaseError && error.cause instanceof ContractFunctionZeroDataError) {
+      const credential = await database.query.credentials.findFirst({
+        where: eq(credentials.account, account),
+        columns: { factory: true },
+      });
+      if (!credential) throw new Error("credential not found");
+      return credential.factory === exaAccountFactoryAddress;
+    }
     throw error;
   }
 }

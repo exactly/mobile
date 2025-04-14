@@ -212,6 +212,33 @@ describe("authenticated", () => {
       expect(response.status).toBe(200);
       expect(created?.status).toBe("ACTIVE");
     });
+
+    it("creates a cm card for a non deployed cm account", async () => {
+      const foo = deriveAddress(inject("ExaAccountFactory"), {
+        x: padHex(privateKeyToAddress(padHex("0xf01"))),
+        y: zeroHash,
+      });
+      await database.insert(credentials).values([
+        {
+          id: foo,
+          publicKey: new Uint8Array(),
+          account: foo,
+          factory: padHex("0xfff"),
+        },
+      ]);
+
+      vi.spyOn(persona, "getInquiry").mockResolvedValueOnce(personaTemplate);
+      vi.spyOn(cryptomate, "createCard").mockResolvedValueOnce({ ...cryptomateTemplate, id: foo });
+      vi.spyOn(cryptomate, "getPAN").mockResolvedValueOnce("https://cm.com");
+
+      const response = await appClient.index.$post({ header: { "test-credential-id": foo } });
+      await response.json();
+
+      const created = await database.query.cards.findFirst({ where: eq(cards.id, foo) });
+
+      expect(response.status).toBe(200);
+      expect(created?.status).toBe("ACTIVE");
+    });
   });
 });
 
