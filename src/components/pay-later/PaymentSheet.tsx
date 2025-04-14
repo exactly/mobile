@@ -1,20 +1,15 @@
-import ProposalType from "@exactly/common/ProposalType";
-import { exaPreviewerAddress, marketUSDCAddress } from "@exactly/common/generated/chain";
-import { MATURITY_INTERVAL, WAD } from "@exactly/lib";
+import { marketUSDCAddress } from "@exactly/common/generated/chain";
+import { WAD } from "@exactly/lib";
 import { Coins, Info, RefreshCw } from "@tamagui/lucide-icons";
-import { useToastController } from "@tamagui/toast";
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistance, isAfter } from "date-fns";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback } from "react";
+import React from "react";
 import { Pressable } from "react-native";
-import { Sheet, Spinner, XStack } from "tamagui";
+import { Sheet, XStack } from "tamagui";
 import { titleCase } from "title-case";
 import { nonEmpty, pipe, safeParse, string } from "valibot";
-import { encodeAbiParameters, zeroAddress } from "viem";
-import { useAccount, useBytecode, useWriteContract } from "wagmi";
 
-import { useReadExaPreviewerPendingProposals, useSimulateExaPluginPropose } from "../../generated/contracts";
 import reportError from "../../utils/reportError";
 import useAsset from "../../utils/useAsset";
 import useIntercom from "../../utils/useIntercom";
@@ -30,12 +25,9 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
   const { maturity: currentMaturity } = useLocalSearchParams();
   const { success, output: maturity } = safeParse(pipe(string(), nonEmpty("no maturity")), currentMaturity);
   if (!success || !USDCMarket) return;
-
   const { fixedBorrowPositions, usdPrice, decimals } = USDCMarket;
   const borrow = fixedBorrowPositions.find((b) => b.maturity === BigInt(maturity));
-
   if (!borrow) return;
-
   const previewValue = (borrow.previewValue * usdPrice) / 10n ** BigInt(decimals);
   const positionValue = ((borrow.position.principal + borrow.position.fee) * usdPrice) / 10n ** BigInt(decimals);
   const discount = Number(WAD - (previewValue * WAD) / positionValue) / 1e18;
@@ -160,7 +152,21 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
                   >
                     Repay
                   </Button>
-                  <RolloverButton maturity={maturity} borrow={borrow} onClose={onClose} />
+                  <Button
+                    onPress={() => {
+                      onClose();
+                      router.push({ pathname: "/roll-debt", params: { maturity: maturity.toString() } });
+                    }}
+                    main
+                    spaced
+                    halfWidth
+                    outlined
+                    backgroundColor="$interactiveBaseBrandSoftDefault"
+                    color="$interactiveOnBaseBrandSoft"
+                    iconAfter={<RefreshCw color="$interactiveOnBaseBrandSoft" strokeWidth={2.5} />}
+                  >
+                    Rollover
+                  </Button>
                 </View>
               </View>
             </>
@@ -168,132 +174,5 @@ export default function PaymentSheet({ open, onClose }: { open: boolean; onClose
         </SafeView>
       </Sheet.Frame>
     </Sheet>
-  );
-}
-
-function RolloverButton({
-  maturity,
-  borrow,
-  onClose,
-}: {
-  maturity: string;
-  borrow: {
-    maturity: bigint;
-    previewValue: bigint;
-    position: { principal: bigint; fee: bigint };
-  };
-  onClose: () => void;
-}) {
-  const { address } = useAccount();
-  const toast = useToastController();
-
-  const followingMaturity = Number(maturity) + MATURITY_INTERVAL;
-  const repayMaturity = BigInt(maturity);
-  const borrowMaturity = BigInt(followingMaturity);
-
-  const slippage = (WAD * 105n) / 100n;
-  const maxRepayAssets = (borrow.previewValue * slippage) / WAD;
-  const percentage = WAD;
-
-  const { data: bytecode } = useBytecode({ address: address ?? zeroAddress, query: { enabled: !!address } });
-  const { data: proposeSimulation } = useSimulateExaPluginPropose({
-    address,
-    args: [
-      marketUSDCAddress,
-      maxRepayAssets,
-      ProposalType.RollDebt,
-      encodeAbiParameters(
-        [
-          {
-            type: "tuple",
-            components: [
-              { name: "repayMaturity", type: "uint256" },
-              { name: "borrowMaturity", type: "uint256" },
-              { name: "maxRepayAssets", type: "uint256" },
-              { name: "percentage", type: "uint256" },
-            ],
-          },
-        ],
-        [{ repayMaturity, borrowMaturity, maxRepayAssets, percentage }],
-      ),
-    ],
-    query: { enabled: !!address && !!bytecode },
-  });
-
-  const {
-    data: pendingProposals,
-    refetch: refetchPendingProposals,
-    isPending: isPendingProposalsPending,
-  } = useReadExaPreviewerPendingProposals({
-    address: exaPreviewerAddress,
-    args: [address ?? zeroAddress],
-    query: { enabled: !!address, gcTime: 0, refetchInterval: 30_000 },
-  });
-
-  const {
-    writeContract,
-    isPending: isProposeRollDebtPending,
-    error: proposeRollDebtError,
-  } = useWriteContract({
-    mutation: {
-      onSuccess: async () => {
-        toast.show("Processing rollover", {
-          native: true,
-          duration: 1000,
-          burntOptions: { haptic: "success", preset: "done" },
-        });
-        await refetchPendingProposals();
-        onClose();
-      },
-      onError: (error) => {
-        toast.show("Rollover failed", {
-          native: true,
-          duration: 1000,
-          burntOptions: { haptic: "error", preset: "error" },
-        });
-        reportError(error);
-      },
-    },
-  });
-
-  const proposeRollDebt = useCallback(() => {
-    if (!address) throw new Error("no address");
-    if (!proposeSimulation) throw new Error("no propose roll debt simulation");
-    writeContract(proposeSimulation.request);
-  }, [address, proposeSimulation, writeContract]);
-
-  const hasProposed = pendingProposals?.some(
-    ({ proposal }) =>
-      proposal.market === marketUSDCAddress &&
-      proposal.proposalType === Number(ProposalType.RollDebt) &&
-      proposal.amount === maxRepayAssets,
-  );
-  const disabled =
-    Boolean(proposeRollDebtError) ||
-    isProposeRollDebtPending ||
-    isPendingProposalsPending ||
-    !proposeSimulation ||
-    hasProposed;
-
-  return (
-    <Button
-      onPress={proposeRollDebt}
-      main
-      spaced
-      halfWidth
-      outlined
-      disabled={disabled}
-      backgroundColor={disabled ? "$interactiveDisabled" : "$interactiveBaseBrandSoftDefault"}
-      color={disabled ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandSoft"}
-      iconAfter={
-        isProposeRollDebtPending ? (
-          <Spinner color="$interactiveOnDisabled" />
-        ) : (
-          <RefreshCw color={disabled ? "$interactiveOnDisabled" : "$interactiveOnBaseBrandSoft"} strokeWidth={2.5} />
-        )
-      }
-    >
-      Rollover
-    </Button>
   );
 }
