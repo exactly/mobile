@@ -1,9 +1,22 @@
 import { vValidator } from "@hono/valibot-validator";
-import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext } from "@sentry/node";
+import { captureException, getActiveSpan, SEMANTIC_ATTRIBUTE_SENTRY_OP, setContext, setUser } from "@sentry/node";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import type { InferOutput } from "valibot";
-import { array, ip, isoTimestamp, literal, looseObject, object, pipe, safeParse, string, transform } from "valibot";
+import {
+  array,
+  ip,
+  isoTimestamp,
+  literal,
+  looseObject,
+  nullable,
+  object,
+  optional,
+  pipe,
+  safeParse,
+  string,
+  transform,
+} from "valibot";
 
 import database, { credentials } from "../database/index";
 import { createUser } from "../utils/panda";
@@ -40,10 +53,12 @@ export default new Hono().post(
                 status: literal("approved"),
                 referenceId: string(),
                 fields: object({
-                  inputSelect: object({ value: string() }),
-                  annualSalary: object({ value: string() }),
-                  expectedMonthlyVolume: object({ value: string() }),
                   accountPurpose: object({ value: string() }),
+                  annualSalary: object({ value: nullable(string()) }),
+                  annualSalaryRangesUs150000: optional(object({ value: optional(string()) })),
+                  expectedMonthlyVolume: object({ value: nullable(string()) }),
+                  inputSelect: object({ value: string() }),
+                  monthlyPurchasesRange: optional(object({ value: string() })),
                 }),
               }),
             }),
@@ -85,15 +100,28 @@ export default new Hono().post(
       included,
     } = payload.data.attributes.payload;
 
+    const credential = await database.query.credentials.findFirst({
+      columns: { account: true },
+      where: eq(credentials.id, referenceId),
+    });
+    if (!credential) return c.json("invalid reference id", 400);
+    setUser({ id: credential.account });
+
     setContext("persona", { inquiryId: personaShareToken });
 
     const session = included[0];
     if (!session) return c.json("no inquiry session", 400);
 
+    const annualSalary = fields.annualSalaryRangesUs150000?.value ?? fields.annualSalary.value;
+    const expectedMonthlyVolume = fields.monthlyPurchasesRange?.value ?? fields.expectedMonthlyVolume.value;
+
+    if (!annualSalary) return c.json("no annual salary", 400);
+    if (!expectedMonthlyVolume) return c.json("no expected monthly volume", 400);
+
     const { id } = await createUser({
       accountPurpose: fields.accountPurpose.value,
-      annualSalary: fields.annualSalary.value,
-      expectedMonthlyVolume: fields.expectedMonthlyVolume.value,
+      annualSalary,
+      expectedMonthlyVolume,
       ipAddress: session.attributes.IPAddress,
       isTermsOfServiceAccepted: true,
       occupation: fields.inputSelect.value,

@@ -133,11 +133,19 @@ const personaPayload = {
                 },
                 annualSalary: {
                   type: "string",
-                  value: "25000",
+                  value: null,
                 },
                 expectedMonthlyVolume: {
                   type: "string",
-                  value: "1500",
+                  value: null,
+                },
+                annualSalaryRangesUs150000: {
+                  type: "choices",
+                  value: "US$ 30.000 - US$ 70.000",
+                },
+                monthlyPurchasesRange: {
+                  type: "choices",
+                  value: "US$ 7.000 - US$ 15.000",
                 },
                 accountPurpose: {
                   type: "choices",
