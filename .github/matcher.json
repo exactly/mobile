@@ -2,6 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/task.json",
   "problemMatcher": [
     {
+      "owner": "changesets",
+      "pattern": [{ "regexp": "^🦋\\s+(\\x1B\\[\\d+m)?(error|warn)(\\x1B\\[\\d+m)?\\s+(.*)$", "message": 4 }]
+    },
+    {
       "owner": "cspell",
       "severity": "warning",
       "pattern": [{ "regexp": "^(.*):(\\d+):(\\d+) - (.*)$", "file": 1, "line": 2, "column": 3, "message": 4 }]
