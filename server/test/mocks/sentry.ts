@@ -2,9 +2,7 @@ import { close, getSpanStatusFromHttpCode, startSpan } from "@sentry/node";
 import type * as hono from "hono";
 import { createMiddleware } from "hono/factory";
 import path from "node:path";
-import { afterAll, beforeEach, expect, vi } from "vitest";
-
-const contexts = new Map<string, unknown>();
+import { afterAll, expect, vi } from "vitest";
 
 vi.mock("hono", async (importOriginal) => {
   await import("../../instrument.cjs");
@@ -21,16 +19,16 @@ vi.mock("hono", async (importOriginal) => {
 });
 
 const middleware = createMiddleware(async (c, next) => {
-  const testFile = path.relative(path.resolve(__dirname, ".."), expect.getState().testPath ?? ""); // eslint-disable-line unicorn/prefer-module
+  const { currentTestName, testPath } = expect.getState();
+  const testFile = path.relative(path.resolve(__dirname, ".."), testPath ?? ""); // eslint-disable-line unicorn/prefer-module
   const name = `${c.req.method} /${testFile.replace(/\.test\.ts$/, "")}`;
-  return startSpan({ name, op: "http.server", forceTransaction: true }, async (span) => {
-    await next();
-    span.setStatus(getSpanStatusFromHttpCode(c.res.status));
-  });
-});
-
-beforeEach(() => {
-  contexts.clear();
+  return startSpan(
+    { name, op: "http.server", forceTransaction: true, attributes: { "test.name": currentTestName } },
+    async (span) => {
+      await next();
+      span.setStatus(getSpanStatusFromHttpCode(c.res.status));
+    },
+  );
 });
 
 afterAll(() => close());
