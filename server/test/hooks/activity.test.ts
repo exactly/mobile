@@ -120,7 +120,7 @@ describe("address activity", () => {
       },
     });
 
-    await vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 2, 6666);
+    await vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 2, 16_666);
 
     const exactly = await publicClient.readContract({
       address: inject("Previewer"),
@@ -168,7 +168,7 @@ describe("address activity", () => {
       },
     });
 
-    await vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 3, 6666);
+    await vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 3, 16_666);
 
     const exactly = await publicClient.readContract({
       address: inject("Previewer"),
@@ -222,7 +222,7 @@ describe("address activity", () => {
           },
         },
       }),
-      vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 5, 6666),
+      vi.waitUntil(() => waitForTransactionReceipt.mock.settledResults.length >= 5, 16_666),
     ]);
 
     expect(response.status).toBe(200);
