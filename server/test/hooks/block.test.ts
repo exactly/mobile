@@ -43,8 +43,6 @@ const bob = createWalletClient({
 const bobAccount = deriveAddress(inject("ExaAccountFactory"), { x: padHex(bob.account.address), y: zeroHash });
 const appClient = testClient(app);
 
-afterEach(() => vi.restoreAllMocks());
-
 describe("validation", () => {
   it("accepts valid request", async () => {
     const response = await appClient.index.$post(blockPayload);
