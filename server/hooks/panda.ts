@@ -139,7 +139,7 @@ export default new Hono().post(
         setUser({ id: account });
         const mutex = getMutex(account) ?? createMutex(account);
         try {
-          await mutex.acquire();
+          await startSpan({ name: "acquire mutex", op: "panda.mutex" }, () => mutex.acquire());
         } catch (error: unknown) {
           if (error === E_TIMEOUT) {
             captureException(error, { level: "fatal" });
