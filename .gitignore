@@ -24,6 +24,7 @@ generated/
 
 *.log
 *.dump
+application_x_sentry_envelope-*.txt
 lcov.info
 .vscode/
 .env
