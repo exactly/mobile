@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    globalSetup: "test/anvil.ts",
+    globalSetup: ["test/anvil.ts", "test/spotlight.ts"],
     env: {
       ALCHEMY_ACTIVITY_KEY: "activity",
       ALCHEMY_BLOCK_KEY: "block",
