@@ -101,13 +101,14 @@ export default new Hono().post(
     } = payload.data.attributes.payload;
 
     const credential = await database.query.credentials.findFirst({
-      columns: { account: true },
+      columns: { account: true, pandaId: true },
       where: eq(credentials.id, referenceId),
     });
     if (!credential) return c.json("invalid reference id", 400);
     setUser({ id: credential.account });
-
     setContext("persona", { inquiryId: personaShareToken });
+
+    if (credential.pandaId) return c.json("panda customer already exists", 400);
 
     const session = included[0];
     if (!session) return c.json("no inquiry session", 400);
@@ -129,6 +130,8 @@ export default new Hono().post(
     });
 
     await database.update(credentials).set({ pandaId: id }).where(eq(credentials.id, referenceId));
+
+    setContext("persona", { inquiryId: personaShareToken, pandaId: id });
 
     return c.json({ id }, 200);
   },
