@@ -26,15 +26,16 @@ import { Hono } from "hono";
 import type { UnofficialStatusCode } from "hono/utils/http-status";
 import * as v from "valibot";
 import {
-  decodeErrorResult,
   decodeEventLog,
   encodeAbiParameters,
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
+  getContractError,
   keccak256,
   maxUint256,
   padHex,
+  RawContractError,
   toBytes,
 } from "viem";
 
@@ -195,10 +196,8 @@ export default new Hono().post(
               }),
             );
             if (trace.output) {
-              let error: string = trace.output;
-              try {
-                error = decodeErrorResult({
-                  data: trace.output,
+              captureException(
+                getContractError(new RawContractError({ data: trace.output }), {
                   abi: [
                     ...exaPluginAbi,
                     ...issuerCheckerAbi,
@@ -207,9 +206,10 @@ export default new Hono().post(
                     ...auditorAbi,
                     ...marketAbi,
                   ],
-                }).errorName;
-              } catch {} // eslint-disable-line no-empty
-              captureException(new Error(error), { contexts: { tx: { call, trace } } });
+                  ...call,
+                }),
+                { contexts: { tx: { call, trace } } },
+              );
               throw new PandaError("tx reverted", 550);
             }
             if (

@@ -24,14 +24,15 @@ import { Hono } from "hono";
 import type { UnofficialStatusCode } from "hono/utils/http-status";
 import * as v from "valibot";
 import {
-  decodeErrorResult,
   decodeEventLog,
   encodeEventTopics,
   encodeFunctionData,
   erc20Abi,
+  getContractError,
   isHash,
   maxUint256,
   padHex,
+  RawContractError,
 } from "viem";
 
 import database, { cards, transactions } from "../database/index";
@@ -125,10 +126,8 @@ export default new Hono().post(
             traceClient.traceCall(transaction),
           );
           if (trace.output) {
-            let error: string = trace.output;
-            try {
-              error = decodeErrorResult({
-                data: trace.output,
+            captureException(
+              getContractError(new RawContractError({ data: trace.output }), {
                 abi: [
                   ...exaPluginAbi,
                   ...issuerCheckerAbi,
@@ -136,9 +135,10 @@ export default new Hono().post(
                   ...auditorAbi,
                   ...marketAbi,
                 ],
-              }).errorName;
-            } catch {} // eslint-disable-line no-empty
-            captureException(new Error(error), { contexts: { tx: { call, trace } } });
+                ...call,
+              }),
+              { contexts: { tx: { call, trace } } },
+            );
             return c.json({ response_code: "69" });
           }
           if (

@@ -190,7 +190,10 @@ describe("card operations", () => {
         });
 
         expect(trace).toHaveBeenCalledOnce();
-        expect(captureException).toHaveBeenCalledWith(new Error("0x"), expect.anything());
+        expect(captureException).toHaveBeenCalledWith(
+          expect.objectContaining({ name: "ContractFunctionExecutionError", functionName: "collectCredit" }),
+          expect.anything(),
+        );
         expect(response.status).toBe(550);
       });
 
