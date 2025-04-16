@@ -110,6 +110,7 @@ export default new Hono().post(
 
     switch (payload.event_type) {
       case "AUTHORIZATION": {
+        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
         const { account, amount, call, transaction } = await prepareCollection(payload);
         const authorize = () => {
           track({
@@ -119,7 +120,6 @@ export default new Hono().post(
           });
           return c.json({ response_code: "00" });
         };
-        getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "cryptomate.authorization");
         if (!transaction) return authorize();
         try {
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>

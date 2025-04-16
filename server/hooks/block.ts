@@ -96,6 +96,7 @@ export default new Hono().post(
     ({ event }) => event.data.block.logs.length > 0,
   ),
   async (c) => {
+    getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
     const { timestamp, logs } = c.req.valid("json").event.data.block;
 
     if (logs.length === 0) {
@@ -103,7 +104,6 @@ export default new Hono().post(
       return c.json({}, 200);
     }
     setContext("alchemy", await c.req.json());
-    getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "alchemy.block");
 
     const proposalsBySignature = logs.reduce((accumulator, event) => {
       const signature = event.topics[0];
