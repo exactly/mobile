@@ -862,49 +862,51 @@ describe("concurrency", () => {
   it("handles concurrent authorizations", async () => {
     const operation = "concurrent";
     const cardId = `${account2}-card`;
-    const spendAuthorization = appClient.index.$post({
-      ...authorization,
-      header: { signature: "panda-signature" },
-      json: {
-        ...authorization.json,
-        body: {
-          ...authorization.json.body,
-          id: operation,
-          spend: { ...authorization.json.body.spend, amount: 5000, cardId },
+    const promises = Promise.all([
+      appClient.index.$post({
+        ...authorization,
+        header: { signature: "panda-signature" },
+        json: {
+          ...authorization.json,
+          body: {
+            ...authorization.json.body,
+            id: operation,
+            spend: { ...authorization.json.body.spend, amount: 5000, cardId },
+          },
         },
-      },
-    });
-
-    const anotherSpendAuthorization = appClient.index.$post({
-      ...authorization,
-      header: { signature: "panda-signature" },
-      json: {
-        ...authorization.json,
-        body: {
-          ...authorization.json.body,
-          id: operation + "2",
-          spend: { ...authorization.json.body.spend, amount: 4000, cardId },
+      }),
+      appClient.index.$post({
+        ...authorization,
+        header: { signature: "panda-signature" },
+        json: {
+          ...authorization.json,
+          body: {
+            ...authorization.json.body,
+            id: operation + "2",
+            spend: { ...authorization.json.body.spend, amount: 4000, cardId },
+          },
         },
-      },
-    });
-
-    const collectSpendAuthorization = await appClient.index.$post({
-      ...authorization,
-      header: { signature: "panda-signature" },
-      json: {
-        ...authorization.json,
-        action: "created",
-        body: {
-          ...authorization.json.body,
-          id: operation,
-          spend: { ...authorization.json.body.spend, amount: 5000, cardId },
+      }),
+      appClient.index.$post({
+        ...authorization,
+        header: { signature: "panda-signature" },
+        json: {
+          ...authorization.json,
+          action: "created",
+          body: {
+            ...authorization.json.body,
+            id: operation,
+            spend: { ...authorization.json.body.spend, amount: 5000, cardId },
+          },
         },
-      },
-    });
+      }),
+    ]);
 
-    await expect(spendAuthorization).resolves.toMatchObject({ status: 200 });
-    await expect(anotherSpendAuthorization).resolves.toMatchObject({ status: 550 });
-    expect(collectSpendAuthorization.status).toBe(200);
+    const [spend, spend2, collect] = await promises;
+
+    expect(spend.status).toBe(200);
+    expect(spend2.status).toBe(550);
+    expect(collect.status).toBe(200);
   });
 
   it("releases mutex when authorization is declined", async () => {
@@ -956,54 +958,55 @@ describe("concurrency", () => {
       const getMutex = vi.spyOn(pandaUtils, "getMutex");
       const operation = "mutex-timeout";
       const cardId = `${account2}-card`;
-      const spendAuthorization = appClient.index.$post({
-        ...authorization,
-        header: { signature: "panda-signature" },
-        json: {
-          ...authorization.json,
-          body: {
-            ...authorization.json.body,
-            id: operation,
-            spend: { ...authorization.json.body.spend, amount: 1000, cardId },
+      const promises = Promise.all([
+        appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: {
+              ...authorization.json.body,
+              id: operation,
+              spend: { ...authorization.json.body.spend, amount: 1000, cardId },
+            },
           },
-        },
-      });
-
-      const anotherSpendAuthorization = appClient.index.$post({
-        ...authorization,
-        header: { signature: "panda-signature" },
-        json: {
-          ...authorization.json,
-          body: {
-            ...authorization.json.body,
-            id: `${operation}-2`,
-            spend: { ...authorization.json.body.spend, amount: 1200, cardId },
+        }),
+        appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: {
+              ...authorization.json.body,
+              id: `${operation}-2`,
+              spend: { ...authorization.json.body.spend, amount: 1200, cardId },
+            },
           },
-        },
-      });
-
-      const anotherSpendAuthorization2 = appClient.index.$post({
-        ...authorization,
-        header: { signature: "panda-signature" },
-        json: {
-          ...authorization.json,
-          body: {
-            ...authorization.json.body,
-            id: `${operation}-3`,
-            spend: { ...authorization.json.body.spend, amount: 1300, cardId },
+        }),
+        appClient.index.$post({
+          ...authorization,
+          header: { signature: "panda-signature" },
+          json: {
+            ...authorization.json,
+            body: {
+              ...authorization.json.body,
+              id: `${operation}-3`,
+              spend: { ...authorization.json.body.spend, amount: 1300, cardId },
+            },
           },
-        },
-      });
+        }),
+      ]);
 
       await vi.waitUntil(() => getMutex.mock.calls.length > 2, 16_666);
       vi.advanceTimersByTime(proposalManager.delay * 1000);
 
       const lastCall = getMutex.mock.results.at(-1);
       const mutex = lastCall?.type === "return" ? lastCall.value : undefined;
+      const [spend, spend2, spend3] = await promises;
 
-      await expect(spendAuthorization).resolves.toMatchObject({ status: 200 });
-      await expect(anotherSpendAuthorization).resolves.toMatchObject({ status: 554 });
-      await expect(anotherSpendAuthorization2).resolves.toMatchObject({ status: 554 });
+      expect(spend.status).toBe(200);
+      expect(spend2.status).toBe(554);
+      expect(spend3.status).toBe(554);
       expect(mutex?.isLocked()).toBe(true);
     });
   });
