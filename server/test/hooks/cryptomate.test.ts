@@ -87,11 +87,14 @@ describe("card operations", () => {
           functionName: "mint",
           args: [account, 420e6],
         });
-        await keeper.writeContract({
-          address: account,
-          abi: exaPluginAbi,
-          functionName: "poke",
-          args: [inject("MarketUSDC")],
+        await publicClient.waitForTransactionReceipt({
+          hash: await keeper.writeContract({
+            address: account,
+            abi: exaPluginAbi,
+            functionName: "poke",
+            args: [inject("MarketUSDC")],
+          }),
+          confirmations: 0,
         });
       });
 
@@ -175,11 +178,14 @@ describe("card operations", () => {
           functionName: "mint",
           args: [account, 420e6],
         });
-        await keeper.writeContract({
-          address: account,
-          abi: exaPluginAbi,
-          functionName: "poke",
-          args: [inject("MarketUSDC")],
+        await publicClient.waitForTransactionReceipt({
+          hash: await keeper.writeContract({
+            address: account,
+            abi: exaPluginAbi,
+            functionName: "poke",
+            args: [inject("MarketUSDC")],
+          }),
+          confirmations: 0,
         });
       });
 
@@ -197,7 +203,10 @@ describe("card operations", () => {
           },
         });
         const card = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({
+          hash: card?.hashes[0] as Hex,
+          confirmations: 0,
+        });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e6));
         expect(response.status).toBe(200);
@@ -218,7 +227,10 @@ describe("card operations", () => {
           },
         });
         const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({
+          hash: transaction?.hashes[0] as Hex,
+          confirmations: 0,
+        });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e6));
         expect(response.status).toBe(200);
@@ -239,7 +251,10 @@ describe("card operations", () => {
           },
         });
         const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
-        const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
+        const purchaseReceipt = await publicClient.waitForTransactionReceipt({
+          hash: transaction?.hashes[0] as Hex,
+          confirmations: 0,
+        });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e6));
         expect(response.status).toBe(200);
