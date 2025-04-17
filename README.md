@@ -19,8 +19,14 @@ pnpm install
 #### run
 
 ```shell
-pnpm web # for web
-
 pnpm android # for native android app
 pnpm ios # for native ios app
 ```
+
+## @exactly/server
+
+[exa server](server)
+
+## @exactly/plugin
+
+[exa plugin and other contracts](contracts)
