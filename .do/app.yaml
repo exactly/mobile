@@ -14,7 +14,7 @@ services:
   - name: server
     dockerfile_path: Dockerfile
     github:
-      repo: exactly/mobile
+      repo: exactly/exa
       branch: main
       deploy_on_push: true
     http_port: 3000

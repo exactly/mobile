@@ -106,7 +106,7 @@ export default {
     ],
     [
       "@sentry/react-native/expo",
-      { organization: "exactly", project: "mobile" } satisfies Parameters<typeof withSentry>[1],
+      { organization: "exactly", project: "exa" } satisfies Parameters<typeof withSentry>[1],
     ],
     [
       "onesignal-expo-plugin",
