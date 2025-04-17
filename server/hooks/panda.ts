@@ -195,6 +195,7 @@ export default new Hono().post(
                 ],
               }),
             );
+            setContext("tx", { call, trace });
             if (trace.output) {
               captureException(
                 getContractError(new RawContractError({ data: trace.output }), {

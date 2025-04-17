@@ -125,6 +125,7 @@ export default new Hono().post(
           const trace = await startSpan({ name: "debug_traceCall", op: "tx.trace" }, () =>
             traceClient.traceCall(transaction),
           );
+          setContext("tx", { call, trace });
           if (trace.output) {
             captureException(
               getContractError(new RawContractError({ data: trace.output }), {
