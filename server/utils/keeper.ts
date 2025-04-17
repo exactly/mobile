@@ -11,6 +11,7 @@ import {
   http,
   nonceManager,
   RawContractError,
+  type MaybePromise,
   type Prettify,
   type TransactionReceipt,
   type WriteContractParameters,
@@ -39,8 +40,8 @@ export function extender(keeper: ReturnType<typeof createWalletClient>) {
       spanOptions: Prettify<{ name: string; op: string } & Omit<Parameters<typeof startSpan>[0], "name" | "op">>,
       call: Prettify<Pick<WriteContractParameters, "address" | "functionName" | "args" | "abi">>,
       options?: {
-        onHash?: (hash: Hash) => Promise<unknown>;
-        ignore?: string[] | ((reason: string) => Promise<TransactionReceipt | boolean | undefined>);
+        onHash?: (hash: Hash) => MaybePromise<unknown>;
+        ignore?: string[] | ((reason: string) => MaybePromise<TransactionReceipt | boolean | undefined>);
       },
     ) =>
       withScope((scope) =>
