@@ -107,7 +107,6 @@ describe("card operations", () => {
       it("authorizes credit", async () => {
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "card" } },
@@ -122,7 +121,6 @@ describe("card operations", () => {
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "debit" } },
@@ -137,7 +135,6 @@ describe("card operations", () => {
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "inst" } },
@@ -150,7 +147,6 @@ describe("card operations", () => {
       it("authorizes zero", async () => {
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: {
@@ -166,7 +162,6 @@ describe("card operations", () => {
       it("authorizes negative amount", async () => {
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: {
@@ -186,7 +181,6 @@ describe("card operations", () => {
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "failed_trace" } },
@@ -222,7 +216,6 @@ describe("card operations", () => {
 
           const response = await appClient.index.$post({
             ...authorization,
-            header: { signature: "panda-signature" },
             json: {
               ...authorization.json,
               body: { ...authorization.json.body, spend: { ...authorization.json.body.spend, cardId: "drain" } },
@@ -255,23 +248,21 @@ describe("card operations", () => {
       });
 
       it("clears debit", async () => {
-        const operation = "debits";
         const cardId = "debits";
         await database.insert(cards).values([{ id: "debits", credentialId: "cred", lastFour: "3456", mode: 0 }]);
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, cardId },
             },
           },
         });
-        const card = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const card = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
         const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: card?.hashes[0] as Hex });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(authorization.json.body.spend.amount * 1e4));
@@ -281,25 +272,23 @@ describe("card operations", () => {
       it("clears credit", async () => {
         const amount = 10;
 
-        const operation = "credits";
         const cardId = "credits";
         await database.insert(cards).values([{ id: "credits", credentialId: "cred", lastFour: "7890", mode: 1 }]);
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, cardId, amount },
             },
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
         const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e4));
@@ -310,18 +299,16 @@ describe("card operations", () => {
         const amount = 100;
         const update = 50;
 
-        const operation = "transactionUpdate";
         const cardId = "tUpdate";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 1 }]);
         const createResponse = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
             },
           },
@@ -329,13 +316,12 @@ describe("card operations", () => {
 
         const updateResponse = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "updated",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: {
                 ...authorization.json.body.spend,
                 amount: amount + update,
@@ -347,7 +333,7 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await Promise.all(transaction!.hashes.map((h) => publicClient.waitForTransactionReceipt({ hash: h as Hex })));
@@ -368,25 +354,23 @@ describe("card operations", () => {
       it("clears installments", async () => {
         const amount = 120;
 
-        const operation = "splits";
         const cardId = "splits";
-        await database.insert(cards).values([{ id: "splits", credentialId: "cred", lastFour: "6754", mode: 6 }]);
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "6754", mode: 6 }]);
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, cardId, amount },
             },
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
         const purchaseReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
 
         expect(usdcToCollector(purchaseReceipt)).toBe(BigInt(amount * 1e4));
@@ -396,25 +380,23 @@ describe("card operations", () => {
       it("fails with transaction timeout", async () => {
         vi.spyOn(publicClient, "waitForTransactionReceipt").mockRejectedValue(new Error("timeout"));
 
-        const operation = "timeout";
         const cardId = "timeout";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "7777", mode: 6 }]);
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, cardId, amount: 60 },
             },
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
 
         expect(captureException).toHaveBeenNthCalledWith(
           1,
@@ -437,25 +419,23 @@ describe("card operations", () => {
           logs: [],
         });
 
-        const operation = "revert";
         const cardId = "revert";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 5 }]);
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, cardId, amount: 70 },
             },
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
 
         expect(captureException).toHaveBeenNthCalledWith(
           1,
@@ -474,19 +454,17 @@ describe("card operations", () => {
       it("fails with unexpected error", async () => {
         vi.spyOn(publicClient, "simulateContract").mockRejectedValue(new Error("Unexpected Error"));
 
-        const operation = "unexpected";
         const cardId = "unexpected";
         await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 4 }]);
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, cardId, amount: 90 },
             },
           },
@@ -518,7 +496,6 @@ describe("card operations", () => {
 
           const response = await appClient.index.$post({
             ...authorization,
-            header: { signature: "panda-signature" },
             json: {
               ...authorization.json,
               action: "created",
@@ -561,18 +538,16 @@ describe("card operations", () => {
 
       it("handles reversal", async () => {
         const amount = 2073;
-        const operation = "reversal";
         const cardId = "card";
 
         await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
             },
           },
@@ -580,13 +555,12 @@ describe("card operations", () => {
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "updated",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: {
                 ...authorization.json.body.spend,
                 cardId,
@@ -597,7 +571,7 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
         const refundReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[1] as Hex });
         const deposit = refundReceipt.logs
           .filter((l) => l.address.toLowerCase() === inject("MarketUSDC").toLowerCase())
@@ -610,18 +584,16 @@ describe("card operations", () => {
 
       it("fails with refund higher than spend", async () => {
         const amount = 800;
-        const operation = "high-reversal";
         const cardId = "card";
 
         await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: "high-reversal",
               spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
             },
           },
@@ -629,13 +601,12 @@ describe("card operations", () => {
 
         await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "updated",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: "high-reversal",
               spend: { ...authorization.json.body.spend, cardId, authorizationUpdateAmount: -400, status: "reversed" },
             },
           },
@@ -643,13 +614,12 @@ describe("card operations", () => {
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "updated",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: "high-reversal",
               spend: {
                 ...authorization.json.body.spend,
                 cardId,
@@ -666,18 +636,16 @@ describe("card operations", () => {
 
       it("fails with spending transaction not found", async () => {
         const amount = 5;
-        const operation = "reversal-without-pending";
         const cardId = "card";
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "updated",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: "reversal-without-pending",
               spend: {
                 ...authorization.json.body.spend,
                 cardId,
@@ -694,18 +662,16 @@ describe("card operations", () => {
 
       it("handles refund", async () => {
         const amount = 2000;
-        const operation = "refund";
         const cardId = "card";
 
         await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "created",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: "refund",
               spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount },
             },
           },
@@ -713,13 +679,12 @@ describe("card operations", () => {
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "completed",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: "refund",
               spend: {
                 ...authorization.json.body.spend,
                 cardId,
@@ -731,7 +696,7 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, "refund") });
         const refundReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[1] as Hex });
         const deposit = refundReceipt.logs
           .filter((l) => l.address.toLowerCase() === inject("MarketUSDC").toLowerCase())
@@ -744,18 +709,16 @@ describe("card operations", () => {
 
       it("refunds without traceable spending", async () => {
         const amount = 3000;
-        const operation = "refund-without-spending";
         const cardId = "card";
 
         const response = await appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             action: "completed",
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: "no-spending",
               spend: {
                 ...authorization.json.body.spend,
                 cardId,
@@ -767,7 +730,7 @@ describe("card operations", () => {
           },
         });
 
-        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, operation) });
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, "no-spending") });
         const refundReceipt = await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[0] as Hex });
         const deposit = refundReceipt.logs
           .filter((l) => l.address.toLowerCase() === inject("MarketUSDC").toLowerCase())
@@ -837,42 +800,38 @@ describe("concurrency", () => {
   });
 
   it("handles concurrent authorizations", async () => {
-    const operation = "concurrent";
     const cardId = `${account2}-card`;
     const promises = Promise.all([
       appClient.index.$post({
         ...authorization,
-        header: { signature: "panda-signature" },
         json: {
           ...authorization.json,
           body: {
             ...authorization.json.body,
-            id: operation,
+            id: cardId,
             spend: { ...authorization.json.body.spend, amount: 5000, cardId },
           },
         },
       }),
       appClient.index.$post({
         ...authorization,
-        header: { signature: "panda-signature" },
         json: {
           ...authorization.json,
           body: {
             ...authorization.json.body,
-            id: operation + "2",
+            id: `${cardId}-2`,
             spend: { ...authorization.json.body.spend, amount: 4000, cardId },
           },
         },
       }),
       appClient.index.$post({
         ...authorization,
-        header: { signature: "panda-signature" },
         json: {
           ...authorization.json,
           action: "created",
           body: {
             ...authorization.json.body,
-            id: operation,
+            id: cardId,
             spend: { ...authorization.json.body.spend, amount: 5000, cardId },
           },
         },
@@ -888,17 +847,14 @@ describe("concurrency", () => {
 
   it("releases mutex when authorization is declined", async () => {
     const getMutex = vi.spyOn(pandaUtils, "getMutex");
-
-    const operation = "auth-declined";
     const cardId = `${account2}-card`;
     const spendAuthorization = await appClient.index.$post({
       ...authorization,
-      header: { signature: "panda-signature" },
       json: {
         ...authorization.json,
         body: {
           ...authorization.json.body,
-          id: operation,
+          id: cardId,
           spend: { ...authorization.json.body.spend, amount: 800, cardId },
         },
       },
@@ -906,13 +862,12 @@ describe("concurrency", () => {
 
     const collectSpendAuthorization = await appClient.index.$post({
       ...authorization,
-      header: { signature: "panda-signature" },
       json: {
         ...authorization.json,
         action: "created",
         body: {
           ...authorization.json.body,
-          id: operation,
+          id: cardId,
           spend: { ...authorization.json.body.spend, amount: 800, cardId, status: "declined" },
         },
       },
@@ -933,41 +888,37 @@ describe("concurrency", () => {
 
     it("mutex timeout", async () => {
       const getMutex = vi.spyOn(pandaUtils, "getMutex");
-      const operation = "mutex-timeout";
       const cardId = `${account2}-card`;
       const promises = Promise.all([
         appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: {
               ...authorization.json.body,
-              id: operation,
+              id: cardId,
               spend: { ...authorization.json.body.spend, amount: 1000, cardId },
             },
           },
         }),
         appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: {
               ...authorization.json.body,
-              id: `${operation}-2`,
+              id: `${cardId}-2`,
               spend: { ...authorization.json.body.spend, amount: 1200, cardId },
             },
           },
         }),
         appClient.index.$post({
           ...authorization,
-          header: { signature: "panda-signature" },
           json: {
             ...authorization.json,
             body: {
               ...authorization.json.body,
-              id: `${operation}-3`,
+              id: `${cardId}-3`,
               spend: { ...authorization.json.body.spend, amount: 1300, cardId },
             },
           },
@@ -990,7 +941,7 @@ describe("concurrency", () => {
 });
 
 const authorization = {
-  header: { signature: "056e8b40cbffe5d26487267e00d82ef2d3331d7a6756f05a8effd86d562a02fa" },
+  header: { signature: "panda-signature" },
   json: {
     resource: "transaction",
     action: "requested",
