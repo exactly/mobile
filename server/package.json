@@ -13,7 +13,6 @@
   },
   "bin": "./dist/index.cjs",
   "files": [
-    ".well-known",
     "app",
     "dist",
     "instrument.cjs"
