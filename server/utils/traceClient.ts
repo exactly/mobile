@@ -1,5 +1,6 @@
 import alchemyAPIKey from "@exactly/common/alchemyAPIKey";
 import chain from "@exactly/common/generated/chain";
+import { parse } from "valibot";
 import {
   AccountStateConflictError,
   BaseError,
@@ -26,12 +27,18 @@ import {
   type StateOverride,
 } from "viem";
 
+import { captureRequests, Request } from "./publicClient";
+
 if (!chain.rpcUrls.alchemy?.http[0]) throw new Error("missing alchemy rpc url");
 
 export default createPublicClient({
   chain,
   rpcSchema: rpcSchema<RpcSchema>(),
-  transport: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`),
+  transport: http(`${chain.rpcUrls.alchemy.http[0]}/${alchemyAPIKey}`, {
+    async onFetchRequest(request) {
+      captureRequests([parse(Request, await request.json())]);
+    },
+  }),
 }).extend((client) => ({
   traceCall: async ({
     blockNumber,
