@@ -54,11 +54,11 @@ const owner = createWalletClient({ chain, transport: http(), account: privateKey
 const account = deriveAddress(inject("ExaAccountFactory"), { x: padHex(owner.account.address), y: zeroHash });
 
 beforeAll(async () => {
-  await database
-    .insert(credentials)
-    .values([{ id: "cred", publicKey: new Uint8Array(), account, factory: zeroAddress }]);
-  await database.insert(cards).values([{ id: "card", credentialId: "cred", lastFour: "1234" }]);
-  await anvilClient.setBalance({ address: owner.account.address, value: 10n ** 24n });
+  await Promise.all([
+    database.insert(credentials).values([{ id: "cred", publicKey: new Uint8Array(), account, factory: zeroAddress }]),
+    database.insert(cards).values([{ id: "card", credentialId: "cred", lastFour: "1234" }]),
+    anvilClient.setBalance({ address: owner.account.address, value: 10n ** 24n }),
+  ]);
 });
 
 describe("validation", () => {
@@ -71,11 +71,13 @@ describe("validation", () => {
 
 describe("card operations", () => {
   beforeAll(async () => {
-    await keeper.writeContract({
-      address: inject("ExaAccountFactory"),
-      abi: exaAccountFactoryAbi,
-      functionName: "createAccount",
-      args: [0n, [{ x: hexToBigInt(owner.account.address), y: 0n }]],
+    await publicClient.waitForTransactionReceipt({
+      hash: await keeper.writeContract({
+        address: inject("ExaAccountFactory"),
+        abi: exaAccountFactoryAbi,
+        functionName: "createAccount",
+        args: [0n, [{ x: hexToBigInt(owner.account.address), y: 0n }]],
+      }),
     });
   });
 
@@ -88,11 +90,13 @@ describe("card operations", () => {
           functionName: "mint",
           args: [account, 420_000_000n],
         });
-        await keeper.writeContract({
-          address: account,
-          abi: exaPluginAbi,
-          functionName: "poke",
-          args: [inject("MarketUSDC")],
+        await publicClient.waitForTransactionReceipt({
+          hash: await keeper.writeContract({
+            address: account,
+            abi: exaPluginAbi,
+            functionName: "poke",
+            args: [inject("MarketUSDC")],
+          }),
         });
       });
 
@@ -240,11 +244,13 @@ describe("card operations", () => {
           functionName: "mint",
           args: [account, 420e6],
         });
-        await keeper.writeContract({
-          address: account,
-          abi: exaPluginAbi,
-          functionName: "poke",
-          args: [inject("MarketUSDC")],
+        await publicClient.waitForTransactionReceipt({
+          hash: await keeper.writeContract({
+            address: account,
+            abi: exaPluginAbi,
+            functionName: "poke",
+            args: [inject("MarketUSDC")],
+          }),
         });
       });
 
@@ -543,11 +549,13 @@ describe("card operations", () => {
             }),
           ),
         );
-        await keeper.writeContract({
-          address: account,
-          abi: exaPluginAbi,
-          functionName: "poke",
-          args: [inject("MarketUSDC")],
+        await publicClient.waitForTransactionReceipt({
+          hash: await keeper.writeContract({
+            address: account,
+            abi: exaPluginAbi,
+            functionName: "poke",
+            args: [inject("MarketUSDC")],
+          }),
         });
       });
 
@@ -774,54 +782,63 @@ describe("card operations", () => {
 });
 
 describe("concurrency", () => {
-  let concurrentWallet: WalletClient;
-  let concurrentAccount: Address;
+  let owner2: WalletClient<ReturnType<typeof http>, typeof chain, ReturnType<typeof privateKeyToAccount>>;
+  let account2: Address;
 
   beforeEach(async () => {
-    concurrentWallet = createWalletClient({
+    owner2 = createWalletClient({
       chain,
       transport: http(),
       account: privateKeyToAccount(generatePrivateKey()),
     });
-    concurrentAccount = deriveAddress(inject("ExaAccountFactory"), {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      x: padHex(concurrentWallet.account!.address),
+    account2 = deriveAddress(inject("ExaAccountFactory"), {
+      x: padHex(owner2.account.address),
       y: zeroHash,
     });
-    await database
-      .insert(credentials)
-      .values([
-        { id: concurrentAccount, publicKey: new Uint8Array(), account: concurrentAccount, factory: zeroAddress },
-      ]);
-    await database
-      .insert(cards)
-      .values([{ id: `${concurrentAccount}-card`, credentialId: concurrentAccount, lastFour: "1234", mode: 0 }]);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    await anvilClient.setBalance({ address: concurrentWallet.account!.address, value: 10n ** 24n });
-    await keeper.writeContract({
-      address: inject("ExaAccountFactory"),
-      abi: exaAccountFactoryAbi,
-      functionName: "createAccount",
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      args: [0n, [{ x: hexToBigInt(concurrentWallet.account!.address), y: 0n }]],
-    });
-    await keeper.writeContract({
-      address: usdcAddress,
-      abi: fakeTokenAbi,
-      functionName: "mint",
-      args: [concurrentAccount, 70_000_000n],
-    });
-    await keeper.writeContract({
-      address: concurrentAccount,
-      abi: exaPluginAbi,
-      functionName: "poke",
-      args: [marketUSDCAddress],
-    });
+    await Promise.all([
+      database
+        .insert(credentials)
+        .values([{ id: account2, publicKey: new Uint8Array(), account: account2, factory: zeroAddress }]),
+      database.insert(cards).values([{ id: `${account2}-card`, credentialId: account2, lastFour: "1234", mode: 0 }]),
+      anvilClient.setBalance({ address: owner2.account.address, value: 10n ** 24n }),
+      Promise.all([
+        keeper.writeContract({
+          address: usdcAddress,
+          abi: fakeTokenAbi,
+          functionName: "mint",
+          args: [account2, 70_000_000n],
+        }),
+        keeper.writeContract({
+          address: inject("ExaAccountFactory"),
+          abi: exaAccountFactoryAbi,
+          functionName: "createAccount",
+          args: [0n, [{ x: hexToBigInt(owner2.account.address), y: 0n }]],
+        }),
+      ])
+        .then(() =>
+          keeper.writeContract({
+            address: account2,
+            abi: exaPluginAbi,
+            functionName: "poke",
+            args: [marketUSDCAddress],
+          }),
+        )
+        .then(async (hash) => {
+          const { status } = await publicClient.waitForTransactionReceipt({ hash });
+          if (status !== "success") {
+            const trace = await traceClient.traceTransaction(hash);
+            const error = new Error(trace.output);
+            captureException(error, { contexts: { tx: { trace } } });
+            Object.assign(error, { trace });
+            throw error;
+          }
+        }),
+    ]);
   });
 
   it("handles concurrent authorizations", async () => {
     const operation = "concurrent";
-    const cardId = `${concurrentAccount}-card`;
+    const cardId = `${account2}-card`;
     const spendAuthorization = appClient.index.$post({
       ...authorization,
       header: { signature: "panda-signature" },
@@ -871,7 +888,7 @@ describe("concurrency", () => {
     const getMutex = vi.spyOn(pandaUtils, "getMutex");
 
     const operation = "auth-declined";
-    const cardId = `${concurrentAccount}-card`;
+    const cardId = `${account2}-card`;
     const spendAuthorization = await appClient.index.$post({
       ...authorization,
       header: { signature: "panda-signature" },
@@ -915,7 +932,7 @@ describe("concurrency", () => {
     it("mutex timeout", async () => {
       const getMutex = vi.spyOn(pandaUtils, "getMutex");
       const operation = "mutex-timeout";
-      const cardId = `${concurrentAccount}-card`;
+      const cardId = `${account2}-card`;
       const spendAuthorization = appClient.index.$post({
         ...authorization,
         header: { signature: "panda-signature" },

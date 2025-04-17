@@ -87,11 +87,13 @@ describe("card operations", () => {
           functionName: "mint",
           args: [account, 420e6],
         });
-        await keeper.writeContract({
-          address: account,
-          abi: exaPluginAbi,
-          functionName: "poke",
-          args: [inject("MarketUSDC")],
+        await publicClient.waitForTransactionReceipt({
+          hash: await keeper.writeContract({
+            address: account,
+            abi: exaPluginAbi,
+            functionName: "poke",
+            args: [inject("MarketUSDC")],
+          }),
         });
       });
 
@@ -175,11 +177,13 @@ describe("card operations", () => {
           functionName: "mint",
           args: [account, 420e6],
         });
-        await keeper.writeContract({
-          address: account,
-          abi: exaPluginAbi,
-          functionName: "poke",
-          args: [inject("MarketUSDC")],
+        await publicClient.waitForTransactionReceipt({
+          hash: await keeper.writeContract({
+            address: account,
+            abi: exaPluginAbi,
+            functionName: "poke",
+            args: [inject("MarketUSDC")],
+          }),
         });
       });
 
