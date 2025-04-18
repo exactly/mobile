@@ -8,8 +8,10 @@ import {
   BaseError,
   ContractFunctionRevertedError,
   createWalletClient,
+  encodeFunctionData,
   getContractError,
   http,
+  keccak256,
   nonceManager,
   RawContractError,
   type MaybePromise,
@@ -54,15 +56,14 @@ export function extender(keeper: ReturnType<typeof createWalletClient>) {
               "tx.from": keeper.account?.address,
               "tx.to": call.address,
             });
+            const txOptions = {
+              type: "eip1559",
+              maxFeePerGas: 1_000_000_000n,
+              maxPriorityFeePerGas: 1_000_000n,
+              gas: 5_000_000n,
+            } as const;
             const { request: writeRequest } = await startSpan({ name: "eth_call", op: "tx.simulate" }, () =>
-              publicClient.simulateContract({
-                account: keeper.account,
-                type: "eip1559",
-                maxFeePerGas: 1_000_000_000n,
-                maxPriorityFeePerGas: 1_000_000n,
-                gas: 5_000_000n,
-                ...call,
-              }),
+              publicClient.simulateContract({ account: keeper.account, ...txOptions, ...call }),
             );
             const {
               abi: _,
@@ -71,15 +72,37 @@ export function extender(keeper: ReturnType<typeof createWalletClient>) {
               ...request
             } = { from: writeRequest.account.address, to: writeRequest.address, ...writeRequest };
             scope.setContext("tx", { request });
-            const hash = await startSpan({ name: "send transaction", op: "tx.send" }, () =>
-              keeper.writeContract(writeRequest),
+            const prepared = await startSpan({ name: "prepare transaction", op: "tx.prepare" }, () =>
+              keeper.prepareTransactionRequest({
+                account: keeper.account,
+                chain,
+                to: call.address,
+                data: encodeFunctionData(call),
+                ...txOptions,
+                nonceManager,
+              }),
             );
-            scope.setContext("tx", { request, hash });
+            scope.setContext("tx", { request, prepared });
+            span.setAttribute("tx.nonce", prepared.nonce);
+            const serializedTransaction = await startSpan({ name: "sign transaction", op: "tx.sign" }, () =>
+              keeper.signTransaction(prepared),
+            );
+            const hash = keccak256(serializedTransaction);
+            scope.setContext("tx", { request, prepared, hash });
             span.setAttribute("tx.hash", hash);
-            await options?.onHash?.(hash);
-            const receipt = await startSpan({ name: "wait for receipt", op: "tx.wait" }, () =>
-              publicClient.waitForTransactionReceipt({ hash }),
-            );
+            const [, receiptResult] = await Promise.allSettled([
+              startSpan({ name: "send transaction", op: "tx.send" }, () =>
+                keeper.sendRawTransaction({ serializedTransaction }),
+              ),
+              startSpan({ name: "wait for receipt", op: "tx.wait" }, () =>
+                publicClient.waitForTransactionReceipt({ hash, confirmations: 0 }),
+              ),
+              Promise.resolve(options?.onHash?.(hash)).catch((error: unknown) =>
+                captureException(error, { level: "error" }),
+              ),
+            ]);
+            if (receiptResult.status === "rejected") throw receiptResult.reason;
+            const receipt = receiptResult.value;
             scope.setContext("tx", { request, receipt });
             const trace = await traceClient.traceTransaction(hash);
             scope.setContext("tx", { request, receipt, trace });
