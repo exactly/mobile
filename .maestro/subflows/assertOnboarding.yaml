@@ -1,0 +1,16 @@
+appId: ${APP_ID ?? "app.exactly"}
+---
+- tapOn: View all steps
+- assertVisible: Remaining steps
+- assertVisible: Verify your identity
+- runFlow: { file: scrollTo.yaml, env: { element: Funds added } }
+- runFlow: { file: tapAria.yaml, env: { aria: Back } }
+- tapOn: Card
+- assertVisible: Your card is awaiting activation. Follow the steps to enable it.
+- tapOn: Get started
+- assertVisible: Remaining steps
+- runFlow: { file: tapAria.yaml, env: { aria: Back } }
+- tapOn: Home
+- tapOn: Swap
+- assertVisible: Swaps
+- runFlow: { file: tapAria.yaml, env: { aria: Back } }
