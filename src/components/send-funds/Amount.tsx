@@ -75,43 +75,6 @@ export default function Amount() {
   });
   const isLatestPlugin = installedPlugins?.[0] === exaPluginAddress;
 
-  const { request: proposeSimulation } = useSimulateProposal({
-    account: address,
-    amount: formAmount,
-    market: market?.market,
-    proposalType: ProposalType.Withdraw,
-    receiver,
-    enabled: !!market && !!address && formAmount > 0n && !!receiver && receiver !== zeroAddress,
-  });
-
-  const externalAddress = useMemo(() => {
-    const { success, output } = safeParse(Address, external?.address);
-    return success ? output : zeroAddress;
-  }, [external?.address, zeroAddress]);
-
-  const isNativeTransfer = !!external && externalAddress === zeroAddress;
-
-  const { data: erc20TransferSimulation } = useSimulateContract({
-    address: externalAddress,
-    chainId: chain.id,
-    abi: erc20Abi,
-    functionName: "transfer",
-    args: receiver ? [receiver, formAmount] : undefined,
-    query: {
-      enabled:
-        !!external && !isNativeTransfer && !!address && formAmount > 0n && !!receiver && receiver !== zeroAddress,
-    },
-  });
-
-  const { data: nativeTransferEstimate } = useEstimateGas({
-    chainId: chain.id,
-    to: receiver,
-    value: formAmount,
-    query: {
-      enabled: !!external && isNativeTransfer && !!address && formAmount > 0n && !!receiver && receiver !== zeroAddress,
-    },
-  });
-
   const { mutateAsync: mutateSendCalls } = useSendCalls();
   const sendCalls = async (calls: readonly { data?: `0x${string}`; to: `0x${string}`; value?: bigint }[]) => {
     const { id } = await mutateSendCalls({
@@ -136,7 +99,7 @@ export default function Amount() {
     isError: sendError,
     reset,
   } = useMutation({
-    async mutationFn() {
+    async mutationFn(): Promise<`0x${string}` | undefined> {
       if (!sendReady || !receiver) throw new Error("not ready");
       if (proposeSimulation) {
         const { address: to, abi, functionName, args } = proposeSimulation;
@@ -152,6 +115,47 @@ export default function Amount() {
     onError(error) {
       if (reportError(error).authKnown) reset();
     },
+  });
+
+  const enabled =
+    !pending &&
+    !success &&
+    !!address &&
+    formAmount > 0n &&
+    formAmount <= available &&
+    !!receiver &&
+    receiver !== zeroAddress;
+
+  const { request: proposeSimulation } = useSimulateProposal({
+    account: address,
+    amount: formAmount,
+    market: market?.market,
+    proposalType: ProposalType.Withdraw,
+    receiver,
+    enabled: enabled && !!market,
+  });
+
+  const externalAddress = useMemo(() => {
+    const parsed = safeParse(Address, external?.address);
+    return parsed.success ? parsed.output : zeroAddress;
+  }, [external?.address, zeroAddress]);
+
+  const isNativeTransfer = !!external && externalAddress === zeroAddress;
+
+  const { data: erc20TransferSimulation } = useSimulateContract({
+    address: externalAddress,
+    chainId: chain.id,
+    abi: erc20Abi,
+    functionName: "transfer",
+    args: receiver ? [receiver, formAmount] : undefined,
+    query: { enabled: enabled && !!external && !isNativeTransfer },
+  });
+
+  const { data: nativeTransferEstimate } = useEstimateGas({
+    chainId: chain.id,
+    to: receiver,
+    value: formAmount,
+    query: { enabled: enabled && !!external && isNativeTransfer },
   });
 
   const sendReady = useMemo(
