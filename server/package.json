@@ -59,7 +59,7 @@
     "@sentry/core": "catalog:",
     "@sentry/node": "catalog:",
     "@sentry/profiling-node": "catalog:",
-    "@simplewebauthn/server": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.3",
     "@types/debug": "^4.1.13",
     "@valibot/to-json-schema": "^1.6.0",
     "@valora/viem-account-hsm-gcp": "^1.2.19",
