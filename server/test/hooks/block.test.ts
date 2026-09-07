@@ -232,6 +232,64 @@ describe("proposal", () => {
       expect(removals).toStrictEqual([1, 1]);
       expect(setUser).toHaveBeenCalledWith({ id: bobAccount });
     });
+
+    it("executes withdrawals despite a notification failure", async () => {
+      const setUser = await spyScopeSetUser();
+      const error = new Error("push failed");
+      const captures = vi.mocked(captureException).mock.calls.length;
+      const sendPushNotification = sendPushNotificationMock.mockResolvedValue({}).mockRejectedValueOnce(error);
+      vi.spyOn(ensClient, "getEnsName").mockResolvedValue("alice.eth");
+      const executions = waitForSuccessfulProposalExecutions(proposals.map(({ args }) => args.nonce));
+      const removals = waitForProposalRemovals(proposals.map(({ args }) => args));
+
+      const [response, receipts, removed] = await Promise.all([
+        appClient.index.$post({
+          ...withdrawProposal,
+          json: {
+            ...withdrawProposal.json,
+            event: {
+              ...withdrawProposal.json.event,
+              data: {
+                ...withdrawProposal.json.event.data,
+                block: {
+                  ...withdrawProposal.json.event.data.block,
+                  logs: proposals.map(({ topics, data, address }) => ({ topics, data, account: { address } })),
+                },
+              },
+            },
+          },
+        }),
+        executions,
+        removals,
+      ]);
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toStrictEqual({});
+      await vi.waitFor(() => {
+        expect(sendPushNotification).toHaveBeenCalledTimes(2);
+        expect(vi.mocked(captureException).mock.calls.slice(captures)).toStrictEqual([[error]]);
+      }, 26_666);
+
+      for (const amount of ["3", "4"]) {
+        expect(sendPushNotification).toHaveBeenCalledWith({
+          userId: bobAccount,
+          headings: t("Withdraw completed"),
+          contents: t("{{amount}} {{symbol}} sent to {{recipient}}", {
+            amount: f(amount),
+            symbol: "USDC",
+            recipient: "alice.eth",
+          }),
+        });
+      }
+      expect(
+        hasExpectedTransfers(
+          receipts,
+          proposals.map(({ args }) => ({ receiver: getAddress(decodeWithdraw(args.data)), amount: args.amount })),
+        ),
+      ).toBe(true);
+      expect(removed).toStrictEqual([1, 1]);
+      expect(setUser).toHaveBeenCalledWith({ id: bobAccount });
+    });
   });
 
   describe("with weth withdraw proposal", () => {
