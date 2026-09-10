@@ -766,6 +766,64 @@ describe("card operations", () => {
         });
       });
 
+      it("clears repeated transaction updates", async () => {
+        const amount = 77;
+        const update = 22;
+        const authorizedAt = new Date().toISOString();
+
+        const cardId = "tRepeatedUpdate";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 0 }]);
+        const createResponse = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: cardId,
+              spend: { ...authorization.json.body.spend, cardId, amount, localAmount: amount, authorizedAt },
+            },
+          },
+        });
+
+        const statuses: number[] = [];
+        for (const [index, id] of ["update-first", "update-second"].entries()) {
+          const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
+          await publicClient.waitForTransactionReceipt({ hash: transaction?.hashes[index] as Hex, confirmations: 0 });
+          const response = await appClient.index.$post({
+            ...authorization,
+            json: {
+              ...authorization.json,
+              id,
+              action: "updated",
+              body: {
+                ...authorization.json.body,
+                id: cardId,
+                spend: {
+                  ...authorization.json.body.spend,
+                  amount: amount + update * (index + 1),
+                  authorizationUpdateAmount: update,
+                  authorizedAt,
+                  cardId,
+                  localAmount: amount + update * (index + 1),
+                },
+              },
+            },
+          });
+          statuses.push(response.status);
+        }
+
+        expect(createResponse.status).toBe(200);
+        expect(statuses).toEqual([200, 200]);
+        expect(captureException).not.toHaveBeenCalled();
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
+
+        expect(transaction).toMatchObject({
+          hashes: [expect.any(String), expect.any(String), expect.any(String)],
+        });
+      });
+
       it("clears installments", async () => {
         const amount = 120;
 
@@ -2071,6 +2129,173 @@ describe("card operations", () => {
         });
         expect(spendFromPayload(transaction?.payload)).toBeDefined();
         expect(spendFromPayload(transaction?.payload, "completed")).toMatchObject({ amount: capture });
+      });
+
+      it("over-captures debit by the authorized amount", async () => {
+        const hold = 27;
+        const capture = 54;
+        const authorizedAt = new Date().toISOString();
+
+        const cardId = "over-capture-double";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 0 }]);
+        const createResponse = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: cardId,
+              spend: { ...authorization.json.body.spend, amount: hold, authorizedAt, cardId, localAmount: hold },
+            },
+          },
+        });
+        const created = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
+        await publicClient.waitForTransactionReceipt({ hash: created?.hashes[0] as Hex, confirmations: 0 });
+
+        const completeResponse = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            action: "completed",
+            body: {
+              ...authorization.json.body,
+              id: cardId,
+              spend: {
+                ...authorization.json.body.spend,
+                amount: capture,
+                authorizedAmount: hold,
+                authorizedAt,
+                postedAt: new Date().toISOString(),
+                cardId,
+                status: "completed",
+              },
+            },
+          },
+        });
+
+        expect(createResponse.status).toBe(200);
+        expect(completeResponse.status).toBe(200);
+        expect(captureException).not.toHaveBeenCalled();
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
+
+        expect(transaction).toMatchObject({
+          hashes: [expect.any(String), expect.any(String)],
+        });
+        expect(spendFromPayload(transaction?.payload, "completed")).toMatchObject({ amount: capture });
+      });
+
+      it("returns ok on over-capture replay", async () => {
+        const hold = 29;
+        const capture = 58;
+        const authorizedAt = new Date().toISOString();
+
+        const cardId = "over-capture-replay";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 0 }]);
+        const createResponse = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: cardId,
+              spend: { ...authorization.json.body.spend, amount: hold, authorizedAt, cardId, localAmount: hold },
+            },
+          },
+        });
+        const created = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
+        await publicClient.waitForTransactionReceipt({ hash: created?.hashes[0] as Hex, confirmations: 0 });
+
+        const json = {
+          ...authorization.json,
+          action: "completed" as const,
+          body: {
+            ...authorization.json.body,
+            id: cardId,
+            spend: {
+              ...authorization.json.body.spend,
+              amount: capture,
+              authorizedAmount: hold,
+              authorizedAt,
+              postedAt: new Date().toISOString(),
+              cardId,
+              status: "completed" as const,
+            },
+          },
+        };
+        const first = await appClient.index.$post({ ...authorization, json });
+        const completed = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
+        await publicClient.waitForTransactionReceipt({ hash: completed?.hashes[1] as Hex, confirmations: 0 });
+
+        const second = await appClient.index.$post({ ...authorization, json });
+
+        expect(createResponse.status).toBe(200);
+        expect(first.status).toBe(200);
+        expect(second.status).toBe(200);
+        expect(captureException).toHaveBeenCalledExactlyOnceWith(
+          expect.any(BaseError),
+          expect.objectContaining({ level: "error", fingerprint: ["{{ default }}", "Replay"] }),
+        );
+
+        const transaction = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
+
+        expect(transaction).toMatchObject({
+          hashes: [expect.any(String), expect.any(String)],
+        });
+      });
+
+      it("returns ok on force-capture replay", async () => {
+        const amount = 31;
+        const authorizedAt = new Date().toISOString();
+
+        const cardId = "force-capture-replay";
+        await database.insert(cards).values([{ id: cardId, credentialId: "cred", lastFour: "8888", mode: 0 }]);
+        const createResponse = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            action: "created",
+            body: {
+              ...authorization.json.body,
+              id: cardId,
+              spend: { ...authorization.json.body.spend, amount, authorizedAt, cardId, localAmount: amount },
+            },
+          },
+        });
+        const created = await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) });
+        await publicClient.waitForTransactionReceipt({ hash: created?.hashes[0] as Hex, confirmations: 0 });
+        await database.delete(transactions).where(eq(transactions.id, cardId));
+
+        const completeResponse = await appClient.index.$post({
+          ...authorization,
+          json: {
+            ...authorization.json,
+            action: "completed",
+            body: {
+              ...authorization.json.body,
+              id: cardId,
+              spend: {
+                ...authorization.json.body.spend,
+                amount,
+                authorizedAmount: amount,
+                authorizedAt,
+                postedAt: new Date().toISOString(),
+                cardId,
+                status: "completed",
+              },
+            },
+          },
+        });
+
+        expect(createResponse.status).toBe(200);
+        expect(completeResponse.status).toBe(200);
+        expect(captureException).toHaveBeenCalledExactlyOnceWith(
+          expect.any(BaseError),
+          expect.objectContaining({ level: "error", fingerprint: ["{{ default }}", "Replay"] }),
+        );
+        expect(await database.query.transactions.findFirst({ where: eq(transactions.id, cardId) })).toBeUndefined();
       });
 
       it("partial-captures debit", async () => {

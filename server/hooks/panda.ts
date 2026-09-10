@@ -1023,9 +1023,14 @@ async function prepareCollection(
   const amount = BigInt(Math.round(usdAmount * 1e6));
   if (amount === 0n) return { amount, call: null, transaction: null };
   const call = await (async () => {
-    const timestamp = Math.floor(
+    const authorized = Math.floor(
       (payload.body.spend.authorizedAt ? new Date(payload.body.spend.authorizedAt) : new Date()).getTime() / 1000, // TODO remove fallback
     );
+    const timestamp =
+      payload.action === "updated" ||
+      (payload.action === "completed" && amount !== BigInt(Math.round((payload.body.spend.amount / 100) * 1e6)))
+        ? authorized - Number(BigInt(`0x${payload.id.replaceAll(/[^0-9a-f]/g, "")}`) % 3600n)
+        : authorized;
     const signature = await signIssuerOp({ account, amount, timestamp }, issuer); // TODO replace with payload signature
     if (payload.body.spend.signature) {
       await startSpan(
@@ -1059,9 +1064,9 @@ async function prepareCollection(
     if (card.mode === 0) {
       return { functionName: "collectDebit", args: [amount, BigInt(timestamp), signature] } as const;
     }
-    const nextMaturity = timestamp - (timestamp % MATURITY_INTERVAL) + MATURITY_INTERVAL;
+    const nextMaturity = authorized - (authorized % MATURITY_INTERVAL) + MATURITY_INTERVAL;
     const firstMaturity =
-      nextMaturity - timestamp < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
+      nextMaturity - authorized < MIN_BORROW_INTERVAL ? nextMaturity + MATURITY_INTERVAL : nextMaturity;
     if (card.mode === 1 || usdAmount < card.mode || payload.action === "requested") {
       return {
         functionName: "collectCredit",
