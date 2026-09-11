@@ -38,6 +38,7 @@ import {
   headerValidator,
   MANTECA_TEMPLATE_EXTRA_FIELDS,
   MANTECA_TEMPLATE_WITH_ID_CLASS,
+  PANDA_BUSINESS_TEMPLATE,
   PANDA_TEMPLATE,
 } from "../utils/persona";
 import validatorHook from "../utils/validatorHook";
@@ -249,6 +250,7 @@ export default function hook({
                             CARD_LIMIT_TEMPLATE,
                             CRYPTOMATE_TEMPLATE,
                             MANTECA_TEMPLATE_EXTRA_FIELDS,
+                            PANDA_BUSINESS_TEMPLATE,
                           ]),
                         }),
                       }),
@@ -266,7 +268,30 @@ export default function hook({
     async (c) => {
       const payload = c.req.valid("json").data.attributes.payload;
 
-      if (payload.template === "ignored") return c.json({ code: "ok" }, 200);
+      if (payload.template === "ignored") {
+        if (
+          payload.data.attributes.status === "approved" &&
+          payload.data.relationships.inquiryTemplate.data.id === PANDA_BUSINESS_TEMPLATE
+        ) {
+          const credential = await database.query.credentials.findFirst({
+            columns: { account: true, factory: true, publicKey: true, salt: true, source: true },
+            where: eq(credentials.id, payload.data.attributes.referenceId),
+          });
+          if (credential) {
+            const account = safeParse(Address, credential.account);
+            if (account.success && firewallAddress)
+              await allow.enqueue({
+                account: account.output,
+                chainId: chain.id,
+                factory: parse(Address, credential.factory),
+                publicKey: bytesToHex(credential.publicKey),
+                salt: parse(Address, credential.salt),
+                source: credential.source,
+              });
+          }
+        }
+        return c.json({ code: "ok" }, 200);
+      }
       if (payload.template === "cardLimit") {
         getActiveSpan()?.setAttribute(SEMANTIC_ATTRIBUTE_SENTRY_OP, "persona.case.card-limit");
         if (payload.data.attributes.status !== "Approved") return c.json({ code: "ok" }, 200);
