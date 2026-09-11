@@ -1,5 +1,14 @@
 # @exactly/mobile
 
+## 1.2.25
+
+### Patch Changes
+
+- [#1291](https://github.com/exactly/exa/pull/1291) [`1f9bce2`](https://github.com/exactly/exa/commit/1f9bce20a73104e9b73824f08f1c4d34f5189cc4) Thanks [@franm91](https://github.com/franm91)! - ✨ add kyc review and failure states
+
+- Updated dependencies [[`a0b2e92`](https://github.com/exactly/exa/commit/a0b2e929715a64c28d67cbfdb193c0e76728fbe7)]:
+  - @exactly/server@0.2.117
+
 ## 1.2.24
 
 ### Patch Changes

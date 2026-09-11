@@ -1,5 +1,11 @@
 # @exactly/server
 
+## 0.2.117
+
+### Patch Changes
+
+- [#1299](https://github.com/exactly/exa/pull/1299) [`a0b2e92`](https://github.com/exactly/exa/commit/a0b2e929715a64c28d67cbfdb193c0e76728fbe7) Thanks [@nfmelendez](https://github.com/nfmelendez)! - 🐛 disambiguate incremental collection signatures
+
 ## 0.2.116
 
 ### Patch Changes
