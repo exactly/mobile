@@ -74,7 +74,7 @@ export default function HTML({ children }: { children: ReactNode }) {
             }
 
             .sheet-frame {
-              max-width: min(100vw, calc(100dvh * 9 / 16));
+              max-width: 100vw;
               margin: 0 auto;
             }
 
@@ -100,6 +100,10 @@ export default function HTML({ children }: { children: ReactNode }) {
                 aspect-ratio: 9 / 16;
                 width: min(100vw, calc(100dvh * 9 / 16));
                 height: min(100dvh, calc(100vw * 16 / 9));
+              }
+
+              .sheet-frame {
+                max-width: min(100vw, calc(100dvh * 9 / 16));
               }
             }
             /* #endregion */
