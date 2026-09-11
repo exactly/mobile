@@ -319,7 +319,7 @@ function OpenWhatsapp() {
     <Button
       primary
       onPress={() => {
-        openBrowser("https://wa.me", { external: true }).catch(reportError); // TODO append bot number
+        openBrowser("https://wa.me/59893906806", { external: true }).catch(reportError); // TODO number by domain
       }}
     >
       <Button.Text>{t("Open WhatsApp")}</Button.Text>
